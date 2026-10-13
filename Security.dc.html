@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- site-meta -->
+<title>Security - QueryAPIGate</title>
+<meta name="description" content="What each layer of QueryAPIGate defends against, the hardening checklist, and how to report a vulnerability.">
+<meta name="theme-color" content="#10201b">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QueryAPIGate">
+<meta property="og:title" content="Security - QueryAPIGate">
+<meta property="og:description" content="What each layer of QueryAPIGate defends against, the hardening checklist, and how to report a vulnerability.">
+<meta name="twitter:card" content="summary">
+<!-- /site-meta -->
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0;background:#f3f5f4;color:#17201d;font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
+a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 170);text-decoration:underline}
+
+@media (max-width:1180px){
+  .rs-gh{display:none !important}
+  .rs-nav{gap:14px !important}
+}
+@media (max-width:1100px){
+  .rs-nav{gap:12px !important;font-size:14px !important}
+}
+@media (max-width:1024px){
+  .rs-cta{display:none !important}
+}
+@media (max-width:960px){
+  .rs-nav{flex:1 1 auto;min-width:0;flex-wrap:nowrap !important;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+  .rs-nav::-webkit-scrollbar{display:none}
+}
+@media (max-width:820px){
+  .rs-2col{grid-template-columns:minmax(0,1fr) !important}
+  .rs-aside{position:static !important;max-height:none !important}
+  .rs-nav{gap:10px 16px !important;font-size:13.5px !important;flex-wrap:nowrap !important;overflow-x:auto;width:100%;scrollbar-width:none;white-space:nowrap;padding-bottom:2px}
+  .rs-nav::-webkit-scrollbar{display:none}
+  .rs-navbar{flex-wrap:wrap !important;gap:12px 20px !important;padding:12px 16px !important}
+  .rs-cta{display:none !important}
+  .rs-pad{padding-left:16px !important;padding-right:16px !important}
+  .rs-hero{padding-top:48px !important}
+  .rs-hide{display:none !important}
+}
+</style>
+</helmet>
+<div data-screen-label="Security" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
+
+  <nav style="position:sticky;top:0;z-index:20;background:rgba(243,245,244,0.9);backdrop-filter:blur(10px);border-bottom:1px solid #dbe2df">
+    <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
+      <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:#17201d;text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+      <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
+        <a href="Features.dc.html" style="color:#4a5652">Features</a>
+        <a href="Use Cases.dc.html" style="color:#4a5652">Use cases</a>
+        <a href="Deploy.dc.html" style="color:#4a5652">Deploy</a>
+        <a href="Docs.dc.html" style="color:#4a5652">Docs</a>
+        <a href="Guides.dc.html" style="color:#4a5652">Guides</a>
+        <a href="Compare.dc.html" style="color:#4a5652">Compare</a>
+        <a href="Trust.dc.html" style="color:#17201d" aria-current="page">Trust</a>
+        <a href="Roadmap.dc.html" style="color:#4a5652">Roadmap</a>
+        <a href="Changelog.dc.html" style="color:#4a5652">Changelog</a>
+        <a href="Blog.dc.html" style="color:#4a5652">Blog</a>
+        <a href="About.dc.html" style="color:#4a5652">About</a>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" style="font-size:14px;font-weight:500;color:#4a5652;padding:8px 12px">GitHub</a>
+        <a href="Docs.dc.html#install" class="rs-cta" style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#10201b;color:#e6efeb;padding:9px 14px;border-radius:7px;text-decoration:none" style-hover="background:#1b3a30;color:#fff">Install</a>
+      </div>
+    </div>
+  </nav>
+
+  <header style="background:#10201b;color:#e6efeb">
+    <div style="max-width:1240px;margin:0 auto;padding:88px 24px 72px;display:grid;gap:18px">
+      <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)">Security</span>
+      <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(34px,4.5vw,56px);line-height:1.04;font-weight:800;letter-spacing:-0.02em;max-width:22ch;text-wrap:balance">It executes SQL on behalf of whoever can reach it. It is built accordingly.</h1>
+      <p style="margin:0;font-size:18px;color:#9fb3ac;max-width:62ch;text-wrap:pretty">Read-only by default, scoped by default, recorded always. The controls below are defence in depth around database grants, never a substitute for them. The reasoning behind each one is in the threat model.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap"><a href="Guide.dc.html?d=THREAT_MODEL" style="font-size:15px;font-weight:600;background:#e6efeb;color:#10201b;padding:12px 18px;border-radius:8px;text-decoration:none" style-hover="background:#fff">Read the threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new" style="font-size:15px;font-weight:600;color:#e6efeb;padding:12px 18px;border:1px solid #2a3d37;border-radius:8px;text-decoration:none" style-hover="border-color:#9fb3ac">Report a vulnerability</a><a href="Trust.dc.html" style="font-size:15px;font-weight:600;color:#e6efeb;padding:12px 18px;border:1px solid #2a3d37;border-radius:8px;text-decoration:none" style-hover="border-color:#9fb3ac">Trust center</a></div>
+    </div>
+  </header>
+
+  <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:36px">
+    <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">What each layer defends against</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px">
+      <div style="display:grid;gap:10px;padding:24px;background:#fff;border:1px solid #dbe2df;border-radius:12px;align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783">Identity</span><h3 style="margin:0;font-size:18px;font-weight:600">The wrong caller</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Scoped API keys, limited to connections and read-only access. Named administrators with the narrowest role that fits: owner, admin, developer, auditor. App users by JWT with JWKS. Console SSO over OIDC + PKCE and MCP OAuth 2.1, both stable since 0.30.</p></div>
+      <div style="display:grid;gap:10px;padding:24px;background:#fff;border:1px solid #dbe2df;border-radius:12px;align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783">Injection</span><h3 style="margin:0;font-size:18px;font-weight:600">Hostile parameters</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Parameters are typed and bound, never spliced. A single-statement SQL guard blocks writes and multi-statement injection; it is dialect-aware and exercised by a Hypothesis fuzz suite on every commit. Still: connect with a database account that only has the privileges the API should have.</p></div>
+      <div style="display:grid;gap:10px;padding:24px;background:#fff;border:1px solid #dbe2df;border-radius:12px;align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783">Policy</span><h3 style="margin:0;font-size:18px;font-weight:600">Reaching too far</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Per-query and collection grants, table allow-lists per key, write operations and a write ceiling, per-user parameters bound from token claims, rate limits that also throttle key guessing, IP allow-lists and key expiry.</p></div>
+      <div style="display:grid;gap:10px;padding:24px;background:#fff;border:1px solid #dbe2df;border-radius:12px;align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783">Masking</span><h3 style="margin:0;font-size:18px;font-weight:600">Seeing too much</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Column masking traced to source columns with sqlglot, so an alias or a join does not leak what the column name hides. Applied before formatting, for every output format and every front door.</p></div>
+      <div style="display:grid;gap:10px;padding:24px;background:#fff;border:1px solid #dbe2df;border-radius:12px;align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783">Agents</span><h3 style="margin:0;font-size:18px;font-weight:600">An agent that acts</h3><p style="margin:0;font-size:14.5px;color:#4a5652">MCP write tools do not run. They queue for a person to approve in the Console, with per-agent usage recorded. An agent's call is governed exactly like an app's: same grants, same limits, same log.</p></div>
+      <div style="display:grid;gap:10px;padding:24px;background:#fff;border:1px solid #dbe2df;border-radius:12px;align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783">Record</span><h3 style="margin:0;font-size:18px;font-weight:600">Not knowing afterwards</h3><p style="margin:0;font-size:14.5px;color:#4a5652">An audit log of who changed what, run history for every query, request IDs in structured logs, Prometheus metrics and alerts. Passwords encrypted at rest with a Fernet key; a backup never contains the secrets.</p></div>
+    </div>
+  </section>
+
+  <section style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df">
+    <div class="rs-2col" style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:48px;align-items:start">
+      <div style="display:grid;gap:12px"><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">Hardening checklist</h2><p style="margin:0;color:#4a5652">The operational list from <a href="Guide.dc.html?d=SECURITY">SECURITY.md</a>. Security fixes are made against the latest released version.</p></div>
+      <ul style="margin:0;padding:0;list-style:none;display:grid;gap:1px;background:#dbe2df;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;font-size:14.5px">
+        <li style="background:#f3f5f4;padding:14px 18px;display:grid;gap:2px"><b style="font-weight:600">Set <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_API_KEY</code> and terminate TLS in front.</b><span style="color:#4a5652">Then give people and pipelines their own admin tokens and keep the shared key sealed as break-glass, or remove it.</span></li>
+        <li style="background:#f3f5f4;padding:14px 18px;display:grid;gap:2px"><b style="font-weight:600">Leave <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_ALLOW_WRITES</code> unset unless you need writes.</b><span style="color:#4a5652">And connect with a database account that has only the privileges the API should have.</span></li>
+        <li style="background:#f3f5f4;padding:14px 18px;display:grid;gap:2px"><b style="font-weight:600">Keep passwords out of the store.</b><span style="color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">"${ENV_VAR}"</code> references, or <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_SECRET_KEY</code> to encrypt them at rest.</span></li>
+        <li style="background:#f3f5f4;padding:14px 18px;display:grid;gap:2px"><b style="font-weight:600">Set <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_RATE_LIMIT</code> on anything reachable beyond a trusted network.</b><span style="color:#4a5652">Behind a proxy, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_TRUST_PROXY</code> = number of proxies; leave it 0 when clients connect directly.</span></li>
+        <li style="background:#f3f5f4;padding:14px 18px;display:grid;gap:2px"><b style="font-weight:600">Never <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_DEBUG</code> on a reachable host. Never CORS <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">*</code> without an API key.</b></li>
+        <li style="background:#f3f5f4;padding:14px 18px;display:grid;gap:2px"><b style="font-weight:600">Keep the query time limit and max page size.</b><span style="color:#4a5652">30 seconds by default, so one expensive request cannot monopolise the service.</span></li>
+        <li style="background:#f3f5f4;padding:14px 18px;display:grid;gap:2px"><b style="font-weight:600">Prefer bound <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">:name</code> parameters over <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">{name}</code> text placeholders.</b></li>
+        <li style="background:#f3f5f4;padding:14px 18px;display:grid;gap:2px"><b style="font-weight:600">Know that <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">GET /api/v1/connections</code> reveals hosts, ports, users and database names.</b><span style="color:#4a5652">Passwords are masked.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section style="max-width:1240px;margin:0 auto;padding:72px 24px 88px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px">
+    <div style="display:grid;gap:8px;align-content:start"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:18px;font-weight:700">Reporting a vulnerability</h3><p style="margin:0;font-size:15px;color:#4a5652">Please do not open a public issue. Use GitHub's private <a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new">Report a vulnerability</a> form, or email <a href="mailto:arcswdev@gmail.com">arcswdev@gmail.com</a>. Expect an acknowledgement within a few days.</p></div>
+    <div style="display:grid;gap:8px;align-content:start"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:18px;font-weight:700">Tested against real systems</h3><p style="margin:0;font-size:15px;color:#4a5652">CI runs against real PostgreSQL, MySQL, ClickHouse, S3 and Keycloak, upgrades from the previous release, and tests the oldest supported dependencies too.</p></div>
+    <div style="display:grid;gap:8px;align-content:start"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:18px;font-weight:700">Proof you can check</h3><p style="margin:0;font-size:15px;color:#4a5652">Every release is signed, with provenance and an SBOM (<a href="Guide.dc.html?g=59-verify-a-release-before-you-run-it">guide 59</a>). The audit log is a signed hash chain, streamed to your SIEM over mutual TLS (<a href="Guide.dc.html?g=53-send-the-audit-log-to-your-siem">guide 53</a>). Cryptography is FIPS-approved throughout, and <a href="Guide.dc.html?d=DATA_PROTECTION">Where data goes</a> answers the questionnaire.</p></div>
+  </section>
+
+  <footer style="border-top:1px solid #dbe2df;background:#fff">
+    <div style="max-width:1240px;margin:0 auto;padding:48px 24px 28px;display:grid;gap:36px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:32px 24px">
+        <div style="display:grid;gap:12px;align-content:start;min-width:0">
+          <a href="Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:#17201d;text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+          <p style="margin:0;font-size:13.5px;color:#4a5652;max-width:30ch">One governed gate between your databases and everything that asks them for data. Self-hosted: your data never leaves your infrastructure.</p>
+        </div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Product</span><a href="Features.dc.html" style="color:#4a5652;font-size:14px">Features</a><a href="Use Cases.dc.html" style="color:#4a5652;font-size:14px">Use cases</a><a href="Deploy.dc.html" style="color:#4a5652;font-size:14px">Deploy</a><a href="Compare.dc.html" style="color:#4a5652;font-size:14px">Compare</a><a href="Roadmap.dc.html" style="color:#4a5652;font-size:14px">Roadmap</a><a href="Changelog.dc.html" style="color:#4a5652;font-size:14px">Changelog</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Resources</span><a href="Docs.dc.html" style="color:#4a5652;font-size:14px">Docs</a><a href="Guides.dc.html" style="color:#4a5652;font-size:14px">Guides</a><a href="Guide.dc.html?d=API" style="color:#4a5652;font-size:14px">API reference</a><a href="https://AnanthaRajuC.github.io/QueryAPIGate/" style="color:#4a5652;font-size:14px">Full reference site</a><a href="Blog.dc.html" style="color:#4a5652;font-size:14px">Blog</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Trust</span><a href="Trust.dc.html" style="color:#4a5652;font-size:14px">Trust center</a><a href="Security.dc.html" style="color:#4a5652;font-size:14px">Security</a><a href="Support.dc.html" style="color:#4a5652;font-size:14px">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION" style="color:#4a5652;font-size:14px">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL" style="color:#4a5652;font-size:14px">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new" style="color:#4a5652;font-size:14px">Report a vulnerability</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Project</span><a href="About.dc.html" style="color:#4a5652;font-size:14px">About</a><a href="Stack.dc.html" style="color:#4a5652;font-size:14px">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate" style="color:#4a5652;font-size:14px">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases" style="color:#4a5652;font-size:14px">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING" style="color:#4a5652;font-size:14px">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT" style="color:#4a5652;font-size:14px">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE" style="color:#4a5652;font-size:14px">Licence (FSL-1.1-MIT)</a></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#7c8783">
+        <span>QueryAPIGate 0.32 · FSL-1.1-MIT · Signed releases with provenance and SBOMs</span>
+        <span>Experimental features are labelled in the product and the changelog.</span>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+</body>
+</html>

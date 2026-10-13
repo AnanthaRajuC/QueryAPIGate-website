@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- site-meta -->
+<title>Guide - QueryAPIGate</title>
+<meta name="description" content="A QueryAPIGate how-to guide, run against a real server.">
+<meta name="theme-color" content="#10201b">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QueryAPIGate">
+<meta property="og:title" content="Guide - QueryAPIGate">
+<meta property="og:description" content="A QueryAPIGate how-to guide, run against a real server.">
+<meta name="twitter:card" content="summary">
+<!-- /site-meta -->
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<style>
+body{margin:0;background:#f3f5f4;color:#17201d;font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.6}
+a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 170);text-decoration:underline}
+#guide-body>:first-child{margin-top:0}
+#guide-body h1{display:none}
+#guide-body h2{font-family:"Schibsted Grotesk",sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.01em;margin:44px 0 12px;line-height:1.2}
+#guide-body h3{font-family:"Schibsted Grotesk",sans-serif;font-size:18px;font-weight:700;margin:30px 0 8px}
+#guide-body p{margin:0 0 14px;color:#2b3532;max-width:72ch;text-wrap:pretty}
+#guide-body ul,#guide-body ol{margin:0 0 14px;padding-left:22px;color:#2b3532;max-width:72ch}
+#guide-body li{margin:4px 0}
+#guide-body code{font-family:"JetBrains Mono",monospace;font-size:0.88em;background:oklch(0.52 0.11 170 / 0.08);padding:2px 5px;border-radius:4px}
+#guide-body pre{background:#10201b;color:#e6efeb;border-radius:12px;padding:18px 20px;overflow-x:auto;margin:6px 0 20px;font-size:13px;line-height:1.65}
+#guide-body pre code{background:none;padding:0;font-size:inherit;color:inherit}
+#guide-body blockquote{margin:0 0 14px;padding:12px 16px;border-left:3px solid oklch(0.52 0.11 170);background:#fff;border-radius:0 8px 8px 0;color:#4a5652}
+#guide-body blockquote p{margin:0}
+#guide-body table{border-collapse:collapse;width:100%;margin:6px 0 20px;font-size:14px;background:#fff;border:1px solid #dbe2df;border-radius:10px;overflow:hidden}
+#guide-body th,#guide-body td{text-align:left;padding:9px 12px;border-bottom:1px solid #dbe2df;vertical-align:top}
+#guide-body th{font-weight:600;background:#f3f5f4;font-size:12px;letter-spacing:0.04em;text-transform:uppercase;color:#4a5652}
+#guide-body tr:last-child td{border-bottom:none}
+#guide-body hr{border:none;border-top:1px solid #dbe2df;margin:32px 0}
+#guide-body img{max-width:100%;border-radius:10px;border:1px solid #dbe2df}
+#guide-body strong{font-weight:600;color:#17201d}
+
+@media (max-width:1180px){
+  .rs-gh{display:none !important}
+  .rs-nav{gap:14px !important}
+}
+@media (max-width:1100px){
+  .rs-nav{gap:12px !important;font-size:14px !important}
+}
+@media (max-width:1024px){
+  .rs-cta{display:none !important}
+}
+@media (max-width:960px){
+  .rs-nav{flex:1 1 auto;min-width:0;flex-wrap:nowrap !important;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+  .rs-nav::-webkit-scrollbar{display:none}
+}
+@media (max-width:820px){
+  .rs-2col{grid-template-columns:minmax(0,1fr) !important}
+  .rs-aside{position:static !important;max-height:none !important}
+  .rs-nav{gap:10px 16px !important;font-size:13.5px !important;flex-wrap:nowrap !important;overflow-x:auto;width:100%;scrollbar-width:none;white-space:nowrap;padding-bottom:2px}
+  .rs-nav::-webkit-scrollbar{display:none}
+  .rs-navbar{flex-wrap:wrap !important;gap:12px 20px !important;padding:12px 16px !important}
+  .rs-cta{display:none !important}
+  .rs-pad{padding-left:16px !important;padding-right:16px !important}
+  .rs-hero{padding-top:48px !important}
+  .rs-hide{display:none !important}
+}
+</style>
+</helmet>
+<div data-screen-label="Guide" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
+  <nav style="position:sticky;top:0;z-index:20;background:rgba(243,245,244,0.9);backdrop-filter:blur(10px);border-bottom:1px solid #dbe2df">
+    <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
+      <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:#17201d;text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+      <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
+        <a href="Features.dc.html" style="color:#4a5652">Features</a>
+        <a href="Use Cases.dc.html" style="color:#4a5652">Use cases</a>
+        <a href="Deploy.dc.html" style="color:#4a5652">Deploy</a>
+        <a href="Docs.dc.html" style="color:#4a5652">Docs</a>
+        <a href="Guides.dc.html" style="color:#17201d" aria-current="page">Guides</a>
+        <a href="Compare.dc.html" style="color:#4a5652">Compare</a>
+        <a href="Trust.dc.html" style="color:#4a5652">Trust</a>
+        <a href="Roadmap.dc.html" style="color:#4a5652">Roadmap</a>
+        <a href="Changelog.dc.html" style="color:#4a5652">Changelog</a>
+        <a href="Blog.dc.html" style="color:#4a5652">Blog</a>
+        <a href="About.dc.html" style="color:#4a5652">About</a>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" style="font-size:14px;font-weight:500;color:#4a5652;padding:8px 12px">GitHub</a>
+        <a href="Docs.dc.html#install" class="rs-cta" style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#10201b;color:#e6efeb;padding:9px 14px;border-radius:7px;text-decoration:none" style-hover="background:#1b3a30;color:#fff">Install</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="rs-2col" style="max-width:1240px;margin:0 auto;padding:56px 24px 88px;display:grid;grid-template-columns:240px minmax(0,1fr);gap:56px;align-items:start">
+    <aside class="rs-aside" style="position:sticky;top:84px;display:grid;gap:4px;font-size:13.5px;max-height:calc(100vh - 110px);overflow:auto">
+      <a href="{{ backHref }}" style="color:#4a5652;padding:4px 0 12px;font-weight:500">{{ backLabel }}</a>
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783;padding-bottom:6px">{{ catLabel }}</span>
+      <sc-for list="{{ siblings }}" as="s" hint-placeholder-count="6">
+        <a href="{{ s.href }}" class="rs-2col" style="display:grid;grid-template-columns:26px minmax(0,1fr);gap:6px;padding:5px 0;color:{{ s.color }};font-weight:{{ s.weight }}"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.52 0.11 170);padding-top:3px">{{ s.num }}</span><span>{{ s.title }}</span></a>
+      </sc-for>
+    </aside>
+
+    <article style="display:grid;gap:24px;min-width:0">
+      <header style="display:grid;gap:12px;padding-bottom:24px;border-bottom:1px solid #dbe2df">
+        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">{{ kindLabel }} · {{ catLabel }}</span>
+        <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(30px,3.8vw,44px);line-height:1.08;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">{{ title }}</h1>
+        <sc-if value="{{ showRepo }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13.5px;color:#7c8783"><a href="{{ ghHref }}" style="color:#4a5652">View on GitHub ↗</a><a href="{{ editHref }}" style="color:#4a5652">Suggest an edit ↗</a></div></sc-if>
+      </header>
+      <sc-if value="{{ error }}" hint-placeholder-val="{{ false }}"><p style="margin:0;color:#4a5652">{{ error }}</p></sc-if>
+      <div id="guide-body" ref="{{ bodyRef }}" style="min-height:200px;min-width:0;max-width:100%;overflow-wrap:anywhere"></div>
+      <nav style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:28px;border-top:1px solid #dbe2df">
+        <sc-if value="{{ prev }}" hint-placeholder-val="{{ false }}"><a href="{{ prev.href }}" style="display:grid;gap:4px;padding:16px 18px;background:#fff;border:1px solid #dbe2df;border-radius:10px;color:#17201d" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-size:12px;color:#7c8783">← Previous</span><b style="font-weight:600">{{ prev.title }}</b></a></sc-if>
+        <sc-if value="{{ next }}" hint-placeholder-val="{{ false }}"><a href="{{ next.href }}" style="display:grid;gap:4px;padding:16px 18px;background:#fff;border:1px solid #dbe2df;border-radius:10px;color:#17201d;text-align:right;grid-column:2" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-size:12px;color:#7c8783">Next →</span><b style="font-weight:600">{{ next.title }}</b></a></sc-if>
+      </nav>
+    </article>
+  </div>
+
+  <footer style="border-top:1px solid #dbe2df;background:#fff">
+    <div style="max-width:1240px;margin:0 auto;padding:48px 24px 28px;display:grid;gap:36px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:32px 24px">
+        <div style="display:grid;gap:12px;align-content:start;min-width:0">
+          <a href="Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:#17201d;text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+          <p style="margin:0;font-size:13.5px;color:#4a5652;max-width:30ch">One governed gate between your databases and everything that asks them for data. Self-hosted: your data never leaves your infrastructure.</p>
+        </div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Product</span><a href="Features.dc.html" style="color:#4a5652;font-size:14px">Features</a><a href="Use Cases.dc.html" style="color:#4a5652;font-size:14px">Use cases</a><a href="Deploy.dc.html" style="color:#4a5652;font-size:14px">Deploy</a><a href="Compare.dc.html" style="color:#4a5652;font-size:14px">Compare</a><a href="Roadmap.dc.html" style="color:#4a5652;font-size:14px">Roadmap</a><a href="Changelog.dc.html" style="color:#4a5652;font-size:14px">Changelog</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Resources</span><a href="Docs.dc.html" style="color:#4a5652;font-size:14px">Docs</a><a href="Guides.dc.html" style="color:#4a5652;font-size:14px">Guides</a><a href="Guide.dc.html?d=API" style="color:#4a5652;font-size:14px">API reference</a><a href="https://AnanthaRajuC.github.io/QueryAPIGate/" style="color:#4a5652;font-size:14px">Full reference site</a><a href="Blog.dc.html" style="color:#4a5652;font-size:14px">Blog</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Trust</span><a href="Trust.dc.html" style="color:#4a5652;font-size:14px">Trust center</a><a href="Security.dc.html" style="color:#4a5652;font-size:14px">Security</a><a href="Support.dc.html" style="color:#4a5652;font-size:14px">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION" style="color:#4a5652;font-size:14px">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL" style="color:#4a5652;font-size:14px">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new" style="color:#4a5652;font-size:14px">Report a vulnerability</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Project</span><a href="About.dc.html" style="color:#4a5652;font-size:14px">About</a><a href="Stack.dc.html" style="color:#4a5652;font-size:14px">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate" style="color:#4a5652;font-size:14px">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases" style="color:#4a5652;font-size:14px">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING" style="color:#4a5652;font-size:14px">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT" style="color:#4a5652;font-size:14px">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE" style="color:#4a5652;font-size:14px">Licence (FSL-1.1-MIT)</a></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#7c8783">
+        <span>QueryAPIGate 0.32 · FSL-1.1-MIT · Signed releases with provenance and SBOMs</span>
+        <span>Experimental features are labelled in the product and the changelog.</span>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { md: null, error: null, slug: null };
+  bodyRef = React.createRef();
+  componentDidMount() {
+    import('./guides.js').then(m => {
+      this.guides = m.guides; this.docs = m.docs; this.posts = m.posts;
+      const q = new URLSearchParams(location.search);
+      let kind = 'g', slug = q.get('g');
+      if (q.get('d')) { kind = 'd'; slug = q.get('d'); } else if (q.get('p')) { kind = 'p'; slug = q.get('p'); }
+      if (!slug) slug = this.guides[0].slug;
+      this.kind = kind;
+      const path = kind === 'd' ? (this.docs.find(d => d.slug === slug) || {}).path : kind === 'p' ? 'blog/' + slug + '.md' : 'how-to/' + slug + '.md';
+      this.setState({ slug });
+      fetch(path).then(r => r.ok ? r.text() : Promise.reject(new Error(r.status))).then(md => this.setState({ md })).catch(() => this.setState({ error: 'This guide could not be loaded. It is on GitHub.' }));
+    });
+  }
+  componentDidUpdate() { this.renderMd(); }
+  renderMd() {
+    const el = this.bodyRef.current;
+    if (!el || !this.state.md || !window.marked || el.dataset.rendered === this.state.slug) return;
+    const html = window.marked.parse(this.state.md, { gfm: true, breaks: false });
+    el.innerHTML = html;
+    el.dataset.rendered = this.state.slug;
+    el.querySelectorAll('a[href]').forEach(a => {
+      const h = a.getAttribute('href');
+      let m = h.match(/^(?:\.\.?\/)?(?:how-to\/)?(\d\d-[a-z0-9-]+)\.md(#.*)?$/);
+      if (m) { a.setAttribute('href', 'Guide.dc.html?g=' + m[1] + (m[2] || '')); return; }
+      m = h.match(/^(?:\.\.?\/)?(?:documentation\/)?([A-Z_]+)\.(?:md|MD)(#.*)?$/);
+      if (m && this.docs.some(d => d.slug === m[1])) { a.setAttribute('href', 'Guide.dc.html?d=' + m[1] + (m[2] || '')); return; }
+      if (/^Guide\.dc\.html|^Home\.dc\.html/.test(h)) return;
+      m = h.match(/^\.\.\/(.*)$/) || h.match(/^(?:\.\/)?((?:documentation|deploy|examples|tests|queryapigate|frontend)\/.*)$/) || h.match(/^(?:\.\/)?([A-Z_]+\.md)(#.*)?$/);
+      if (m) { a.setAttribute('href', 'https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/' + m[1]); a.target = '_blank'; return; }
+      if (/^#/.test(h)) return;
+      if (/^https?:/.test(h)) a.target = '_blank';
+    });
+    el.querySelectorAll('img[src^="../"]').forEach(img => img.src = 'https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/' + img.getAttribute('src').slice(3));
+    el.querySelectorAll('h2, h3').forEach(h => { if (!h.id) h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); });
+    if (location.hash) { const t = el.querySelector(location.hash); if (t) window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - 90 }); }
+  }
+  renderVals() {
+    const kind = this.kind || 'g';
+    const gs = (kind === 'd' ? this.docs : kind === 'p' ? this.posts : this.guides) || [];
+    const i = gs.findIndex(g => g.slug === this.state.slug);
+    const g = gs[i];
+    const href = s => 'Guide.dc.html?' + kind + '=' + s.slug;
+    const sib = g ? (kind === 'p' ? gs : gs.filter(x => x.cat === g.cat)) : [];
+    const repoPath = g ? (kind === 'd' ? g.path : kind === 'p' ? null : 'how-to/' + g.slug + '.md') : null;
+    const backHref = kind === 'd' ? 'Docs.dc.html' : kind === 'p' ? 'Blog.dc.html' : 'Guides.dc.html';
+    const backLabel = kind === 'd' ? '← Docs' : kind === 'p' ? '← Blog' : '← All guides';
+    return {
+      bodyRef: this.bodyRef, error: this.state.error, backHref, backLabel,
+      kindLabel: kind === 'd' ? 'Documentation' : kind === 'p' ? (g ? g.date : 'Blog') : 'Guide ' + (g ? g.num : ''),
+      showRepo: !!repoPath,
+      num: g ? g.num : '', title: g ? g.title : 'Loading…', catLabel: g ? g.cat : '',
+      ghHref: repoPath ? 'https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/' + repoPath : '#',
+      editHref: repoPath ? 'https://github.com/AnanthaRajuC/QueryAPIGate/edit/main/' + repoPath : '#',
+      siblings: sib.map(s => ({ num: s.num || '', title: s.title, href: href(s), color: s.slug === this.state.slug ? '#17201d' : '#4a5652', weight: s.slug === this.state.slug ? 600 : 400 })),
+      prev: i > 0 ? { title: gs[i - 1].title, href: href(gs[i - 1]) } : null,
+      next: i >= 0 && i < gs.length - 1 ? { title: gs[i + 1].title, href: href(gs[i + 1]) } : null,
+    };
+  }
+}
+</script>
+</body>
+</html>

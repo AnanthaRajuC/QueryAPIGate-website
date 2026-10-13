@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- site-meta -->
+<title>Guides - QueryAPIGate</title>
+<meta name="description" content="Fifty-nine how-to guides, each run against a real server: connections, keys, agents, exports, operations and compliance.">
+<meta name="theme-color" content="#10201b">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QueryAPIGate">
+<meta property="og:title" content="Guides - QueryAPIGate">
+<meta property="og:description" content="Fifty-nine how-to guides, each run against a real server: connections, keys, agents, exports, operations and compliance.">
+<meta name="twitter:card" content="summary">
+<!-- /site-meta -->
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0;background:#f3f5f4;color:#17201d;font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
+a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 170);text-decoration:underline}
+
+@media (max-width:1180px){
+  .rs-gh{display:none !important}
+  .rs-nav{gap:14px !important}
+}
+@media (max-width:1100px){
+  .rs-nav{gap:12px !important;font-size:14px !important}
+}
+@media (max-width:1024px){
+  .rs-cta{display:none !important}
+}
+@media (max-width:960px){
+  .rs-nav{flex:1 1 auto;min-width:0;flex-wrap:nowrap !important;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+  .rs-nav::-webkit-scrollbar{display:none}
+}
+@media (max-width:820px){
+  .rs-2col{grid-template-columns:minmax(0,1fr) !important}
+  .rs-aside{position:static !important;max-height:none !important}
+  .rs-nav{gap:10px 16px !important;font-size:13.5px !important;flex-wrap:nowrap !important;overflow-x:auto;width:100%;scrollbar-width:none;white-space:nowrap;padding-bottom:2px}
+  .rs-nav::-webkit-scrollbar{display:none}
+  .rs-navbar{flex-wrap:wrap !important;gap:12px 20px !important;padding:12px 16px !important}
+  .rs-cta{display:none !important}
+  .rs-pad{padding-left:16px !important;padding-right:16px !important}
+  .rs-hero{padding-top:48px !important}
+  .rs-hide{display:none !important}
+}
+</style>
+</helmet>
+<div data-screen-label="Guides" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
+  <nav style="position:sticky;top:0;z-index:20;background:rgba(243,245,244,0.9);backdrop-filter:blur(10px);border-bottom:1px solid #dbe2df">
+    <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
+      <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:#17201d;text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+      <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
+        <a href="Features.dc.html" style="color:#4a5652">Features</a>
+        <a href="Use Cases.dc.html" style="color:#4a5652">Use cases</a>
+        <a href="Deploy.dc.html" style="color:#4a5652">Deploy</a>
+        <a href="Docs.dc.html" style="color:#4a5652">Docs</a>
+        <a href="Guides.dc.html" style="color:#17201d" aria-current="page">Guides</a>
+        <a href="Compare.dc.html" style="color:#4a5652">Compare</a>
+        <a href="Trust.dc.html" style="color:#4a5652">Trust</a>
+        <a href="Roadmap.dc.html" style="color:#4a5652">Roadmap</a>
+        <a href="Changelog.dc.html" style="color:#4a5652">Changelog</a>
+        <a href="Blog.dc.html" style="color:#4a5652">Blog</a>
+        <a href="About.dc.html" style="color:#4a5652">About</a>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" style="font-size:14px;font-weight:500;color:#4a5652;padding:8px 12px">GitHub</a>
+        <a href="Docs.dc.html#install" class="rs-cta" style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#10201b;color:#e6efeb;padding:9px 14px;border-radius:7px;text-decoration:none" style-hover="background:#1b3a30;color:#fff">Install</a>
+      </div>
+    </div>
+  </nav>
+
+  <header style="max-width:1240px;margin:0 auto;padding:80px 24px 32px;display:grid;gap:14px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">How-to guides</span>
+    <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(34px,4.5vw,54px);line-height:1.04;font-weight:800;letter-spacing:-0.02em;max-width:22ch;text-wrap:balance">Fifty-nine guides, each one run against a real server</h1>
+    <p style="margin:0;font-size:18px;color:#4a5652;max-width:62ch;text-wrap:pretty">Every command and response in them was executed before it was written down, and a test checks that every guide is listed and every link resolves. Start with the first five, then follow whatever your deployment needs.</p>
+  </header>
+  <section style="max-width:1240px;margin:0 auto;padding:0 24px 88px;display:grid;gap:22px">
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+      <input ref="{{ inputRef }}" onInput="{{ onSearch }}" placeholder="Search guides" style="font:inherit;font-size:14.5px;padding:10px 14px;border:1px solid #c3cdc9;border-radius:8px;background:#fff;color:#17201d;min-width:260px;outline:none">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <sc-for list="{{ cats }}" as="c" hint-placeholder-count="8">
+          <button onClick="{{ c.go }}" style="font:inherit;font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};cursor:pointer;transition:background 0.2s,color 0.2s">{{ c.label }}</button>
+        </sc-for>
+      </div>
+      <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#7c8783">{{ count }}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">
+      <sc-for list="{{ shown }}" as="g" hint-placeholder-count="12">
+        <a href="{{ g.href }}" class="rs-2col" style="display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;padding:14px 16px;background:#fff;border:1px solid #dbe2df;border-radius:10px;color:#17201d;text-decoration:none;align-items:start" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170);padding-top:2px">{{ g.num }}</span><span style="display:grid;gap:3px"><b style="font-weight:600;font-size:14.5px;line-height:1.35">{{ g.title }}</b><span style="font-size:12px;color:#7c8783">{{ g.cat }}</span></span></a>
+      </sc-for>
+    </div>
+    <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><p style="margin:0;color:#4a5652">No guide matches. Try fewer words, or <a href="https://github.com/AnanthaRajuC/QueryAPIGate/issues/new">ask for one</a>.</p></sc-if>
+  </section>
+  <footer style="border-top:1px solid #dbe2df;background:#fff">
+    <div style="max-width:1240px;margin:0 auto;padding:48px 24px 28px;display:grid;gap:36px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:32px 24px">
+        <div style="display:grid;gap:12px;align-content:start;min-width:0">
+          <a href="Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:#17201d;text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+          <p style="margin:0;font-size:13.5px;color:#4a5652;max-width:30ch">One governed gate between your databases and everything that asks them for data. Self-hosted: your data never leaves your infrastructure.</p>
+        </div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Product</span><a href="Features.dc.html" style="color:#4a5652;font-size:14px">Features</a><a href="Use Cases.dc.html" style="color:#4a5652;font-size:14px">Use cases</a><a href="Deploy.dc.html" style="color:#4a5652;font-size:14px">Deploy</a><a href="Compare.dc.html" style="color:#4a5652;font-size:14px">Compare</a><a href="Roadmap.dc.html" style="color:#4a5652;font-size:14px">Roadmap</a><a href="Changelog.dc.html" style="color:#4a5652;font-size:14px">Changelog</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Resources</span><a href="Docs.dc.html" style="color:#4a5652;font-size:14px">Docs</a><a href="Guides.dc.html" style="color:#4a5652;font-size:14px">Guides</a><a href="Guide.dc.html?d=API" style="color:#4a5652;font-size:14px">API reference</a><a href="https://AnanthaRajuC.github.io/QueryAPIGate/" style="color:#4a5652;font-size:14px">Full reference site</a><a href="Blog.dc.html" style="color:#4a5652;font-size:14px">Blog</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Trust</span><a href="Trust.dc.html" style="color:#4a5652;font-size:14px">Trust center</a><a href="Security.dc.html" style="color:#4a5652;font-size:14px">Security</a><a href="Support.dc.html" style="color:#4a5652;font-size:14px">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION" style="color:#4a5652;font-size:14px">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL" style="color:#4a5652;font-size:14px">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new" style="color:#4a5652;font-size:14px">Report a vulnerability</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Project</span><a href="About.dc.html" style="color:#4a5652;font-size:14px">About</a><a href="Stack.dc.html" style="color:#4a5652;font-size:14px">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate" style="color:#4a5652;font-size:14px">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases" style="color:#4a5652;font-size:14px">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING" style="color:#4a5652;font-size:14px">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT" style="color:#4a5652;font-size:14px">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE" style="color:#4a5652;font-size:14px">Licence (FSL-1.1-MIT)</a></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#7c8783">
+        <span>QueryAPIGate 0.32 · FSL-1.1-MIT · Signed releases with provenance and SBOMs</span>
+        <span>Experimental features are labelled in the product and the changelog.</span>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { cat: 'All', q: '', guides: [] };
+  componentDidMount() { import('./guides.js').then(m => this.setState({ guides: m.guides })); }
+  inputRef = React.createRef();
+  cats = ["All","Start","Queries","Access","Agents","Events & exports","Operate","Govern"];
+  guides = [{"num":"01","title":"Turn your first SQL query into a REST API","cat":"Start","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/01-turn-your-first-sql-query-into-a-rest-api.md"},{"num":"02","title":"Connect a database","cat":"Start","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/02-connect-a-database.md"},{"num":"03","title":"Connect via generic JDBC","cat":"Start","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/03-connect-via-generic-jdbc.md"},{"num":"04","title":"Connect to MongoDB","cat":"Start","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/04-connect-to-mongodb.md"},{"num":"05","title":"Try the built-in example APIs","cat":"Start","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/05-try-the-built-in-example-apis.md"},{"num":"06","title":"Use bound parameters safely","cat":"Queries","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/06-use-bound-parameters-safely.md"},{"num":"07","title":"Group queries into a collection","cat":"Queries","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/07-group-queries-into-a-collection.md"},{"num":"08","title":"Cache a saved query","cat":"Queries","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/08-cache-a-saved-query.md"},{"num":"09","title":"Stream a large export","cat":"Queries","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/09-stream-a-large-export.md"},{"num":"10","title":"Allow a saved query to write data","cat":"Queries","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/10-allow-a-saved-query-to-write-data.md"},{"num":"11","title":"Browse a connection's schema","cat":"Queries","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/11-browse-a-connections-schema.md"},{"num":"12","title":"Export a Postman collection","cat":"Queries","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/12-export-a-postman-collection.md"},{"num":"13","title":"Set up a scoped API key","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/13-set-up-a-scoped-api-key.md"},{"num":"14","title":"Give a partner one query only","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/14-give-a-partner-one-query-only.md"},{"num":"15","title":"Create a role","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/15-create-a-role.md"},{"num":"16","title":"Restrict a key to tables","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/16-restrict-a-key-to-tables.md"},{"num":"17","title":"Rate limit a key","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/17-rate-limit-a-key.md"},{"num":"18","title":"Restrict a key to IPs","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/18-restrict-a-key-to-ips.md"},{"num":"19","title":"Give a key an expiry date","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/19-give-a-key-an-expiry-date.md"},{"num":"20","title":"Read the audit log","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/20-read-the-audit-log.md"},{"num":"21","title":"Verify who can reach what","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/21-verify-who-can-reach-what.md"},{"num":"22","title":"Encrypt passwords at rest","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/22-encrypt-passwords-at-rest.md"},{"num":"52","title":"Give a partner a quota and a concurrency cap","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/52-give-a-partner-a-quota-and-a-concurrency-cap.md"},{"num":"56","title":"Use short-lived database credentials from Vault","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/56-use-short-lived-database-credentials-from-vault.md"},{"num":"24","title":"Let an agent call your queries via MCP","cat":"Agents","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/24-let-an-agent-call-your-queries-via-mcp.md"},{"num":"25","title":"MCP ad-hoc tools","cat":"Agents","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/25-mcp-ad-hoc-tools.md"},{"num":"26","title":"MCP structured results","cat":"Agents","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/26-mcp-structured-results.md"},{"num":"27","title":"Check the MCP server from the Console","cat":"Agents","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/27-check-the-mcp-server-from-the-console.md"},{"num":"46","title":"Let AI clients sign in through your identity provider","cat":"Agents","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/46-let-ai-clients-sign-in-through-your-identity-provider.md"},{"num":"47","title":"Tell agents what your data means and see what they did","cat":"Agents","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/47-tell-agents-what-your-data-means-and-see-what-they-did.md"},{"num":"49","title":"Let an agent write, with a person approving each write","cat":"Agents","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/49-let-an-agent-write-with-a-person-approving-each-write.md"},{"num":"28","title":"Build a client that watches queries run","cat":"Events & exports","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/28-build-a-client-that-watches-queries-run.md"},{"num":"29","title":"Per-key live feeds","cat":"Events & exports","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/29-per-key-live-feeds.md"},{"num":"30","title":"Schedule an export","cat":"Events & exports","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/30-schedule-an-export.md"},{"num":"31","title":"Get the CLI command for a query","cat":"Events & exports","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/31-get-the-cli-command-for-a-query.md"},{"num":"41","title":"Publish files in S3 as an API","cat":"Events & exports","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/41-publish-files-in-s3-as-an-api.md"},{"num":"44","title":"Deliver a daily file to a partner's bucket","cat":"Events & exports","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/44-deliver-a-daily-file-to-a-partners-bucket.md"},{"num":"23","title":"Put it behind a reverse proxy","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/23-put-it-behind-a-reverse-proxy.md"},{"num":"32","title":"Deploy with Docker","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/32-deploy-with-docker.md"},{"num":"33","title":"Back up and restore","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/33-back-up-and-restore.md"},{"num":"34","title":"Upgrade safely","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/34-upgrade-safely.md"},{"num":"35","title":"Wire up Prometheus and Grafana","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/35-wire-up-prometheus-and-grafana.md"},{"num":"36","title":"Trace a request in the logs","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/36-trace-a-request-in-the-logs.md"},{"num":"37","title":"Tune the connection pool","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/37-tune-the-connection-pool.md"},{"num":"38","title":"Allow a browser frontend (CORS)","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/38-allow-a-browser-frontend-cors.md"},{"num":"39","title":"Walk through the example APIs","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/39-walk-through-the-example-apis.md"},{"num":"42","title":"Run several instances","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/42-run-several-instances.md"},{"num":"51","title":"See QueryAPIGate in your traces","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/51-see-queryapigate-in-your-traces.md"},{"num":"54","title":"Install on Kubernetes with Helm","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/54-install-on-kubernetes-with-helm.md"},{"num":"55","title":"Promote a setup from dev to prod through a pull request","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/55-promote-a-setup-from-dev-to-prod-through-a-pull-request.md"},{"num":"58","title":"Keep the server's own secrets, and its metrics, in","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/58-keep-the-servers-own-secrets-and-metrics-in.md"},{"num":"40","title":"Read the threat model","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/40-read-the-threat-model.md"},{"num":"43","title":"Give your team their own admin access","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/43-give-your-team-their-own-admin-access.md"},{"num":"45","title":"Hide personal data from a partner or an AI agent","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/45-hide-personal-data-from-a-partner-or-an-ai-agent.md"},{"num":"48","title":"Sign in to the Console through your identity provider","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/48-sign-in-to-the-console-through-your-identity-provider.md"},{"num":"50","title":"Rotate an API key without downtime","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/50-rotate-an-api-key-without-downtime.md"},{"num":"53","title":"Send the audit log to your SIEM","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/53-send-the-audit-log-to-your-siem.md"},{"num":"57","title":"Answer a security questionnaire about data and cryptography","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/57-answer-a-security-questionnaire-about-data-and-cryptography.md"},{"num":"59","title":"Verify a release before you run it","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/59-verify-a-release-before-you-run-it.md"}];
+  renderVals() {
+    const { cat, q } = this.state;
+    const guides = this.state.guides.length ? this.state.guides : this.guides;
+    const needle = q.trim().toLowerCase();
+    const shown = guides.filter(g => (cat === 'All' || g.cat === cat) && (!needle || g.title.toLowerCase().includes(needle) || g.cat.toLowerCase().includes(needle))).map(g => ({ ...g, href: g.slug ? 'Guide.dc.html?g=' + g.slug : g.href }));
+    return {
+      inputRef: this.inputRef,
+      onSearch: (e) => this.setState({ q: e.target.value }),
+      cats: this.cats.map(c => ({ label: c, go: () => this.setState({ cat: c }), bg: c === cat ? '#10201b' : '#fff', color: c === cat ? '#e6efeb' : '#4a5652', border: c === cat ? '#10201b' : '#dbe2df' })),
+      shown, count: shown.length + ' of ' + guides.length, empty: shown.length === 0,
+    };
+  }
+}
+</script>
+</body>
+</html>

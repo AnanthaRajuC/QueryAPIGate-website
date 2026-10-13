@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- site-meta -->
+<title>Docs - QueryAPIGate</title>
+<meta name="description" content="Install QueryAPIGate with pip, Docker or Helm, create your first governed endpoint, and configure it for production.">
+<meta name="theme-color" content="#10201b">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QueryAPIGate">
+<meta property="og:title" content="Docs - QueryAPIGate">
+<meta property="og:description" content="Install QueryAPIGate with pip, Docker or Helm, create your first governed endpoint, and configure it for production.">
+<meta name="twitter:card" content="summary">
+<!-- /site-meta -->
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0;background:#f3f5f4;color:#17201d;font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
+a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 170);text-decoration:underline}
+
+@media (max-width:1180px){
+  .rs-gh{display:none !important}
+  .rs-nav{gap:14px !important}
+}
+@media (max-width:1100px){
+  .rs-nav{gap:12px !important;font-size:14px !important}
+}
+@media (max-width:1024px){
+  .rs-cta{display:none !important}
+}
+@media (max-width:960px){
+  .rs-nav{flex:1 1 auto;min-width:0;flex-wrap:nowrap !important;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+  .rs-nav::-webkit-scrollbar{display:none}
+}
+@media (max-width:820px){
+  .rs-2col{grid-template-columns:minmax(0,1fr) !important}
+  .rs-aside{position:static !important;max-height:none !important}
+  .rs-nav{gap:10px 16px !important;font-size:13.5px !important;flex-wrap:nowrap !important;overflow-x:auto;width:100%;scrollbar-width:none;white-space:nowrap;padding-bottom:2px}
+  .rs-nav::-webkit-scrollbar{display:none}
+  .rs-navbar{flex-wrap:wrap !important;gap:12px 20px !important;padding:12px 16px !important}
+  .rs-cta{display:none !important}
+  .rs-pad{padding-left:16px !important;padding-right:16px !important}
+  .rs-hero{padding-top:48px !important}
+  .rs-hide{display:none !important}
+}
+</style>
+</helmet>
+<div data-screen-label="Docs" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
+
+  <nav style="position:sticky;top:0;z-index:20;background:rgba(243,245,244,0.9);backdrop-filter:blur(10px);border-bottom:1px solid #dbe2df">
+    <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
+      <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:#17201d;text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+      <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
+        <a href="Features.dc.html" style="color:#4a5652">Features</a>
+        <a href="Use Cases.dc.html" style="color:#4a5652">Use cases</a>
+        <a href="Deploy.dc.html" style="color:#4a5652">Deploy</a>
+        <a href="Docs.dc.html" style="color:#17201d" aria-current="page">Docs</a>
+        <a href="Guides.dc.html" style="color:#4a5652">Guides</a>
+        <a href="Compare.dc.html" style="color:#4a5652">Compare</a>
+        <a href="Trust.dc.html" style="color:#4a5652">Trust</a>
+        <a href="Roadmap.dc.html" style="color:#4a5652">Roadmap</a>
+        <a href="Changelog.dc.html" style="color:#4a5652">Changelog</a>
+        <a href="Blog.dc.html" style="color:#4a5652">Blog</a>
+        <a href="About.dc.html" style="color:#4a5652">About</a>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" style="font-size:14px;font-weight:500;color:#4a5652;padding:8px 12px">GitHub</a>
+        <a href="https://AnanthaRajuC.github.io/QueryAPIGate/" class="rs-cta" style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#10201b;color:#e6efeb;padding:9px 14px;border-radius:7px;text-decoration:none" style-hover="background:#1b3a30;color:#fff">Full reference ↗</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="rs-2col" style="max-width:1240px;margin:0 auto;padding:64px 24px 88px;display:grid;grid-template-columns:220px minmax(0,1fr);gap:56px;align-items:start">
+    <aside class="rs-aside" style="position:sticky;top:84px;display:grid;gap:6px;font-size:14px">
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783;padding-bottom:6px">Getting started</span>
+      <a href="#install" style="color:#17201d;padding:5px 0">Install</a>
+      <a href="#quickstart" style="color:#4a5652;padding:5px 0">Quickstart</a>
+      <a href="#first" style="color:#4a5652;padding:5px 0">Your first endpoint</a>
+      <a href="#scoped" style="color:#4a5652;padding:5px 0">A scoped key</a>
+      <a href="#production" style="color:#4a5652;padding:5px 0">Production</a>
+      <a href="#config" style="color:#4a5652;padding:5px 0">Configuration</a>
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783;padding:18px 0 6px">Reference</span>
+      <a href="Guide.dc.html?d=API" style="color:#4a5652;padding:5px 0">API reference</a>
+      <a href="Guide.dc.html?d=MCP" style="color:#4a5652;padding:5px 0">MCP server</a>
+      <a href="Guide.dc.html?d=DEPLOYMENT" style="color:#4a5652;padding:5px 0">Deployment</a>
+      <a href="Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION" style="color:#4a5652;padding:5px 0">Database connections</a>
+      <a href="Guide.dc.html?d=EXAMPLES" style="color:#4a5652;padding:5px 0">Example APIs</a>
+      <a href="Guide.dc.html?d=THREAT_MODEL" style="color:#4a5652;padding:5px 0">Threat model</a>
+      <a href="Guide.dc.html?d=INSTALLATION_AND_SETUP" style="color:#4a5652;padding:5px 0">Full installation guide</a>
+      <a href="Guides.dc.html" style="color:#4a5652;padding:5px 0">59 how-to guides</a>
+    </aside>
+
+    <article style="display:grid;gap:48px;min-width:0">
+      <header style="display:grid;gap:14px">
+        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Getting started</span>
+        <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(32px,4vw,48px);line-height:1.05;font-weight:800;letter-spacing:-0.02em">From zero to a governed endpoint</h1>
+        <p style="margin:0;font-size:17px;color:#4a5652;max-width:62ch">Python 3.11 or newer. Java 11+ only if you connect to H2. Everything else is a pip extra, imported only when a connection of that type is used.</p>
+      </header>
+
+      <section id="install" style="display:grid;gap:14px">
+        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.01em">Install</h2>
+        <h3 style="margin:8px 0 0;font-size:18px;font-weight:600">With pip</h3>
+        <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.7;overflow-x:auto"><span style="color:#9fb3ac">$</span> pip install queryapigate                     <span style="color:#9fb3ac"># SQLite only
+</span><span style="color:#9fb3ac">$</span> pip install "queryapigate[postgres,mysql]"   <span style="color:#9fb3ac"># add the drivers you need
+</span><span style="color:#9fb3ac">$</span> pip install "queryapigate[all]"              <span style="color:#9fb3ac"># every driver</span></pre>
+        <p style="margin:0;color:#4a5652;font-size:15px"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">all</code> installs every database driver plus <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">flow</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">encryption</code> and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">jwt</code>. Add the rest by what you use:</p>
+        <ul style="margin:0;padding:0;list-style:none;display:grid;gap:6px;color:#4a5652;font-size:14.5px"><li style="display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr);gap:12px"><span>Databases</span><span><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">mysql</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">postgres</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">clickhouse</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">duckdb</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">mongo</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">h2</code></span></li><li style="display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr);gap:12px"><span>Agents and sign-in</span><span><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">mcp</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">jwt</code></span></li><li style="display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr);gap:12px"><span>Running several instances</span><span><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">redis</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">server</code></span></li><li style="display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr);gap:12px"><span>Tracing</span><span><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">otel</code></span></li><li style="display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr);gap:12px"><span>Secrets</span><span><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">encryption</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">aws</code></span></li><li style="display:grid;grid-template-columns:minmax(0,190px) minmax(0,1fr);gap:12px"><span>Query flow diagrams</span><span><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">flow</code></span></li></ul>
+        <p style="margin:0;color:#4a5652;font-size:15px">The Docker image includes <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">otel</code> and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">aws</code>. Vault and secrets from files need no extra.</p>
+              <h3 id="install-docker" style="margin:8px 0 0;font-size:18px;font-weight:600">With Docker</h3>
+        <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;overflow-x:auto"><span style="color:#9fb3ac">$</span> docker run -p 5000:5000 -v queryapigate-data:/data \
+    -e QUERYAPIGATE_API_KEY=change-me \
+    ghcr.io/anantharajuc/queryapigate:0.32.0</pre>
+        <p style="margin:0;color:#4a5652;font-size:15px">The image includes every driver except H2, plus Redis, MCP, tracing, AWS and gunicorn, and runs non-root on a read-only root filesystem. Tags: <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">X.Y.Z</code> and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">latest</code>; <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">X.Y.Z-h2</code> adds Java for H2 and generic JDBC. Pin a version. For several instances behind Caddy with Docker Compose, see <a href="Guide.dc.html?g=32-deploy-with-docker">guide 32</a> and <a href="Guide.dc.html?g=42-run-several-instances">guide 42</a>.</p>
+        <h3 id="install-helm" style="margin:8px 0 0;font-size:18px;font-weight:600">With Helm, on Kubernetes</h3>
+        <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;overflow-x:auto"><span style="color:#9fb3ac">$</span> kubectl create namespace queryapigate
+<span style="color:#9fb3ac">$</span> kubectl -n queryapigate create secret generic queryapigate \
+    --from-literal=QUERYAPIGATE_API_KEY=change-me \
+    --from-literal=QUERYAPIGATE_SECRET_KEY=&lt;a Fernet key&gt;
+<span style="color:#9fb3ac">$</span> helm install queryapigate oci://ghcr.io/anantharajuc/charts/queryapigate \
+    --version 0.32.0 -n queryapigate --set existingSecret=queryapigate --wait</pre>
+        <p style="margin:0;color:#4a5652;font-size:15px">One pod on SQLite with its store on a volume, or several on PostgreSQL and Redis; the chart refuses setups that can't work. Chart X.Y.Z runs server X.Y.Z. See <a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm">guide 54</a>, and <a href="Guide.dc.html?g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request">guide 55</a> to drive it from a configuration file.</p>
+        <h3 id="install-verify" style="margin:8px 0 0;font-size:18px;font-weight:600">Verify a release first</h3>
+        <p style="margin:0;color:#4a5652;font-size:15px">From 0.31, the image and the chart are signed keyless with cosign, with SLSA provenance and an SBOM. Check them with <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">cosign verify</code>, or let an admission controller refuse anything unsigned: <a href="Guide.dc.html?g=59-verify-a-release-before-you-run-it">guide 59</a>.</p>
+      </section>
+
+      <section id="quickstart" style="display:grid;gap:14px">
+        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.01em">Quickstart</h2>
+        <p style="margin:0;color:#4a5652">A small generated database (films, customers, rentals) and four worked example APIs, so the requests below work immediately. <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate examples unload</code> removes them again.</p>
+        <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.7;overflow-x:auto"><span style="color:#9fb3ac">$</span> QUERYAPIGATE_API_KEY=demo-key queryapigate examples load   <span style="color:#9fb3ac"># prints one scoped key per scenario
+</span><span style="color:#9fb3ac">$</span> QUERYAPIGATE_API_KEY=demo-key queryapigate serve            <span style="color:#9fb3ac"># http://127.0.0.1:5000 · Console at /console
+
+</span><span style="color:#9fb3ac">$</span> curl 'http://127.0.0.1:5000/q/example_film_search?text=Harbor&page_size=2' -H 'X-API-Key: demo-key'
+[{"film_id":48,"title":"Broken Harbor","category":"Action","rating":"PG-13"},
+ {"film_id":44,"title":"Electric Harbor","category":"Documentary","rating":"G"}]</pre>
+        <p style="margin:0;color:#4a5652;font-size:15px">With Docker: <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">docker compose up</code>. The image is <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">ghcr.io/anantharajuc/queryapigate</code>.</p>
+      </section>
+
+      <section id="first" style="display:grid;gap:14px">
+        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.01em">Your first endpoint, against your own database</h2>
+        <ol style="margin:0;padding:0;list-style:none;display:grid;gap:1px;background:#dbe2df;border:1px solid #dbe2df;border-radius:12px;overflow:hidden">
+          <li class="rs-2col" style="background:#fff;padding:18px 20px;display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170);padding-top:3px">01</span><div style="display:grid;gap:4px"><b style="font-weight:600">Make a data folder</b><span style="font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">mkdir my-api && cd my-api && queryapigate init</code> writes <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate.db</code>: connections, saved queries, keys, roles and the audit log, in one SQLite file.</span></div></li>
+          <li class="rs-2col" style="background:#fff;padding:18px 20px;display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170);padding-top:3px">02</span><div style="display:grid;gap:4px"><b style="font-weight:600">Connect a database</b><span style="font-size:14.5px;color:#4a5652">In the Console, or <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">PATCH /api/v1/connections/&lt;name&gt;</code>. Keep passwords out of the store with <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">"${ENV_VAR}"</code> references, or encrypt them at rest with <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_SECRET_KEY</code>.</span></div></li>
+          <li class="rs-2col" style="background:#fff;padding:18px 20px;display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170);padding-top:3px">03</span><div style="display:grid;gap:4px"><b style="font-weight:600">Save a query with bound parameters</b><span style="font-size:14.5px;color:#4a5652">Prefer <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">:name</code> parameters over <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">{name}</code> placeholders. Give each a type, range or length. Values are bound, never spliced.</span></div></li>
+          <li class="rs-2col" style="background:#fff;padding:18px 20px;display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170);padding-top:3px">04</span><div style="display:grid;gap:4px"><b style="font-weight:600">Call it</b><span style="font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">GET /q/&lt;name&gt;?param=value&format=csv</code>. Add <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">?stream=true</code> for a constant-memory export.</span></div></li>
+        </ol>
+      </section>
+
+      <section id="scoped" style="display:grid;gap:14px">
+        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.01em">Give a partner one query only</h2>
+        <p style="margin:0;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_API_KEY</code> is the shared, full-access admin key. Anyone or anything that only needs to run queries gets a scoped key instead, limited to specific connections and, separately, to read-only access.</p>
+        <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.7;overflow-x:auto"><span style="color:#9fb3ac">$</span> curl -X POST http://127.0.0.1:5000/api/v1/api-keys -H 'X-API-Key: &lt;admin key&gt;' \
+    -H 'Content-Type: application/json' \
+    -d '{"name": "partner-acme", "queries": ["orders_by_customer"],
+         "rate_limit": "60/minute", "expires_at": "2027-01-01", "allowed_ips": ["203.0.113.0/24"]}'</pre>
+        <p style="margin:0;color:#4a5652;font-size:15px">Then confirm it on the access map, or with the <a href="Guide.dc.html?g=21-verify-who-can-reach-what">verify who can reach what</a> guide.</p>
+      </section>
+
+      <section id="production" style="display:grid;gap:14px">
+        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.01em">Production</h2>
+        <p style="margin:0;color:#4a5652;font-size:15px">Choosing between one instance, several, or Kubernetes? See the <a href="Deploy.dc.html">reference architectures</a>, with a production checklist and measured performance.</p>
+        <p style="margin:0;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate serve</code> is Flask's development server. In production use gunicorn with one worker and several threads, behind a TLS-terminating reverse proxy. For more capacity, run more instances on a shared PostgreSQL store and Redis.</p>
+        <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.7;overflow-x:auto"><span style="color:#9fb3ac">$</span> pip install "queryapigate[server]"
+<span style="color:#9fb3ac">$</span> QUERYAPIGATE_API_KEY=change-me gunicorn --bind 127.0.0.1:5000 --workers 1 --worker-class gthread \
+    --threads 8 --timeout 120 "queryapigate.app:create_app()"
+
+<span style="color:#9fb3ac"># several instances: shared store and shared limits/cache
+</span><span style="color:#9fb3ac">$</span> export QUERYAPIGATE_DATABASE_URL=postgresql://queryapigate:secret@db.internal:5432/queryapigate
+<span style="color:#9fb3ac">$</span> export QUERYAPIGATE_REDIS_URL=redis://redis:6379/0
+<span style="color:#9fb3ac">$</span> queryapigate migrate-to-postgres   <span style="color:#9fb3ac"># once, copies queryapigate.db across</span></pre>
+        <p style="margin:0;color:#4a5652;font-size:15px">Behind a proxy, set <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_TRUST_PROXY</code> to the number of proxies so rate limits apply per real client. Reverse proxy, secrets, backups and monitoring are covered in <a href="Guide.dc.html?d=DEPLOYMENT">Deployment</a>; On Kubernetes, install the Helm chart (<code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">helm install queryapigate oci://ghcr.io/anantharajuc/charts/queryapigate</code>, <a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm">guide 54</a>); plain manifests live under <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">deploy/kubernetes</code>.</p>
+      </section>
+
+      <section id="config" style="display:grid;gap:14px">
+        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.01em">Configuration</h2>
+        <p style="margin:0;color:#4a5652;font-size:15px">Everything is an environment variable. The ones you will meet first:</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1px;background:#dbe2df;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;font-size:14px">
+          <div style="background:#fff;padding:14px 18px;display:grid;gap:2px"><code style="font-family:'JetBrains Mono',monospace;font-size:13px">QUERYAPIGATE_HOME</code><span style="color:#4a5652">The data folder. Default: current directory.</span></div>
+          <div style="background:#fff;padding:14px 18px;display:grid;gap:2px"><code style="font-family:'JetBrains Mono',monospace;font-size:13px">QUERYAPIGATE_API_KEY</code><span style="color:#4a5652">The admin key. Unset means an open server.</span></div>
+          <div style="background:#fff;padding:14px 18px;display:grid;gap:2px"><code style="font-family:'JetBrains Mono',monospace;font-size:13px">QUERYAPIGATE_ALLOW_WRITES</code><span style="color:#4a5652">Leave unset unless you need writes.</span></div>
+          <div style="background:#fff;padding:14px 18px;display:grid;gap:2px"><code style="font-family:'JetBrains Mono',monospace;font-size:13px">QUERYAPIGATE_QUERY_TIMEOUT</code><span style="color:#4a5652">Seconds per query. Default 30.</span></div>
+          <div style="background:#fff;padding:14px 18px;display:grid;gap:2px"><code style="font-family:'JetBrains Mono',monospace;font-size:13px">QUERYAPIGATE_RATE_LIMIT</code><span style="color:#4a5652">Server-wide limit per client address.</span></div>
+          <div style="background:#fff;padding:14px 18px;display:grid;gap:2px"><code style="font-family:'JetBrains Mono',monospace;font-size:13px">QUERYAPIGATE_SECRET_KEY</code><span style="color:#4a5652">Encrypts connection passwords at rest.</span></div>
+          <div style="background:#fff;padding:14px 18px;display:grid;gap:2px"><code style="font-family:'JetBrains Mono',monospace;font-size:13px">QUERYAPIGATE_DATABASE_URL</code><span style="color:#4a5652">PostgreSQL store for several instances.</span></div>
+          <div style="background:#fff;padding:14px 18px;display:grid;gap:2px"><code style="font-family:'JetBrains Mono',monospace;font-size:13px">QUERYAPIGATE_REDIS_URL</code><span style="color:#4a5652">Shared cache, limits and events.</span></div>
+        </div>
+        <p style="margin:0;color:#4a5652;font-size:15px">The full table, including pool size, CORS origins, host and port, is in the <a href="https://github.com/AnanthaRajuC/QueryAPIGate#configuration">README</a>.</p>
+      </section>
+    </article>
+  </div>
+
+  <footer style="border-top:1px solid #dbe2df;background:#fff">
+    <div style="max-width:1240px;margin:0 auto;padding:48px 24px 28px;display:grid;gap:36px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:32px 24px">
+        <div style="display:grid;gap:12px;align-content:start;min-width:0">
+          <a href="Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:#17201d;text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+          <p style="margin:0;font-size:13.5px;color:#4a5652;max-width:30ch">One governed gate between your databases and everything that asks them for data. Self-hosted: your data never leaves your infrastructure.</p>
+        </div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Product</span><a href="Features.dc.html" style="color:#4a5652;font-size:14px">Features</a><a href="Use Cases.dc.html" style="color:#4a5652;font-size:14px">Use cases</a><a href="Deploy.dc.html" style="color:#4a5652;font-size:14px">Deploy</a><a href="Compare.dc.html" style="color:#4a5652;font-size:14px">Compare</a><a href="Roadmap.dc.html" style="color:#4a5652;font-size:14px">Roadmap</a><a href="Changelog.dc.html" style="color:#4a5652;font-size:14px">Changelog</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Resources</span><a href="Docs.dc.html" style="color:#4a5652;font-size:14px">Docs</a><a href="Guides.dc.html" style="color:#4a5652;font-size:14px">Guides</a><a href="Guide.dc.html?d=API" style="color:#4a5652;font-size:14px">API reference</a><a href="https://AnanthaRajuC.github.io/QueryAPIGate/" style="color:#4a5652;font-size:14px">Full reference site</a><a href="Blog.dc.html" style="color:#4a5652;font-size:14px">Blog</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Trust</span><a href="Trust.dc.html" style="color:#4a5652;font-size:14px">Trust center</a><a href="Security.dc.html" style="color:#4a5652;font-size:14px">Security</a><a href="Support.dc.html" style="color:#4a5652;font-size:14px">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION" style="color:#4a5652;font-size:14px">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL" style="color:#4a5652;font-size:14px">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new" style="color:#4a5652;font-size:14px">Report a vulnerability</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Project</span><a href="About.dc.html" style="color:#4a5652;font-size:14px">About</a><a href="Stack.dc.html" style="color:#4a5652;font-size:14px">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate" style="color:#4a5652;font-size:14px">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases" style="color:#4a5652;font-size:14px">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING" style="color:#4a5652;font-size:14px">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT" style="color:#4a5652;font-size:14px">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE" style="color:#4a5652;font-size:14px">Licence (FSL-1.1-MIT)</a></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#7c8783">
+        <span>QueryAPIGate 0.32 · FSL-1.1-MIT · Signed releases with provenance and SBOMs</span>
+        <span>Experimental features are labelled in the product and the changelog.</span>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- site-meta -->
+<title>Architecture - QueryAPIGate</title>
+<meta name="description" content="How a request travels through QueryAPIGate, from caller to database.">
+<meta name="theme-color" content="#10201b">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QueryAPIGate">
+<meta property="og:title" content="Architecture - QueryAPIGate">
+<meta property="og:description" content="How a request travels through QueryAPIGate, from caller to database.">
+<meta name="twitter:card" content="summary">
+<!-- /site-meta -->
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0;background:#f3f5f4;color:#17201d;font-family:"Instrument Sans",system-ui,sans-serif}
+a{color:oklch(0.52 0.11 170)}a:hover{color:oklch(0.42 0.11 170)}
+</style>
+</helmet>
+<div data-screen-label="Architecture" style="position:relative;width:1920px;height:1080px;background:#f3f5f4;overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif;color:#17201d">
+
+  <div style="box-sizing:border-box;position:absolute;left:80px;top:64px;width:1040px;display:grid;gap:14px">
+    <div style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">QueryAPIGate · open source, MIT</div>
+    <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:46px;line-height:1.04;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">One governed gate between your databases and <span style="color:oklch(0.52 0.11 170)">everything that asks them for data</span>.</h1>
+  </div>
+  <div style="position:absolute;right:80px;top:96px;display:flex;gap:36px">
+    <div style="display:grid;gap:4px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:30px;line-height:1;font-weight:700">8</b><span style="font-size:12px;color:#7c8783;letter-spacing:0.03em">database types</span></div>
+    <div style="display:grid;gap:4px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:30px;line-height:1;font-weight:700">5</b><span style="font-size:12px;color:#7c8783;letter-spacing:0.03em">front doors</span></div>
+    <div style="display:grid;gap:4px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:30px;line-height:1;font-weight:700">8</b><span style="font-size:12px;color:#7c8783;letter-spacing:0.03em">output formats</span></div>
+  </div>
+
+  <svg width="1920" height="1080" viewBox="0 0 1920 1080" style="position:absolute;inset:0;pointer-events:none" fill="none" stroke="#cfd8d4" stroke-width="1.5">
+    <path d="M341,320 H420 M720,320 C780,320 760,346 820,346 H1440 C1500,346 1480,334 1540,334"></path>
+    <path d="M341,444 H420 M720,444 C780,444 760,346 820,346 H1440 C1500,346 1480,490 1540,490"></path>
+    <path d="M341,568 H420 M720,568 C780,568 760,346 820,346 H1440 C1500,346 1480,334 1540,334"></path>
+    <path d="M341,692 H420 M720,692 C780,692 760,346 820,346 H1440 C1500,346 1480,802 1540,802"></path>
+    <path d="M341,816 H420 M720,816 C780,816 760,346 820,346 H1440 C1500,346 1480,646 1540,646"></path>
+  </svg>
+
+  <div style="box-sizing:border-box;position:absolute;left:80px;top:228px;width:260px;padding-bottom:6px;border-bottom:1px solid #dbe2df;font-family:'Schibsted Grotesk',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#7c8783">Who calls</div>
+  <div style="box-sizing:border-box;position:absolute;left:420px;top:228px;width:300px;padding-bottom:6px;border-bottom:1px solid #dbe2df;font-family:'Schibsted Grotesk',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#7c8783">Front doors</div>
+  <div style="box-sizing:border-box;position:absolute;left:1540px;top:228px;width:300px;padding-bottom:6px;border-bottom:1px solid #dbe2df;font-family:'Schibsted Grotesk',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#7c8783">Your data</div>
+
+  <div style="box-sizing:border-box;position:absolute;left:80px;top:270px;width:260px;height:100px;border:1px dashed #c3cdc9;border-radius:8px;padding:14px 16px;display:flex;gap:14px;align-items:center;background:#f3f5f4"><span style="flex:none;width:38px;height:38px;border-radius:8px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:20px;height:20px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-grid.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-grid.svg) center/contain no-repeat"></span></span><div style="display:grid;gap:3px;min-width:0"><h3 style="margin:0;font-size:15px;font-weight:600">Apps and services</h3><p style="margin:0;font-size:13px;color:#4a5652;line-height:1.45">Backends, dashboards, mobile apps</p></div></div>
+  <div style="box-sizing:border-box;position:absolute;left:80px;top:394px;width:260px;height:100px;border:1px dashed #c3cdc9;border-radius:8px;padding:14px 16px;display:flex;gap:14px;align-items:center;background:#f3f5f4"><span style="flex:none;width:38px;height:38px;border-radius:8px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:20px;height:20px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg) center/contain no-repeat"></span></span><div style="display:grid;gap:3px;min-width:0"><h3 style="margin:0;font-size:15px;font-weight:600">Partners</h3><p style="margin:0;font-size:13px;color:#4a5652;line-height:1.45">Scoped keys with expiry and IP allow-lists</p></div></div>
+  <div style="box-sizing:border-box;position:absolute;left:80px;top:518px;width:260px;height:100px;border:1px dashed #c3cdc9;border-radius:8px;padding:14px 16px;display:flex;gap:14px;align-items:center;background:#f3f5f4"><span style="flex:none;width:38px;height:38px;border-radius:8px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:20px;height:20px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg) center/contain no-repeat"></span></span><div style="display:grid;gap:3px;min-width:0"><h3 style="margin:0;font-size:15px;font-weight:600">AI agents</h3><p style="margin:0;font-size:13px;color:#4a5652;line-height:1.45">Any MCP client, signed in or keyed</p></div></div>
+  <div style="box-sizing:border-box;position:absolute;left:80px;top:642px;width:260px;height:100px;border:1px dashed #c3cdc9;border-radius:8px;padding:14px 16px;display:flex;gap:14px;align-items:center;background:#f3f5f4"><span style="flex:none;width:38px;height:38px;border-radius:8px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:20px;height:20px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/users.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/users.svg) center/contain no-repeat"></span></span><div style="display:grid;gap:3px;min-width:0"><h3 style="margin:0;font-size:15px;font-weight:600">People</h3><p style="margin:0;font-size:13px;color:#4a5652;line-height:1.45">The Console, through your SSO</p></div></div>
+  <div style="box-sizing:border-box;position:absolute;left:80px;top:766px;width:260px;height:100px;border:1px dashed #c3cdc9;border-radius:8px;padding:14px 16px;display:flex;gap:14px;align-items:center;background:#f3f5f4"><span style="flex:none;width:38px;height:38px;border-radius:8px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:20px;height:20px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/workflow.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/workflow.svg) center/contain no-repeat"></span></span><div style="display:grid;gap:3px;min-width:0"><h3 style="margin:0;font-size:15px;font-weight:600">Pipelines</h3><p style="margin:0;font-size:13px;color:#4a5652;line-height:1.45">cron, Airflow, Kubernetes CronJobs</p></div></div>
+
+  <div style="box-sizing:border-box;position:absolute;left:420px;top:270px;width:300px;height:100px;background:#fff;border:1px solid #dbe2df;border-radius:8px;padding:14px 16px;display:flex;gap:14px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:8px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:20px;height:20px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/globe.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/globe.svg) center/contain no-repeat"></span></span><div style="display:grid;gap:3px;min-width:0"><h3 style="margin:0;font-size:15px;font-weight:600">REST endpoints</h3><p style="margin:0;font-size:13px;color:#4a5652;line-height:1.45"><code style="font-family:'JetBrains Mono',monospace;font-size:0.88em;color:oklch(0.52 0.11 170)">/q/&lt;name&gt;</code> per saved query, with OpenAPI and Postman</p></div></div>
+  <div style="box-sizing:border-box;position:absolute;left:420px;top:394px;width:300px;height:100px;background:#fff;border:1px solid #dbe2df;border-radius:8px;padding:14px 16px;display:flex;gap:14px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:8px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:20px;height:20px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/plug.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/plug.svg) center/contain no-repeat"></span></span><div style="display:grid;gap:3px;min-width:0"><h3 style="margin:0;font-size:15px;font-weight:600">MCP server</h3><p style="margin:0;font-size:13px;color:#4a5652;line-height:1.45">Saved queries as tools, write tools with approval</p></div></div>
+  <div style="box-sizing:border-box;position:absolute;left:420px;top:518px;width:300px;height:100px;background:#fff;border:1px solid #dbe2df;border-radius:8px;padding:14px 16px;display:flex;gap:14px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:8px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:20px;height:20px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg) center/contain no-repeat"></span></span><div style="display:grid;gap:3px;min-width:0"><h3 style="margin:0;font-size:15px;font-weight:600;display:flex;justify-content:space-between;align-items:baseline">Live events <span style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:4px 7px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12);color:oklch(0.6 0.13 75)">Exp</span></h3><p style="margin:0;font-size:13px;color:#4a5652;line-height:1.45"><code style="font-family:'JetBrains Mono',monospace;font-size:0.88em;color:oklch(0.52 0.11 170)">/events</code> server-sent events, fanned out across instances</p></div></div>
+  <div style="box-sizing:border-box;position:absolute;left:420px;top:642px;width:300px;height:100px;background:#fff;border:1px solid #dbe2df;border-radius:8px;padding:14px 16px;display:flex;gap:14px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:8px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:20px;height:20px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/terminal.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/terminal.svg) center/contain no-repeat"></span></span><div style="display:grid;gap:3px;min-width:0"><h3 style="margin:0;font-size:15px;font-weight:600">Exports and CLI</h3><p style="margin:0;font-size:13px;color:#4a5652;line-height:1.45"><code style="font-family:'JetBrains Mono',monospace;font-size:0.88em;color:oklch(0.52 0.11 170)">queryapigate export</code> and saved, incremental exports</p></div></div>
+  <div style="box-sizing:border-box;position:absolute;left:420px;top:766px;width:300px;height:100px;background:#fff;border:1px solid #dbe2df;border-radius:8px;padding:14px 16px;display:flex;gap:14px;align-items:center"><span style="flex:none;width:38px;height:38px;border-radius:8px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:20px;height:20px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/settings-2.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/settings-2.svg) center/contain no-repeat"></span></span><div style="display:grid;gap:3px;min-width:0"><h3 style="margin:0;font-size:15px;font-weight:600">Management API</h3><p style="margin:0;font-size:13px;color:#4a5652;line-height:1.45"><code style="font-family:'JetBrains Mono',monospace;font-size:0.88em;color:oklch(0.52 0.11 170)">/api/v1</code>: everything the Console does, scriptable</p></div></div>
+
+  <div style="box-sizing:border-box;position:absolute;left:820px;top:270px;width:620px;height:596px;color:#e6efeb;border-radius:14px;padding:24px;background:radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.52 0.11 170 / 0.28), transparent 70%),repeating-linear-gradient(0deg, transparent 0 23px, rgba(255,255,255,0.035) 23px 24px),repeating-linear-gradient(90deg, transparent 0 23px, rgba(255,255,255,0.035) 23px 24px),#10201b;box-shadow:0 0 0 1px oklch(0.62 0.13 170 / 0.5), 0 0 70px oklch(0.62 0.13 170 / 0.2), 0 30px 60px -24px rgba(0,0,0,0.55)">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-family:'Schibsted Grotesk',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#e6efeb">The governed core</div><div style="display:flex;gap:18px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9fb3ac"><span style="display:flex;gap:6px;align-items:baseline">checked<b ref="{{ cntChecked }}" style="color:#e6efeb;font-weight:500;font-variant-numeric:tabular-nums">12,480</b></span><span style="display:flex;gap:6px;align-items:baseline">masked<b ref="{{ cntMasked }}" style="color:#e6efeb;font-weight:500;font-variant-numeric:tabular-nums">3,912</b></span><span style="display:flex;gap:6px;align-items:baseline">recorded<b ref="{{ cntRecorded }}" style="color:#e6efeb;font-weight:500;font-variant-numeric:tabular-nums">12,477</b></span></div></div>
+    <div style="position:absolute;left:24px;right:24px;top:96px;bottom:112px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+      <div ref="{{ col0 }}" style="display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;padding:10px 12px;border-radius:10px;border:1px solid transparent;min-height:0;overflow:hidden;box-sizing:border-box;transition:background 0.2s,border-color 0.2s"><div style="display:grid;gap:3px"><h4 style="margin:0;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)">01 · Identity</h4><p style="margin:0;font-size:12px;color:#9fb3ac;line-height:1.4">Who is asking</p></div><div style="display:grid;grid-auto-rows:minmax(0,1fr);min-height:0"><div style="display:grid;gap:3px;padding:0 0 9px;border-top:none;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.8 0.11 170)">Step 1</span><b style="font-size:14px;font-weight:600;color:#e6efeb">Identify the caller</b><span style="font-size:12.5px;line-height:1.45;color:#9fb3ac">API key, admin token, JWT or OAuth token</span></div><div style="display:grid;gap:3px;padding:9px 0 9px;border-top:1px solid #243631;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.8 0.11 170)">Step 2</span><b style="font-size:14px;font-weight:600;color:#e6efeb">Apply its limits</b><span style="font-size:12.5px;line-height:1.45;color:#9fb3ac">Rate limit, IP allow-list, expiry</span></div></div></div>
+      <div ref="{{ col1 }}" style="display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;padding:10px 12px;border-radius:10px;border:1px solid transparent;min-height:0;overflow:hidden;box-sizing:border-box;transition:background 0.2s,border-color 0.2s"><div style="display:grid;gap:3px"><h4 style="margin:0;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)">02 · Policy</h4><p style="margin:0;font-size:12px;color:#9fb3ac;line-height:1.4">What they may see</p></div><div style="display:grid;grid-auto-rows:minmax(0,1fr);min-height:0"><div style="display:grid;gap:3px;padding:0 0 9px;border-top:none;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.8 0.11 170)">Step 3</span><b style="font-size:14px;font-weight:600;color:#e6efeb">Check the grant</b><span style="font-size:12.5px;line-height:1.45;color:#9fb3ac">This query, this connection, read or write</span></div><div style="display:grid;gap:3px;padding:9px 0 9px;border-top:1px solid #243631;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.8 0.11 170)">Step 4</span><b style="font-size:14px;font-weight:600;color:#e6efeb">Validate parameters</b><span style="font-size:12.5px;line-height:1.45;color:#9fb3ac">Types, ranges, lengths; values bound, never spliced</span></div><div style="display:grid;gap:3px;padding:9px 0 9px;border-top:1px solid #243631;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.8 0.11 170)">Step 5</span><b style="font-size:14px;font-weight:600;color:#e6efeb">Guard the SQL</b><span style="font-size:12.5px;line-height:1.45;color:#9fb3ac">Allowed tables and writes, values bound from claims</span></div></div></div>
+      <div ref="{{ col2 }}" style="display:grid;grid-template-rows:auto minmax(0,1fr);gap:12px;padding:10px 12px;border-radius:10px;border:1px solid transparent;min-height:0;overflow:hidden;box-sizing:border-box;transition:background 0.2s,border-color 0.2s"><div style="display:grid;gap:3px"><h4 style="margin:0;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)">03 · Execution</h4><p style="margin:0;font-size:12px;color:#9fb3ac;line-height:1.4">Run, mask, record</p></div><div style="display:grid;grid-auto-rows:minmax(0,1fr);min-height:0"><div style="display:grid;gap:3px;padding:0 0 9px;border-top:none;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.8 0.11 170)">Step 6</span><b style="font-size:14px;font-weight:600;color:#e6efeb">Run it</b><span style="font-size:12.5px;line-height:1.45;color:#9fb3ac">Pooled connection, time and row limits, transaction for writes</span></div><div style="display:grid;gap:3px;padding:9px 0 9px;border-top:1px solid #243631;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.8 0.11 170)">Step 7</span><b style="font-size:14px;font-weight:600;color:#e6efeb">Mask and format</b><span style="font-size:12.5px;line-height:1.45;color:#9fb3ac">Masking traced to source columns, then the format asked for</span></div><div style="display:grid;gap:3px;padding:9px 0 9px;border-top:1px solid #243631;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.8 0.11 170)">Step 8</span><b style="font-size:14px;font-weight:600;color:#e6efeb">Record it</b><span style="font-size:12.5px;line-height:1.45;color:#9fb3ac">Run history, metrics, events; audit for changes</span></div></div></div>
+    </div>
+    <div style="position:absolute;left:24px;right:24px;bottom:24px;height:76px;border-top:1px solid #243631;padding-top:10px;display:grid;gap:5px;align-content:start;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.4;color:#9fb3ac">
+      <sc-for list="{{ log }}" as="l" hint-placeholder-count="3">
+        <div style="display:flex;gap:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="color:{{ l.color }};font-weight:500;flex:none;width:34px">{{ l.status }}</span><span style="color:#e6efeb">{{ l.req }}</span><span>{{ l.who }}</span><span style="color:{{ l.noteColor }}">{{ l.note }}</span><span style="margin-left:auto;flex:none">{{ l.ms }}</span></div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="box-sizing:border-box;position:absolute;left:1540px;top:270px;width:300px;height:128px;background:#fff;border:1px solid #dbe2df;border-radius:8px;padding:14px 16px;display:grid;gap:8px;align-content:center"><h3 style="margin:0;font-size:15px;font-weight:600;display:flex;justify-content:space-between;align-items:baseline">Databases <span style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:4px 7px;border-radius:4px;background:oklch(0.52 0.11 170 / 0.09);color:oklch(0.52 0.11 170)">Tier 1</span></h3><div style="display:flex;flex-wrap:wrap;gap:5px"><span style="display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 7px 4px 5px;border-radius:4px;background:oklch(0.52 0.11 170 / 0.09)"><img src="https://cdn.simpleicons.org/postgresql" alt="" width="14" height="14" style="display:block;width:14px;height:14px">PostgreSQL</span><span style="display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 7px 4px 5px;border-radius:4px;background:oklch(0.52 0.11 170 / 0.09)"><img src="https://cdn.simpleicons.org/mysql" alt="" width="14" height="14" style="display:block;width:14px;height:14px">MySQL</span><span style="display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 7px 4px 5px;border-radius:4px;background:oklch(0.52 0.11 170 / 0.09)"><img src="https://cdn.simpleicons.org/sqlite" alt="" width="14" height="14" style="display:block;width:14px;height:14px">SQLite</span><span style="display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 7px 4px 5px;border-radius:4px;background:oklch(0.52 0.11 170 / 0.09)"><img src="https://cdn.simpleicons.org/duckdb" alt="" width="14" height="14" style="display:block;width:14px;height:14px">DuckDB</span><span style="display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 7px 4px 5px;border-radius:4px;background:oklch(0.52 0.11 170 / 0.09)"><img src="https://cdn.simpleicons.org/clickhouse" alt="" width="14" height="14" style="display:block;width:14px;height:14px">ClickHouse</span></div></div>
+  <div style="box-sizing:border-box;position:absolute;left:1540px;top:426px;width:300px;height:128px;background:#fff;border:1px solid #dbe2df;border-radius:8px;padding:14px 16px;display:grid;gap:8px;align-content:center"><h3 style="margin:0;font-size:15px;font-weight:600;display:flex;justify-content:space-between;align-items:baseline">More sources <span style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:4px 7px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12);color:oklch(0.6 0.13 75)">Exp</span></h3><div style="display:flex;flex-wrap:wrap;gap:5px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:5px 7px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12)">H2</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:5px 7px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12)">JDBC</span><span style="display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 7px 4px 5px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12)"><img src="https://cdn.simpleicons.org/mongodb" alt="" width="14" height="14" style="display:block;width:14px;height:14px">MongoDB</span></div></div>
+  <div style="box-sizing:border-box;position:absolute;left:1540px;top:582px;width:300px;height:128px;background:#fff;border:1px solid #dbe2df;border-radius:8px;padding:12px 16px;display:grid;gap:2px;align-content:center"><h3 style="margin:0;font-size:15px;font-weight:600">Files, through DuckDB</h3><p style="margin:0;font-size:13px;color:#4a5652;line-height:1.45">Parquet, CSV and JSON in object storage, over HTTPS or on disk</p><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px"><span style="display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 7px 4px 5px;border-radius:4px;background:oklch(0.52 0.11 170 / 0.09)"><span style="display:block;width:12px;height:12px;border-radius:3px;background:#e8792b"></span>S3</span><span style="display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 7px 4px 5px;border-radius:4px;background:oklch(0.52 0.11 170 / 0.09)"><img src="https://cdn.simpleicons.org/googlecloudstorage" alt="" width="14" height="14" style="display:block;width:14px;height:14px">GCS</span><span style="display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 7px 4px 5px;border-radius:4px;background:oklch(0.52 0.11 170 / 0.09)"><img src="https://cdn.simpleicons.org/cloudflare" alt="" width="14" height="14" style="display:block;width:14px;height:14px">R2</span></div></div>
+  <div style="box-sizing:border-box;position:absolute;left:1540px;top:738px;width:300px;height:128px;background:#fff;border:1px solid #dbe2df;border-radius:8px;padding:12px 16px;display:grid;gap:2px;align-content:center"><h3 style="margin:0;font-size:15px;font-weight:600">Deliveries</h3><p style="margin:0;font-size:13px;color:#4a5652;line-height:1.45">Exports to object storage or a local folder, resuming where the last run stopped</p><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px"><span style="display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 7px 4px 5px;border-radius:4px;background:oklch(0.52 0.11 170 / 0.09)"><span style="display:block;width:12px;height:12px;border-radius:3px;background:#e8792b"></span>S3</span><span style="display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 7px 4px 5px;border-radius:4px;background:oklch(0.52 0.11 170 / 0.09)"><img src="https://cdn.simpleicons.org/googlecloudstorage" alt="" width="14" height="14" style="display:block;width:14px;height:14px">GCS</span><span style="display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;padding:4px 7px 4px 5px;border-radius:4px;background:oklch(0.52 0.11 170 / 0.09)"><img src="https://cdn.simpleicons.org/cloudflare" alt="" width="14" height="14" style="display:block;width:14px;height:14px">R2</span></div></div>
+
+  {{ pulses }}
+
+  <div style="position:absolute;left:80px;right:80px;top:930px;display:flex;justify-content:space-between;align-items:center;gap:40px">
+    <p style="margin:0;font-size:18px;line-height:1.5;color:#4a5652;max-width:900px;text-wrap:pretty">Every front door runs the same checks, so an AI agent's call is governed exactly like an app's. Write the SQL once; QueryAPIGate publishes it as a REST endpoint, an MCP tool, a live event stream and a scheduled export.</p>
+    <div style="display:flex;gap:18px;font-size:13px;color:#4a5652;white-space:nowrap">
+      <span style="display:flex;gap:8px;align-items:center"><span style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:4px 7px;border-radius:4px;background:oklch(0.52 0.11 170 / 0.09);color:oklch(0.52 0.11 170)">Stable</span>compatibility promise</span>
+      <span style="display:flex;gap:8px;align-items:center"><span style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:4px 7px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12);color:oklch(0.6 0.13 75)">Exp</span>may change in a minor release</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;speed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:7,&quot;min&quot;:3,&quot;max&quot;:14,&quot;step&quot;:1,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Animation&quot;},&quot;pulses&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:2,&quot;min&quot;:1,&quot;max&quot;:4,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Animation&quot;},&quot;amberExperimental&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Animation&quot;},&quot;showDenied&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Animation&quot;}}">
+class Component extends DCLogic {
+  state = { log: [] };
+  col0 = React.createRef(); col1 = React.createRef(); col2 = React.createRef();
+  cntChecked = React.createRef(); cntMasked = React.createRef(); cntRecorded = React.createRef();
+  svgRef = React.createRef();
+  counts = { checked: 12480, masked: 3912, recorded: 12477 };
+  lines = [
+    { req: 'GET /q/orders_by_customer', who: 'key app-dashboard', note: 'email masked', ms: '12 ms', mask: true },
+    { req: 'MCP tools/call orders_summary', who: 'key partner-acme', note: 'rows filtered by claims', ms: '21 ms', mask: true },
+    { req: 'SSE /events order_updates', who: 'agent ops-bot', note: '14 events', ms: 'stream', mask: false },
+    { req: 'export nightly_orders → s3://', who: 'console sso', note: '2,310 rows · resumed', ms: '1.4 s', mask: true },
+    { req: 'GET /api/v1/queries', who: 'admin token', note: 'audit written', ms: '6 ms', mask: false },
+  ];
+  denied = { req: 'GET /q/payroll', who: 'key partner-acme', note: 'GRANT_DENIED', ms: '2 ms', status: '403', color: 'oklch(0.72 0.18 25)', noteColor: 'oklch(0.72 0.18 25)' };
+  componentDidMount() {
+    this.state.log.length || this.setState({ log: [this.mk(1), this.mk(0), this.mk(4)] });
+    const loop = () => {
+      this.raf = requestAnimationFrame(loop);
+      const svg = this.svgRef.current; if (!svg || !this.pulses) return;
+      const t = svg.getCurrentTime();
+      const hot = [0, 0, 0];
+      for (const p of this.pulses) {
+        const f = (((t - p.begin) / p.speed) % 1 + 1) % 1;
+        const last = p.last ?? f; p.last = f;
+        const passed = (m) => (last < m && f >= m) || (last > f && (m > last || m <= f));
+        if (p.denied) {
+          if (passed(p.tj[1])) this.push(this.denied);
+          continue;
+        }
+        p.tj.forEach((tj, j) => { hot[j] = Math.max(hot[j], Math.max(0, 1 - Math.abs(f - tj) / p.w)); });
+        if (passed(p.tj[0])) this.tick('checked', this.cntChecked);
+        if (passed(p.tj[2]) && this.lines[p.i].mask) this.tick('masked', this.cntMasked);
+        if (passed(p.tEnd)) { this.tick('recorded', this.cntRecorded); this.push(this.mk(p.i)); }
+      }
+      [this.col0, this.col1, this.col2].forEach((r, j) => { if (r.current) { r.current.style.background = 'oklch(0.62 0.13 170 / ' + (hot[j] * 0.14).toFixed(3) + ')'; r.current.style.borderColor = 'oklch(0.62 0.13 170 / ' + (hot[j] * 0.5).toFixed(3) + ')'; } });
+    };
+    loop();
+  }
+  componentWillUnmount() { cancelAnimationFrame(this.raf); }
+  tick(k, ref) { this.counts[k]++; if (ref.current) ref.current.textContent = this.counts[k].toLocaleString('en-US'); }
+  mk(i) { return { ...this.lines[i], status: '200', color: 'oklch(0.72 0.13 170)', noteColor: '#9fb3ac' }; }
+  push(l) { this.setState(s => ({ log: [{ ...l, key: Math.random() }, ...s.log].slice(0, 3) })); }
+  renderVals() {
+    const speed = this.props.speed ?? 7;
+    const n = this.props.pulses ?? 2;
+    const amber = this.props.amberExperimental ?? true;
+    const showDenied = this.props.showDenied ?? true;
+    const ys = [320, 444, 568, 692, 816];
+    const yd = [334, 490, 334, 802, 646];
+    const green = 'oklch(0.62 0.13 170)', gold = 'oklch(0.75 0.14 75)', red = 'oklch(0.65 0.2 25)';
+    const h = React.createElement;
+    const bez = (p0, p1, p2, p3) => { let L = 0, px = p0[0], py = p0[1]; for (let j = 1; j <= 40; j++) { const t = j / 40, u = 1 - t; const x = u*u*u*p0[0] + 3*u*u*t*p1[0] + 3*u*t*t*p2[0] + t*t*t*p3[0]; const yy = u*u*u*p0[1] + 3*u*u*t*p1[1] + 3*u*t*t*p2[1] + t*t*t*p3[1]; L += Math.hypot(x - px, yy - py); px = x; py = yy; } return L; };
+    const dots = [934, 1130, 1326];
+    const perim = 2 * (620 - 28) + 2 * (596 - 28) + 2 * Math.PI * 14;
+    const kids = [
+      h('rect', { key: 'perim-glow', x: 820, y: 270, width: 620, height: 596, rx: 14, fill: 'none', stroke: green, strokeWidth: 6, opacity: 0.35, strokeDasharray: '160 ' + (perim - 160), style: { filter: 'blur(6px)' } },
+        h('animate', { attributeName: 'stroke-dashoffset', from: perim, to: 0, dur: '9s', repeatCount: 'indefinite' })),
+      h('rect', { key: 'perim', x: 820, y: 270, width: 620, height: 596, rx: 14, fill: 'none', stroke: green, strokeWidth: 1.5, strokeLinecap: 'round', strokeDasharray: '160 ' + (perim - 160) },
+        h('animate', { attributeName: 'stroke-dashoffset', from: perim, to: 0, dur: '9s', repeatCount: 'indefinite' })),
+      h('line', { key: 'lane', x1: 820, y1: 346, x2: 1440, y2: 346, stroke: '#2f463f', strokeWidth: 1.5 }),
+      ...dots.map(x => h('circle', { key: 'd' + x, cx: x, cy: 346, r: 5, fill: '#10201b', stroke: green, strokeWidth: 2 })),
+    ];
+    const glows = [];
+    const pulses = [];
+    ys.forEach((y, i) => {
+      const d = `M348,${y} H420 M720,${y} C780,${y} 760,346 820,346 H1440 C1500,346 1480,${yd[i]} 1540,${yd[i]}`;
+      const c = amber && i === 2 ? gold : green;
+      const l1 = bez([720, y], [780, y], [760, 346], [820, 346]), l2 = bez([1440, 346], [1500, 346], [1480, yd[i]], [1540, yd[i]]);
+      const total = 72 + l1 + 620 + l2;
+      const w = 0.35 / speed;
+      const tj = dots.map(x => (72 + l1 + (x - 820)) / total);
+      for (let k = 0; k < n; k++) {
+        const beginN = -(i * 0.9 + k * speed / n), begin = beginN.toFixed(2) + 's';
+        pulses.push({ i, begin: beginN, speed, tj, w, tEnd: (72 + l1 + 620) / total });
+        dots.forEach((x, j) => {
+          const t = tj[j];
+          const kt = [0, Math.max(0, t - w), t, Math.min(1, t + w * 1.6), 1].map(v => v.toFixed(4)).join(';');
+          glows.push(h('circle', { key: `g${i}-${k}-${j}`, cx: x, cy: 346, r: 13, fill: c, opacity: 0 },
+            h('animate', { attributeName: 'opacity', values: '0;0;0.7;0;0', keyTimes: kt, dur: speed + 's', begin, repeatCount: 'indefinite' }),
+            h('animate', { attributeName: 'r', values: '6;6;14;20;20', keyTimes: kt, dur: speed + 's', begin, repeatCount: 'indefinite' })));
+        });
+        kids.push(h('g', { key: `p${i}-${k}` },
+          h('circle', { r: 10, fill: c, opacity: 0.2 }),
+          h('circle', { r: 4.5, fill: c }),
+          h('animateMotion', { dur: speed + 's', begin, repeatCount: 'indefinite', path: d, calcMode: 'linear' })
+        ));
+      }
+      if (showDenied && i === 1) {
+        const dd = `M348,${y} H420 M720,${y} C780,${y} 760,346 820,346 H1130`;
+        const len = 72 + l1 + 310, frac = len / total;
+        const beginN = -(i * 0.9 + speed * 0.5), begin = beginN.toFixed(2) + 's';
+        const hold = Math.min(0.98, frac + 1.6 / speed);
+        pulses.push({ i, begin: beginN, speed, tj: [0, frac, 0], denied: true });
+        const ktO = `0;${frac.toFixed(4)};${(hold - 0.02).toFixed(4)};${hold.toFixed(4)};1`;
+        kids.push(h('g', { key: 'denied' },
+          h('circle', { r: 10, fill: red, opacity: 0.25 }),
+          h('circle', { r: 4.5, fill: red }),
+          h('animateMotion', { dur: speed + 's', begin, repeatCount: 'indefinite', path: dd, calcMode: 'linear', keyPoints: '0;1;1;1;1', keyTimes: ktO }),
+          h('animate', { attributeName: 'opacity', values: '1;1;1;0;0', keyTimes: ktO, dur: speed + 's', begin, repeatCount: 'indefinite' })
+        ));
+        kids.push(h('circle', { key: 'denied-glow', cx: 1130, cy: 346, r: 16, fill: red, opacity: 0 },
+          h('animate', { attributeName: 'opacity', values: '0;0;0.45;0;0', keyTimes: ktO, dur: speed + 's', begin, repeatCount: 'indefinite' })));
+        kids.push(h('text', { key: 'denied-text', x: 1130, y: 326, textAnchor: 'middle', fill: red, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 500, opacity: 0 },
+          h('animate', { attributeName: 'opacity', values: '0;0;1;0;0', keyTimes: ktO, dur: speed + 's', begin, repeatCount: 'indefinite' }),
+          '403 GRANT_DENIED'));
+      }
+    });
+    this.pulses = pulses;
+    return {
+      log: this.state.log,
+      col0: this.col0, col1: this.col1, col2: this.col2,
+      cntChecked: this.cntChecked, cntMasked: this.cntMasked, cntRecorded: this.cntRecorded,
+      pulses: h('svg', { key: 'pulses-' + speed + n + amber + showDenied, ref: this.svgRef, width: 1920, height: 1080, viewBox: '0 0 1920 1080', style: { position: 'absolute', inset: 0, pointerEvents: 'none' } }, [...glows, ...kids])
+    };
+  }
+}
+</script>
+</body>
+</html>

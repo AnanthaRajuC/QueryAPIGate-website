@@ -1,0 +1,19 @@
+# Design-tool artefacts: the project preview image and raw uploads (the Architecture page is built from them)
+.thumbnail
+uploads/
+
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+.idea/
+.vscode/
+
+# Local tooling, logs and secrets
+node_modules/
+__pycache__/
+*.log
+.env
+.env.*

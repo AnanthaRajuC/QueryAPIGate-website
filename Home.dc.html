@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- site-meta -->
+<title>QueryAPIGate: governed data APIs from SQL</title>
+<meta name="description" content="Write the SQL once and serve it as a REST endpoint, an MCP tool for AI agents, a live stream and a scheduled export - every call checked, limited, masked and recorded. Self-hosted.">
+<meta name="theme-color" content="#10201b">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QueryAPIGate">
+<meta property="og:title" content="QueryAPIGate: governed data APIs from SQL">
+<meta property="og:description" content="Write the SQL once and serve it as a REST endpoint, an MCP tool for AI agents, a live stream and a scheduled export - every call checked, limited, masked and recorded. Self-hosted.">
+<meta name="twitter:card" content="summary">
+<!-- /site-meta -->
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0;background:#f3f5f4;color:#17201d;font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
+a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 170);text-decoration:underline}
+
+@media (max-width:1180px){
+  .rs-gh{display:none !important}
+  .rs-nav{gap:14px !important}
+}
+@media (max-width:1100px){
+  .rs-nav{gap:12px !important;font-size:14px !important}
+}
+@media (max-width:1024px){
+  .rs-cta{display:none !important}
+}
+@media (max-width:960px){
+  .rs-nav{flex:1 1 auto;min-width:0;flex-wrap:nowrap !important;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+  .rs-nav::-webkit-scrollbar{display:none}
+}
+@media (max-width:820px){
+  .rs-2col{grid-template-columns:minmax(0,1fr) !important}
+  .rs-aside{position:static !important;max-height:none !important}
+  .rs-nav{gap:10px 16px !important;font-size:13.5px !important;flex-wrap:nowrap !important;overflow-x:auto;width:100%;scrollbar-width:none;white-space:nowrap;padding-bottom:2px}
+  .rs-nav::-webkit-scrollbar{display:none}
+  .rs-navbar{flex-wrap:wrap !important;gap:12px 20px !important;padding:12px 16px !important}
+  .rs-cta{display:none !important}
+  .rs-pad{padding-left:16px !important;padding-right:16px !important}
+  .rs-hero{padding-top:48px !important}
+  .rs-hide{display:none !important}
+}
+
+/* integrations hub */
+.ig-grid{display:grid;grid-template-columns:minmax(0,1fr) 44px 208px 44px minmax(0,1fr);align-items:center}
+.ig-stack{display:grid;min-width:0}
+.ig-slot{position:relative;padding:8px 0}
+.ig-left .ig-slot{padding-right:26px}
+.ig-right .ig-slot{padding-left:26px}
+.ig-left .ig-slot::before,.ig-right .ig-slot::before{content:"";position:absolute;top:0;bottom:0}
+.ig-left .ig-slot::before{right:0;border-right:1.5px solid #c3cdc9}
+.ig-right .ig-slot::before{left:0;border-left:1.5px solid #c3cdc9}
+.ig-slot:first-child::before{top:50%}
+.ig-slot:last-child::before{bottom:50%}
+.ig-left .ig-slot::after,.ig-right .ig-slot::after{content:"";position:absolute;top:50%;width:26px;border-top:1.5px solid #c3cdc9}
+.ig-left .ig-slot::after{right:0}
+.ig-right .ig-slot::after{left:0}
+.ig-conn{border-top:1.5px solid #c3cdc9}
+.ig-card{background:#fff;border:1px solid #dbe2df;border-radius:12px;padding:14px 16px;display:grid;gap:10px}
+.ig-items{display:flex;flex-wrap:wrap;gap:6px 4px}
+.ig-item{position:relative;display:grid;justify-items:center;gap:6px;width:76px;text-align:center;font-size:12px;line-height:1.25;color:#4a5652}
+.ig-logo{width:44px;height:44px;border-radius:10px;border:1px solid #dbe2df;background:#fff;display:grid;place-items:center;transition:border-color .2s}
+.ig-mark{display:block;width:24px;height:24px;filter:grayscale(1);opacity:.72;transition:filter .2s,opacity .2s}
+.ig-glyph{display:block;width:22px;height:22px;background:#7c8783;transition:background .2s}
+.ig-item:hover .ig-mark{filter:none;opacity:1}
+.ig-item:hover .ig-glyph{background:oklch(0.52 0.11 170)}
+.ig-item:hover .ig-logo{border-color:#9fb3ac}
+.ig-ci{position:absolute;top:-6px;right:calc(50% - 30px);width:17px;height:17px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;box-shadow:0 0 0 2px #fff}
+.ig-more{font-size:12.5px;color:#7c8783}
+.ig-hub{box-sizing:border-box;background:#10201b;color:#e6efeb;border-radius:18px;padding:26px 18px;display:grid;justify-items:center;gap:10px;text-align:center;box-shadow:0 30px 60px -30px rgba(16,32,27,0.5)}
+.ig-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@keyframes igIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:no-preference){@supports (animation-timeline:view()){
+  .ig-card,.ig-hub{animation:igIn linear both;animation-timeline:view();animation-range:entry 0% entry 55%}
+}}
+@media (max-width:900px){
+  .ig-grid{grid-template-columns:minmax(0,1fr);gap:12px}
+  .ig-conn{display:none}
+  .ig-hub{order:-1;justify-self:center;width:100%;max-width:340px}
+  .ig-left .ig-slot,.ig-right .ig-slot{padding:0}
+  .ig-left .ig-slot::before,.ig-right .ig-slot::before,.ig-left .ig-slot::after,.ig-right .ig-slot::after{display:none}
+  .ig-stack{gap:12px}
+}
+</style>
+</helmet>
+<div data-screen-label="Home" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
+
+  <nav style="position:sticky;top:0;z-index:20;background:rgba(243,245,244,0.9);backdrop-filter:blur(10px);border-bottom:1px solid #dbe2df">
+    <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
+      <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:#17201d;text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+      <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
+        <a href="Features.dc.html" style="color:#4a5652">Features</a>
+        <a href="Use Cases.dc.html" style="color:#4a5652">Use cases</a>
+        <a href="Deploy.dc.html" style="color:#4a5652">Deploy</a>
+        <a href="Docs.dc.html" style="color:#4a5652">Docs</a>
+        <a href="Guides.dc.html" style="color:#4a5652">Guides</a>
+        <a href="Compare.dc.html" style="color:#4a5652">Compare</a>
+        <a href="Trust.dc.html" style="color:#4a5652">Trust</a>
+        <a href="Roadmap.dc.html" style="color:#4a5652">Roadmap</a>
+        <a href="Changelog.dc.html" style="color:#4a5652">Changelog</a>
+        <a href="Blog.dc.html" style="color:#4a5652">Blog</a>
+        <a href="About.dc.html" style="color:#4a5652">About</a>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" style="font-size:14px;font-weight:500;color:#4a5652;padding:8px 12px">GitHub</a>
+        <a href="Docs.dc.html#install" class="rs-cta" style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#10201b;color:#e6efeb;padding:9px 14px;border-radius:7px;text-decoration:none" style-hover="background:#1b3a30;color:#fff">Install</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="rs-2col" style="max-width:1240px;margin:0 auto;padding:88px 24px 56px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:40px;align-items:center">
+    <div style="display:grid;gap:22px;min-width:0">
+      <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Self-hosted · Python · FSL-1.1-MIT{{ latestLabel }}</span>
+      <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(38px,5vw,64px);line-height:1.02;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">One governed gate between your databases and <span style="color:oklch(0.52 0.11 170)">everything that asks them for data</span>.</h1>
+      <p style="margin:0;font-size:18px;color:#4a5652;max-width:58ch;text-wrap:pretty">Write the SQL once. QueryAPIGate publishes it as a REST endpoint, an MCP tool for AI agents, a live event stream and a scheduled export. Each call checks who is asking and what they may see, and leaves a record.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <div style="display:grid;gap:10px;min-width:0;width:100%;max-width:640px">
+          <div role="tablist" aria-label="Install with" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <sc-for list="{{ installTabs }}" as="t" hint-placeholder-count="3">
+              <button role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.go }}" style="font-size:13px;font-weight:500;padding:6px 12px;border-radius:999px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.color }};cursor:pointer;font-family:'JetBrains Mono',monospace;transition:background 0.2s,color 0.2s,border-color 0.2s">{{ t.label }}</button>
+            </sc-for>
+          </div>
+          <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:8px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.65;overflow-x:auto;min-width:0">{{ installCode }}</pre>
+          <span style="font-size:13px;color:#7c8783">{{ installNote }}</span>
+        </div>
+        <a href="Docs.dc.html#install" style="font-size:15px;font-weight:600;color:#17201d;padding:12px 18px;border:1px solid #c3cdc9;border-radius:8px;background:#fff;text-decoration:none" style-hover="border-color:#17201d">All install options →</a>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:6px">
+        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">8</b><span style="font-size:12px;color:#7c8783;letter-spacing:0.03em">database types</span></div>
+        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">5</b><span style="font-size:12px;color:#7c8783;letter-spacing:0.03em">front doors</span></div>
+        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">8</b><span style="font-size:12px;color:#7c8783;letter-spacing:0.03em">output formats</span></div>
+        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">~50</b><span style="font-size:12px;color:#7c8783;letter-spacing:0.03em">client languages</span></div>
+        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">59</b><span style="font-size:12px;color:#7c8783;letter-spacing:0.03em">how-to guides</span></div>
+        <sc-if value="{{ hasStars }}" hint-placeholder-val="{{ false }}"><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">{{ stars }}</b><span style="font-size:12px;color:#7c8783;letter-spacing:0.03em">GitHub stars</span></div></sc-if>
+      </div>
+    </div>
+    <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:22px 24px;font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.65;overflow-x:auto;min-width:0;box-shadow:0 30px 60px -30px rgba(16,32,27,0.45)"><span style="color:#9fb3ac"># a saved query, called by a partner's key
+</span><span style="color:oklch(0.8 0.11 170)">GET</span> /q/acme_orders?status=open
+X-API-Key: sk_…partner-acme
+
+<span style="color:#9fb3ac"># grant checked · parameters validated · email masked</span>
+[{"id": 5, "status": "open",
+  "email": <span style="color:oklch(0.82 0.12 80)">"a***@acme.io"</span>}]</pre>
+  </header>
+  <section aria-labelledby="integrations-h" style="border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df;background:#f8faf9">
+    <div style="max-width:1240px;margin:0 auto;padding:64px 24px;display:grid;gap:28px">
+      <div style="display:grid;gap:8px;justify-items:center;text-align:center">
+        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Integrations</span>
+        <h2 id="integrations-h" style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Fits the stack you already run</h2>
+        <p style="margin:0;color:#4a5652;max-width:60ch;text-wrap:pretty">Your identity provider, secrets manager, monitoring, SIEM and platform, connected through open standards: OIDC, OTLP, syslog, Prometheus and MCP.</p>
+      </div>
+      <div class="ig-grid">
+        <div class="ig-stack ig-left"><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Identity</span><div class="ig-items"><div class="ig-item" title="Keycloak: sign-in for the Console, AI clients and app users over OIDC. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/keycloak) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>Keycloak</span></div></div><span class="ig-more">and any OIDC provider or JWKS issuer</span></div></div><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Secrets <span style="font-size:10px;font-weight:600;letter-spacing:0.06em;padding:3px 6px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12);color:oklch(0.6 0.13 75);vertical-align:1px">EXPERIMENTAL</span></span><div class="ig-items"><div class="ig-item" title="Vault: KV secrets and short-lived database credentials per lease. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/vault) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>HashiCorp Vault</span></div><div class="ig-item" title="AWS Secrets Manager and RDS IAM tokens."><span class="ig-logo"><span class="ig-glyph" style="-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/cloud.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/cloud.svg) center/contain no-repeat"></span></span><span>AWS</span></div></div><span class="ig-more">Secrets Manager and RDS IAM tokens</span></div></div><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Observability</span><div class="ig-items"><div class="ig-item" title="Prometheus: per-key metrics at /metrics, behind a token."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/prometheus) center/contain no-repeat"></span></span><span>Prometheus</span></div><div class="ig-item" title="Grafana: a bundled dashboard."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/grafana) center/contain no-repeat"></span></span><span>Grafana</span></div><div class="ig-item" title="OpenTelemetry: tracing spans that never hold a value or a row (experimental)."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/opentelemetry) center/contain no-repeat"></span></span><span>OpenTelemetry</span></div></div><span class="ig-more">and any OTLP trace collector</span></div></div><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Audit and SIEM</span><div class="ig-items"><div class="ig-item" title="rsyslog: the audit log over RFC 5425 syslog with mutual TLS. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-glyph" style="-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/scroll-text.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/scroll-text.svg) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>rsyslog</span></div><div class="ig-item" title="syslog-ng: the audit log over RFC 5425 syslog with mutual TLS. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-glyph" style="-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/scroll-text.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/scroll-text.svg) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>syslog-ng</span></div><div class="ig-item" title="OpenTelemetry Collector: the audit log as OTLP logs. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/opentelemetry) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>OTel Collector</span></div></div><span class="ig-more">and any RFC 5425 syslog or OTLP log receiver</span></div></div></div>
+        <div class="ig-conn" aria-hidden="true"></div>
+        <div class="ig-hub"><svg aria-hidden="true" width="46" height="46" viewBox="0 0 32 32" style="display:block"><rect width="32" height="32" rx="7" fill="#16302a"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><b style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px">Query<span style="color:oklch(0.8 0.11 170)">API</span>Gate</b><span style="font-size:12.5px;color:#9fb3ac">One governed gate</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fb3ac;line-height:1.6">REST · MCP · events<br>exports · Console</span></div>
+        <div class="ig-conn" aria-hidden="true"></div>
+        <div class="ig-stack ig-right"><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Platform</span><div class="ig-items"><div class="ig-item" title="Kubernetes: installed and upgraded under load on a kind cluster in CI. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/kubernetes) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>Kubernetes</span></div><div class="ig-item" title="Helm: the signed chart, from ghcr. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/helm) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>Helm</span></div><div class="ig-item" title="Docker: the signed image on ghcr, and Compose for several instances."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/docker) center/contain no-repeat"></span></span><span>Docker</span></div><div class="ig-item" title="Caddy: the reference load balancer for several instances."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/caddy) center/contain no-repeat"></span></span><span>Caddy</span></div></div></div></div><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Shared state</span><div class="ig-items"><div class="ig-item" title="PostgreSQL: the shared store for several instances. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/postgresql) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>PostgreSQL</span></div><div class="ig-item" title="Redis: shared cache, rate limits, quotas and concurrency caps. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/redis) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>Redis</span></div></div></div></div><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">AI agents</span><div class="ig-items"><div class="ig-item" title="Model Context Protocol: saved queries as tools, OAuth 2.1 sign-in."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/modelcontextprotocol) center/contain no-repeat"></span></span><span>MCP</span></div></div><span class="ig-more">and any MCP client</span></div></div></div>
+      </div>
+      <p style="margin:0;text-align:center;font-size:13px;color:#7c8783"><span style="display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:9px;font-weight:700;vertical-align:-2px">✓</span> tested against the real software in CI on every change. The others are documented and run in the <a href="Guides.dc.html">guides</a>.</p>
+    </div>
+  </section>
+  <section style="max-width:1240px;margin:0 auto;padding:40px 24px 24px;display:grid;gap:10px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">How it fits together</span>
+    <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">From caller to database, through one core</h2>
+    <p style="margin:0;color:#4a5652;max-width:70ch">Every front door runs the same checks, so an AI agent's call is governed exactly like an app's. The core is the product; the front doors and drivers plug into it.</p>
+  </section>
+  <section style="max-width:1240px;margin:0 auto;padding:0 24px 72px">
+    <div ref="{{ wrapRef }}" style="width:100%;overflow:hidden;border-radius:14px;border:1px solid #dbe2df;background:#f3f5f4;height:{{ wrapHeight }}">
+      <div style="width:1920px;height:1080px;transform-origin:0 0;transform:{{ diagramTransform }}">
+        <dc-import name="QueryAPIGate Architecture" hint-size="1920px,1080px"></dc-import>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df">
+    <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:36px">
+      <div style="display:grid;gap:10px">
+        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Front doors</span>
+        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">Save a query once. Serve it five ways.</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px">
+        <div style="display:grid;gap:8px;padding:22px;border:1px solid #dbe2df;border-radius:10px;align-content:start"><code style="font-family:'JetBrains Mono',monospace;font-size:13px;color:oklch(0.52 0.11 170)">GET /q/&lt;name&gt;</code><h3 style="margin:0;font-size:17px;font-weight:600">REST endpoints</h3><p style="margin:0;font-size:14.5px;color:#4a5652">One endpoint per saved query, with OpenAPI, typed clients in about 50 languages and a Postman collection.</p></div>
+        <div style="display:grid;gap:8px;padding:22px;border:1px solid #dbe2df;border-radius:10px;align-content:start"><code style="font-family:'JetBrains Mono',monospace;font-size:13px;color:oklch(0.52 0.11 170)">queryapigate mcp</code><h3 style="margin:0;font-size:17px;font-weight:600">MCP server</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Saved queries as tools for any MCP client. Write tools wait for a person's approval.</p></div>
+        <div style="display:grid;gap:8px;padding:22px;border:1px solid #dbe2df;border-radius:10px;align-content:start"><code style="font-family:'JetBrains Mono',monospace;font-size:13px;color:oklch(0.52 0.11 170)">GET /events</code><h3 style="margin:0;font-size:17px;font-weight:600;display:flex;gap:8px;align-items:baseline">Live events <span style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:4px 7px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12);color:oklch(0.6 0.13 75)">Exp</span></h3><p style="margin:0;font-size:14.5px;color:#4a5652">Server-sent events as queries run, fanned out across instances by <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate events</code>.</p></div>
+        <div style="display:grid;gap:8px;padding:22px;border:1px solid #dbe2df;border-radius:10px;align-content:start"><code style="font-family:'JetBrains Mono',monospace;font-size:13px;color:oklch(0.52 0.11 170)">queryapigate export</code><h3 style="margin:0;font-size:17px;font-weight:600">Exports and CLI</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Full results to a file, in-process, built for cron, systemd timers and Kubernetes CronJobs.</p></div>
+        <div style="display:grid;gap:8px;padding:22px;border:1px solid #dbe2df;border-radius:10px;align-content:start"><code style="font-family:'JetBrains Mono',monospace;font-size:13px;color:oklch(0.52 0.11 170)">/api/v1</code><h3 style="margin:0;font-size:17px;font-weight:600">Management API</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Everything the Console does, scriptable: connections, queries, keys, roles, audit.</p></div>
+      </div>
+    </div>
+  </section>
+  <section style="max-width:1240px;margin:0 auto;padding:72px 24px">
+    <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:48px;align-items:center">
+      <div style="display:grid;gap:16px">
+        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Client libraries</span>
+        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">A typed client in your team's language, generated in one command</h2>
+        <p style="margin:0;color:#4a5652;text-wrap:pretty">Every server publishes a complete OpenAPI 3.0 spec, checked against the official validator in CI, with each saved query as its own typed endpoint. Point <a href="https://openapi-generator.tech">OpenAPI Generator</a> at it and get a client in any of its roughly 50 languages: methods named after your queries, parameters typed from their rules, nothing written by hand.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px"><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/typescript) center/contain no-repeat"></span>TypeScript<span title="Generated and called against a live server" style="color:oklch(0.52 0.11 170);font-weight:700">✓</span></span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/python) center/contain no-repeat"></span>Python<span title="Generated and called against a live server" style="color:oklch(0.52 0.11 170);font-weight:700">✓</span></span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/openjdk) center/contain no-repeat"></span>Java<span title="Generated and called against a live server" style="color:oklch(0.52 0.11 170);font-weight:700">✓</span></span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/go) center/contain no-repeat"></span>Go</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500">C#</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/kotlin) center/contain no-repeat"></span>Kotlin</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/swift) center/contain no-repeat"></span>Swift</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/rust) center/contain no-repeat"></span>Rust</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/php) center/contain no-repeat"></span>PHP</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/ruby) center/contain no-repeat"></span>Ruby</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/dart) center/contain no-repeat"></span>Dart</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/scala) center/contain no-repeat"></span>Scala</span><a href="https://openapi-generator.tech/docs/generators" style="display:inline-flex;align-items:center;padding:7px 11px;border:1px dashed #9fb3ac;border-radius:999px;font-size:13.5px;font-weight:500;color:#4a5652">+ about 40 more</a></div>
+        <p style="margin:0;font-size:13.5px;color:#7c8783"><span style="color:oklch(0.52 0.11 170);font-weight:700">✓</span> generated and called against a live server. Generate with a partner's key and their client contains only the queries that key may call. Regenerate when you publish a new query version.</p>
+      </div>
+      <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:22px 24px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35)"><span style="color:#9fb3ac"># 1. generate a client from your own server's spec</span>
+npx @openapitools/openapi-generator-cli generate \
+  -i https://data.example.com/openapi.json \
+  --auth "X-API-Key:$PARTNER_KEY" -g python -o acme-client
+
+<span style="color:#9fb3ac"># 2. every saved query is a typed method</span>
+api = SavedQueriesLiveApi(ApiClient(config))
+api.run_example_top_films(category=<span style="color:oklch(0.82 0.12 80)">"Comedy"</span>, top_n=2)
+<span style="color:#9fb3ac"># [{'title': 'Electric Signal', 'rating': 'PG', 'rentals': 977, ...}, ...]</span>
+
+api.run_example_top_films(top_n=500)
+<span style="color:#9fb3ac"># ValidationError: top_n is 1 to 50 - caught before the request is sent</span></pre>
+    </div>
+  </section>
+
+
+  <section class="rs-2col" style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:48px;align-items:start">
+    <div style="display:grid;gap:14px">
+      <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Governance</span>
+      <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Governed, not just exposed</h2>
+      <p style="margin:0;color:#4a5652;text-wrap:pretty">Read-only by default. A single-statement SQL guard blocks writes and multi-statement injection unless a connection or key explicitly opts in, narrowed further to specific write operations if needed.</p>
+      <a href="Security.dc.html" style="font-weight:600">The security model →</a>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+      <div style="display:grid;gap:6px;padding:18px;background:#fff;border:1px solid #dbe2df;border-radius:10px"><h3 style="margin:0;font-size:15px;font-weight:600">Identity</h3><p style="margin:0;font-size:14px;color:#4a5652">Scoped API keys, reusable roles, named administrators with owner, admin, developer and auditor roles. App users by JWT / JWKS.</p></div>
+      <div style="display:grid;gap:6px;padding:18px;background:#fff;border:1px solid #dbe2df;border-radius:10px"><h3 style="margin:0;font-size:15px;font-weight:600">Policy</h3><p style="margin:0;font-size:14px;color:#4a5652">Per-query and collection grants, table allow-lists, write ceilings, per-user values bound from token claims, rate limits, IP allow-lists, key expiry.</p></div>
+      <div style="display:grid;gap:6px;padding:18px;background:#fff;border:1px solid #dbe2df;border-radius:10px"><h3 style="margin:0;font-size:15px;font-weight:600">Masking</h3><p style="margin:0;font-size:14px;color:#4a5652">Column masking traced to source columns through joins and aliases with sqlglot, applied before the response is formatted.</p></div>
+      <div style="display:grid;gap:6px;padding:18px;background:#fff;border:1px solid #dbe2df;border-radius:10px"><h3 style="margin:0;font-size:15px;font-weight:600">Record</h3><p style="margin:0;font-size:14px;color:#4a5652">Audit log of who changed what, run history for every query, alerts on failures, Prometheus <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/metrics</code>.</p></div>
+    </div>
+  </section>
+
+  <section style="background:#10201b;color:#e6efeb">
+    <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:36px">
+      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end">
+        <div style="display:grid;gap:10px">
+          <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)">One call, step by step</span>
+          <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">What happens to every request</h2>
+          <p style="margin:0;color:#9fb3ac;max-width:70ch">The same path for REST, MCP, events and exports. Follow one partner call through all eight stages; a stage that fails stops the call with a typed error code.</p>
+        </div>
+        <div class="rs-hide" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#9fb3ac;display:grid;gap:4px;text-align:right"><span><span style="color:oklch(0.8 0.11 170)">GET</span> /q/orders_by_customer?customer=acme</span><span>X-API-Key: sk_live_…9f3a</span></div>
+      </div>
+
+      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:28px;align-items:stretch">
+        <ol ref="{{ stepsRef }}" style="list-style:none;margin:0;padding:0;display:grid;grid-auto-rows:minmax(0,1fr);position:relative">
+          <sc-for list="{{ steps }}" as="st" hint-placeholder-count="8">
+            <li onClick="{{ st.pick }}" onMouseEnter="{{ st.hover }}" onMouseLeave="{{ unhover }}" class="rs-2col" style="position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px;align-items:center;padding:9px 12px 9px 10px;border-radius:10px;cursor:pointer;background:{{ st.rowBg }};transition:background 0.35s">
+              <span style="position:absolute;left:29px;top:0;width:2px;height:50%;background:{{ st.lineTop }};transition:background 0.35s"></span>
+              <span style="position:absolute;left:29px;bottom:0;width:2px;height:50%;background:{{ st.lineBottom }};transition:background 0.35s"></span>
+              <span style="position:relative;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:{{ st.nodeBg }};border:1px solid {{ st.nodeBorder }};box-shadow:{{ st.nodeGlow }};transition:background 0.35s,border-color 0.35s,box-shadow 0.35s"><span style="display:block;width:18px;height:18px;background:{{ st.iconColor }};-webkit-mask:url({{ st.iconUrl }}) center/contain no-repeat;mask:url({{ st.iconUrl }}) center/contain no-repeat;transition:background 0.35s"></span></span>
+              <span style="display:grid;gap:1px;min-width:0"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ st.numColor }};transition:color 0.35s">{{ st.num }}</span><b style="font-size:14.5px;font-weight:600;color:{{ st.titleColor }};transition:color 0.35s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ st.title }}</b></span>
+            </li>
+          </sc-for>
+        </ol>
+
+        <div style="position:relative;border:1px solid #2a3d37;border-radius:14px;background:radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.52 0.11 170 / 0.18), transparent 70%),#0c1915;padding:26px 28px 28px;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:18px;min-width:0;overflow:hidden">
+          <div style="position:absolute;left:0;right:0;top:0;height:2px;background:#1b2f29"><span style="display:block;height:100%;background:oklch(0.62 0.13 170);transform-origin:left;transform:{{ barTransform }};transition:{{ barTransition }}"></span></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
+            <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">Stage {{ cur.num }} · {{ cur.layer }}</span></div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.04em;padding:4px 9px;border-radius:999px;background:oklch(0.62 0.13 170 / 0.14);color:oklch(0.8 0.11 170);border:1px solid oklch(0.62 0.13 170 / 0.35)">{{ cur.status }}</span>
+          </div>
+          <div style="display:grid;gap:6px;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">{{ cur.title }}</h3><p style="margin:0;color:#9fb3ac;max-width:62ch">{{ cur.desc }}</p></div>
+          <div style="display:grid;gap:1px;background:#1b2f29;border:1px solid #1b2f29;border-radius:10px;overflow:hidden;align-self:start;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
+            <sc-for list="{{ cur.rows }}" as="r" hint-placeholder-count="3">
+              <div class="rs-2col" style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;padding:10px 14px;background:#0f201b;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.5"><span style="color:#7c8f88">{{ r.k }}</span><span style="color:#e6efeb;overflow-wrap:anywhere">{{ r.v }} <span style="color:{{ r.markColor }}">{{ r.mark }}</span></span></div>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:16px;font-size:12.5px;color:#7c8f88;flex-wrap:wrap"><span>If this stage fails: <code style="font-family:'JetBrains Mono',monospace;color:oklch(0.72 0.18 25)">{{ cur.fail }}</code></span><span style="font-family:'JetBrains Mono',monospace">cumulative {{ cur.elapsed }}</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
+    <div style="display:grid;gap:10px">
+      <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Your data</span>
+      <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">Every major database, one interface</h2>
+      <p style="margin:0;color:#4a5652;max-width:70ch">Native drivers, plus generic JDBC for anything with a driver jar. Point a connection at a folder or bucket of Parquet, CSV or JSON and each file becomes a view, through DuckDB.</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6">
+        <button onClick="{{ c.go }}" style="font-size:13.5px;font-weight:500;padding:8px 14px;border-radius:999px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};cursor:pointer;font-family:inherit;transition:background 0.25s,color 0.25s,border-color 0.25s">{{ c.label }}</button>
+      </sc-for>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px">
+      <sc-for list="{{ dbs }}" as="d" hint-placeholder-count="10">
+        <span style="display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:14px;padding:10px 14px 10px 12px;border-radius:8px;background:#fff;border:1px solid {{ d.border }};opacity:{{ d.opacity }};transform:{{ d.transform }};filter:{{ d.filter }};transition:opacity 0.4s cubic-bezier(0.2,0.7,0.2,1),transform 0.4s cubic-bezier(0.2,0.7,0.2,1),filter 0.4s,border-color 0.4s;transition-delay:{{ d.delay }}"><sc-if value="{{ d.icon }}" hint-placeholder-val="{{ false }}"><span style="display:block;width:18px;height:18px;background:{{ d.iconBg }}"></span></sc-if>{{ d.name }}<sc-if value="{{ d.exp }}" hint-placeholder-val="{{ false }}"><em style="font-style:normal;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:oklch(0.6 0.13 75)">exp</em></sc-if></span>
+      </sc-for>
+    </div>
+    <p style="margin:0;font-size:14.5px;color:#4a5652;min-height:1.6em;max-width:70ch">{{ catNote }}</p>
+  </section>
+
+  <section style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df">
+    <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:32px">
+      <div style="display:grid;gap:10px">
+        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Compared with a hand-rolled API</span>
+        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">What you stop writing</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:#dbe2df;border:1px solid #dbe2df;border-radius:10px;overflow:hidden">
+        <div style="background:#f3f5f4;padding:18px 22px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783">Per endpoint, by hand</div>
+        <div style="background:#f3f5f4;padding:18px 22px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">With QueryAPIGate</div>
+        <div style="background:#fff;padding:18px 22px;font-size:15px;color:#4a5652">Controller, repository layer, serializer, pagination</div>
+        <div style="background:#fff;padding:18px 22px;font-size:15px">Save the SQL. The endpoint, OpenAPI and Postman collection are generated.</div>
+        <div style="background:#fff;padding:18px 22px;font-size:15px;color:#4a5652">Auth middleware, key storage, rate limiting, per-client scopes</div>
+        <div style="background:#fff;padding:18px 22px;font-size:15px">Scoped keys, roles, limits and expiry, managed in the Console or <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/api/v1</code>.</div>
+        <div style="background:#fff;padding:18px 22px;font-size:15px;color:#4a5652">Parameter validation and injection defences, reviewed per endpoint</div>
+        <div style="background:#fff;padding:18px 22px;font-size:15px">Typed parameters, always bound. A fuzz-tested SQL guard on every call.</div>
+        <div style="background:#fff;padding:18px 22px;font-size:15px;color:#4a5652">A second integration for AI agents, a third for exports, a fourth for events</div>
+        <div style="background:#fff;padding:18px 22px;font-size:15px">The same saved query behind REST, MCP, SSE and the export CLI.</div>
+        <div style="background:#fff;padding:18px 22px;font-size:15px;color:#4a5652">Logging, metrics, audit trail, dashboards</div>
+        <div style="background:#fff;padding:18px 22px;font-size:15px">Structured logs, request IDs, Prometheus metrics, a Grafana dashboard and an audit log out of the box.</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:32px">
+    <div style="display:grid;gap:10px">
+      <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Run it</span>
+      <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">A running server in minutes, wherever you run things</h2>
+      <p style="margin:0;color:#4a5652;max-width:68ch">The same server three ways. Load the examples and the first request works at once: a small generated database and four worked APIs. The image and the chart are signed, with provenance and an SBOM. <a href="Deploy.dc.html">Reference architectures and measured performance →</a></p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:28px">
+      <div style="display:grid;gap:12px;align-content:start;min-width:0">
+        <div style="display:grid;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">pip</span><h3 style="margin:0;font-size:18px;font-weight:600">On your machine</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Python 3.11 or later. SQLite included; add drivers as extras.</p></div>
+        <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0"><span style="color:#9fb3ac">$</span> pip install queryapigate
+<span style="color:#9fb3ac">$</span> export QUERYAPIGATE_API_KEY=demo-key
+<span style="color:#9fb3ac">$</span> queryapigate examples load
+<span style="color:#9fb3ac">$</span> queryapigate serve
+<span style="color:#9fb3ac"># http://127.0.0.1:5000 · Console at /console</span></pre>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:14px;font-weight:600"><a href="Docs.dc.html#install">Install and extras →</a></div>
+      </div>
+      <div style="display:grid;gap:12px;align-content:start;min-width:0">
+        <div style="display:grid;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">docker</span><h3 style="margin:0;font-size:18px;font-weight:600">In a container</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Every driver, Redis, MCP and tracing included. <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">-h2</code> tags add Java for H2 and JDBC.</p></div>
+        <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0"><span style="color:#9fb3ac">$</span> docker run -p 5000:5000 \
+    -v queryapigate-data:/data \
+    -e QUERYAPIGATE_API_KEY=change-me \
+    ghcr.io/anantharajuc/queryapigate:0.32.0
+
+<span style="color:#9fb3ac"># several instances behind Caddy
+</span><span style="color:#9fb3ac">$</span> docker compose up -d</pre>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:14px;font-weight:600"><a href="Guide.dc.html?g=32-deploy-with-docker">Guide 32 →</a><a href="Guide.dc.html?g=42-run-several-instances">Guide 42 →</a></div>
+      </div>
+      <div style="display:grid;gap:12px;align-content:start;min-width:0">
+        <div style="display:grid;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">helm</span><h3 style="margin:0;font-size:18px;font-weight:600">On Kubernetes</h3><p style="margin:0;font-size:14.5px;color:#4a5652">One pod on SQLite, or several on PostgreSQL and Redis. Non-root, read-only root filesystem.</p></div>
+        <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0"><span style="color:#9fb3ac">$</span> kubectl create secret generic queryapigate \
+    --from-literal=QUERYAPIGATE_API_KEY=change-me
+<span style="color:#9fb3ac">$</span> helm install queryapigate \
+    oci://ghcr.io/anantharajuc/charts/queryapigate \
+    --version 0.32.0 \
+    --set existingSecret=queryapigate --wait</pre>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:14px;font-weight:600"><a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm">Guide 54 →</a><a href="Guide.dc.html?g=59-verify-a-release-before-you-run-it">Verify the release →</a></div>
+      </div>
+    </div>
+  </section>
+  <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
+    <div style="display:grid;gap:10px">
+      <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Where it's going</span>
+      <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">Toward 1.0</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;border-top:2px solid oklch(0.52 0.11 170);padding-top:16px">
+      <div style="display:grid;gap:4px;align-content:start"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:17px">0.23 – 0.26</b><span style="font-size:14px;color:#4a5652">Tracing, security headers, per-key limits and quotas, a tamper-evident audit log, a Helm chart</span></div>
+      <div style="display:grid;gap:4px;align-content:start"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:17px">0.27 – 0.29</b><span style="font-size:14px;color:#4a5652">Configuration as code, secrets managers and short-lived credentials, FIPS and where data goes</span></div>
+      <div style="display:grid;gap:4px;align-content:start"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:17px;color:oklch(0.52 0.11 170)">0.30 – 0.32 · now</b><span style="font-size:14px;color:#4a5652">Eight features graduate, signed releases, the SIEM stream stable</span></div>
+      <div style="display:grid;gap:4px;align-content:start"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:17px">1.0.0-rc1 · next</b><span style="font-size:14px;color:#4a5652">The freeze: the compatibility promise becomes a contract</span></div>
+    </div>
+    <a href="Roadmap.dc.html" style="font-weight:600;justify-self:start">Full roadmap →</a>
+  </section>
+
+  <section style="max-width:1240px;margin:0 auto;padding:0 24px 88px">
+    <div class="rs-2col" style="background:#10201b;color:#e6efeb;border-radius:16px;padding:48px;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:32px;align-items:center">
+      <div style="display:grid;gap:12px">
+        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:32px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Source-available, built in the open</h2>
+        <p style="margin:0;color:#9fb3ac;max-width:60ch">FSL-1.1-MIT: free to use and self-host, not to resell as a competing product. Each version becomes MIT after two years. Issues, discussions and 59 how-to guides live on GitHub. <a href="Stack.dc.html" style="color:#e6efeb;text-decoration:underline">See what it's built with →</a></p>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#9fb3ac"><span>latest <b style="color:#e6efeb;font-weight:500">{{ latestTag }}</b></span><span>PyPI <b style="color:#e6efeb;font-weight:500">{{ pypiVersion }}</b></span><span>open issues <b style="color:#e6efeb;font-weight:500">{{ issues }}</b></span><span>licence <b style="color:#e6efeb;font-weight:500">{{ licence }}</b></span></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end">
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" style="font-size:15px;font-weight:600;background:#e6efeb;color:#10201b;padding:12px 18px;border-radius:8px;text-decoration:none" style-hover="background:#fff">Star on GitHub{{ starsSuffix }}</a>
+        <a href="https://AnanthaRajuC.github.io/QueryAPIGate/" style="font-size:15px;font-weight:600;color:#e6efeb;padding:12px 18px;border:1px solid #2a3d37;border-radius:8px;text-decoration:none" style-hover="border-color:#9fb3ac">Documentation</a>
+      </div>
+    </div>
+  </section>
+
+  <footer style="border-top:1px solid #dbe2df;background:#fff">
+    <div style="max-width:1240px;margin:0 auto;padding:48px 24px 28px;display:grid;gap:36px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:32px 24px">
+        <div style="display:grid;gap:12px;align-content:start;min-width:0">
+          <a href="Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:#17201d;text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+          <p style="margin:0;font-size:13.5px;color:#4a5652;max-width:30ch">One governed gate between your databases and everything that asks them for data. Self-hosted: your data never leaves your infrastructure.</p>
+        </div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Product</span><a href="Features.dc.html" style="color:#4a5652;font-size:14px">Features</a><a href="Use Cases.dc.html" style="color:#4a5652;font-size:14px">Use cases</a><a href="Deploy.dc.html" style="color:#4a5652;font-size:14px">Deploy</a><a href="Compare.dc.html" style="color:#4a5652;font-size:14px">Compare</a><a href="Roadmap.dc.html" style="color:#4a5652;font-size:14px">Roadmap</a><a href="Changelog.dc.html" style="color:#4a5652;font-size:14px">Changelog</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Resources</span><a href="Docs.dc.html" style="color:#4a5652;font-size:14px">Docs</a><a href="Guides.dc.html" style="color:#4a5652;font-size:14px">Guides</a><a href="Guide.dc.html?d=API" style="color:#4a5652;font-size:14px">API reference</a><a href="https://AnanthaRajuC.github.io/QueryAPIGate/" style="color:#4a5652;font-size:14px">Full reference site</a><a href="Blog.dc.html" style="color:#4a5652;font-size:14px">Blog</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Trust</span><a href="Trust.dc.html" style="color:#4a5652;font-size:14px">Trust center</a><a href="Security.dc.html" style="color:#4a5652;font-size:14px">Security</a><a href="Support.dc.html" style="color:#4a5652;font-size:14px">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION" style="color:#4a5652;font-size:14px">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL" style="color:#4a5652;font-size:14px">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new" style="color:#4a5652;font-size:14px">Report a vulnerability</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Project</span><a href="About.dc.html" style="color:#4a5652;font-size:14px">About</a><a href="Stack.dc.html" style="color:#4a5652;font-size:14px">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate" style="color:#4a5652;font-size:14px">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases" style="color:#4a5652;font-size:14px">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING" style="color:#4a5652;font-size:14px">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT" style="color:#4a5652;font-size:14px">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE" style="color:#4a5652;font-size:14px">Licence (FSL-1.1-MIT)</a></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#7c8783">
+        <span>QueryAPIGate 0.32 · FSL-1.1-MIT · Signed releases with provenance and SBOMs</span>
+        <span>Experimental features are labelled in the product and the changelog.</span>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { w: 1192, cat: 'all', inst: 'pip', gh: null, pypi: null, release: null, step: 0, hovered: null, running: true, fading: false };
+  stepsRef = React.createRef();
+  stepData = [
+    { num: '01', layer: 'Identity', icon: 'key-round', title: 'Identify the caller', desc: 'The key, admin token, JWT or OAuth token is resolved to a named principal with roles and scopes.', status: 'KEY RESOLVED', elapsed: '0.3 ms', fail: '401 INVALID_KEY',
+      rows: [['credential', 'X-API-Key sk_live_…9f3a', '', ''], ['principal', 'partner-acme', '· role reader', 'ok'], ['scope', 'connections [orders_pg] · read-only', '', '']] },
+    { num: '02', layer: 'Identity', icon: 'gauge', title: 'Apply its limits', desc: 'Per-key rate limit, IP allow-list and expiry are checked before any work is done.', status: 'WITHIN LIMITS', elapsed: '0.5 ms', fail: '429 RATE_LIMITED',
+      rows: [['rate limit', '60/minute · 14 used', '', 'ok'], ['client ip', '203.0.113.7 ∈ 203.0.113.0/24', '', 'ok'], ['expires', '2027-01-01', '· 81 days left', 'ok']] },
+    { num: '03', layer: 'Policy', icon: 'shield-check', title: 'Check the grant', desc: 'Is this query, on this connection, in this mode, granted to this principal? Directly or through a collection.', status: 'GRANTED', elapsed: '0.7 ms', fail: '403 GRANT_DENIED',
+      rows: [['query', 'orders_by_customer v7', '', 'ok'], ['connection', 'orders_pg', '', 'ok'], ['mode', 'read', '· via collection partners', 'ok']] },
+    { num: '04', layer: 'Policy', icon: 'braces', title: 'Validate parameters', desc: 'Each parameter is coerced to its declared type and checked against ranges and lengths. Values are bound, never spliced into SQL.', status: '2 PARAMS BOUND', elapsed: '0.9 ms', fail: '400 INVALID_PARAMETER',
+      rows: [['customer', '"acme" → str · len 4 ≤ 64', '', 'ok'], ['page_size', '50 → int · ≤ 100', '', 'ok'], ['binding', '$1 = acme · $2 = 50', '', '']] },
+    { num: '05', layer: 'Policy', icon: 'scan-search', title: 'Guard the SQL', desc: 'The statement is parsed with sqlglot: single statement, tables inside the allow-list, writes only where permitted.', status: 'STATEMENT SAFE', elapsed: '2.1 ms', fail: '403 TABLE_NOT_ALLOWED',
+      rows: [['statements', '1 · SELECT', '', 'ok'], ['tables', '{orders, customers} ⊆ allowed', '', 'ok'], ['writes', 'none · read-only key', '', 'ok']] },
+    { num: '06', layer: 'Execution', icon: 'play', title: 'Run it', desc: 'A pooled connection runs the bound statement under a time limit and row limit; writes run inside a transaction.', status: '38 ROWS', elapsed: '14.3 ms', fail: '504 QUERY_TIMEOUT',
+      rows: [['pool', 'orders_pg · 3/10 in use', '', ''], ['limits', 'timeout 30 s · rows ≤ 1000', '', 'ok'], ['result', '38 rows · 12.2 ms · cache miss', '', '']] },
+    { num: '07', layer: 'Execution', icon: 'eye-off', title: 'Mask and format', desc: 'Masking rules are traced to source columns through joins and aliases, then the result is serialised in the format asked for.', status: '1 COLUMN MASKED', elapsed: '15.1 ms', fail: '406 UNSUPPORTED_FORMAT',
+      rows: [['customers.email', 'a***@acme.io', '· rule partial', 'mask'], ['format', 'json · 38 rows · 6.1 kB', '', ''], ['cache', 'stored · ttl 60 s', '', '']] },
+    { num: '08', layer: 'Record', icon: 'scroll-text', title: 'Record it', desc: 'Run history, metrics and an event are written. Changes to configuration go to the audit log with the administrator who made them.', status: '200 OK', elapsed: '15.4 ms', fail: 'never blocks the response',
+      rows: [['run', '#184203 · 200 · 15 ms', '', 'ok'], ['metric', 'requests_total{key="partner-acme"} +1', '', ''], ['event', 'query.completed → /events', '', '']] },
+  ];
+  stepMs = 3200;
+  installs = [
+    { id: 'pip', label: 'pip', code: v => '$ pip install queryapigate\n$ QUERYAPIGATE_API_KEY=change-me queryapigate serve',
+      note: 'Python 3.11+. Add drivers as extras: queryapigate[postgres,mysql].' },
+    { id: 'docker', label: 'Docker', code: v => '$ docker run -p 5000:5000 -v queryapigate-data:/data \\\n    -e QUERYAPIGATE_API_KEY=change-me ghcr.io/anantharajuc/queryapigate:' + v,
+      note: 'Every driver, Redis, MCP and tracing included. Signed, with an SBOM.' },
+    { id: 'helm', label: 'Helm', code: v => '$ kubectl create secret generic queryapigate --from-literal=QUERYAPIGATE_API_KEY=change-me\n$ helm install queryapigate oci://ghcr.io/anantharajuc/charts/queryapigate \\\n    --version ' + v + ' --set existingSecret=queryapigate',
+      note: 'One pod on SQLite, or several on PostgreSQL and Redis. Signed; verify before you run it.' },
+  ];
+  advance(next) {
+    this.setState({ fading: true });
+    clearTimeout(this.fadeT);
+    this.fadeT = setTimeout(() => this.setState({ step: next, fading: false }), 220);
+  }
+  cats = [
+    { id: 'all', label: 'All', note: 'Ten sources, one saved-query interface. Native drivers where they exist, generic JDBC for the rest.' },
+    { id: 'oltp', label: 'Relational / OLTP', note: 'Row stores behind applications. Writes are opt-in per connection and narrowed to specific operations.' },
+    { id: 'olap', label: 'Analytical / OLAP', note: 'Column stores for aggregates over large tables. Streaming and Parquet output fit naturally here.' },
+    { id: 'embedded', label: 'Embedded', note: 'In-process engines, no server to run. SQLite is also the default store for QueryAPIGate itself.' },
+    { id: 'nosql', label: 'Document / NoSQL', note: 'MongoDB collections queried through the same saved-query, grant and masking path. Experimental.' },
+    { id: 'files', label: 'Files & object storage', note: 'Parquet, CSV and JSON on S3, GCS, R2, HTTPS or disk, each file a view through DuckDB, locked to allowed paths.' },
+  ];
+  dbs = [
+    { name: 'PostgreSQL', icon: 'https://cdn.simpleicons.org/postgresql', cats: ['oltp'] },
+    { name: 'MySQL', icon: 'https://cdn.simpleicons.org/mysql', cats: ['oltp'] },
+    { name: 'SQLite', icon: 'https://cdn.simpleicons.org/sqlite', cats: ['oltp', 'embedded'] },
+    { name: 'DuckDB', icon: 'https://cdn.simpleicons.org/duckdb', cats: ['olap', 'embedded', 'files'] },
+    { name: 'ClickHouse', icon: 'https://cdn.simpleicons.org/clickhouse', cats: ['olap'] },
+    { name: 'MongoDB', icon: 'https://cdn.simpleicons.org/mongodb', cats: ['nosql'], exp: true },
+    { name: 'H2', icon: null, cats: ['oltp', 'embedded'], exp: true },
+    { name: 'Generic JDBC', icon: null, cats: ['oltp', 'olap'], exp: true },
+    { name: 'Parquet · CSV · JSON', icon: null, cats: ['files'] },
+    { name: 'S3 · GCS · R2 · HTTPS · disk', icon: null, cats: ['files'] },
+  ];
+  wrapRef = React.createRef();
+  componentDidMount() {
+    const el = this.wrapRef.current; if (!el) return;
+    this.ro = new ResizeObserver(([e]) => { const w = e.contentRect.width; if (w && Math.abs(w - this.state.w) > 1) this.setState({ w }); });
+    this.ro.observe(el);
+    this.observeSteps();
+    const j = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
+    j('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate').then(gh => gh && this.setState({ gh }));
+    j('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate/releases/latest').then(release => release && this.setState({ release }));
+    j('https://pypi.org/pypi/queryapigate/json').then(pypi => pypi && this.setState({ pypi }));
+    this.timer = setInterval(() => {
+      if (!this.state.running || this.state.hovered !== null) return;
+      this.advance((this.state.step + 1) % this.stepData.length);
+    }, this.stepMs);
+  }
+  componentDidUpdate() { this.observeSteps(); }
+  observeSteps() {
+    const ol = this.stepsRef.current;
+    if (!ol || this.io) return;
+    this.io = new IntersectionObserver(([e]) => this.setState({ running: e.isIntersecting }), { threshold: 0.2 });
+    this.io.observe(ol);
+  }
+  componentWillUnmount() { this.ro && this.ro.disconnect(); this.io && this.io.disconnect(); clearInterval(this.timer); }
+  renderVals() {
+    const s = this.state.w / 1920;
+    const cat = this.state.cat;
+    let k = 0;
+    const dbs = this.dbs.map(d => {
+      const on = cat === 'all' || d.cats.includes(cat);
+      const delay = on ? (k++ * 40) + 'ms' : '0ms';
+      return { name: d.name, icon: d.icon, iconBg: d.icon ? `url(${d.icon}) center/contain no-repeat` : 'none', exp: !!d.exp, opacity: on ? 1 : 0.28, transform: on ? 'translateY(0) scale(1)' : 'translateY(4px) scale(0.96)', filter: on ? 'none' : 'grayscale(1)', border: on && cat !== 'all' ? 'oklch(0.52 0.11 170 / 0.6)' : '#dbe2df', delay };
+    });
+    const gh = this.state.gh, py = this.state.pypi, rel = this.state.release;
+    const fmt = n => n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n);
+    const live = {
+      hasStars: !!gh, stars: gh ? fmt(gh.stargazers_count) : '', starsSuffix: gh ? ' · ' + fmt(gh.stargazers_count) : '',
+      issues: gh ? String(gh.open_issues_count) : '—', licence: gh && gh.license ? gh.license.spdx_id : 'FSL-1.1-MIT',
+      latestTag: rel ? rel.tag_name : (py ? 'v' + py.info.version : '—'), pypiVersion: py ? py.info.version : '—',
+      latestLabel: py ? ' · v' + py.info.version + ' on PyPI' : '',
+    };
+    const ver = py ? py.info.version : '0.32.0';
+    const inst = this.installs.find(x => x.id === this.state.inst);
+    return {
+      ...live,
+      installTabs: this.installs.map(x => { const on = x.id === inst.id; return { label: x.label, selected: on ? 'true' : 'false', go: () => this.setState({ inst: x.id }), bg: on ? '#10201b' : '#fff', color: on ? '#e6efeb' : '#4a5652', border: on ? '#10201b' : '#c3cdc9' }; }),
+      installCode: inst.code(ver), installNote: inst.note,
+      wrapRef: this.wrapRef, diagramTransform: `scale(${s})`, wrapHeight: Math.round(1080 * s) + 'px',
+      cats: this.cats.map(c => ({ label: c.label, go: () => this.setState({ cat: c.id }), bg: c.id === cat ? '#10201b' : '#fff', color: c.id === cat ? '#e6efeb' : '#4a5652', border: c.id === cat ? '#10201b' : '#dbe2df' })),
+      dbs, catNote: this.cats.find(c => c.id === cat).note,
+      stepsRef: this.stepsRef,
+      unhover: () => this.setState({ hovered: null }),
+      steps: this.stepData.map((d, i) => {
+        const active = this.state.step === i, done = i < this.state.step;
+        const g = 'oklch(0.62 0.13 170)', dim = '#2a3d37';
+        return {
+          num: d.num, title: d.title, iconUrl: 'https://unpkg.com/lucide-static@0.460.0/icons/' + d.icon + '.svg',
+          pick: () => { this.advance(i); },
+          hover: () => this.setState({ hovered: i }),
+          rowBg: active ? 'rgba(255,255,255,0.04)' : 'transparent',
+          lineTop: i === 0 ? 'transparent' : (done || active ? g : dim),
+          lineBottom: i === this.stepData.length - 1 ? 'transparent' : (done ? g : dim),
+          nodeBg: active ? g : done ? '#16302a' : '#10201b',
+          nodeBorder: active || done ? g : dim,
+          nodeGlow: active ? '0 0 0 6px oklch(0.62 0.13 170 / 0.18), 0 0 24px oklch(0.62 0.13 170 / 0.45)' : 'none',
+          iconColor: active ? '#0c1915' : done ? 'oklch(0.8 0.11 170)' : '#7c8f88',
+          numColor: active ? 'oklch(0.8 0.11 170)' : '#7c8f88',
+          titleColor: active ? '#e6efeb' : done ? '#c5d3cd' : '#9fb3ac',
+        };
+      }),
+      cur: (() => { const d = this.stepData[this.state.step]; return { ...d, rows: d.rows.map(r => ({ k: r[0], v: r[1] + (r[2] ? ' ' + r[2] : ''), mark: r[3] === 'ok' ? '✓' : r[3] === 'mask' ? '●' : '', markColor: r[3] === 'mask' ? 'oklch(0.82 0.12 80)' : 'oklch(0.72 0.13 170)' })) }; })(),
+      detailOpacity: this.state.fading ? 0 : 1,
+      detailShift: this.state.fading ? 'translateY(6px)' : 'translateY(0)',
+      barTransform: this.state.fading ? 'scaleX(0)' : (this.state.hovered !== null ? 'scaleX(1)' : 'scaleX(1)'),
+      barTransition: this.state.fading ? 'none' : 'transform ' + (this.stepMs - 220) + 'ms linear',
+    };
+  }
+}
+</script>
+</body>
+</html>
