@@ -417,6 +417,27 @@ export const docs = [
   "cat": "Security"
  },
  {
+  "slug": "ARCHITECTURE",
+  "path": "security-pack/ARCHITECTURE.md",
+  "title": "Architecture overview",
+  "cat": "Security",
+  "repoUrl": "https://github.com/AnanthaRajuC/QueryAPIGate-website/blob/main/security-pack/ARCHITECTURE.md"
+ },
+ {
+  "slug": "QUESTIONNAIRE",
+  "path": "security-pack/QUESTIONNAIRE.md",
+  "title": "Security questionnaire answers",
+  "cat": "Security",
+  "repoUrl": "https://github.com/AnanthaRajuC/QueryAPIGate-website/blob/main/security-pack/QUESTIONNAIRE.md"
+ },
+ {
+  "slug": "SBOM",
+  "path": "security-pack/SBOM.md",
+  "title": "SBOM and release verification",
+  "cat": "Security",
+  "repoUrl": "https://github.com/AnanthaRajuC/QueryAPIGate-website/blob/main/security-pack/SBOM.md"
+ },
+ {
   "slug": "TECHNOLOGY_STACK",
   "path": "documentation/TECHNOLOGY_STACK.MD",
   "title": "Technology stack",
