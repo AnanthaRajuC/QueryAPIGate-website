@@ -120,11 +120,11 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
           <button onClick="{{ c.go }}" style="font:inherit;font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};cursor:pointer;transition:background 0.2s,color 0.2s">{{ c.label }}</button>
         </sc-for>
       </div>
-      <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#7c8783">{{ count }}</span>
+      <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#626d69">{{ count }}</span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">
       <sc-for list="{{ shown }}" as="g" hint-placeholder-count="12">
-        <a href="{{ g.href }}" class="rs-2col" style="display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;padding:14px 16px;background:#fff;border:1px solid #dbe2df;border-radius:10px;color:#17201d;text-decoration:none;align-items:start" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170);padding-top:2px">{{ g.num }}</span><span style="display:grid;gap:3px"><b style="font-weight:600;font-size:14.5px;line-height:1.35">{{ g.title }}</b><span style="font-size:12px;color:#7c8783">{{ g.cat }}</span></span></a>
+        <a href="{{ g.href }}" class="rs-2col" style="display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;padding:14px 16px;background:#fff;border:1px solid #dbe2df;border-radius:10px;color:#17201d;text-decoration:none;align-items:start" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170);padding-top:2px">{{ g.num }}</span><span style="display:grid;gap:3px"><b style="font-weight:600;font-size:14.5px;line-height:1.35">{{ g.title }}</b><span style="font-size:12px;color:#626d69">{{ g.cat }}</span></span></a>
       </sc-for>
     </div>
     <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><p style="margin:0;color:#4a5652">No guide matches. Try fewer words, or <a href="https://github.com/AnanthaRajuC/QueryAPIGate/issues/new">ask for one</a>.</p></sc-if>
@@ -141,8 +141,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Trust</span><a href="Trust.dc.html" style="color:#4a5652;font-size:14px">Trust center</a><a href="Security.dc.html" style="color:#4a5652;font-size:14px">Security</a><a href="Support.dc.html" style="color:#4a5652;font-size:14px">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION" style="color:#4a5652;font-size:14px">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL" style="color:#4a5652;font-size:14px">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new" style="color:#4a5652;font-size:14px">Report a vulnerability</a></div>
         <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Project</span><a href="About.dc.html" style="color:#4a5652;font-size:14px">About</a><a href="Stack.dc.html" style="color:#4a5652;font-size:14px">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate" style="color:#4a5652;font-size:14px">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases" style="color:#4a5652;font-size:14px">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING" style="color:#4a5652;font-size:14px">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT" style="color:#4a5652;font-size:14px">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE" style="color:#4a5652;font-size:14px">Licence (FSL-1.1-MIT)</a></div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#7c8783">
-        <span>QueryAPIGate 0.32 · FSL-1.1-MIT · Signed releases with provenance and SBOMs</span>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#626d69">
+        <span>QueryAPIGate 0.34 · FSL-1.1-MIT · Signed releases with provenance and SBOMs</span>
         <span>Experimental features are labelled in the product and the changelog.</span>
       </div>
     </div>

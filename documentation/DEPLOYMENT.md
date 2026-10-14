@@ -413,7 +413,7 @@ on the PostgreSQL store with Redis. They roll one at a time, and a new pod must 
 | Observability | `serviceMonitor.enabled` for the Prometheus Operator ([section 6](#6-observability)), sending the token `/metrics` needs: `metricsAuth` makes one in a Secret of the chart's own, kept across upgrades - or name yours, `metricsAuth.existingSecret`, where the chart is rendered without the cluster (`helm template`, Argo CD). Tracing through `config` (`OTEL_EXPORTER_OTLP_ENDPOINT`). |
 | Network | `networkPolicy.enabled`: in only from `networkPolicy.ingressFrom`, out only to `networkPolicy.egress` and DNS. List your databases, Redis and the SIEM there. |
 | Scale | `autoscaling.enabled`, CPU-based, PostgreSQL shape only. |
-| Secrets managers | `${vault:...}`, `${aws-sm:...}` and short-lived database credentials ([Secrets from files and secrets managers](API.md#secrets-from-files-and-secrets-managers), experimental): `vaultToken.enabled` for Vault's Kubernetes auth, `serviceAccount.annotations` for IRSA, and the `QUERYAPIGATE_VAULT_*` / `QUERYAPIGATE_AWS_*` settings through `config`. |
+| Secrets managers | `${vault:...}`, `${aws-sm:...}` and short-lived database credentials ([Secrets from files and secrets managers](API.md#secrets-from-files-and-secrets-managers); AWS's experimental): `vaultToken.enabled` for Vault's Kubernetes auth, `serviceAccount.annotations` for IRSA, and the `QUERYAPIGATE_VAULT_*` / `QUERYAPIGATE_AWS_*` settings through `config`. |
 | Configuration as code | `configAsCode.enabled` with `configAsCode.file` (or `existingConfigMap`): connections, queries, roles, keys and the rest as one file in git, applied by the first new API server pod as it starts, once per file ([Configuration as code](API.md#configuration-as-code), experimental). A change to it rolls the pods; a file that can't be applied stops the rollout at its first pod. `locked: true` keeps what it manages to the file. |
 
 Two things to know:
@@ -456,6 +456,9 @@ serving, writing and recording runs on a store the current code has just upgrade
 1. Back up the store.
 2. Start one instance on the new version - it upgrades the store on its first start - and check its `/health`.
 3. Replace the others one by one. `GET /api/v1/instances` shows who is on which version meanwhile.
+4. Replace `queryapigate events`, if you run it, with the instances. From 0.33 it streams the event log
+   ([ADR 0020](adr/0020-the-event-log.md)), and an instance still on 0.32 writes its runs to history only - so they
+   aren't events until it's upgraded too.
 
 Two limits:
 - **An instance can't *start* on the previous release once the store is upgraded** - it refuses, naming the newer
