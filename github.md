@@ -10,6 +10,13 @@ date: 2026-10-14T00:00:00Z (repo at 0.34.2)
 - Review fixes: SQL guard described as a classifier (sqlglot only for allow-lists), signing "since 0.31", backup wording, licence on the architecture diagram, three broken guide links, Deploy install pins a version and sets an API key, error codes match API.md, eight steps match across pages
 - Layout: Home comparison table is two columns, mobile architecture summary, Docs mobile overflow and sidebar, AA contrast for secondary text, lang on every page, per-guide titles in the reader
 
+## Security pack
+`security-pack/` holds three documents written for the site (ARCHITECTURE, QUESTIONNAIRE, SBOM) and the built
+`queryapigate-security-pack-<version>.pdf` / `.zip`, which also bundle THREAT_MODEL, DATA_PROTECTION, SECURITY and
+DEPLOYMENT. On each sync: update SBOM.md's digests for the new release (read from ghcr.io), check the questionnaire
+and architecture answers against the changed docs, then rebuild with
+`node tools/security-pack/build.mjs <version>` (see the script's header) and update the links in Enterprise.dc.html.
+
 ## Sync history
 - 2026-10-13T00:00:00Z — synced at 0.32.0: guides 51-59, DATA_PROTECTION, Trust, Deploy, Support and Stack pages, four-column footer, Console screenshots at 0.32.0
 - 2026-10-11T15:02:53Z — copied documentation, SECURITY, CONTRIBUTING, CODE_OF_CONDUCT; four blog posts; live GitHub and PyPI data on Home
@@ -35,4 +42,5 @@ date: 2026-10-14T00:00:00Z (repo at 0.34.2)
 | Trust.dc.html | documentation/DATA_PROTECTION.md, SECURITY.md, documentation/THREAT_MODEL.md, documentation/adr/ |
 | Support.dc.html | CHANGELOG.md (Versioning and compatibility), SECURITY.md, documentation/DATABASE_CONNECTION_CONFIGURATION.md, .github/workflows/ci.yml |
 | Stack.dc.html | frontend/package.json, pyproject.toml, documentation/TECHNOLOGY_STACK.MD, .github/workflows/ci.yml |
+| Enterprise.dc.html | documentation/THREAT_MODEL.md, documentation/DATA_PROTECTION.md, documentation/DEPLOYMENT.md, SECURITY.md, documentation/adr/; security-pack/*.md and the built PDF/zip |
 | QueryAPIGate Architecture.dc.html | LANDING.md (uploaded artifact) |

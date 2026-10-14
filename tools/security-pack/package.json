@@ -1,0 +1,10 @@
+{
+  "name": "queryapigate-security-pack-builder",
+  "private": true,
+  "type": "module",
+  "description": "Builds security-pack/*.pdf and *.zip for the Enterprise page",
+  "dependencies": {
+    "marked": "12.0.2",
+    "playwright-core": "1.56.1"
+  }
+}
