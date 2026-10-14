@@ -92,6 +92,34 @@ a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 
   .ig-left .ig-slot::before,.ig-right .ig-slot::before,.ig-left .ig-slot::after,.ig-right .ig-slot::after{display:none}
   .ig-stack{gap:12px}
 }
+
+/* mobile menu + code wrapping */
+.rs-burger{display:none}
+.rs-menu-toggle{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-width:1180px){
+  .rs-burger{display:inline-grid;place-items:center;width:40px;height:40px;border:1px solid #c3cdc9;border-radius:8px;background:#fff;cursor:pointer;margin-left:auto;flex:none}
+  .rs-burger span{display:block;width:16px;height:2px;background:#17201d;border-radius:2px;box-shadow:0 -5px 0 #17201d,0 5px 0 #17201d}
+  .rs-actions{margin-left:0 !important}
+  .rs-gh{display:inline-block !important}
+  .rs-cta{display:inline-block !important}
+  .rs-nav{display:none !important;flex-basis:100%;flex-direction:column;align-items:flex-start;gap:0 !important;font-size:16px !important;overflow:visible !important;white-space:normal !important;border-top:1px solid #dbe2df;padding:8px 0 4px !important;margin-top:4px}
+  .rs-nav a{display:block;width:100%;padding:11px 4px;border-bottom:1px solid #e8edeb}
+  .rs-nav a:last-child{border-bottom:0}
+  .rs-menu-toggle:checked ~ .rs-nav{display:flex !important}
+  .rs-menu-toggle:checked ~ .rs-burger span{background:transparent;box-shadow:none}
+  .rs-menu-toggle:checked ~ .rs-burger span::before,.rs-menu-toggle:checked ~ .rs-burger span::after{content:"";position:absolute;width:18px;height:2px;background:#17201d;border-radius:2px}
+  .rs-menu-toggle:checked ~ .rs-burger span::before{transform:rotate(45deg)}
+  .rs-menu-toggle:checked ~ .rs-burger span::after{transform:rotate(-45deg)}
+  .rs-navbar{flex-wrap:wrap !important}
+}
+@media (max-width:820px){
+  .rs-cta{display:inline-block !important}
+  .rs-navbar{gap:12px !important}
+}
+@media (max-width:480px){
+  .rs-gh{display:none !important}
+}
 </style>
 </helmet>
 <div data-screen-label="Home" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
@@ -99,6 +127,12 @@ a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 
   <nav style="position:sticky;top:0;z-index:20;background:rgba(243,245,244,0.9);backdrop-filter:blur(10px);border-bottom:1px solid #dbe2df">
     <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
       <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:#17201d;text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+      <div class="rs-actions" style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" style="font-size:14px;font-weight:500;color:#4a5652;padding:8px 12px">GitHub</a>
+        <a href="Docs.dc.html#install" class="rs-cta" style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#10201b;color:#e6efeb;padding:9px 14px;border-radius:7px;text-decoration:none" style-hover="background:#1b3a30;color:#fff">Install</a>
+      </div>
+      <input type="checkbox" id="rs-menu" class="rs-menu-toggle" aria-label="Open menu">
+      <label for="rs-menu" class="rs-burger" aria-hidden="true"><span></span></label>
       <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
         <a href="Features.dc.html" style="color:#4a5652">Features</a>
         <a href="Use Cases.dc.html" style="color:#4a5652">Use cases</a>
@@ -111,10 +145,6 @@ a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 
         <a href="Changelog.dc.html" style="color:#4a5652">Changelog</a>
         <a href="Blog.dc.html" style="color:#4a5652">Blog</a>
         <a href="About.dc.html" style="color:#4a5652">About</a>
-      </div>
-      <div style="margin-left:auto;display:flex;gap:10px;align-items:center">
-        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" style="font-size:14px;font-weight:500;color:#4a5652;padding:8px 12px">GitHub</a>
-        <a href="Docs.dc.html#install" class="rs-cta" style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#10201b;color:#e6efeb;padding:9px 14px;border-radius:7px;text-decoration:none" style-hover="background:#1b3a30;color:#fff">Install</a>
       </div>
     </div>
   </nav>
@@ -153,6 +183,60 @@ X-API-Key: sk_…partner-acme
 [{"id": 5, "status": "open",
   "email": <span style="color:oklch(0.82 0.12 80)">"a***@acme.io"</span>}]</pre>
   </header>
+  <section style="max-width:1240px;margin:0 auto;padding:72px 24px 24px;display:grid;gap:10px">
+    <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">How it fits together</span>
+    <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">From caller to database, through one core</h2>
+    <p style="margin:0;color:#4a5652;max-width:70ch">Every front door runs the same checks, so an AI agent's call is governed exactly like an app's. The core is the product; the front doors and drivers plug into it.</p>
+  </section>
+  <section style="max-width:1920px;margin:0 auto;padding:0 24px 72px">
+    <div ref="{{ wrapRef }}" style="width:100%;overflow:hidden;border-radius:14px;border:1px solid #dbe2df;background:#f3f5f4;height:{{ wrapHeight }}">
+      <div style="width:1920px;height:1080px;transform-origin:0 0;transform:{{ diagramTransform }}">
+        <dc-import name="QueryAPIGate Architecture" hint-size="1920px,1080px"></dc-import>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:#10201b;color:#e6efeb">
+    <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:36px">
+      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end">
+        <div style="display:grid;gap:10px">
+          <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)">One call, step by step</span>
+          <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">What happens to every request</h2>
+          <p style="margin:0;color:#9fb3ac;max-width:70ch">The same path for REST, MCP, events and exports. Follow one partner call through all eight stages; a stage that fails stops the call with a typed error code.</p>
+        </div>
+        <div class="rs-hide" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#9fb3ac;display:grid;gap:4px;text-align:right"><span><span style="color:oklch(0.8 0.11 170)">GET</span> /q/orders_by_customer?customer=acme</span><span>X-API-Key: sk_live_…9f3a</span></div>
+      </div>
+
+      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:28px;align-items:stretch">
+        <ol ref="{{ stepsRef }}" style="list-style:none;margin:0;padding:0;display:grid;grid-auto-rows:minmax(0,1fr);position:relative">
+          <sc-for list="{{ steps }}" as="st" hint-placeholder-count="8">
+            <li onClick="{{ st.pick }}" onMouseEnter="{{ st.hover }}" onMouseLeave="{{ unhover }}" class="rs-2col" style="position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px;align-items:center;padding:9px 12px 9px 10px;border-radius:10px;cursor:pointer;background:{{ st.rowBg }};transition:background 0.35s">
+              <span style="position:absolute;left:29px;top:0;width:2px;height:50%;background:{{ st.lineTop }};transition:background 0.35s"></span>
+              <span style="position:absolute;left:29px;bottom:0;width:2px;height:50%;background:{{ st.lineBottom }};transition:background 0.35s"></span>
+              <span style="position:relative;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:{{ st.nodeBg }};border:1px solid {{ st.nodeBorder }};box-shadow:{{ st.nodeGlow }};transition:background 0.35s,border-color 0.35s,box-shadow 0.35s"><span style="display:block;width:18px;height:18px;background:{{ st.iconColor }};-webkit-mask:url({{ st.iconUrl }}) center/contain no-repeat;mask:url({{ st.iconUrl }}) center/contain no-repeat;transition:background 0.35s"></span></span>
+              <span style="display:grid;gap:1px;min-width:0"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ st.numColor }};transition:color 0.35s">{{ st.num }}</span><b style="font-size:14.5px;font-weight:600;color:{{ st.titleColor }};transition:color 0.35s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ st.title }}</b></span>
+            </li>
+          </sc-for>
+        </ol>
+
+        <div style="position:relative;border:1px solid #2a3d37;border-radius:14px;background:radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.52 0.11 170 / 0.18), transparent 70%),#0c1915;padding:26px 28px 28px;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:18px;min-width:0;overflow:hidden">
+          <div style="position:absolute;left:0;right:0;top:0;height:2px;background:#1b2f29"><span style="display:block;height:100%;background:oklch(0.62 0.13 170);transform-origin:left;transform:{{ barTransform }};transition:{{ barTransition }}"></span></div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
+            <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">Stage {{ cur.num }} · {{ cur.layer }}</span></div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.04em;padding:4px 9px;border-radius:999px;background:oklch(0.62 0.13 170 / 0.14);color:oklch(0.8 0.11 170);border:1px solid oklch(0.62 0.13 170 / 0.35)">{{ cur.status }}</span>
+          </div>
+          <div style="display:grid;gap:6px;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">{{ cur.title }}</h3><p style="margin:0;color:#9fb3ac;max-width:62ch">{{ cur.desc }}</p></div>
+          <div style="display:grid;gap:1px;background:#1b2f29;border:1px solid #1b2f29;border-radius:10px;overflow:hidden;align-self:start;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
+            <sc-for list="{{ cur.rows }}" as="r" hint-placeholder-count="3">
+              <div class="rs-2col" style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;padding:10px 14px;background:#0f201b;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.5"><span style="color:#7c8f88">{{ r.k }}</span><span style="color:#e6efeb;overflow-wrap:anywhere">{{ r.v }} <span style="color:{{ r.markColor }}">{{ r.mark }}</span></span></div>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:16px;font-size:12.5px;color:#7c8f88;flex-wrap:wrap"><span>If this stage fails: <code style="font-family:'JetBrains Mono',monospace;color:oklch(0.72 0.18 25)">{{ cur.fail }}</code></span><span style="font-family:'JetBrains Mono',monospace">cumulative {{ cur.elapsed }}</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section aria-labelledby="integrations-h" style="border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df;background:#f8faf9">
     <div style="max-width:1240px;margin:0 auto;padding:64px 24px;display:grid;gap:28px">
       <div style="display:grid;gap:8px;justify-items:center;text-align:center">
@@ -168,18 +252,6 @@ X-API-Key: sk_…partner-acme
         <div class="ig-stack ig-right"><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Platform</span><div class="ig-items"><div class="ig-item" title="Kubernetes: installed and upgraded under load on a kind cluster in CI. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/kubernetes) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>Kubernetes</span></div><div class="ig-item" title="Helm: the signed chart, from ghcr. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/helm) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>Helm</span></div><div class="ig-item" title="Docker: the signed image on ghcr, and Compose for several instances."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/docker) center/contain no-repeat"></span></span><span>Docker</span></div><div class="ig-item" title="Caddy: the reference load balancer for several instances."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/caddy) center/contain no-repeat"></span></span><span>Caddy</span></div></div></div></div><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Shared state</span><div class="ig-items"><div class="ig-item" title="PostgreSQL: the shared store for several instances. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/postgresql) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>PostgreSQL</span></div><div class="ig-item" title="Redis: shared cache, rate limits, quotas and concurrency caps. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/redis) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>Redis</span></div></div></div></div><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">AI agents</span><div class="ig-items"><div class="ig-item" title="Model Context Protocol: saved queries as tools, OAuth 2.1 sign-in."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/modelcontextprotocol) center/contain no-repeat"></span></span><span>MCP</span></div></div><span class="ig-more">and any MCP client</span></div></div></div>
       </div>
       <p style="margin:0;text-align:center;font-size:13px;color:#7c8783"><span style="display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:9px;font-weight:700;vertical-align:-2px">✓</span> tested against the real software in CI on every change. The others are documented and run in the <a href="Guides.dc.html">guides</a>.</p>
-    </div>
-  </section>
-  <section style="max-width:1240px;margin:0 auto;padding:40px 24px 24px;display:grid;gap:10px">
-    <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">How it fits together</span>
-    <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">From caller to database, through one core</h2>
-    <p style="margin:0;color:#4a5652;max-width:70ch">Every front door runs the same checks, so an AI agent's call is governed exactly like an app's. The core is the product; the front doors and drivers plug into it.</p>
-  </section>
-  <section style="max-width:1240px;margin:0 auto;padding:0 24px 72px">
-    <div ref="{{ wrapRef }}" style="width:100%;overflow:hidden;border-radius:14px;border:1px solid #dbe2df;background:#f3f5f4;height:{{ wrapHeight }}">
-      <div style="width:1920px;height:1080px;transform-origin:0 0;transform:{{ diagramTransform }}">
-        <dc-import name="QueryAPIGate Architecture" hint-size="1920px,1080px"></dc-import>
-      </div>
     </div>
   </section>
 
@@ -235,47 +307,6 @@ api.run_example_top_films(top_n=500)
       <div style="display:grid;gap:6px;padding:18px;background:#fff;border:1px solid #dbe2df;border-radius:10px"><h3 style="margin:0;font-size:15px;font-weight:600">Policy</h3><p style="margin:0;font-size:14px;color:#4a5652">Per-query and collection grants, table allow-lists, write ceilings, per-user values bound from token claims, rate limits, IP allow-lists, key expiry.</p></div>
       <div style="display:grid;gap:6px;padding:18px;background:#fff;border:1px solid #dbe2df;border-radius:10px"><h3 style="margin:0;font-size:15px;font-weight:600">Masking</h3><p style="margin:0;font-size:14px;color:#4a5652">Column masking traced to source columns through joins and aliases with sqlglot, applied before the response is formatted.</p></div>
       <div style="display:grid;gap:6px;padding:18px;background:#fff;border:1px solid #dbe2df;border-radius:10px"><h3 style="margin:0;font-size:15px;font-weight:600">Record</h3><p style="margin:0;font-size:14px;color:#4a5652">Audit log of who changed what, run history for every query, alerts on failures, Prometheus <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/metrics</code>.</p></div>
-    </div>
-  </section>
-
-  <section style="background:#10201b;color:#e6efeb">
-    <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:36px">
-      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end">
-        <div style="display:grid;gap:10px">
-          <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)">One call, step by step</span>
-          <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">What happens to every request</h2>
-          <p style="margin:0;color:#9fb3ac;max-width:70ch">The same path for REST, MCP, events and exports. Follow one partner call through all eight stages; a stage that fails stops the call with a typed error code.</p>
-        </div>
-        <div class="rs-hide" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#9fb3ac;display:grid;gap:4px;text-align:right"><span><span style="color:oklch(0.8 0.11 170)">GET</span> /q/orders_by_customer?customer=acme</span><span>X-API-Key: sk_live_…9f3a</span></div>
-      </div>
-
-      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:28px;align-items:stretch">
-        <ol ref="{{ stepsRef }}" style="list-style:none;margin:0;padding:0;display:grid;grid-auto-rows:minmax(0,1fr);position:relative">
-          <sc-for list="{{ steps }}" as="st" hint-placeholder-count="8">
-            <li onClick="{{ st.pick }}" onMouseEnter="{{ st.hover }}" onMouseLeave="{{ unhover }}" class="rs-2col" style="position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px;align-items:center;padding:9px 12px 9px 10px;border-radius:10px;cursor:pointer;background:{{ st.rowBg }};transition:background 0.35s">
-              <span style="position:absolute;left:29px;top:0;width:2px;height:50%;background:{{ st.lineTop }};transition:background 0.35s"></span>
-              <span style="position:absolute;left:29px;bottom:0;width:2px;height:50%;background:{{ st.lineBottom }};transition:background 0.35s"></span>
-              <span style="position:relative;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:{{ st.nodeBg }};border:1px solid {{ st.nodeBorder }};box-shadow:{{ st.nodeGlow }};transition:background 0.35s,border-color 0.35s,box-shadow 0.35s"><span style="display:block;width:18px;height:18px;background:{{ st.iconColor }};-webkit-mask:url({{ st.iconUrl }}) center/contain no-repeat;mask:url({{ st.iconUrl }}) center/contain no-repeat;transition:background 0.35s"></span></span>
-              <span style="display:grid;gap:1px;min-width:0"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ st.numColor }};transition:color 0.35s">{{ st.num }}</span><b style="font-size:14.5px;font-weight:600;color:{{ st.titleColor }};transition:color 0.35s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ st.title }}</b></span>
-            </li>
-          </sc-for>
-        </ol>
-
-        <div style="position:relative;border:1px solid #2a3d37;border-radius:14px;background:radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.52 0.11 170 / 0.18), transparent 70%),#0c1915;padding:26px 28px 28px;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:18px;min-width:0;overflow:hidden">
-          <div style="position:absolute;left:0;right:0;top:0;height:2px;background:#1b2f29"><span style="display:block;height:100%;background:oklch(0.62 0.13 170);transform-origin:left;transform:{{ barTransform }};transition:{{ barTransition }}"></span></div>
-          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
-            <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">Stage {{ cur.num }} · {{ cur.layer }}</span></div>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.04em;padding:4px 9px;border-radius:999px;background:oklch(0.62 0.13 170 / 0.14);color:oklch(0.8 0.11 170);border:1px solid oklch(0.62 0.13 170 / 0.35)">{{ cur.status }}</span>
-          </div>
-          <div style="display:grid;gap:6px;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">{{ cur.title }}</h3><p style="margin:0;color:#9fb3ac;max-width:62ch">{{ cur.desc }}</p></div>
-          <div style="display:grid;gap:1px;background:#1b2f29;border:1px solid #1b2f29;border-radius:10px;overflow:hidden;align-self:start;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
-            <sc-for list="{{ cur.rows }}" as="r" hint-placeholder-count="3">
-              <div class="rs-2col" style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;padding:10px 14px;background:#0f201b;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.5"><span style="color:#7c8f88">{{ r.k }}</span><span style="color:#e6efeb;overflow-wrap:anywhere">{{ r.v }} <span style="color:{{ r.markColor }}">{{ r.mark }}</span></span></div>
-            </sc-for>
-          </div>
-          <div style="display:flex;justify-content:space-between;gap:16px;font-size:12.5px;color:#7c8f88;flex-wrap:wrap"><span>If this stage fails: <code style="font-family:'JetBrains Mono',monospace;color:oklch(0.72 0.18 25)">{{ cur.fail }}</code></span><span style="font-family:'JetBrains Mono',monospace">cumulative {{ cur.elapsed }}</span></div>
-        </div>
-      </div>
     </div>
   </section>
 

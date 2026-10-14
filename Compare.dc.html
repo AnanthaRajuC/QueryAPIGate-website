@@ -25,38 +25,72 @@
 <style>
 body{margin:0;background:#f3f5f4;color:#17201d;font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
 a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 170);text-decoration:underline}
-
+pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.rs-burger{display:none}
+.rs-menu-toggle{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
 @media (max-width:1180px){
-  .rs-gh{display:none !important}
-  .rs-nav{gap:14px !important}
+  .rs-burger{display:inline-grid;place-items:center;width:40px;height:40px;border:1px solid #c3cdc9;border-radius:8px;background:#fff;cursor:pointer;margin-left:auto;flex:none}
+  .rs-burger span{display:block;width:16px;height:2px;background:#17201d;border-radius:2px;box-shadow:0 -5px 0 #17201d,0 5px 0 #17201d}
+  .rs-actions{margin-left:0 !important}
+  .rs-nav{display:none !important;flex-basis:100%;flex-direction:column;align-items:flex-start;gap:0 !important;font-size:16px !important;border-top:1px solid #dbe2df;padding:8px 0 4px !important;margin-top:4px}
+  .rs-nav a{display:block;width:100%;padding:11px 4px;border-bottom:1px solid #e8edeb}
+  .rs-nav a:last-child{border-bottom:0}
+  .rs-menu-toggle:checked ~ .rs-nav{display:flex !important}
+  .rs-menu-toggle:checked ~ .rs-burger span{background:transparent;box-shadow:none}
+  .rs-menu-toggle:checked ~ .rs-burger span::before,.rs-menu-toggle:checked ~ .rs-burger span::after{content:"";position:absolute;width:18px;height:2px;background:#17201d;border-radius:2px}
+  .rs-menu-toggle:checked ~ .rs-burger span::before{transform:rotate(45deg)}
+  .rs-menu-toggle:checked ~ .rs-burger span::after{transform:rotate(-45deg)}
+  .rs-navbar{flex-wrap:wrap !important;gap:12px !important}
 }
-@media (max-width:1100px){
-  .rs-nav{gap:12px !important;font-size:14px !important}
-}
-@media (max-width:1024px){
-  .rs-cta{display:none !important}
-}
+@media (max-width:480px){.rs-gh{display:none !important}}
 @media (max-width:960px){
-  .rs-nav{flex:1 1 auto;min-width:0;flex-wrap:nowrap !important;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
-  .rs-nav::-webkit-scrollbar{display:none}
+  .f-bento{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+  .f-bento > *{grid-column:span 1 !important}
+  .f-2col{grid-template-columns:minmax(0,1fr) !important}
+  .f-3col{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+  .f-sec{grid-template-columns:minmax(0,1fr) !important}
 }
-@media (max-width:820px){
-  .rs-2col{grid-template-columns:minmax(0,1fr) !important}
-  .rs-aside{position:static !important;max-height:none !important}
-  .rs-nav{gap:10px 16px !important;font-size:13.5px !important;flex-wrap:nowrap !important;overflow-x:auto;width:100%;scrollbar-width:none;white-space:nowrap;padding-bottom:2px}
-  .rs-nav::-webkit-scrollbar{display:none}
-  .rs-navbar{flex-wrap:wrap !important;gap:12px 20px !important;padding:12px 16px !important}
-  .rs-cta{display:none !important}
-  .rs-pad{padding-left:16px !important;padding-right:16px !important}
-  .rs-hero{padding-top:48px !important}
-  .rs-hide{display:none !important}
+@media (max-width:640px){
+  .f-bento,.f-3col,.f-badges{grid-template-columns:minmax(0,1fr) !important}
+  .f-pad{padding-left:16px !important;padding-right:16px !important}
+  .f-table th:nth-child(3),.f-table td:nth-child(3){display:none}
 }
+.f-sub{scrollbar-width:none;top:71px !important}
+.c-table td,.c-table th{padding:16px 18px;text-align:left;vertical-align:top;border-top:1px solid #dbe2df;font-size:14px}
+.c-table th{font-size:13px;font-weight:600;border-top:0}
+.c-table tr > *:first-child{position:sticky;left:0;background:#fff;z-index:1}
+.c-pick{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:960px){.c-pick{grid-template-columns:minmax(0,1fr) !important}}
+.t-table td,.t-table th{padding:14px 16px;text-align:left;vertical-align:top;border-top:1px solid #243b34;font-size:14px}
+.t-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac;border-top:0;padding-top:0}
+.t-docs td{padding:16px 18px;vertical-align:top;border-top:1px solid #dbe2df;font-size:14.5px}
+@media (max-width:640px){.t-docs td:nth-child(3){display:none}}
+.d-tabs{scrollbar-width:none}.d-tabs::-webkit-scrollbar{display:none}
+.d-table td,.d-table th{padding:14px 16px;text-align:left;vertical-align:top;border-top:1px solid #dbe2df;font-size:14px}
+.d-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783;border-top:0}
+@media (max-width:960px){.d-check{grid-template-columns:minmax(0,1fr) !important}}
+.u-case{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}
+.u-case.u-flip > .u-code{order:-1}
+@media (max-width:960px){.u-case{grid-template-columns:minmax(0,1fr) !important}.u-case.u-flip > .u-code{order:2}.u-personas{grid-template-columns:repeat(2,minmax(0,1fr)) !important}.u-personas > .u-last{grid-column:span 2}}
+@media (max-width:640px){.u-personas{grid-template-columns:minmax(0,1fr) !important}.u-personas > .u-last{grid-column:span 1}}
+.f-bento > .f-last{grid-column:span 4}
+@media (max-width:960px){.f-bento > .f-last{grid-column:span 2 !important}}
+@media (max-width:640px){.f-bento > .f-last{grid-column:span 1 !important}}.f-sub::-webkit-scrollbar{display:none}
+.f-table td,.f-table th{padding:14px 16px;text-align:left;vertical-align:top;border-top:1px solid #243b34}
+.f-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac;border-top:0;padding-top:0}
 </style>
 </helmet>
 <div data-screen-label="Compare" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
+
   <nav style="position:sticky;top:0;z-index:20;background:rgba(243,245,244,0.9);backdrop-filter:blur(10px);border-bottom:1px solid #dbe2df">
     <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
       <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:#17201d;text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+      <div class="rs-actions" style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" style="font-size:14px;font-weight:500;color:#4a5652;padding:8px 12px">GitHub</a>
+        <a href="Docs.dc.html#install" class="rs-cta" style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#10201b;color:#e6efeb;padding:9px 14px;border-radius:7px;text-decoration:none" style-hover="background:#1b3a30;color:#fff">Install</a>
+      </div>
+      <input type="checkbox" id="rs-menu" class="rs-menu-toggle" aria-label="Open menu">
+      <label for="rs-menu" class="rs-burger" aria-hidden="true"><span></span></label>
       <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
         <a href="Features.dc.html" style="color:#4a5652">Features</a>
         <a href="Use Cases.dc.html" style="color:#4a5652">Use cases</a>
@@ -70,44 +104,59 @@ a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 
         <a href="Blog.dc.html" style="color:#4a5652">Blog</a>
         <a href="About.dc.html" style="color:#4a5652">About</a>
       </div>
-      <div style="margin-left:auto;display:flex;gap:10px;align-items:center">
-        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" style="font-size:14px;font-weight:500;color:#4a5652;padding:8px 12px">GitHub</a>
-        <a href="Docs.dc.html#install" class="rs-cta" style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#10201b;color:#e6efeb;padding:9px 14px;border-radius:7px;text-decoration:none" style-hover="background:#1b3a30;color:#fff">Install</a>
-      </div>
     </div>
   </nav>
-
-  <header style="max-width:1240px;margin:0 auto;padding:80px 24px 40px;display:grid;gap:14px">
+  <header class="f-pad" style="max-width:1240px;margin:0 auto;padding:96px 24px 56px;display:grid;gap:22px;justify-items:center;text-align:center">
     <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Compare</span>
-    <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(34px,4.5vw,54px);line-height:1.04;font-weight:800;letter-spacing:-0.02em;max-width:22ch;text-wrap:balance">Where QueryAPIGate fits, and where something else does</h1>
-    <p style="margin:0;font-size:18px;color:#4a5652;max-width:62ch;text-wrap:pretty">The tools below are good at what they do. This page is about the shape of the problem each one solves, so you can pick the right one quickly.</p>
+    <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(38px,5.2vw,68px);line-height:1;font-weight:800;letter-spacing:-0.025em;max-width:17ch;text-wrap:balance">Where QueryAPIGate fits, and where something else does</h1>
+    <p style="margin:0;font-size:19px;color:#4a5652;max-width:60ch;text-wrap:pretty">The tools below are good at what they do. This page is about the shape of the problem each one solves, so you can pick the right one quickly.</p>
   </header>
-  <section style="max-width:1240px;margin:0 auto;padding:0 24px 56px;display:grid;gap:36px">
-    <div style="display:grid;gap:12px">
-      <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.01em">The one-line difference</h2>
-      <p style="margin:0;color:#4a5652;max-width:76ch;text-wrap:pretty">Most data-API tools expose <em>tables</em> and let the caller compose the query. QueryAPIGate exposes <em>queries you wrote</em>, and governs who may call each one, what rows and columns they get back, and leaves a record. It is for the moment you want to hand data to a partner, a pipeline or an AI agent without handing them your schema.</p>
+
+  <section class="f-pad" style="max-width:1240px;margin:0 auto;padding:0 24px 72px">
+    <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:32px;padding:clamp(24px,3vw,40px);border-radius:16px;background:#10201b;color:#e6efeb;box-shadow:0 40px 80px -40px rgba(16,32,27,0.5)">
+      <div style="display:grid;gap:10px;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">The one-line difference</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(24px,2.8vw,34px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Others expose tables. QueryAPIGate exposes queries you wrote.</h2></div>
+      <p style="margin:0;font-size:17px;line-height:1.6;color:#c9d6d1;text-wrap:pretty">Most data-API tools expose <em>tables</em> and let the caller compose the query. QueryAPIGate exposes <em>queries you wrote</em>, and governs who may call each one, what rows and columns they get back, and leaves a record. It is for the moment you want to hand data to a partner, a pipeline or an AI agent without handing them your schema.</p>
     </div>
-    <div style="overflow-x:auto">
-      <div style="display:grid;grid-template-columns:200px repeat(5,minmax(150px,1fr));gap:1px;background:#dbe2df;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;min-width:960px;font-size:14px">
-        <div style="background:#f3f5f4;padding:14px 16px"></div>
-        <div style="background:#10201b;color:#e6efeb;padding:14px 16px;font-weight:600">QueryAPIGate</div><div style="background:#f3f5f4;color:#17201d;padding:14px 16px;font-weight:600">Hand-rolled API</div><div style="background:#f3f5f4;color:#17201d;padding:14px 16px;font-weight:600">PostgREST / Supabase</div><div style="background:#f3f5f4;color:#17201d;padding:14px 16px;font-weight:600">Hasura</div><div style="background:#f3f5f4;color:#17201d;padding:14px 16px;font-weight:600">Directus</div>
-        <div style="background:#fff;padding:14px 16px;font-weight:600;">Unit of exposure</div><div style="background:#fff;padding:14px 16px;background:oklch(0.52 0.11 170 / 0.06);">A SQL query you wrote</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Whatever you code</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Tables and views</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Tables, via GraphQL</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Collections, via REST/GraphQL</div><div style="background:#fff;padding:14px 16px;font-weight:600;">Caller composes the query?</div><div style="background:#fff;padding:14px 16px;background:oklch(0.52 0.11 170 / 0.06);">No. Typed parameters only</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">No</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Yes, URL filters</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Yes, GraphQL</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Yes, query params</div><div style="background:#fff;padding:14px 16px;font-weight:600;">Databases</div><div style="background:#fff;padding:14px 16px;background:oklch(0.52 0.11 170 / 0.06);">PostgreSQL, MySQL, SQLite, DuckDB, ClickHouse, + files, MongoDB, JDBC</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Any</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">PostgreSQL</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">PostgreSQL, others via connectors</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Several SQL</div><div style="background:#fff;padding:14px 16px;font-weight:600;">Row and column policy</div><div style="background:#fff;padding:14px 16px;background:oklch(0.52 0.11 170 / 0.06);">Grants, values bound from token claims, masking traced through SQL</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">You write it</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Database RLS and grants</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Permission rules per role</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Role and field permissions</div><div style="background:#fff;padding:14px 16px;font-weight:600;">AI agents</div><div style="background:#fff;padding:14px 16px;background:oklch(0.52 0.11 170 / 0.06);">MCP server, OAuth 2.1, descriptions, approved writes</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">You build it</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Community MCP servers</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Community / PromptQL</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">MCP via extension</div><div style="background:#fff;padding:14px 16px;font-weight:600;">Exports and events</div><div style="background:#fff;padding:14px 16px;background:oklch(0.52 0.11 170 / 0.06);">Scheduled incremental exports to S3/GCS/R2, SSE</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">You build it</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Realtime via Supabase</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Subscriptions</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Flows and webhooks</div><div style="background:#fff;padding:14px 16px;font-weight:600;">Deployment</div><div style="background:#fff;padding:14px 16px;background:oklch(0.52 0.11 170 / 0.06);">One pip install, SQLite store; or several instances on Postgres + Redis</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Yours</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Single binary / cloud</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Docker / cloud</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Node / cloud</div><div style="background:#fff;padding:14px 16px;font-weight:600;">Licence</div><div style="background:#fff;padding:14px 16px;background:oklch(0.52 0.11 170 / 0.06);">FSL-1.1-MIT (MIT after 2 years)</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">—</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">MIT / Apache 2.0</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">Apache 2.0 (core)</div><div style="background:#fff;padding:14px 16px;color:#4a5652;">BSL</div>
+  </section>
+
+  <section style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df">
+    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:28px">
+      <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end">
+        <div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">Side by side</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Eight dimensions, five tools</h2></div>
+        <p style="margin:0;color:#4a5652;text-wrap:pretty">Scroll sideways on a narrow screen; the dimension column stays put.</p>
+      </div>
+      <div style="border:1px solid #dbe2df;border-radius:14px;overflow:hidden"><div style="overflow-x:auto"><table class="c-table" style="width:100%;border-collapse:separate;border-spacing:0;min-width:900px">
+        <thead><tr><th style="width:16%;color:#7c8783;font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase">Dimension</th><th style="width:21%;background:oklch(0.52 0.11 170 / 0.08);border-left:1px solid oklch(0.52 0.11 170 / 0.35);border-right:1px solid oklch(0.52 0.11 170 / 0.35)"><span style="display:flex;gap:8px;align-items:center;color:#17201d"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 32 32" style="flex:none"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg>QueryAPIGate</span></th><th style="color:#4a5652">Hand-rolled API</th><th style="color:#4a5652">PostgREST / Supabase</th><th style="color:#4a5652">Hasura</th><th style="color:#4a5652">Directus</th></tr></thead>
+        <tbody><tr><td style="font-weight:600;color:#17201d">Unit of exposure</td><td style="background:oklch(0.52 0.11 170 / 0.08);border-left:1px solid oklch(0.52 0.11 170 / 0.35);border-right:1px solid oklch(0.52 0.11 170 / 0.35);color:#17201d;font-weight:500">A SQL query you wrote</td><td style="color:#4a5652">Whatever you code</td><td style="color:#4a5652">Tables and views</td><td style="color:#4a5652">Tables, via GraphQL</td><td style="color:#4a5652">Collections, via REST/GraphQL</td></tr><tr><td style="font-weight:600;color:#17201d">Caller composes the query?</td><td style="background:oklch(0.52 0.11 170 / 0.08);border-left:1px solid oklch(0.52 0.11 170 / 0.35);border-right:1px solid oklch(0.52 0.11 170 / 0.35);color:#17201d;font-weight:500">No. Typed parameters only</td><td style="color:#4a5652">No</td><td style="color:#4a5652">Yes, URL filters</td><td style="color:#4a5652">Yes, GraphQL</td><td style="color:#4a5652">Yes, query params</td></tr><tr><td style="font-weight:600;color:#17201d">Databases</td><td style="background:oklch(0.52 0.11 170 / 0.08);border-left:1px solid oklch(0.52 0.11 170 / 0.35);border-right:1px solid oklch(0.52 0.11 170 / 0.35);color:#17201d;font-weight:500">PostgreSQL, MySQL, SQLite, DuckDB, ClickHouse, + files, MongoDB, JDBC</td><td style="color:#4a5652">Any</td><td style="color:#4a5652">PostgreSQL</td><td style="color:#4a5652">PostgreSQL, others via connectors</td><td style="color:#4a5652">Several SQL</td></tr><tr><td style="font-weight:600;color:#17201d">Row and column policy</td><td style="background:oklch(0.52 0.11 170 / 0.08);border-left:1px solid oklch(0.52 0.11 170 / 0.35);border-right:1px solid oklch(0.52 0.11 170 / 0.35);color:#17201d;font-weight:500">Grants, values bound from token claims, masking traced through SQL</td><td style="color:#4a5652">You write it</td><td style="color:#4a5652">Database RLS and grants</td><td style="color:#4a5652">Permission rules per role</td><td style="color:#4a5652">Role and field permissions</td></tr><tr><td style="font-weight:600;color:#17201d">AI agents</td><td style="background:oklch(0.52 0.11 170 / 0.08);border-left:1px solid oklch(0.52 0.11 170 / 0.35);border-right:1px solid oklch(0.52 0.11 170 / 0.35);color:#17201d;font-weight:500">MCP server, OAuth 2.1, descriptions, approved writes</td><td style="color:#4a5652">You build it</td><td style="color:#4a5652">Community MCP servers</td><td style="color:#4a5652">Community / PromptQL</td><td style="color:#4a5652">MCP via extension</td></tr><tr><td style="font-weight:600;color:#17201d">Exports and events</td><td style="background:oklch(0.52 0.11 170 / 0.08);border-left:1px solid oklch(0.52 0.11 170 / 0.35);border-right:1px solid oklch(0.52 0.11 170 / 0.35);color:#17201d;font-weight:500">Scheduled incremental exports to S3/GCS/R2, SSE</td><td style="color:#4a5652">You build it</td><td style="color:#4a5652">Realtime via Supabase</td><td style="color:#4a5652">Subscriptions</td><td style="color:#4a5652">Flows and webhooks</td></tr><tr><td style="font-weight:600;color:#17201d">Deployment</td><td style="background:oklch(0.52 0.11 170 / 0.08);border-left:1px solid oklch(0.52 0.11 170 / 0.35);border-right:1px solid oklch(0.52 0.11 170 / 0.35);color:#17201d;font-weight:500">One pip install, SQLite store; or several instances on Postgres + Redis</td><td style="color:#4a5652">Yours</td><td style="color:#4a5652">Single binary / cloud</td><td style="color:#4a5652">Docker / cloud</td><td style="color:#4a5652">Node / cloud</td></tr><tr><td style="font-weight:600;color:#17201d">Licence</td><td style="background:oklch(0.52 0.11 170 / 0.08);border-left:1px solid oklch(0.52 0.11 170 / 0.35);border-right:1px solid oklch(0.52 0.11 170 / 0.35);color:#17201d;font-weight:500">FSL-1.1-MIT (MIT after 2 years)</td><td style="color:#4a5652">—</td><td style="color:#4a5652">MIT / Apache 2.0</td><td style="color:#4a5652">Apache 2.0 (core)</td><td style="color:#4a5652">BSL</td></tr></tbody>
+      </table></div></div>
+      <p style="margin:0;font-size:13px;color:#7c8783;max-width:84ch">Feature summaries of other projects are from their public documentation at the time of writing and may be out of date. Corrections welcome on GitHub.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:88px 24px;display:grid;gap:36px">
+      <div style="display:grid;gap:10px;max-width:70ch"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">Decision</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Which one, in one glance</h2></div>
+      <div class="c-pick" style="display:grid;gap:16px">
+        <div style="display:grid;gap:18px;padding:clamp(22px,3vw,32px);border-radius:16px;background:#10201b;color:#e6efeb;align-content:start"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:22px;font-weight:700;letter-spacing:-0.01em;display:flex;gap:10px;align-items:center"><span style="width:26px;height:26px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:13px;font-weight:700;display:grid;place-items:center">✓</span>Pick QueryAPIGate when</h3><div style="display:grid;gap:0"><div style="padding:14px 0;border-top:1px solid #243b34;font-size:15px;color:#c9d6d1">The SQL is the contract: you want callers to run <em>this</em> query, not explore your tables.</div><div style="padding:14px 0;border-top:1px solid #243b34;font-size:15px;color:#c9d6d1">Callers are outside your trust boundary: partners, pipelines, AI agents.</div><div style="padding:14px 0;border-top:1px solid #243b34;font-size:15px;color:#c9d6d1">You need grants, masking and an audit trail without writing them per endpoint.</div><div style="padding:14px 0;border-top:1px solid #243b34;font-size:15px;color:#c9d6d1">Your data is in several engines, or in files on S3.</div><div style="padding:14px 0;border-top:1px solid #243b34;font-size:15px;color:#c9d6d1">You want one pip install and a SQLite file to start.</div></div><div style="display:flex;gap:12px;flex-wrap:wrap;padding-top:4px"><a href="Docs.dc.html#install" style="font-size:14.5px;font-weight:600;background:#e6efeb;color:#10201b;padding:11px 18px;border-radius:8px;text-decoration:none" style-hover="background:#fff;color:#10201b;text-decoration:none">Install</a><a href="Use Cases.dc.html" style="font-size:14.5px;font-weight:600;color:#e6efeb;padding:11px 18px;border:1px solid #2a3d37;border-radius:8px;text-decoration:none" style-hover="border-color:#9fb3ac;color:#fff;text-decoration:none">Use cases</a></div></div>
+        <div style="display:grid;gap:18px;padding:clamp(22px,3vw,32px);border-radius:16px;background:#fff;border:1px solid #dbe2df;align-content:start"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:22px;font-weight:700;letter-spacing:-0.01em;display:flex;gap:10px;align-items:center"><span style="width:26px;height:26px;border-radius:50%;border:1px solid #c3cdc9;color:#7c8783;font-size:13px;font-weight:700;display:grid;place-items:center">→</span>Pick something else when</h3><div style="display:grid;gap:0"><div style="padding:14px 0;border-top:1px solid #dbe2df;font-size:15px;color:#4a5652">Your frontend needs flexible, client-composed queries over your own tables: PostgREST, Hasura.</div><div style="padding:14px 0;border-top:1px solid #dbe2df;font-size:15px;color:#4a5652">You want a headless CMS with content editing: Directus.</div><div style="padding:14px 0;border-top:1px solid #dbe2df;font-size:15px;color:#4a5652">The API needs business logic beyond what SQL expresses: write the service.</div><div style="padding:14px 0;border-top:1px solid #dbe2df;font-size:15px;color:#4a5652">You need Snowflake, BigQuery or Redshift today (on the backlog, not shipped).</div></div></div>
       </div>
     </div>
-    <p style="margin:0;font-size:13px;color:#7c8783">Feature summaries of other projects are from their public documentation at the time of writing and may be out of date. Corrections welcome on GitHub.</p>
   </section>
-  <section style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df">
-    <div style="max-width:1240px;margin:0 auto;padding:64px 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px">
-      <div style="display:grid;gap:10px;align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Pick QueryAPIGate when</span><ul style="margin:0;padding:0 0 0 18px;display:grid;gap:6px;font-size:14.5px;color:#4a5652"><li>The SQL is the contract: you want callers to run <em>this</em> query, not explore your tables.</li><li>Callers are outside your trust boundary: partners, pipelines, AI agents.</li><li>You need grants, masking and an audit trail without writing them per endpoint.</li><li>Your data is in several engines, or in files on S3.</li><li>You want one pip install and a SQLite file to start.</li></ul></div>
-      <div style="display:grid;gap:10px;align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783">Pick something else when</span><ul style="margin:0;padding:0 0 0 18px;display:grid;gap:6px;font-size:14.5px;color:#4a5652"><li>Your frontend needs flexible, client-composed queries over your own tables: PostgREST, Hasura.</li><li>You want a headless CMS with content editing: Directus.</li><li>The API needs business logic beyond what SQL expresses: write the service.</li><li>You need Snowflake, BigQuery or Redshift today (on the backlog, not shipped).</li></ul></div>
+
+  <section style="background:#fff;border-top:1px solid #dbe2df">
+    <div class="f-pad f-2col" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:40px;align-items:start">
+      <div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">In practice</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Alongside, not instead</h2></div>
+      <div style="display:grid;gap:20px"><p style="margin:0;font-size:17px;line-height:1.6;color:#4a5652;text-wrap:pretty">QueryAPIGate sits in front of databases you already run. Teams use it next to PostgREST (internal app traffic there, partner and agent traffic here), behind an existing API gateway for TLS and routing, and under Airflow or cron for scheduled deliveries. The Management API means it can be configured from the same place as the rest of your infrastructure.</p>
+        <div class="f-3col" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+          <div style="display:grid;gap:4px;padding:16px 18px;border:1px solid #dbe2df;border-radius:12px;background:#f3f5f4"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783">Next to</span><b style="font-size:15px;font-weight:600">PostgREST</b><span style="font-size:13.5px;color:#4a5652">Internal app traffic there, partner and agent traffic here.</span></div>
+          <div style="display:grid;gap:4px;padding:16px 18px;border:1px solid #dbe2df;border-radius:12px;background:#f3f5f4"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783">Behind</span><b style="font-size:15px;font-weight:600">Your API gateway</b><span style="font-size:13.5px;color:#4a5652">TLS and routing stay where they are.</span></div>
+          <div style="display:grid;gap:4px;padding:16px 18px;border:1px solid #dbe2df;border-radius:12px;background:#f3f5f4"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783">Under</span><b style="font-size:15px;font-weight:600">Airflow or cron</b><span style="font-size:13.5px;color:#4a5652">Scheduled deliveries on your existing schedule.</span></div>
+        </div>
+      </div>
     </div>
   </section>
-  <section style="max-width:1240px;margin:0 auto;padding:64px 24px 88px;display:grid;gap:24px">
-    <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.01em">Alongside, not instead</h2>
-    <p style="margin:0;color:#4a5652;max-width:76ch">QueryAPIGate sits in front of databases you already run. Teams use it next to PostgREST (internal app traffic there, partner and agent traffic here), behind an existing API gateway for TLS and routing, and under Airflow or cron for scheduled deliveries. The Management API means it can be configured from the same place as the rest of your infrastructure.</p>
-  </section>
   <footer style="border-top:1px solid #dbe2df;background:#fff">
-    <div style="max-width:1240px;margin:0 auto;padding:48px 24px 28px;display:grid;gap:36px">
+    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:48px 24px 28px;display:grid;gap:36px">
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:32px 24px">
         <div style="display:grid;gap:12px;align-content:start;min-width:0">
           <a href="Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:#17201d;text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
