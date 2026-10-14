@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -130,7 +130,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   <div class="rs-2col" style="max-width:1240px;margin:0 auto;padding:56px 24px 88px;display:grid;grid-template-columns:240px minmax(0,1fr);gap:56px;align-items:start">
     <aside class="rs-aside" style="position:sticky;top:84px;display:grid;gap:4px;font-size:13.5px;max-height:calc(100vh - 110px);overflow:auto">
       <a href="{{ backHref }}" style="color:#4a5652;padding:4px 0 12px;font-weight:500">{{ backLabel }}</a>
-      <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783;padding-bottom:6px">{{ catLabel }}</span>
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69;padding-bottom:6px">{{ catLabel }}</span>
       <sc-for list="{{ siblings }}" as="s" hint-placeholder-count="6">
         <a href="{{ s.href }}" class="rs-2col" style="display:grid;grid-template-columns:26px minmax(0,1fr);gap:6px;padding:5px 0;color:{{ s.color }};font-weight:{{ s.weight }}"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.52 0.11 170);padding-top:3px">{{ s.num }}</span><span>{{ s.title }}</span></a>
       </sc-for>
@@ -140,13 +140,13 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       <header style="display:grid;gap:12px;padding-bottom:24px;border-bottom:1px solid #dbe2df">
         <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">{{ kindLabel }} · {{ catLabel }}</span>
         <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(30px,3.8vw,44px);line-height:1.08;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">{{ title }}</h1>
-        <sc-if value="{{ showRepo }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13.5px;color:#7c8783"><a href="{{ ghHref }}" style="color:#4a5652">View on GitHub ↗</a><a href="{{ editHref }}" style="color:#4a5652">Suggest an edit ↗</a></div></sc-if>
+        <sc-if value="{{ showRepo }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13.5px;color:#626d69"><a href="{{ ghHref }}" style="color:#4a5652">View on GitHub ↗</a><a href="{{ editHref }}" style="color:#4a5652">Suggest an edit ↗</a></div></sc-if>
       </header>
       <sc-if value="{{ error }}" hint-placeholder-val="{{ false }}"><p style="margin:0;color:#4a5652">{{ error }}</p></sc-if>
       <div id="guide-body" ref="{{ bodyRef }}" style="min-height:200px;min-width:0;max-width:100%;overflow-wrap:anywhere"></div>
       <nav style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:28px;border-top:1px solid #dbe2df">
-        <sc-if value="{{ prev }}" hint-placeholder-val="{{ false }}"><a href="{{ prev.href }}" style="display:grid;gap:4px;padding:16px 18px;background:#fff;border:1px solid #dbe2df;border-radius:10px;color:#17201d" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-size:12px;color:#7c8783">← Previous</span><b style="font-weight:600">{{ prev.title }}</b></a></sc-if>
-        <sc-if value="{{ next }}" hint-placeholder-val="{{ false }}"><a href="{{ next.href }}" style="display:grid;gap:4px;padding:16px 18px;background:#fff;border:1px solid #dbe2df;border-radius:10px;color:#17201d;text-align:right;grid-column:2" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-size:12px;color:#7c8783">Next →</span><b style="font-weight:600">{{ next.title }}</b></a></sc-if>
+        <sc-if value="{{ prev }}" hint-placeholder-val="{{ false }}"><a href="{{ prev.href }}" style="display:grid;gap:4px;padding:16px 18px;background:#fff;border:1px solid #dbe2df;border-radius:10px;color:#17201d" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-size:12px;color:#626d69">← Previous</span><b style="font-weight:600">{{ prev.title }}</b></a></sc-if>
+        <sc-if value="{{ next }}" hint-placeholder-val="{{ false }}"><a href="{{ next.href }}" style="display:grid;gap:4px;padding:16px 18px;background:#fff;border:1px solid #dbe2df;border-radius:10px;color:#17201d;text-align:right;grid-column:2" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-size:12px;color:#626d69">Next →</span><b style="font-weight:600">{{ next.title }}</b></a></sc-if>
       </nav>
     </article>
   </div>
@@ -163,8 +163,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Trust</span><a href="Trust.dc.html" style="color:#4a5652;font-size:14px">Trust center</a><a href="Security.dc.html" style="color:#4a5652;font-size:14px">Security</a><a href="Support.dc.html" style="color:#4a5652;font-size:14px">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION" style="color:#4a5652;font-size:14px">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL" style="color:#4a5652;font-size:14px">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new" style="color:#4a5652;font-size:14px">Report a vulnerability</a></div>
         <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Project</span><a href="About.dc.html" style="color:#4a5652;font-size:14px">About</a><a href="Stack.dc.html" style="color:#4a5652;font-size:14px">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate" style="color:#4a5652;font-size:14px">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases" style="color:#4a5652;font-size:14px">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING" style="color:#4a5652;font-size:14px">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT" style="color:#4a5652;font-size:14px">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE" style="color:#4a5652;font-size:14px">Licence (FSL-1.1-MIT)</a></div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#7c8783">
-        <span>QueryAPIGate 0.32 · FSL-1.1-MIT · Signed releases with provenance and SBOMs</span>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#626d69">
+        <span>QueryAPIGate 0.34 · FSL-1.1-MIT · Signed releases with provenance and SBOMs</span>
         <span>Experimental features are labelled in the product and the changelog.</span>
       </div>
     </div>
@@ -188,7 +188,17 @@ class Component extends DCLogic {
       fetch(path).then(r => r.ok ? r.text() : Promise.reject(new Error(r.status))).then(md => this.setState({ md })).catch(() => this.setState({ error: 'This guide could not be loaded. It is on GitHub.' }));
     });
   }
-  componentDidUpdate() { this.renderMd(); }
+  componentDidUpdate() { this.renderMd(); this.setTitle(); }
+  setTitle() {
+    const kind = this.kind || 'g';
+    const gs = (kind === 'd' ? this.docs : kind === 'p' ? this.posts : this.guides) || [];
+    const g = gs.find(x => x.slug === this.state.slug);
+    if (!g) return;
+    const t = g.title + ' - QueryAPIGate';
+    if (document.title !== t) document.title = t;
+    const desc = document.querySelector('meta[name="description"]');
+    if (desc) desc.setAttribute('content', (kind === 'd' ? 'QueryAPIGate documentation: ' : kind === 'p' ? 'QueryAPIGate blog: ' : 'QueryAPIGate how-to guide: ') + g.title);
+  }
   renderMd() {
     const el = this.bodyRef.current;
     if (!el || !this.state.md || !window.marked || el.dataset.rendered === this.state.slug) return;

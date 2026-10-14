@@ -2,21 +2,16 @@ repo: AnanthaRajuC/QueryAPIGate
 branch: main
 
 ## Last sync
-date: 2026-10-13T00:00:00Z (repo at 0.32.0)
+date: 2026-10-14T00:00:00Z (repo at 0.34.2)
 ### Updated in this project
-- Copied how-to guides 51-59 and refreshed every guide and doc; added documentation/DATA_PROTECTION.md; guides.js and the Guides page list 59 guides and 13 docs
-- Changelog entries 0.23.0-0.32.0; Roadmap, Home and Security show 0.23-0.32 as shipped and 1.0.0-rc1 as next; footer version 0.32
-- Features: limits, quotas, rotation, new alerts, operations cards and a Prove section; Use Cases: compliance and platform-team sections, corrected code samples
-- Install shown three ways (pip, Docker, Helm) on Home, Docs and the nav button
-- New pages: Trust (trust center), Deploy (reference architectures, measured performance, production checklist), Support (compatibility, versions, upgrades)
-- Every page: title, description, Open Graph tags and favicon in the static head; nav adds Deploy and Trust; four-column footer
-- Tech stack moved from Home to its own page, Stack.dc.html ("Built with"), updated for 0.23-0.32
-- Use Cases: twelve sections in five audience groups (new: customer analytics, controlled writes, self-serve data, legacy databases)
-- Integrations on Home redrawn as a hub; nav fits one line; removed empty data-dc-script blocks that made the framework show an error banner
-- Features: Connect and Developers groups, administrators and SSO, MCP OAuth and agent usage, experimental labels, all 25 alert kinds; Console screenshots retaken at 0.32.0 into images/console/*.webp (example APIs, named admins, a partner key with a quota)
-- Removed claims of key-level "row filters" (the product binds values with from_claim parameters instead)
+- Copied the guides and docs that changed upstream (how-to 04, 28, 29, 30, 32, 34, 56; API, DATABASE_CONNECTION_CONFIGURATION, DATA_PROTECTION, DEPLOYMENT, THREAT_MODEL)
+- Changelog entries 0.33.0-0.34.2; Roadmap and Home show 0.30-0.34 as shipped; footer version 0.34; install commands pin 0.34.2
+- Live events and secrets from files and Vault shown as stable; AWS secrets, tracing, H2, JDBC and MongoDB still experimental; live-event payload sample updated to `query.run`
+- Review fixes: SQL guard described as a classifier (sqlglot only for allow-lists), signing "since 0.31", backup wording, licence on the architecture diagram, three broken guide links, Deploy install pins a version and sets an API key, error codes match API.md, eight steps match across pages
+- Layout: Home comparison table is two columns, mobile architecture summary, Docs mobile overflow and sidebar, AA contrast for secondary text, lang on every page, per-guide titles in the reader
 
 ## Sync history
+- 2026-10-13T00:00:00Z — synced at 0.32.0: guides 51-59, DATA_PROTECTION, Trust, Deploy, Support and Stack pages, four-column footer, Console screenshots at 0.32.0
 - 2026-10-11T15:02:53Z — copied documentation, SECURITY, CONTRIBUTING, CODE_OF_CONDUCT; four blog posts; live GitHub and PyPI data on Home
 - 2026-10-11T14:54:01Z — copied the 50 how-to guides; in-site reader
 - 2026-10-11T14:41:30Z — added Changelog, Roadmap, Compare and Guides pages; version bumped to 0.22

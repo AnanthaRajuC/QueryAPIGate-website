@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -23,6 +23,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+article,article > section{grid-template-columns:minmax(0,1fr)}
+article code{overflow-wrap:anywhere}
 body{margin:0;background:#f3f5f4;color:#17201d;font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
 a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 170);text-decoration:underline}
 
@@ -42,6 +44,10 @@ a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 
 }
 @media (max-width:820px){
   .rs-2col{grid-template-columns:minmax(0,1fr) !important}
+  .docs-aside{display:flex !important;flex-wrap:nowrap;overflow-x:auto;gap:8px !important;scrollbar-width:none;padding-bottom:2px}
+  .docs-aside::-webkit-scrollbar{display:none}
+  .docs-aside > span{display:none}
+  .docs-aside > a{flex:none;white-space:nowrap;padding:7px 12px !important;border:1px solid #dbe2df;border-radius:999px;background:#fff}
   .rs-aside{position:static !important;max-height:none !important}
   .rs-nav{gap:10px 16px !important;font-size:13.5px !important;flex-wrap:nowrap !important;overflow-x:auto;width:100%;scrollbar-width:none;white-space:nowrap;padding-bottom:2px}
   .rs-nav::-webkit-scrollbar{display:none}
@@ -88,7 +94,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:#17201d;text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
       <div class="rs-actions" style="margin-left:auto;display:flex;gap:10px;align-items:center">
         <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" style="font-size:14px;font-weight:500;color:#4a5652;padding:8px 12px">GitHub</a>
-        <a href="https://AnanthaRajuC.github.io/QueryAPIGate/" class="rs-cta" style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#10201b;color:#e6efeb;padding:9px 14px;border-radius:7px;text-decoration:none" style-hover="background:#1b3a30;color:#fff">Full reference ↗</a>
+        <a href="#install" class="rs-cta" style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#10201b;color:#e6efeb;padding:9px 14px;border-radius:7px;text-decoration:none" style-hover="background:#1b3a30;color:#fff">Install</a>
       </div>
       <input type="checkbox" id="rs-menu" class="rs-menu-toggle" aria-label="Open menu">
       <label for="rs-menu" class="rs-burger" aria-hidden="true"><span></span></label>
@@ -109,15 +115,15 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   </nav>
 
   <div class="rs-2col" style="max-width:1240px;margin:0 auto;padding:64px 24px 88px;display:grid;grid-template-columns:220px minmax(0,1fr);gap:56px;align-items:start">
-    <aside class="rs-aside" style="position:sticky;top:84px;display:grid;gap:6px;font-size:14px">
-      <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783;padding-bottom:6px">Getting started</span>
+    <aside class="rs-aside docs-aside" style="position:sticky;top:84px;display:grid;gap:6px;font-size:14px">
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69;padding-bottom:6px">Getting started</span>
       <a href="#install" style="color:#17201d;padding:5px 0">Install</a>
       <a href="#quickstart" style="color:#4a5652;padding:5px 0">Quickstart</a>
       <a href="#first" style="color:#4a5652;padding:5px 0">Your first endpoint</a>
       <a href="#scoped" style="color:#4a5652;padding:5px 0">A scoped key</a>
       <a href="#production" style="color:#4a5652;padding:5px 0">Production</a>
       <a href="#config" style="color:#4a5652;padding:5px 0">Configuration</a>
-      <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#7c8783;padding:18px 0 6px">Reference</span>
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69;padding:18px 0 6px">Reference</span>
       <a href="Guide.dc.html?d=API" style="color:#4a5652;padding:5px 0">API reference</a>
       <a href="Guide.dc.html?d=MCP" style="color:#4a5652;padding:5px 0">MCP server</a>
       <a href="Guide.dc.html?d=DEPLOYMENT" style="color:#4a5652;padding:5px 0">Deployment</a>
@@ -126,6 +132,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       <a href="Guide.dc.html?d=THREAT_MODEL" style="color:#4a5652;padding:5px 0">Threat model</a>
       <a href="Guide.dc.html?d=INSTALLATION_AND_SETUP" style="color:#4a5652;padding:5px 0">Full installation guide</a>
       <a href="Guides.dc.html" style="color:#4a5652;padding:5px 0">59 how-to guides</a>
+      <a href="https://AnanthaRajuC.github.io/QueryAPIGate/" style="color:#4a5652;padding:5px 0">Full reference site ↗</a>
     </aside>
 
     <article style="display:grid;gap:48px;min-width:0">
@@ -147,7 +154,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
               <h3 id="install-docker" style="margin:8px 0 0;font-size:18px;font-weight:600">With Docker</h3>
         <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;overflow-x:auto"><span style="color:#9fb3ac">$</span> docker run -p 5000:5000 -v queryapigate-data:/data \
     -e QUERYAPIGATE_API_KEY=change-me \
-    ghcr.io/anantharajuc/queryapigate:0.32.0</pre>
+    ghcr.io/anantharajuc/queryapigate:0.34.2</pre>
         <p style="margin:0;color:#4a5652;font-size:15px">The image includes every driver except H2, plus Redis, MCP, tracing, AWS and gunicorn, and runs non-root on a read-only root filesystem. Tags: <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">X.Y.Z</code> and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">latest</code>; <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">X.Y.Z-h2</code> adds Java for H2 and generic JDBC. Pin a version. For several instances behind Caddy with Docker Compose, see <a href="Guide.dc.html?g=32-deploy-with-docker">guide 32</a> and <a href="Guide.dc.html?g=42-run-several-instances">guide 42</a>.</p>
         <h3 id="install-helm" style="margin:8px 0 0;font-size:18px;font-weight:600">With Helm, on Kubernetes</h3>
         <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;overflow-x:auto"><span style="color:#9fb3ac">$</span> kubectl create namespace queryapigate
@@ -155,7 +162,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     --from-literal=QUERYAPIGATE_API_KEY=change-me \
     --from-literal=QUERYAPIGATE_SECRET_KEY=&lt;a Fernet key&gt;
 <span style="color:#9fb3ac">$</span> helm install queryapigate oci://ghcr.io/anantharajuc/charts/queryapigate \
-    --version 0.32.0 -n queryapigate --set existingSecret=queryapigate --wait</pre>
+    --version 0.34.2 -n queryapigate --set existingSecret=queryapigate --wait</pre>
         <p style="margin:0;color:#4a5652;font-size:15px">One pod on SQLite with its store on a volume, or several on PostgreSQL and Redis; the chart refuses setups that can't work. Chart X.Y.Z runs server X.Y.Z. See <a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm">guide 54</a>, and <a href="Guide.dc.html?g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request">guide 55</a> to drive it from a configuration file.</p>
         <h3 id="install-verify" style="margin:8px 0 0;font-size:18px;font-weight:600">Verify a release first</h3>
         <p style="margin:0;color:#4a5652;font-size:15px">From 0.31, the image and the chart are signed keyless with cosign, with SLSA provenance and an SBOM. Check them with <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">cosign verify</code>, or let an admission controller refuse anything unsigned: <a href="Guide.dc.html?g=59-verify-a-release-before-you-run-it">guide 59</a>.</p>
@@ -238,8 +245,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Trust</span><a href="Trust.dc.html" style="color:#4a5652;font-size:14px">Trust center</a><a href="Security.dc.html" style="color:#4a5652;font-size:14px">Security</a><a href="Support.dc.html" style="color:#4a5652;font-size:14px">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION" style="color:#4a5652;font-size:14px">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL" style="color:#4a5652;font-size:14px">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new" style="color:#4a5652;font-size:14px">Report a vulnerability</a></div>
         <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Project</span><a href="About.dc.html" style="color:#4a5652;font-size:14px">About</a><a href="Stack.dc.html" style="color:#4a5652;font-size:14px">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate" style="color:#4a5652;font-size:14px">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases" style="color:#4a5652;font-size:14px">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING" style="color:#4a5652;font-size:14px">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT" style="color:#4a5652;font-size:14px">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE" style="color:#4a5652;font-size:14px">Licence (FSL-1.1-MIT)</a></div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#7c8783">
-        <span>QueryAPIGate 0.32 · FSL-1.1-MIT · Signed releases with provenance and SBOMs</span>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#626d69">
+        <span>QueryAPIGate 0.34 · FSL-1.1-MIT · Signed releases with provenance and SBOMs</span>
         <span>Experimental features are labelled in the product and the changelog.</span>
       </div>
     </div>
