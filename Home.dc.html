@@ -36,6 +36,17 @@ a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 
 @media (max-width:1024px){
   .rs-cta{display:none !important}
 }
+.copy-btn{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:#c5d3cd;background:#1b2f29;border:1px solid #2a3d37;border-radius:6px;padding:4px 9px;min-height:26px;cursor:pointer;transition:background 0.2s,color 0.2s}
+.copy-btn:hover{background:#24403a;color:#e6efeb}
+.db-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:1100px){.db-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:480px){.db-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@keyframes catbarA{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes catbarB{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.gov-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.gov-paper{background-color:#f8faf9;background-image:linear-gradient(#e3eae6 1px,transparent 1px),linear-gradient(90deg,#e3eae6 1px,transparent 1px);background-size:16px 16px}
+@media (max-width:1100px){.gov-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.gov-grid{grid-template-columns:minmax(0,1fr)}.rs-pill{border-radius:14px !important;padding:10px 12px !important;align-items:flex-start !important}}
 @media (max-width:960px){
   .rs-nav{flex:1 1 auto;min-width:0;flex-wrap:nowrap !important;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
   .rs-nav::-webkit-scrollbar{display:none}
@@ -56,7 +67,7 @@ a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 
 /* architecture: full diagram on wide screens, stacked summary on phones */
 .arch-m{display:none}
 @media (max-width:700px){.arch-d{display:none}.arch-m{display:block}}
-@media (max-width:700px){.cmp-grid > div{padding:12px 14px !important;font-size:14px !important}}
+@media (max-width:700px){.cmp-grid > div{padding:12px 14px !important;font-size:14px !important}.cmp-arrow{display:none !important}}
 
 /* integrations hub */
 .ig-grid{display:grid;grid-template-columns:minmax(0,1fr) 44px 208px 44px minmax(0,1fr);align-items:center}
@@ -156,7 +167,14 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </nav>
 
-  <header class="rs-2col" style="max-width:1240px;margin:0 auto;padding:88px 24px 56px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:40px;align-items:center">
+  <div class="rs-pad" style="max-width:1240px;margin:0 auto;padding:28px 24px 0;display:flex;justify-content:center">
+    <a href="Changelog.dc.html" class="rs-pill" style="display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:#4a5652;background:#fff;border:1px solid #dbe2df;border-radius:999px;padding:5px 6px 5px 12px;text-decoration:none;max-width:100%" style-hover="border-color:#c3cdc9;text-decoration:none">
+      <span style="display:flex;align-items:center;gap:10px;min-width:0"><span aria-hidden="true" style="width:7px;height:7px;border-radius:50%;background:oklch(0.52 0.11 170);box-shadow:0 0 0 3px oklch(0.52 0.11 170 / 0.18);flex:none"></span><span><b style="font-family:'JetBrains Mono',monospace;font-weight:500;color:#17201d">{{ pillVersion }}</b> is out: {{ pillNote }}</span></span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;color:#e6efeb;background:#10201b;border-radius:999px;padding:4px 10px;white-space:nowrap">See what's new →</span>
+    </a>
+  </div>
+
+  <header class="rs-2col" style="max-width:1240px;margin:0 auto;padding:56px 24px 56px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:40px;align-items:center">
     <div style="display:grid;gap:22px;min-width:0">
       <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Self-hosted · Python · FSL-1.1-MIT{{ latestLabel }}</span>
       <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(38px,5vw,64px);line-height:1.02;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">One governed gate between your databases and <span style="color:oklch(0.52 0.11 170)">everything that asks them for data</span>.</h1>
@@ -168,10 +186,31 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
               <button role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.go }}" style="font-size:13px;font-weight:500;padding:6px 12px;border-radius:999px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.color }};cursor:pointer;font-family:'JetBrains Mono',monospace;transition:background 0.2s,color 0.2s,border-color 0.2s">{{ t.label }}</button>
             </sc-for>
           </div>
-          <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:8px;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.65;overflow-x:auto;min-width:0">{{ installCode }}</pre>
-          <span style="font-size:13px;color:#626d69">{{ installNote }}</span>
+          <div style="background:#10201b;border-radius:10px;overflow:hidden;min-width:0;box-shadow:0 20px 40px -24px rgba(16,32,27,0.5)">
+            <div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #1b2f29">
+              <span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">{{ installFile }}</span>
+              <button type="button" class="copy-btn" onClick="{{ copyInstall }}" aria-label="Copy install commands" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedInstall }}</button>
+            </div>
+            <div style="display:grid;min-width:0">
+              <sc-for list="{{ installPanes }}" as="p" hint-placeholder-count="3">
+                <pre aria-hidden="{{ p.hidden }}" style="grid-area:1/1;visibility:{{ p.vis }};margin:0;color:#e6efeb;padding:12px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.65;overflow-x:auto;min-width:0">{{ p.code }}</pre>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display:grid">
+            <sc-for list="{{ installPanes }}" as="p" hint-placeholder-count="3">
+              <span aria-hidden="{{ p.hidden }}" style="grid-area:1/1;visibility:{{ p.vis }};font-size:13px;color:#626d69">{{ p.note }}</span>
+            </sc-for>
+          </div>
         </div>
         <a href="Docs.dc.html#install" style="font-size:15px;font-weight:600;color:#17201d;padding:12px 18px;border:1px solid #c3cdc9;border-radius:8px;background:#fff;text-decoration:none" style-hover="border-color:#17201d">All install options →</a>
+      </div>
+      <div style="display:flex;gap:10px 20px;flex-wrap:wrap;font-size:13px;color:#4a5652">
+        <span style="display:inline-flex;align-items:center;gap:6px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(0.52 0.11 170)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 6h.01M6 18h.01"/></svg>Self-hosted: your data never leaves</span>
+        <span style="display:inline-flex;align-items:center;gap:6px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(0.52 0.11 170)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Signed releases with provenance and SBOM</span>
+        <span style="display:inline-flex;align-items:center;gap:6px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(0.52 0.11 170)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>FSL-1.1-MIT, MIT after two years</span>
+        <span style="display:inline-flex;align-items:center;gap:6px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(0.52 0.11 170)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>Python 3.11+, one process</span>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:6px">
         <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">8</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">database types</span></div>
@@ -182,13 +221,20 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         <sc-if value="{{ hasStars }}" hint-placeholder-val="{{ false }}"><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">{{ stars }}</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">GitHub stars</span></div></sc-if>
       </div>
     </div>
-    <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:22px 24px;font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.65;overflow-x:auto;min-width:0;box-shadow:0 30px 60px -30px rgba(16,32,27,0.45)"><span style="color:#9fb3ac"># a saved query, called by a partner's key
+    <div style="background:#10201b;border-radius:12px;overflow:hidden;min-width:0;box-shadow:0 30px 60px -30px rgba(16,32,27,0.45)">
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid #1b2f29">
+        <span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">request.http</span>
+        <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.04em;padding:3px 8px;border-radius:999px;background:oklch(0.62 0.13 170 / 0.14);color:oklch(0.8 0.11 170);border:1px solid oklch(0.62 0.13 170 / 0.35);white-space:nowrap">200 OK · 15 ms</span>
+      </div>
+      <pre style="margin:0;color:#e6efeb;padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:13.5px;line-height:1.65;overflow-x:auto;min-width:0"><span style="color:#9fb3ac"># a saved query, called by a partner's key
 </span><span style="color:oklch(0.8 0.11 170)">GET</span> /q/acme_orders?status=open
 X-API-Key: sk_…partner-acme
 
 <span style="color:#9fb3ac"># grant checked · parameters validated · email masked</span>
 [{"id": 5, "status": "open",
   "email": <span style="color:oklch(0.82 0.12 80)">"a***@acme.io"</span>}]</pre>
+    </div>
   </header>
   <section id="architecture" style="scroll-margin-top:72px;max-width:1240px;margin:0 auto;padding:72px 24px 24px;display:grid;gap:10px">
     <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">How it fits together</span>
@@ -297,75 +343,174 @@ X-API-Key: sk_…partner-acme
         <div style="display:flex;flex-wrap:wrap;gap:8px"><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/typescript) center/contain no-repeat"></span>TypeScript<span title="Generated and called against a live server" style="color:oklch(0.52 0.11 170);font-weight:700">✓</span></span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/python) center/contain no-repeat"></span>Python<span title="Generated and called against a live server" style="color:oklch(0.52 0.11 170);font-weight:700">✓</span></span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/openjdk) center/contain no-repeat"></span>Java<span title="Generated and called against a live server" style="color:oklch(0.52 0.11 170);font-weight:700">✓</span></span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/go) center/contain no-repeat"></span>Go</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500">C#</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/kotlin) center/contain no-repeat"></span>Kotlin</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/swift) center/contain no-repeat"></span>Swift</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/rust) center/contain no-repeat"></span>Rust</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/php) center/contain no-repeat"></span>PHP</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/ruby) center/contain no-repeat"></span>Ruby</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/dart) center/contain no-repeat"></span>Dart</span><span style="display:inline-flex;gap:7px;align-items:center;padding:7px 11px;background:#fff;border:1px solid #dbe2df;border-radius:999px;font-size:13.5px;font-weight:500"><span aria-hidden="true" style="flex:none;width:16px;height:16px;background:url(https://cdn.simpleicons.org/scala) center/contain no-repeat"></span>Scala</span><a href="https://openapi-generator.tech/docs/generators" style="display:inline-flex;align-items:center;padding:7px 11px;border:1px dashed #9fb3ac;border-radius:999px;font-size:13.5px;font-weight:500;color:#4a5652">+ about 40 more</a></div>
         <p style="margin:0;font-size:13.5px;color:#626d69"><span style="color:oklch(0.52 0.11 170);font-weight:700">✓</span> generated and called against a live server. Generate with a partner's key and their client contains only the queries that key may call. Regenerate when you publish a new query version.</p>
       </div>
-      <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:22px 24px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35)"><span style="color:#9fb3ac"># 1. generate a client from your own server's spec</span>
-npx @openapitools/openapi-generator-cli generate \
-  -i https://data.example.com/openapi.json \
-  --auth "X-API-Key:$PARTNER_KEY" -g python -o acme-client
-
-<span style="color:#9fb3ac"># 2. every saved query is a typed method</span>
-api = SavedQueriesLiveApi(ApiClient(config))
-api.run_example_top_films(category=<span style="color:oklch(0.82 0.12 80)">"Comedy"</span>, top_n=2)
-<span style="color:#9fb3ac"># [{'title': 'Electric Signal', 'rating': 'PG', 'rentals': 977, ...}, ...]</span>
-
-api.run_example_top_films(top_n=500)
-<span style="color:#9fb3ac"># ValidationError: top_n is 1 to 50 - caught before the request is sent</span></pre>
+      <div style="background:#10201b;border-radius:12px;overflow:hidden;min-width:0;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35)">
+        <div style="display:flex;align-items:center;gap:6px;padding:8px 10px 8px 14px;border-bottom:1px solid #1b2f29;flex-wrap:wrap">
+          <span aria-hidden="true" style="display:flex;gap:5px;margin-right:6px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span>
+          <div role="tablist" aria-label="Client language" style="display:flex;gap:4px;flex-wrap:wrap">
+            <sc-for list="{{ langTabs }}" as="t" hint-placeholder-count="6">
+              <button type="button" role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.go }}" style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;padding:4px 10px;border-radius:999px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.color }};cursor:pointer;min-height:26px;transition:background 0.2s,color 0.2s,border-color 0.2s">{{ t.label }}</button>
+            </sc-for>
+          </div>
+          <button type="button" class="copy-btn" onClick="{{ copyLang }}" aria-label="Copy client example" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedLang }}</button>
+        </div>
+        <div style="display:grid;min-width:0">
+          <sc-for list="{{ langPanes }}" as="p" hint-placeholder-count="6">
+            <pre aria-hidden="{{ p.hidden }}" style="grid-area:1/1;visibility:{{ p.vis }};margin:0;color:#e6efeb;padding:18px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0"><sc-for list="{{ p.lines }}" as="l" hint-placeholder-count="10"><span style="display:block;min-height:1.7em;color:{{ l.color }}">{{ l.t }}</span></sc-for></pre>
+          </sc-for>
+        </div>
+      </div>
     </div>
   </section>
 
 
-  <section class="rs-2col" style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:48px;align-items:start">
-    <div style="display:grid;gap:14px">
-      <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Governance</span>
-      <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Governed, not just exposed</h2>
-      <p style="margin:0;color:#4a5652;text-wrap:pretty">Read-only by default. A single-statement SQL guard blocks writes and multi-statement injection unless a connection or key explicitly opts in, narrowed further to specific write operations if needed.</p>
-      <a href="Security.dc.html" style="font-weight:600">The security model →</a>
+  <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
+    <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
+      <div style="display:grid;gap:10px">
+        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Governance</span>
+        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Governed, not just exposed</h2>
+      </div>
+      <p style="margin:0;color:#4a5652;max-width:52ch;text-wrap:pretty">Read-only by default. A single-statement SQL guard blocks writes and multi-statement injection unless a connection or key explicitly opts in. Every call passes the same four controls whether it comes from an app, a partner key or an AI agent. <a href="Security.dc.html" style="font-weight:600;white-space:nowrap">The security model →</a></p>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px">
-      <div style="display:grid;gap:6px;padding:18px;background:#fff;border:1px solid #dbe2df;border-radius:10px"><h3 style="margin:0;font-size:15px;font-weight:600">Identity</h3><p style="margin:0;font-size:14px;color:#4a5652">Scoped API keys, reusable roles, named administrators with owner, admin, developer and auditor roles. App users by JWT / JWKS.</p></div>
-      <div style="display:grid;gap:6px;padding:18px;background:#fff;border:1px solid #dbe2df;border-radius:10px"><h3 style="margin:0;font-size:15px;font-weight:600">Policy</h3><p style="margin:0;font-size:14px;color:#4a5652">Per-query and collection grants, table allow-lists, write ceilings, per-user values bound from token claims, rate limits, IP allow-lists, key expiry.</p></div>
-      <div style="display:grid;gap:6px;padding:18px;background:#fff;border:1px solid #dbe2df;border-radius:10px"><h3 style="margin:0;font-size:15px;font-weight:600">Masking</h3><p style="margin:0;font-size:14px;color:#4a5652">Column masking traced to source columns through joins and aliases with sqlglot, applied before the response is formatted.</p></div>
-      <div style="display:grid;gap:6px;padding:18px;background:#fff;border:1px solid #dbe2df;border-radius:10px"><h3 style="margin:0;font-size:15px;font-weight:600">Record</h3><p style="margin:0;font-size:14px;color:#4a5652">Audit log of who changed what, run history for every query, alerts on failures, Prometheus <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/metrics</code>.</p></div>
+    <div class="gov-grid">
+      <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)">
+        <div class="gov-paper" aria-hidden="true" style="height:150px;box-sizing:border-box;padding:18px;display:grid;align-content:center;gap:8px;border-bottom:1px solid #dbe2df;font-family:'JetBrains Mono',monospace;font-size:11px">
+          <div style="background:#fff;border:1px solid #c3cdc9;border-radius:6px;padding:7px 10px;color:#4a5652;display:flex;justify-content:space-between;gap:8px"><span>X-API-Key</span><span style="color:#17201d">sk_live_…9f3a</span></div>
+          <div style="justify-self:center;color:#9fb3ac;line-height:1">↓</div>
+          <div style="background:#10201b;border-radius:6px;padding:7px 10px;color:#e6efeb;display:flex;justify-content:space-between;gap:8px"><span>partner-acme · reader</span><span style="color:oklch(0.8 0.11 170)">✓</span></div>
+        </div>
+        <div style="padding:16px 18px 18px;display:grid;gap:8px;align-content:start">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#10201b;display:grid;place-items:center;color:oklch(0.8 0.11 170)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Governance</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">01</span></div>
+          <h3 style="margin:0;font-size:16px;font-weight:600">Identity</h3>
+          <p style="margin:0;font-size:13.5px;color:#4a5652">Scoped API keys, reusable roles, named administrators with owner, admin, developer and auditor roles. App users by JWT / JWKS.</p>
+        </div>
+      </article>
+      <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)">
+        <div class="gov-paper" aria-hidden="true" style="height:150px;box-sizing:border-box;padding:18px;display:grid;align-content:center;gap:6px;border-bottom:1px solid #dbe2df;font-family:'JetBrains Mono',monospace;font-size:11px;color:#17201d">
+          <div style="background:#fff;border:1px solid #c3cdc9;border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;gap:8px"><span>orders_by_customer</span><span style="color:oklch(0.52 0.11 170)">grant ✓</span></div>
+          <div style="background:#fff;border:1px solid #c3cdc9;border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;gap:8px"><span>tables: orders, customers</span><span style="color:oklch(0.52 0.11 170)">allow ✓</span></div>
+          <div style="background:#fff;border:1px solid #e0b4ab;border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;gap:8px"><span>payroll</span><span style="color:oklch(0.55 0.18 25)">403 GRANT_DENIED</span></div>
+        </div>
+        <div style="padding:16px 18px 18px;display:grid;gap:8px;align-content:start">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#10201b;display:grid;place-items:center;color:oklch(0.8 0.11 170)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Governance</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">02</span></div>
+          <h3 style="margin:0;font-size:16px;font-weight:600">Policy</h3>
+          <p style="margin:0;font-size:13.5px;color:#4a5652">Per-query and collection grants, table allow-lists, write ceilings, per-user values bound from token claims, rate limits, IP allow-lists, key expiry.</p>
+        </div>
+      </article>
+      <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)">
+        <div class="gov-paper" aria-hidden="true" style="height:150px;box-sizing:border-box;padding:18px;display:grid;align-content:center;gap:8px;border-bottom:1px solid #dbe2df;font-family:'JetBrains Mono',monospace;font-size:11px;color:#4a5652">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 14px minmax(0,1fr);gap:6px;align-items:center"><span style="background:#fff;border:1px solid #c3cdc9;border-radius:5px;padding:5px 7px;color:#17201d;text-decoration:line-through;text-decoration-color:oklch(0.55 0.18 25);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">a.lee@acme.io</span><span style="color:#9fb3ac;text-align:center">→</span><span style="background:#10201b;border-radius:5px;padding:5px 7px;color:oklch(0.82 0.12 80);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">a***@acme.io</span></div>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 14px minmax(0,1fr);gap:6px;align-items:center"><span style="background:#fff;border:1px solid #c3cdc9;border-radius:5px;padding:5px 7px;color:#17201d;text-decoration:line-through;text-decoration-color:oklch(0.55 0.18 25);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">+44 7700 900</span><span style="color:#9fb3ac;text-align:center">→</span><span style="background:#10201b;border-radius:5px;padding:5px 7px;color:oklch(0.82 0.12 80);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">+44 •••• 900</span></div>
+          <div style="font-size:10.5px;color:#626d69;text-align:right">traced to the source column with sqlglot</div>
+        </div>
+        <div style="padding:16px 18px 18px;display:grid;gap:8px;align-content:start">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#10201b;display:grid;place-items:center;color:oklch(0.8 0.11 170)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61M2 2l20 20"/></svg></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Governance</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">03</span></div>
+          <h3 style="margin:0;font-size:16px;font-weight:600">Masking</h3>
+          <p style="margin:0;font-size:13.5px;color:#4a5652">Column masking traced to source columns through joins and aliases with sqlglot, applied before the response is formatted, in every output format.</p>
+        </div>
+      </article>
+      <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)">
+        <div class="gov-paper" aria-hidden="true" style="height:150px;box-sizing:border-box;padding:18px;display:grid;align-content:center;border-bottom:1px solid #dbe2df">
+          <div style="background:#10201b;border-radius:8px;padding:10px 12px;color:#c5d3cd;display:grid;gap:5px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.5;white-space:nowrap;overflow:hidden">
+            <span><span style="color:oklch(0.8 0.11 170)">run</span>    #184203 · 200 · 15 ms</span>
+            <span><span style="color:oklch(0.8 0.11 170)">metric</span> requests_total +1</span>
+            <span><span style="color:oklch(0.8 0.11 170)">event</span>  query.run → /events</span>
+            <span><span style="color:oklch(0.82 0.12 80)">audit</span>  grant.changed by ops@acme</span>
+          </div>
+        </div>
+        <div style="padding:16px 18px 18px;display:grid;gap:8px;align-content:start">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#10201b;display:grid;place-items:center;color:oklch(0.8 0.11 170)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"/><path d="M14 2v4a2 2 0 0 0 2 2h4M2 15h10M9 18l3-3-3-3"/></svg></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Governance</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">04</span></div>
+          <h3 style="margin:0;font-size:16px;font-weight:600">Record</h3>
+          <p style="margin:0;font-size:13.5px;color:#4a5652">Audit log of who changed what, run history for every query, alerts on failures, Prometheus <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/metrics</code>.</p>
+        </div>
+      </article>
     </div>
   </section>
 
   <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
-    <div style="display:grid;gap:10px">
-      <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Your data</span>
-      <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">Every major database, one interface</h2>
-      <p style="margin:0;color:#4a5652;max-width:70ch">Native drivers, plus generic JDBC for anything with a driver jar. Point a connection at a folder or bucket of Parquet, CSV or JSON and each file becomes a view, through DuckDB.</p>
+    <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
+      <div style="display:grid;gap:10px">
+        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Your data</span>
+        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">Every major database, one interface</h2>
+      </div>
+      <p style="margin:0;color:#4a5652;max-width:52ch;text-wrap:pretty">Native drivers, plus generic JDBC for anything with a driver jar. Point a connection at a folder or bucket of Parquet, CSV or JSON and each file becomes a view, through DuckDB.</p>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6">
-        <button onClick="{{ c.go }}" style="font-size:13.5px;font-weight:500;padding:8px 14px;border-radius:999px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};cursor:pointer;font-family:inherit;transition:background 0.25s,color 0.25s,border-color 0.25s">{{ c.label }}</button>
-      </sc-for>
+    <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:32px;align-items:start">
+      <div ref="{{ dataRef }}" onMouseEnter="{{ catEnter }}" onMouseLeave="{{ catLeave }}" style="display:grid;gap:18px;min-width:0">
+        <div style="display:grid;gap:10px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ cats }}" as="c" hint-placeholder-count="6">
+              <button onClick="{{ c.go }}" style="font-size:13.5px;font-weight:500;padding:8px 14px;border-radius:999px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};cursor:pointer;font-family:inherit;transition:background 0.25s,color 0.25s,border-color 0.25s">{{ c.label }}</button>
+            </sc-for>
+          </div>
+          <div aria-hidden="true" style="height:2px;background:#dbe2df;border-radius:2px;overflow:hidden;opacity:{{ catBarOpacity }};transition:opacity 0.3s"><span onAnimationEnd="{{ catNext }}" style="display:block;height:100%;background:oklch(0.52 0.11 170);transform-origin:left;transform:scaleX(0);animation:{{ catBarAnim }} 4000ms linear forwards;animation-play-state:{{ catBarPlay }}"></span></div>
+        </div>
+        <div class="db-grid">
+          <sc-for list="{{ dbs }}" as="d" hint-placeholder-count="10">
+            <span style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;box-sizing:border-box;height:84px;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid {{ d.border }};font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.3;opacity:{{ d.opacity }};transform:{{ d.transform }};filter:{{ d.filter }};transition:opacity 0.4s cubic-bezier(0.2,0.7,0.2,1),transform 0.4s cubic-bezier(0.2,0.7,0.2,1),filter 0.4s,border-color 0.4s;transition-delay:{{ d.delay }}"><sc-if value="{{ d.icon }}" hint-placeholder-val="{{ false }}"><span style="display:block;width:22px;height:22px;background:{{ d.iconBg }}"></span></sc-if><span>{{ d.name }}<sc-if value="{{ d.exp }}" hint-placeholder-val="{{ false }}"> <em style="font-style:normal;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:oklch(0.6 0.13 75)">exp</em></sc-if></span></span>
+          </sc-for>
+        </div>
+        <p style="margin:0;font-size:14.5px;color:#4a5652;min-height:1.6em;max-width:60ch">{{ catNote }}</p>
+        <p style="margin:0;font-size:13px;color:#626d69;display:flex;gap:16px;flex-wrap:wrap"><span><b style="font-weight:600;color:#17201d">Tier 1</b> · every feature, tested against a real server in CI</span><span><em style="font-style:normal;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:oklch(0.6 0.13 75)">exp</em> · experimental, may change in a minor release</span></p>
+      </div>
+      <div style="display:grid;gap:16px;min-width:0">
+        <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid">
+          <div class="gov-paper" aria-hidden="true" style="box-sizing:border-box;padding:18px;display:grid;gap:6px;border-bottom:1px solid #dbe2df;font-family:'JetBrains Mono',monospace;font-size:11px;color:#17201d">
+            <div style="background:#fff;border:1px solid #c3cdc9;border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;gap:8px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">s3://sales/2026/*.parquet</span><span style="color:#626d69;white-space:nowrap">allowed_paths ✓</span></div>
+            <div style="justify-self:center;color:#9fb3ac;line-height:1">↓</div>
+            <div style="background:#fff;border:1px solid #c3cdc9;border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;gap:8px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">view <b style="font-weight:500">orders</b> · 5,000 rows</span><span style="color:#626d69;white-space:nowrap">DuckDB</span></div>
+            <div style="justify-self:center;color:#9fb3ac;line-height:1">↓</div>
+            <div style="background:#10201b;border-radius:6px;padding:6px 10px;color:#e6efeb;display:flex;justify-content:space-between;gap:8px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span style="color:oklch(0.8 0.11 170)">GET</span> /q/daily_revenue?from=…&amp;to=…</span><span style="color:oklch(0.8 0.11 170);white-space:nowrap">200</span></div>
+          </div>
+          <div style="padding:14px 18px 16px;display:grid;gap:6px">
+            <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Files, through DuckDB</span><a href="Guide.dc.html?g=41-publish-files-in-s3-as-an-api" style="margin-left:auto;font-size:13px;font-weight:600;white-space:nowrap">Guide 41 →</a></div>
+            <h3 style="margin:0;font-size:15px;font-weight:600">No database to load them into</h3>
+            <p style="margin:0;font-size:13.5px;color:#4a5652">A connection reads exactly the paths you allow; each file becomes a view, and a saved query over it is an endpoint like any other.</p>
+          </div>
+        </article>
+        <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid">
+          <div class="gov-paper" aria-hidden="true" style="box-sizing:border-box;padding:18px;display:grid;gap:6px;border-bottom:1px solid #dbe2df;font-family:'JetBrains Mono',monospace;font-size:11px;color:#17201d">
+            <div style="background:#fff;border:1px solid #c3cdc9;border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;gap:8px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">server · QUERYAPIGATE_ALLOW_WRITES=1</span><span style="color:oklch(0.52 0.11 170);white-space:nowrap">ceiling ✓</span></div>
+            <div style="background:#fff;border:1px solid #c3cdc9;border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;gap:8px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">key · "allow_writes": true</span><span style="color:oklch(0.52 0.11 170);white-space:nowrap">narrows ✓</span></div>
+            <div style="background:#fff;border:1px solid #c3cdc9;border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;gap:8px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">key · "allowed_write_ops": ["insert"]</span><span style="color:oklch(0.52 0.11 170);white-space:nowrap">one verb ✓</span></div>
+            <div style="background:#fff;border:1px solid #e0b4ab;border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;gap:8px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">any other key · DELETE FROM notes</span><span style="color:oklch(0.55 0.18 25);white-space:nowrap">refused</span></div>
+          </div>
+          <div style="padding:14px 18px 16px;display:grid;gap:6px">
+            <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Writes</span><a href="Guide.dc.html?g=10-allow-a-saved-query-to-write-data" style="margin-left:auto;font-size:13px;font-weight:600;white-space:nowrap">Guide 10 →</a></div>
+            <h3 style="margin:0;font-size:15px;font-weight:600">Off until every layer agrees</h3>
+            <p style="margin:0;font-size:13.5px;color:#4a5652">Read-only by default. A server ceiling, then each key, can only narrow what is allowed, down to a single verb on a single query.</p>
+          </div>
+        </article>
+      </div>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:10px">
-      <sc-for list="{{ dbs }}" as="d" hint-placeholder-count="10">
-        <span style="display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:14px;padding:10px 14px 10px 12px;border-radius:8px;background:#fff;border:1px solid {{ d.border }};opacity:{{ d.opacity }};transform:{{ d.transform }};filter:{{ d.filter }};transition:opacity 0.4s cubic-bezier(0.2,0.7,0.2,1),transform 0.4s cubic-bezier(0.2,0.7,0.2,1),filter 0.4s,border-color 0.4s;transition-delay:{{ d.delay }}"><sc-if value="{{ d.icon }}" hint-placeholder-val="{{ false }}"><span style="display:block;width:18px;height:18px;background:{{ d.iconBg }}"></span></sc-if>{{ d.name }}<sc-if value="{{ d.exp }}" hint-placeholder-val="{{ false }}"><em style="font-style:normal;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:oklch(0.6 0.13 75)">exp</em></sc-if></span>
-      </sc-for>
-    </div>
-    <p style="margin:0;font-size:14.5px;color:#4a5652;min-height:1.6em;max-width:70ch">{{ catNote }}</p>
   </section>
 
   <section style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df">
     <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:32px">
-      <div style="display:grid;gap:10px">
-        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Compared with a hand-rolled API</span>
-        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">What you stop writing</h2>
+      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
+        <div style="display:grid;gap:10px">
+          <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Compared with a hand-rolled API</span>
+          <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">What you stop writing</h2>
+        </div>
+        <p style="margin:0;color:#4a5652;max-width:52ch;text-wrap:pretty">Each row is something you would build and maintain per endpoint, and what QueryAPIGate gives every saved query instead.</p>
       </div>
-      <div class="cmp-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:#dbe2df;border:1px solid #dbe2df;border-radius:10px;overflow:hidden">
-        <div style="background:#f3f5f4;padding:18px 22px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Per endpoint, by hand</div>
-        <div style="background:#f3f5f4;padding:18px 22px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">With QueryAPIGate</div>
-        <div style="background:#fff;padding:18px 22px;font-size:15px;color:#4a5652">Controller, repository layer, serializer, pagination</div>
-        <div style="background:#fff;padding:18px 22px;font-size:15px">Save the SQL. The endpoint, OpenAPI and Postman collection are generated.</div>
-        <div style="background:#fff;padding:18px 22px;font-size:15px;color:#4a5652">Auth middleware, key storage, rate limiting, per-client scopes</div>
-        <div style="background:#fff;padding:18px 22px;font-size:15px">Scoped keys, roles, limits and expiry, managed in the Console or <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/api/v1</code>.</div>
-        <div style="background:#fff;padding:18px 22px;font-size:15px;color:#4a5652">Parameter validation and injection defences, reviewed per endpoint</div>
-        <div style="background:#fff;padding:18px 22px;font-size:15px">Typed parameters, always bound. A fuzz-tested SQL guard on every call.</div>
-        <div style="background:#fff;padding:18px 22px;font-size:15px;color:#4a5652">A second integration for AI agents, a third for exports, a fourth for events</div>
-        <div style="background:#fff;padding:18px 22px;font-size:15px">The same saved query behind REST, MCP, SSE and the export CLI.</div>
-        <div style="background:#fff;padding:18px 22px;font-size:15px;color:#4a5652">Logging, metrics, audit trail, dashboards</div>
-        <div style="background:#fff;padding:18px 22px;font-size:15px">Structured logs, request IDs, Prometheus metrics, a Grafana dashboard and an audit log out of the box.</div>
+      <div class="cmp-grid" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:1px;background:#dbe2df;border:1px solid #dbe2df;border-radius:12px;overflow:hidden">
+        <div style="background:#f3f5f4;padding:14px 22px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69;display:flex;align-items:center;gap:8px"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Per endpoint, by hand</div>
+        <div style="background:#e9f3ee;padding:14px 22px;font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170);display:flex;align-items:center;gap:8px"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>With QueryAPIGate</div>
+
+        <div style="background:#fff;padding:16px 22px;font-size:15px;color:#626d69;display:flex;gap:14px;align-items:flex-start"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fb3ac;padding-top:4px">01</span><span style="flex:1">Controller, repository layer, serializer, pagination</span><span class="cmp-arrow" aria-hidden="true" style="color:#9fb3ac;padding-top:1px">→</span></div>
+        <div style="background:#f3f9f6;padding:16px 22px;font-size:15px;font-weight:500;display:flex;gap:10px;align-items:flex-start"><span aria-hidden="true" style="flex:none;width:18px;height:18px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;display:grid;place-items:center;margin-top:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span>Save the SQL. The endpoint, OpenAPI and Postman collection are generated.</span></div>
+
+        <div style="background:#fff;padding:16px 22px;font-size:15px;color:#626d69;display:flex;gap:14px;align-items:flex-start"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fb3ac;padding-top:4px">02</span><span style="flex:1">Auth middleware, key storage, rate limiting, per-client scopes</span><span class="cmp-arrow" aria-hidden="true" style="color:#9fb3ac;padding-top:1px">→</span></div>
+        <div style="background:#f3f9f6;padding:16px 22px;font-size:15px;font-weight:500;display:flex;gap:10px;align-items:flex-start"><span aria-hidden="true" style="flex:none;width:18px;height:18px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;display:grid;place-items:center;margin-top:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span>Scoped keys, roles, limits and expiry, managed in the Console or <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/api/v1</code>.</span></div>
+
+        <div style="background:#fff;padding:16px 22px;font-size:15px;color:#626d69;display:flex;gap:14px;align-items:flex-start"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fb3ac;padding-top:4px">03</span><span style="flex:1">Parameter validation and injection defences, reviewed per endpoint</span><span class="cmp-arrow" aria-hidden="true" style="color:#9fb3ac;padding-top:1px">→</span></div>
+        <div style="background:#f3f9f6;padding:16px 22px;font-size:15px;font-weight:500;display:flex;gap:10px;align-items:flex-start"><span aria-hidden="true" style="flex:none;width:18px;height:18px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;display:grid;place-items:center;margin-top:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span>Typed parameters, always bound. A fuzz-tested SQL guard on every call.</span></div>
+
+        <div style="background:#fff;padding:16px 22px;font-size:15px;color:#626d69;display:flex;gap:14px;align-items:flex-start"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fb3ac;padding-top:4px">04</span><span style="flex:1">A second integration for AI agents, a third for exports, a fourth for events</span><span class="cmp-arrow" aria-hidden="true" style="color:#9fb3ac;padding-top:1px">→</span></div>
+        <div style="background:#f3f9f6;padding:16px 22px;font-size:15px;font-weight:500;display:flex;gap:10px;align-items:flex-start"><span aria-hidden="true" style="flex:none;width:18px;height:18px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;display:grid;place-items:center;margin-top:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span>The same saved query behind REST, MCP, SSE and the export CLI.</span></div>
+
+        <div style="background:#fff;padding:16px 22px;font-size:15px;color:#626d69;display:flex;gap:14px;align-items:flex-start"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fb3ac;padding-top:4px">05</span><span style="flex:1">Logging, metrics, audit trail, dashboards</span><span class="cmp-arrow" aria-hidden="true" style="color:#9fb3ac;padding-top:1px">→</span></div>
+        <div style="background:#f3f9f6;padding:16px 22px;font-size:15px;font-weight:500;display:flex;gap:10px;align-items:flex-start"><span aria-hidden="true" style="flex:none;width:18px;height:18px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;display:grid;place-items:center;margin-top:3px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span>Structured logs, request IDs, Prometheus metrics, a Grafana dashboard and an audit log out of the box.</span></div>
       </div>
     </div>
   </section>
@@ -459,8 +604,23 @@ api.run_example_top_films(top_n=500)
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { w: 1192, cat: 'all', inst: 'pip', gh: null, pypi: null, release: null, step: 0, hovered: null, running: true, fading: false };
+  state = { w: 1192, cat: 'all', catAuto: true, catHover: false, catRunning: true, catAnim: 'catbarA', inst: 'pip', lang: 'python', gh: null, pypi: null, release: null, step: 0, hovered: null, running: true, fading: false, copied: null };
   stepsRef = React.createRef();
+  dataRef = React.createRef();
+  // The "Your data" category filter cycles on its own: the progress bar's CSS animation (4s, see the markup)
+  // ends, catNext picks the next category and flips the keyframe name so the bar restarts. Hovering pauses it;
+  // choosing a category by hand stops it.
+  catNext = () => {
+    if (!this.state.catAuto) return;
+    const i = this.cats.findIndex(c => c.id === this.state.cat);
+    this.setState({ cat: this.cats[(i + 1) % this.cats.length].id, catAnim: this.state.catAnim === 'catbarA' ? 'catbarB' : 'catbarA' });
+  };
+  observeData() {
+    const el = this.dataRef.current;
+    if (!el || this.ioData) return;
+    this.ioData = new IntersectionObserver(([e]) => this.setState({ catRunning: e.isIntersecting }), { threshold: 0.2 });
+    this.ioData.observe(el);
+  }
   stepData = [
     { num: '01', layer: 'Identity', icon: 'key-round', title: 'Identify the caller', desc: 'The key, admin token, JWT or OAuth token is resolved to a named principal with roles and scopes.', status: 'KEY RESOLVED', elapsed: '0.3 ms', fail: '401 unauthorized',
       rows: [['credential', 'X-API-Key sk_live_…9f3a', '', ''], ['principal', 'partner-acme', '· role reader', 'ok'], ['scope', 'connections [orders_pg] · read-only', '', '']] },
@@ -480,6 +640,19 @@ class Component extends DCLogic {
       rows: [['run', '#184203 · 200 · 15 ms', '', 'ok'], ['metric', 'requests_total{key="partner-acme"} +1', '', ''], ['event', 'query.run → /events', '', '']] },
   ];
   stepMs = 3200;
+  // Shown in the announcement pill above the hero, after the live version number. Update per release.
+  releaseNote = 'signed images, SBOM and the Helm chart';
+  // Client-library examples. The generate command is the same for every language except -g; the usage
+  // lines follow OpenAPI Generator's naming for each generator. Lines starting with # or // render muted.
+  langGen = (g) => '# 1. generate a client from your own server\'s spec\nnpx @openapitools/openapi-generator-cli generate \\\n  -i https://data.example.com/openapi.json \\\n  --auth "X-API-Key:$PARTNER_KEY" -g ' + g + ' -o acme-client\n\n';
+  langs = [
+    { id: 'curl', label: 'cURL', code: '# any saved query is a GET, with the caller\'s key\ncurl "https://data.example.com/q/example_top_films?category=Comedy&top_n=2" \\\n  -H "X-API-Key: $PARTNER_KEY"\n# [{"title": "Electric Signal", "rating": "PG", "rentals": 977, ...}, ...]\n\ncurl "https://data.example.com/q/example_top_films?top_n=500" \\\n  -H "X-API-Key: $PARTNER_KEY"\n# 400 {"code": "param_invalid", "detail": "top_n is 1 to 50"}' },
+    { id: 'python', label: 'Python', code: null, gen: 'python', usage: '# 2. every saved query is a typed method\napi = SavedQueriesLiveApi(ApiClient(config))\napi.run_example_top_films(category="Comedy", top_n=2)\n# [{\'title\': \'Electric Signal\', \'rating\': \'PG\', \'rentals\': 977, ...}, ...]\n\napi.run_example_top_films(top_n=500)\n# ValidationError: top_n is 1 to 50 - caught before the request is sent' },
+    { id: 'ts', label: 'TypeScript', code: null, gen: 'typescript-fetch', usage: '// 2. every saved query is a typed method\nconst api = new SavedQueriesLiveApi(config);\nawait api.runExampleTopFilms({ category: "Comedy", topN: 2 });\n// [{ title: "Electric Signal", rating: "PG", rentals: 977, ... }, ...]\n\nawait api.runExampleTopFilms({ topN: 500 });\n// RequiredError: topN is 1 to 50 - caught before the request is sent' },
+    { id: 'java', label: 'Java', code: null, gen: 'java', usage: '// 2. every saved query is a typed method\nSavedQueriesLiveApi api = new SavedQueriesLiveApi(client);\napi.runExampleTopFilms("Comedy", 2);\n// [{title=Electric Signal, rating=PG, rentals=977, ...}, ...]\n\napi.runExampleTopFilms(null, 500);\n// ApiException: 400 param_invalid - top_n is 1 to 50' },
+    { id: 'go', label: 'Go', code: null, gen: 'go', usage: '// 2. every saved query is a typed method\nrows, _, err := client.SavedQueriesLiveAPI.\n  RunExampleTopFilms(ctx).Category("Comedy").TopN(2).Execute()\n// [{Title: "Electric Signal", Rating: "PG", Rentals: 977, ...}, ...]\n\n_, _, err = client.SavedQueriesLiveAPI.RunExampleTopFilms(ctx).TopN(500).Execute()\n// err: 400 param_invalid - top_n is 1 to 50' },
+    { id: 'csharp', label: 'C#', code: null, gen: 'csharp', usage: '// 2. every saved query is a typed method\nvar api = new SavedQueriesLiveApi(config);\nvar rows = api.RunExampleTopFilms(category: "Comedy", topN: 2);\n// [{ Title = "Electric Signal", Rating = "PG", Rentals = 977, ... }, ...]\n\napi.RunExampleTopFilms(topN: 500);\n// ApiException: 400 param_invalid - top_n is 1 to 50' },
+  ];
   installs = [
     { id: 'pip', label: 'pip', code: v => '$ pip install queryapigate\n$ QUERYAPIGATE_API_KEY=change-me queryapigate serve',
       note: 'Python 3.11+. Add drivers as extras: queryapigate[postgres,mysql].' },
@@ -492,6 +665,14 @@ class Component extends DCLogic {
     this.setState({ fading: true });
     clearTimeout(this.fadeT);
     this.fadeT = setTimeout(() => this.setState({ step: next, fading: false }), 220);
+  }
+  copy(key, text) {
+    return () => {
+      try { navigator.clipboard && navigator.clipboard.writeText(text); } catch (e) {}
+      this.setState({ copied: key });
+      clearTimeout(this.copyT);
+      this.copyT = setTimeout(() => this.setState({ copied: null }), 1400);
+    };
   }
   cats = [
     { id: 'all', label: 'All', note: 'Eight database types, plus files on disk or in object storage, behind one saved-query interface. Native drivers where they exist, generic JDBC for the rest.' },
@@ -519,6 +700,7 @@ class Component extends DCLogic {
     this.ro = new ResizeObserver(([e]) => { const w = e.contentRect.width; if (w && Math.abs(w - this.state.w) > 1) this.setState({ w }); });
     this.ro.observe(el);
     this.observeSteps();
+    this.observeData();
     const j = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
     j('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate').then(gh => gh && this.setState({ gh }));
     j('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate/releases/latest').then(release => release && this.setState({ release }));
@@ -528,14 +710,14 @@ class Component extends DCLogic {
       this.advance((this.state.step + 1) % this.stepData.length);
     }, this.stepMs);
   }
-  componentDidUpdate() { this.observeSteps(); }
+  componentDidUpdate() { this.observeSteps(); this.observeData(); }
   observeSteps() {
     const ol = this.stepsRef.current;
     if (!ol || this.io) return;
     this.io = new IntersectionObserver(([e]) => this.setState({ running: e.isIntersecting }), { threshold: 0.2 });
     this.io.observe(ol);
   }
-  componentWillUnmount() { this.ro && this.ro.disconnect(); this.io && this.io.disconnect(); clearInterval(this.timer); }
+  componentWillUnmount() { this.ro && this.ro.disconnect(); this.io && this.io.disconnect(); this.ioData && this.ioData.disconnect(); clearInterval(this.timer); clearTimeout(this.copyT); }
   renderVals() {
     const s = this.state.w / 1920;
     const cat = this.state.cat;
@@ -557,14 +739,26 @@ class Component extends DCLogic {
       latestLabel: pyVer ? ' · v' + pyVer + ' on PyPI' : '',
     };
     const ver = pyVer || '0.34.2';
+    live.pillVersion = 'v' + ver;
+    live.pillNote = this.releaseNote;
     const inst = this.installs.find(x => x.id === this.state.inst);
     return {
       ...live,
       installTabs: this.installs.map(x => { const on = x.id === inst.id; return { label: x.label, selected: on ? 'true' : 'false', go: () => this.setState({ inst: x.id }), bg: on ? '#10201b' : '#fff', color: on ? '#e6efeb' : '#4a5652', border: on ? '#10201b' : '#c3cdc9' }; }),
-      installCode: inst.code(ver), installNote: inst.note,
+      installPanes: this.installs.map(x => { const on = x.id === inst.id; return { code: x.code(ver), note: x.note, vis: on ? 'visible' : 'hidden', hidden: on ? 'false' : 'true' }; }),
+      installFile: 'install · ' + inst.label,
+      langTabs: this.langs.map(x => { const on = x.id === this.state.lang; return { label: x.label, selected: on ? 'true' : 'false', go: () => this.setState({ lang: x.id }), bg: on ? '#e6efeb' : 'transparent', color: on ? '#10201b' : '#9fb3ac', border: on ? '#e6efeb' : '#2a3d37' }; }),
+      langPanes: this.langs.map(x => { const on = x.id === this.state.lang; const code = x.code ?? (this.langGen(x.gen) + x.usage); return { vis: on ? 'visible' : 'hidden', hidden: on ? 'false' : 'true', lines: code.split('\n').map(t => ({ t, color: /^\s*(#|\/\/)/.test(t) ? '#9fb3ac' : '#e6efeb' })) }; }),
+      copyLang: this.copy('lang', (() => { const x = this.langs.find(l => l.id === this.state.lang) || this.langs[0]; return x.code ?? (this.langGen(x.gen) + x.usage); })()),
+      copiedLang: this.state.copied === 'lang' ? 'Copied' : 'Copy',
+      copyInstall: this.copy('install', inst.code(ver).replace(/^\$ /gm, '')), copiedInstall: this.state.copied === 'install' ? 'Copied' : 'Copy',
       wrapRef: this.wrapRef, diagramTransform: `scale(${s})`, wrapHeight: Math.round(1080 * s) + 'px',
-      cats: this.cats.map(c => ({ label: c.label, go: () => this.setState({ cat: c.id }), bg: c.id === cat ? '#10201b' : '#fff', color: c.id === cat ? '#e6efeb' : '#4a5652', border: c.id === cat ? '#10201b' : '#dbe2df' })),
+      cats: this.cats.map(c => ({ label: c.label, go: () => this.setState({ cat: c.id, catAuto: false }), bg: c.id === cat ? '#10201b' : '#fff', color: c.id === cat ? '#e6efeb' : '#4a5652', border: c.id === cat ? '#10201b' : '#dbe2df' })),
       dbs, catNote: this.cats.find(c => c.id === cat).note,
+      dataRef: this.dataRef, catNext: this.catNext,
+      catEnter: () => this.setState({ catHover: true }), catLeave: () => this.setState({ catHover: false }),
+      catBarAnim: this.state.catAnim, catBarOpacity: this.state.catAuto ? 1 : 0,
+      catBarPlay: this.state.catAuto && !this.state.catHover && this.state.catRunning ? 'running' : 'paused',
       stepsRef: this.stepsRef,
       unhover: () => this.setState({ hovered: null }),
       steps: this.stepData.map((d, i) => {
