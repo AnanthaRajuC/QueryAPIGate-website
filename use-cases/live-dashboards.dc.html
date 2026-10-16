@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- site-meta -->
+<title>Live dashboards - Use cases - QueryAPIGate</title>
+<meta name="description" content="A wall display or a client that reacts when a query runs. GET /events streams each run as it completes, per key if you want, fanned out across instances by the events server.">
+<meta name="theme-color" content="#10201b">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QueryAPIGate">
+<meta property="og:title" content="Live dashboards - Use cases - QueryAPIGate">
+<meta property="og:description" content="A wall display or a client that reacts when a query runs. GET /events streams each run as it completes, per key if you want, fanned out across instances by the events server.">
+<meta name="twitter:card" content="summary">
+<!-- /site-meta -->
+<script src="../support.js"></script>
+</head>
+<body>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0;background:#f3f5f4;color:#17201d;font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
+a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 170);text-decoration:underline}
+pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.rs-burger{display:none}
+.rs-menu-toggle{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+@media (max-width:1180px){
+  .rs-burger{display:inline-grid;place-items:center;width:40px;height:40px;border:1px solid #c3cdc9;border-radius:8px;background:#fff;cursor:pointer;margin-left:auto;flex:none}
+  .rs-burger span{display:block;width:16px;height:2px;background:#17201d;border-radius:2px;box-shadow:0 -5px 0 #17201d,0 5px 0 #17201d}
+  .rs-actions{margin-left:0 !important}
+  .rs-nav{display:none !important;flex-basis:100%;flex-direction:column;align-items:flex-start;gap:0 !important;font-size:16px !important;border-top:1px solid #dbe2df;padding:8px 0 4px !important;margin-top:4px}
+  .rs-nav a{display:block;width:100%;padding:11px 4px;border-bottom:1px solid #e8edeb}
+  .rs-nav a:last-child{border-bottom:0}
+  .rs-menu-toggle:checked ~ .rs-nav{display:flex !important}
+  .rs-menu-toggle:checked ~ .rs-burger span{background:transparent;box-shadow:none}
+  .rs-menu-toggle:checked ~ .rs-burger span::before,.rs-menu-toggle:checked ~ .rs-burger span::after{content:"";position:absolute;width:18px;height:2px;background:#17201d;border-radius:2px}
+  .rs-menu-toggle:checked ~ .rs-burger span::before{transform:rotate(45deg)}
+  .rs-menu-toggle:checked ~ .rs-burger span::after{transform:rotate(-45deg)}
+  .rs-navbar{flex-wrap:wrap !important;gap:12px !important}
+}
+@media (max-width:480px){.rs-gh{display:none !important}}
+@media (max-width:960px){
+  .f-bento{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+  .f-bento > *{grid-column:span 1 !important}
+  .f-2col{grid-template-columns:minmax(0,1fr) !important}
+  .f-3col{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+  .f-sec{grid-template-columns:minmax(0,1fr) !important}
+}
+@media (max-width:640px){
+  .f-bento,.f-3col,.f-badges{grid-template-columns:minmax(0,1fr) !important}
+  .f-pad{padding-left:16px !important;padding-right:16px !important}
+  .f-table th:nth-child(3),.f-table td:nth-child(3){display:none}
+}
+.f-sub{scrollbar-width:none;top:71px !important}
+.u-case{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}
+.u-case.u-flip > .u-code{order:-1}
+/* "Shape of the call" strip: who -> door -> the checks that matter here -> data. CSS-only 6s loop; the
+   un-animated base state is the finished one (checks lit), so reduced-motion shows a sensible still. */
+.u-strip{grid-column:1/-1;order:-2;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 12px;margin:-6px 0 -8px;border:1px solid #dbe2df;border-radius:10px;background:#f8faf9;font-family:'JetBrains Mono',monospace;font-size:11px;color:#17201d;min-width:0}
+.u-node{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:6px;background:#fff;border:1px solid #c3cdc9;white-space:nowrap}
+.u-node>small{font-size:10px;color:#626d69;letter-spacing:0.04em;text-transform:uppercase}
+.u-node.u-dark{background:#10201b;border-color:#10201b;color:#e6efeb}
+.u-node.u-dark>small{color:#9fb3ac}
+.u-node.u-data{animation:u-land 6s infinite backwards;animation-delay:3.6s;border-color:oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08)}
+.u-link{flex:none;width:20px;height:2px;background:#dbe2df;position:relative;border-radius:2px}
+.u-link::after{content:'';position:absolute;top:-2px;left:0;width:6px;height:6px;border-radius:50%;background:oklch(0.52 0.11 170);opacity:0;animation:u-travel 6s infinite}
+.u-link.l2::after{animation-delay:1.1s}
+/* The third connector is a row break: data sits on its own row, introduced by an arrow. */
+.u-link.l3{flex-basis:100%;width:auto;height:0;background:none}
+.u-link.l3::after{display:none}
+.u-node.u-data::before{content:'↳';color:#9fb3ac;margin-right:2px}
+.u-checks{display:inline-flex;gap:6px;flex-wrap:wrap}
+.u-chk{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:6px;white-space:nowrap;border:1px solid oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08);color:#17201d;animation:u-light 6s infinite backwards}
+.u-chk.c1{animation-delay:1.5s}.u-chk.c2{animation-delay:2.1s}.u-chk.c3{animation-delay:2.7s}.u-chk.c4{animation-delay:3.3s}
+.u-chk>b{font-weight:500;color:oklch(0.52 0.11 170)}
+.u-num{margin-left:auto;font-size:11px;color:#9fb3ac;white-space:nowrap}
+@keyframes u-travel{0%{left:0;opacity:0}2%{opacity:1}16%{left:14px;opacity:1}19%,100%{left:14px;opacity:0}}
+@keyframes u-light{0%{border-color:#c3cdc9;background:#fff;color:#626d69}6%,78%{border-color:oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08);color:#17201d}88%,100%{border-color:#c3cdc9;background:#fff;color:#626d69}}
+@keyframes u-land{0%{border-color:#c3cdc9;background:#fff}5%,38%{border-color:oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08)}42%,100%{border-color:#c3cdc9;background:#fff}}
+.u-strip-dark{background:#10201b;border-color:#243b34;color:#e6efeb}
+.u-strip-dark .u-node{background:#0c1915;border-color:#2a3d37;color:#e6efeb}
+.u-strip-dark .u-node>small{color:#9fb3ac}
+.u-strip-dark .u-node.u-dark{background:#e6efeb;border-color:#e6efeb;color:#10201b}
+.u-strip-dark .u-node.u-dark>small{color:#4a5652}
+.u-strip-dark .u-link{background:#2a3d37}
+.u-strip-dark .u-chk{color:#e6efeb;animation-name:u-light-dark}
+.u-strip-dark .u-chk>b{color:oklch(0.8 0.11 170)}
+.u-strip-dark .u-node.u-data{animation-name:u-land-dark}
+.u-strip-dark .u-num{color:#7c8f88}
+@keyframes u-light-dark{0%{border-color:#2a3d37;background:#0c1915;color:#9fb3ac}6%,78%{border-color:oklch(0.62 0.13 170 / 0.6);background:oklch(0.62 0.13 170 / 0.14);color:#e6efeb}88%,100%{border-color:#2a3d37;background:#0c1915;color:#9fb3ac}}
+@keyframes u-land-dark{0%{border-color:#2a3d37;background:#0c1915}5%,38%{border-color:oklch(0.62 0.13 170 / 0.6);background:oklch(0.62 0.13 170 / 0.14)}42%,100%{border-color:#2a3d37;background:#0c1915}}
+@media (max-width:1100px){.u-link.l2{display:none}}
+@media (max-width:640px){.u-link{display:none}.u-link.l3{display:block}.u-num{margin-left:0;width:100%}}
+@media (prefers-reduced-motion:reduce){.u-strip *{animation:none !important}.u-strip .u-link::after{display:none}}
+@media (max-width:960px){.u-case{grid-template-columns:minmax(0,1fr) !important}.u-case.u-flip > .u-code{order:2}.u-personas{grid-template-columns:repeat(2,minmax(0,1fr)) !important}.u-personas > .u-last{grid-column:span 2}}
+@media (max-width:640px){.u-personas{grid-template-columns:minmax(0,1fr) !important}.u-personas > .u-last{grid-column:span 1}}
+.f-bento > .f-last{grid-column:span 4}
+@media (max-width:960px){.f-bento > .f-last{grid-column:span 2 !important}}
+@media (max-width:640px){.f-bento > .f-last{grid-column:span 1 !important}}.f-sub::-webkit-scrollbar{display:none}
+.f-table td,.f-table th{padding:14px 16px;text-align:left;vertical-align:top;border-top:1px solid #243b34}
+.f-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac;border-top:0;padding-top:0}
+/* Use-cases dropdown in the top nav (desktop only; the burger menu keeps a plain link). */
+.rs-dd{position:relative}
+.rs-dd-panel{display:none;position:absolute;top:100%;left:-18px;padding-top:12px;z-index:30}
+.rs-dd:hover .rs-dd-panel,.rs-dd:focus-within .rs-dd-panel{display:block}
+.rs-dd-inner{background:#fff;border:1px solid #dbe2df;border-radius:14px;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35);padding:18px 20px 14px;display:grid;gap:14px;width:max-content;max-width:calc(100vw - 48px)}
+.rs-dd-grid{display:grid;grid-template-columns:repeat(5,max-content);gap:18px 28px}
+.rs-dd-grid>div{display:grid;gap:7px;align-content:start}
+.rs-dd-grid small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:#626d69;margin-bottom:2px}
+.rs-dd-grid a{font-size:13.5px;font-weight:500;color:#17201d;white-space:nowrap;text-decoration:none}
+.rs-dd-grid a:hover{color:oklch(0.52 0.11 170)}
+.rs-dd-all{font-size:13px;font-weight:600;border-top:1px solid #e8edeb;padding-top:12px;text-decoration:none}
+@media (max-width:1400px){.rs-dd-grid{grid-template-columns:repeat(3,max-content)}}
+@media (max-width:1180px){.rs-dd{width:100%}.rs-dd-panel{display:none !important}}
+</style>
+</helmet>
+<div data-screen-label="Use cases" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
+  <nav style="position:sticky;top:0;z-index:20;background:rgba(243,245,244,0.9);backdrop-filter:blur(10px);border-bottom:1px solid #dbe2df">
+    <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
+      <a href="../Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:#17201d;text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+      <div class="rs-actions" style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" style="font-size:14px;font-weight:500;color:#4a5652;padding:8px 12px">GitHub</a>
+        <a href="../Docs.dc.html#install" class="rs-cta" style="font-family:'JetBrains Mono',monospace;font-size:13px;background:#10201b;color:#e6efeb;padding:9px 14px;border-radius:7px;text-decoration:none" style-hover="background:#1b3a30;color:#fff">Install</a>
+      </div>
+      <input type="checkbox" id="rs-menu" class="rs-menu-toggle" aria-label="Open menu">
+      <label for="rs-menu" class="rs-burger" aria-hidden="true"><span></span></label>
+      <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
+        <a href="../Features.dc.html" style="color:#4a5652">Features</a>
+        <div class="rs-dd"><a href="../Use Cases.dc.html" style="color:#17201d" aria-current="page">Use cases</a><div class="rs-dd-panel"><div class="rs-dd-inner"><div class="rs-dd-grid"><div><small>01 · Product teams</small><a href="../use-cases/customer-analytics.dc.html">Customer analytics</a><a href="../use-cases/internal-tools.dc.html">Internal tools</a><a href="../use-cases/controlled-writes.dc.html">Controlled writes</a></div><div><small>02 · Partners and pipelines</small><a href="../use-cases/partner-data-api.dc.html">Partner data API</a><a href="../use-cases/scheduled-deliveries.dc.html">Scheduled deliveries</a><a href="../use-cases/live-dashboards.dc.html">Live dashboards</a></div><div><small>03 · Data teams</small><a href="../use-cases/self-serve-data.dc.html">Self-serve data</a><a href="../use-cases/files-as-an-api.dc.html">Files as an API</a><a href="../use-cases/legacy-databases.dc.html">Legacy databases</a></div><div><small>04 · AI</small><a href="../use-cases/ai-agents.dc.html">AI agents</a></div><div><small>05 · Security and platform</small><a href="../use-cases/compliance-and-audit.dc.html">Compliance and audit</a><a href="../use-cases/platform-teams.dc.html">Platform teams</a></div></div><a class="rs-dd-all" href="../Use Cases.dc.html">All twelve, with the shape of each call →</a></div></div></div>
+        <a href="../Enterprise.dc.html" style="color:#4a5652">Enterprise</a>
+        <a href="../Deploy.dc.html" style="color:#4a5652">Deploy</a>
+        <a href="../Docs.dc.html" style="color:#4a5652">Docs</a>
+        <a href="../Guides.dc.html" style="color:#4a5652">Guides</a>
+        <a href="../Compare.dc.html" style="color:#4a5652">Compare</a>
+        <a href="../Trust.dc.html" style="color:#4a5652">Trust</a>
+        <a href="../Roadmap.dc.html" style="color:#4a5652">Roadmap</a>
+        <a href="../Changelog.dc.html" style="color:#4a5652">Changelog</a>
+        <a href="../Blog.dc.html" style="color:#4a5652">Blog</a>
+        <a href="../About.dc.html" style="color:#4a5652">About</a>
+      </div>
+    </div>
+  </nav>
+  <header class="f-pad" style="max-width:1240px;margin:0 auto;padding:56px 24px 8px;display:grid;gap:14px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:#626d69"><a href="../Use Cases.dc.html" style="color:#4a5652;font-weight:500">Use cases</a><span aria-hidden="true">/</span><a href="../Use Cases.dc.html#g-partners" style="color:#4a5652;font-weight:500">Partners and pipelines</a><span aria-hidden="true">/</span><span style="color:#17201d;font-weight:600">Live dashboards</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9fb3ac">06 / 12</span></div>
+  </header>
+  <section style="">
+    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:16px 24px 64px;display:grid;gap:24px">
+<article id="events" class="f-2col u-case u-flip" style="background:#fff;border:1px solid #dbe2df;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
+          <div class="u-strip" role="img" aria-label="A browser with the key in a header opens GET /events; the feed is per key, covers every instance from the shared store, and can be filtered by query or kind; it reads the run history.">
+            <span class="u-node"><small>who</small>browser · key in header</span>
+            <span class="u-link l1" aria-hidden="true"></span>
+            <span class="u-node u-dark"><small>door</small>GET /events</span>
+            <span class="u-link l2" aria-hidden="true"></span>
+            <span class="u-checks"><span class="u-chk c1">per-key feed <b>✓</b></span><span class="u-chk c2">every instance, one stream <b>✓</b></span><span class="u-chk c3">filter by query · kind <b>✓</b></span></span>
+            <span class="u-link l3" aria-hidden="true"></span>
+            <span class="u-node u-data"><small>data</small>run history · shared store</span>
+            <span class="u-num">06 / 12</span>
+          </div>
+          <div style="display:grid;gap:16px;min-width:0">
+            <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">For operations screens</span></div>
+            <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.4vw,40px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:#17201d">A live view of what is being queried, by whom</h1>
+            <p style="margin:0;color:#4a5652;text-wrap:pretty">A wall display or a client that reacts when a query runs. <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">GET /events</code> streams each run as it completes, per key if you want, fanned out across instances by the events server.</p>
+            <div style="display:grid;gap:10px;padding-top:6px"><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:#4a5652;align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>Server-sent events over plain HTTP: a <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">fetch</code> stream in the browser with the key in a header, no WebSocket infrastructure.</span></div><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:#4a5652;align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>Per-key feeds, so a partner can watch their own calls and nobody else's.</span></div><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:#4a5652;align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>Across several instances, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate events</code> reads every instance's runs from the shared store, woken by a PostgreSQL notification.</span></div><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:#4a5652;align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>Stable since 0.34, under the compatibility promise. Filter by query, connection, kind or status.</span></div></div>
+            <div style="display:flex;gap:8px 18px;flex-wrap:wrap;font-size:14px;font-weight:600;padding-top:4px"><a href="../Guide.dc.html?g=28-build-a-client-that-watches-queries-run">Guide 28: Build a client that watches queries run →</a><a href="../Guide.dc.html?g=29-per-key-live-feeds">Guide 29: Per-key live feeds →</a></div>
+          </div>
+          <div class="u-code" style="min-width:0;border-radius:12px;overflow:hidden;border:1px solid #243b34;box-shadow:0 30px 60px -30px rgba(16,32,27,0.45)">
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#0c1915;border-bottom:1px solid #243b34"><span style="width:9px;height:9px;border-radius:50%;background:#2a3d37"></span><span style="width:9px;height:9px;border-radius:50%;background:#2a3d37"></span><span style="width:9px;height:9px;border-radius:50%;background:#2a3d37"></span><span style="margin-left:8px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#7c8f88">Live dashboards</span></div>
+            <pre style="margin:0;background:#10201b;color:#e6efeb;padding:20px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65;min-width:0"><span style="color:#9fb3ac"># in the browser: the key goes in a header, never the URL</span>
+const res = await fetch("https://data.example.com/events", {
+  headers: {"X-API-Key": key}
+})
+const reader = res.body.pipeThrough(new TextDecoderStream()).getReader()
+for (let buf = ""; ;) {
+  const {value, done} = await reader.read(); if (done) break
+  const frames = (buf += value).split("\n\n"); buf = frames.pop()
+  for (const f of frames) {
+    const line = f.split("\n").find(l =&gt; l.startsWith("data: "))
+    if (line) onRun(JSON.parse(line.slice(6)))
+  }
+}
+
+<span style="color:#9fb3ac"># what arrives, one frame per run</span>
+id: <span style="color:oklch(0.8 0.11 170)">4182</span>
+data: {"type": "query.run", "source": "rest", "kind": "saved",
+       "query": "orders_by_customer", "version": 1, "connection_name": "shop",
+       "entry": {"status": "success", "rows": 38, "duration_ms": 12,
+                 "key_name": "partner-acme", ...}}</pre>
+          </div>
+        </article>
+    </div>
+  </section>
+  <section aria-label="More use cases" style="max-width:1240px;margin:0 auto;padding:0 24px 72px;display:grid;gap:14px">
+    <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">More use cases</span><a href="../Use Cases.dc.html" style="font-size:13.5px;font-weight:600;margin-left:auto">All twelve →</a></div>
+    <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px">
+      <a href="scheduled-deliveries.dc.html" style="display:grid;gap:6px;padding:18px 20px;background:#fff;border:1px solid #dbe2df;border-radius:12px;color:#17201d;text-decoration:none" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#626d69">← 05 · Partners and pipelines</span><b style="font-weight:600">Scheduled deliveries</b><span style="font-size:13.5px;color:#4a5652">Deliver a daily file, incrementally, to someone else&#x27;s bucket</span></a>
+      <a href="self-serve-data.dc.html" style="display:grid;gap:6px;padding:18px 20px;background:#fff;border:1px solid #dbe2df;border-radius:12px;color:#17201d;text-decoration:none;text-align:right" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#626d69">07 · Data teams →</span><b style="font-weight:600">Self-serve data</b><span style="font-size:13.5px;color:#4a5652">Self-serve data for every team, without handing out the database</span></a>
+    </div>
+  </section>
+<section style="max-width:1240px;margin:0 auto;padding:88px 24px">
+    <div class="f-2col" style="background:#10201b;color:#e6efeb;border-radius:16px;padding:clamp(24px,5vw,48px);display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:32px;align-items:center">
+      <div style="display:grid;gap:12px"><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">Not sure which fits?</h2><p style="margin:0;color:#9fb3ac;max-width:60ch">The example APIs ship with a generated database and one scoped key per scenario, so you can try each of these in a few minutes without connecting anything of your own.</p></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end"><a href="../Docs.dc.html#quickstart" style="font-size:15px;font-weight:600;background:#e6efeb;color:#10201b;padding:12px 18px;border-radius:8px;text-decoration:none" style-hover="background:#fff">Run the examples</a><a href="../Compare.dc.html" style="font-size:15px;font-weight:600;color:#e6efeb;padding:12px 18px;border:1px solid #2a3d37;border-radius:8px;text-decoration:none" style-hover="border-color:#9fb3ac">Compare alternatives</a></div>
+    </div>
+  </section>
+  <footer style="border-top:1px solid #dbe2df;background:#fff">
+    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:48px 24px 28px;display:grid;gap:36px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:32px 24px">
+        <div style="display:grid;gap:12px;align-content:start;min-width:0">
+          <a href="../Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:#17201d;text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+          <p style="margin:0;font-size:13.5px;color:#4a5652;max-width:30ch">One governed gate between your databases and everything that asks them for data. Self-hosted: your data never leaves your infrastructure.</p>
+        </div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Product</span><a href="../Features.dc.html" style="color:#4a5652;font-size:14px">Features</a><a href="../Use Cases.dc.html" style="color:#4a5652;font-size:14px">Use cases</a><a href="../Deploy.dc.html" style="color:#4a5652;font-size:14px">Deploy</a><a href="../Compare.dc.html" style="color:#4a5652;font-size:14px">Compare</a><a href="../Roadmap.dc.html" style="color:#4a5652;font-size:14px">Roadmap</a><a href="../Changelog.dc.html" style="color:#4a5652;font-size:14px">Changelog</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Resources</span><a href="../Docs.dc.html" style="color:#4a5652;font-size:14px">Docs</a><a href="../Guides.dc.html" style="color:#4a5652;font-size:14px">Guides</a><a href="../Guide.dc.html?d=API" style="color:#4a5652;font-size:14px">API reference</a><a href="https://AnanthaRajuC.github.io/QueryAPIGate/" style="color:#4a5652;font-size:14px">Full reference site</a><a href="../Blog.dc.html" style="color:#4a5652;font-size:14px">Blog</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Trust</span><a href="../Trust.dc.html" style="color:#4a5652;font-size:14px">Trust center</a><a href="../Enterprise.dc.html" style="color:#4a5652;font-size:14px">Enterprise</a><a href="../Security.dc.html" style="color:#4a5652;font-size:14px">Security</a><a href="../Support.dc.html" style="color:#4a5652;font-size:14px">Support and versions</a><a href="../Guide.dc.html?d=DATA_PROTECTION" style="color:#4a5652;font-size:14px">Where data goes</a><a href="../Guide.dc.html?d=THREAT_MODEL" style="color:#4a5652;font-size:14px">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new" style="color:#4a5652;font-size:14px">Report a vulnerability</a></div>
+        <div style="display:grid;gap:10px;align-content:start"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Project</span><a href="../About.dc.html" style="color:#4a5652;font-size:14px">About</a><a href="../Stack.dc.html" style="color:#4a5652;font-size:14px">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate" style="color:#4a5652;font-size:14px">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases" style="color:#4a5652;font-size:14px">Releases</a><a href="../Guide.dc.html?d=CONTRIBUTING" style="color:#4a5652;font-size:14px">Contributing</a><a href="../Guide.dc.html?d=CODE_OF_CONDUCT" style="color:#4a5652;font-size:14px">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE" style="color:#4a5652;font-size:14px">Licence (FSL-1.1-MIT)</a></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#626d69">
+        <span>QueryAPIGate 0.34 · FSL-1.1-MIT · Signed releases with provenance and SBOMs</span>
+        <span>Experimental features are labelled in the product and the changelog.</span>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

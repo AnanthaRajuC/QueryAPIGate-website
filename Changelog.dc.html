@@ -79,6 +79,19 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 @media (max-width:480px){
   .rs-gh{display:none !important}
 }
+/* Use-cases dropdown in the top nav (desktop only; the burger menu keeps a plain link). */
+.rs-dd{position:relative}
+.rs-dd-panel{display:none;position:absolute;top:100%;left:-18px;padding-top:12px;z-index:30}
+.rs-dd:hover .rs-dd-panel,.rs-dd:focus-within .rs-dd-panel{display:block}
+.rs-dd-inner{background:#fff;border:1px solid #dbe2df;border-radius:14px;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35);padding:18px 20px 14px;display:grid;gap:14px;width:max-content;max-width:calc(100vw - 48px)}
+.rs-dd-grid{display:grid;grid-template-columns:repeat(5,max-content);gap:18px 28px}
+.rs-dd-grid>div{display:grid;gap:7px;align-content:start}
+.rs-dd-grid small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:#626d69;margin-bottom:2px}
+.rs-dd-grid a{font-size:13.5px;font-weight:500;color:#17201d;white-space:nowrap;text-decoration:none}
+.rs-dd-grid a:hover{color:oklch(0.52 0.11 170)}
+.rs-dd-all{font-size:13px;font-weight:600;border-top:1px solid #e8edeb;padding-top:12px;text-decoration:none}
+@media (max-width:1400px){.rs-dd-grid{grid-template-columns:repeat(3,max-content)}}
+@media (max-width:1180px){.rs-dd{width:100%}.rs-dd-panel{display:none !important}}
 </style>
 </helmet>
 <div data-screen-label="Changelog" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
@@ -93,7 +106,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       <label for="rs-menu" class="rs-burger" aria-hidden="true"><span></span></label>
       <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
         <a href="Features.dc.html" style="color:#4a5652">Features</a>
-        <a href="Use Cases.dc.html" style="color:#4a5652">Use cases</a>
+        <div class="rs-dd"><a href="Use Cases.dc.html" style="color:#4a5652">Use cases</a><div class="rs-dd-panel"><div class="rs-dd-inner"><div class="rs-dd-grid"><div><small>01 · Product teams</small><a href="use-cases/customer-analytics.dc.html">Customer analytics</a><a href="use-cases/internal-tools.dc.html">Internal tools</a><a href="use-cases/controlled-writes.dc.html">Controlled writes</a></div><div><small>02 · Partners and pipelines</small><a href="use-cases/partner-data-api.dc.html">Partner data API</a><a href="use-cases/scheduled-deliveries.dc.html">Scheduled deliveries</a><a href="use-cases/live-dashboards.dc.html">Live dashboards</a></div><div><small>03 · Data teams</small><a href="use-cases/self-serve-data.dc.html">Self-serve data</a><a href="use-cases/files-as-an-api.dc.html">Files as an API</a><a href="use-cases/legacy-databases.dc.html">Legacy databases</a></div><div><small>04 · AI</small><a href="use-cases/ai-agents.dc.html">AI agents</a></div><div><small>05 · Security and platform</small><a href="use-cases/compliance-and-audit.dc.html">Compliance and audit</a><a href="use-cases/platform-teams.dc.html">Platform teams</a></div></div><a class="rs-dd-all" href="Use Cases.dc.html">All twelve, with the shape of each call →</a></div></div></div>
         <a href="Enterprise.dc.html" style="color:#4a5652">Enterprise</a>
         <a href="Deploy.dc.html" style="color:#4a5652">Deploy</a>
         <a href="Docs.dc.html" style="color:#4a5652">Docs</a>
