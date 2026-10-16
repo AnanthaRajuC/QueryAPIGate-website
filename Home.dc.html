@@ -64,7 +64,7 @@ a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 
 @keyframes fd-ok{0%,52%{opacity:0}58%,100%{opacity:1}}
 @keyframes fd-blink{0%,100%{opacity:1}50%{opacity:0.25}}
 @keyframes fd-scroll{0%{transform:translateY(0)}100%{transform:translateY(-50%)}}
-@media (prefers-reduced-motion:reduce){.fd-grid *{animation:none !important}}
+@media (prefers-reduced-motion:reduce){.fd-stage *{animation:none !important}}
 .gov-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
 .gov-paper{background-color:#f8faf9;background-image:linear-gradient(#e3eae6 1px,transparent 1px),linear-gradient(90deg,#e3eae6 1px,transparent 1px);background-size:16px 16px}
 @media (max-width:1100px){.gov-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -350,36 +350,29 @@ X-API-Key: sk_…partner-acme
         </div>
         <p style="margin:0;color:#4a5652;max-width:52ch;text-wrap:pretty">The same saved query behind every door, and the same identity, policy, masking and record on every call, whichever door it comes through.</p>
       </div>
-      <div class="fd-grid">
-        <!-- 01 REST -->
-        <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)">
-          <div class="fd-panel" aria-hidden="true" style="height:160px;box-sizing:border-box;padding:18px;display:grid;align-content:center;gap:6px;border-bottom:1px solid #dbe2df">
+      <div ref="{{ fdRef }}" onMouseEnter="{{ fdEnter }}" onMouseLeave="{{ fdLeave }}" class="rs-2col fd-stage" style="display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:24px;align-items:stretch">
+        <ol style="list-style:none;margin:0;padding:0;display:grid;gap:6px;align-content:start">
+          <sc-for list="{{ doors }}" as="d" hint-placeholder-count="5">
+            <li><button type="button" aria-pressed="{{ d.pressed }}" onClick="{{ d.pick }}" style="width:100%;text-align:left;font:inherit;display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:center;padding:10px 12px;border-radius:10px;border:1px solid {{ d.border }};background:{{ d.bg }};cursor:pointer;transition:background 0.25s,border-color 0.25s">
+              <span style="width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:{{ d.iconBg }};transition:background 0.25s"><span style="display:block;width:16px;height:16px;background:{{ d.iconColor }};-webkit-mask:url({{ d.iconUrl }}) center/contain no-repeat;mask:url({{ d.iconUrl }}) center/contain no-repeat;transition:background 0.25s"></span></span>
+              <span style="display:grid;gap:1px;min-width:0"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ d.numColor }}">{{ d.num }}</span><b style="font-size:14.5px;font-weight:600;color:#17201d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.title }}</b><code style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:{{ d.cmdColor }}">{{ d.cmd }}</code></span>
+            </button></li>
+          </sc-for>
+        </ol>
+        <div style="background:#fff;border:1px solid #dbe2df;border-radius:14px;overflow:hidden;display:grid;grid-template-rows:auto auto minmax(0,1fr);min-width:0">
+          <div aria-hidden="true" style="height:3px;background:#e9eeec;opacity:{{ fdBarOpacity }};transition:opacity 0.3s"><span onAnimationEnd="{{ fdNext }}" style="display:block;height:100%;background:oklch(0.52 0.11 170);transform-origin:left;transform:scaleX(0);animation:{{ fdBarAnim }} 5000ms linear forwards;animation-play-state:{{ fdBarPlay }}"></span></div>
+          <div style="display:grid;min-width:0;border-bottom:1px solid #dbe2df">
+          <div class="fd-panel" aria-hidden="true" style="height:240px;box-sizing:border-box;padding:24px 28px;display:{{ fd.show1 }};align-content:center;gap:6px;border-bottom:1px solid #dbe2df">
             <div class="fd-row" style="animation:fd-in 6s 0s infinite backwards"><span><span style="color:oklch(0.52 0.11 170)">GET</span> /q/orders_by_customer?customer=acme</span><span style="color:#626d69">X-API-Key</span></div>
             <div class="fd-row fd-dark" style="animation:fd-in 6s 0.7s infinite backwards"><span>[{"id": 5, "status": "open", "email": <span style="color:oklch(0.82 0.12 80)">"a***@acme.io"</span>}, …]</span><span style="color:oklch(0.8 0.11 170)">200 · 15 ms</span></div>
             <div style="display:flex;gap:6px;flex-wrap:wrap;animation:fd-in 6s 1.4s infinite backwards"><span class="fd-row" style="padding:4px 8px;font-size:10.5px;color:#4a5652">openapi.json</span><span class="fd-row" style="padding:4px 8px;font-size:10.5px;color:#4a5652">postman.json</span><span class="fd-row" style="padding:4px 8px;font-size:10.5px;color:#4a5652">typed client · ~50 languages</span></div>
           </div>
-          <div style="padding:16px 18px 18px;display:grid;gap:8px;align-content:start">
-            <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#10201b;display:grid;place-items:center;color:oklch(0.8 0.11 170)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></svg></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Front door</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">01</span></div>
-            <h3 style="margin:0;font-size:16px;font-weight:600">REST endpoints <code style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:400;color:oklch(0.52 0.11 170);margin-left:6px">GET /q/&lt;name&gt;</code></h3>
-            <p style="margin:0;font-size:13.5px;color:#4a5652">One endpoint per saved query, with OpenAPI, typed clients in about 50 languages and a Postman collection.</p>
-          </div>
-        </article>
-        <!-- 02 MCP -->
-        <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)">
-          <div class="fd-panel" aria-hidden="true" style="height:160px;box-sizing:border-box;padding:18px;display:grid;align-content:center;gap:6px;border-bottom:1px solid #dbe2df">
+          <div class="fd-panel" aria-hidden="true" style="height:240px;box-sizing:border-box;padding:24px 28px;display:{{ fd.show2 }};align-content:center;gap:6px;border-bottom:1px solid #dbe2df">
             <div class="fd-row" style="animation:fd-in 6s 0s infinite backwards"><span>tools/call <b style="font-weight:500">orders_by_customer</b></span><span style="color:oklch(0.52 0.11 170)">rows filtered by claims ✓</span></div>
             <div class="fd-row" style="animation:fd-in 6s 0.7s infinite backwards"><span>tools/call <b style="font-weight:500">add_note</b> <span style="color:#626d69">(write)</span></span><span style="display:grid;min-width:0"><span style="grid-area:1/1;color:oklch(0.6 0.13 75);opacity:0;animation:fd-wait 6s infinite;white-space:nowrap">● awaiting approval</span><span style="grid-area:1/1;color:oklch(0.52 0.11 170);animation:fd-ok 6s infinite;white-space:nowrap">approved by ops@ ✓</span></span></div>
             <div class="fd-row fd-dark" style="animation:fd-in 6s 1.4s infinite backwards"><span>{"inserted": 1}</span><span style="color:oklch(0.8 0.11 170)">audit written</span></div>
           </div>
-          <div style="padding:16px 18px 18px;display:grid;gap:8px;align-content:start">
-            <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#10201b;display:grid;place-items:center;color:oklch(0.8 0.11 170)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a6 6 0 0 1-12 0V8z"/></svg></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Front door</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">02</span></div>
-            <h3 style="margin:0;font-size:16px;font-weight:600">MCP server <code style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:400;color:oklch(0.52 0.11 170);margin-left:6px">queryapigate mcp</code></h3>
-            <p style="margin:0;font-size:13.5px;color:#4a5652">Saved queries as tools for any MCP client. Write tools wait for a person's approval.</p>
-          </div>
-        </article>
-        <!-- 03 Live events -->
-        <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)">
-          <div class="fd-panel" aria-hidden="true" style="height:160px;box-sizing:border-box;padding:18px;display:grid;align-content:center;gap:6px;border-bottom:1px solid #dbe2df">
+          <div class="fd-panel" aria-hidden="true" style="height:240px;box-sizing:border-box;padding:24px 28px;display:{{ fd.show3 }};align-content:center;gap:6px;border-bottom:1px solid #dbe2df">
             <div class="fd-row fd-dark"><span><span style="color:oklch(0.8 0.11 170)">GET</span> /events?key=partner-acme</span><span style="display:inline-flex;align-items:center;gap:6px;color:#9fb3ac"><i style="width:7px;height:7px;border-radius:50%;background:oklch(0.8 0.11 170);display:block;animation:fd-blink 1.6s infinite"></i>live</span></div>
             <div style="height:74px;overflow:hidden;border:1px solid #c3cdc9;border-radius:6px;background:#fff">
               <div style="display:grid;animation:fd-scroll 6s linear infinite">
@@ -392,38 +385,23 @@ X-API-Key: sk_…partner-acme
               </div>
             </div>
           </div>
-          <div style="padding:16px 18px 18px;display:grid;gap:8px;align-content:start">
-            <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#10201b;display:grid;place-items:center;color:oklch(0.8 0.11 170)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5M19.1 4.9C23 8.8 23 15.1 19.1 19"/><circle cx="12" cy="12" r="2"/></svg></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Front door</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">03</span></div>
-            <h3 style="margin:0;font-size:16px;font-weight:600">Live events <code style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:400;color:oklch(0.52 0.11 170);margin-left:6px">GET /events</code></h3>
-            <p style="margin:0;font-size:13.5px;color:#4a5652">Server-sent events as queries run, fanned out across instances by <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate events</code>.</p>
-          </div>
-        </article>
-        <!-- 04 Exports -->
-        <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)">
-          <div class="fd-panel" aria-hidden="true" style="height:160px;box-sizing:border-box;padding:18px;display:grid;align-content:center;gap:8px;border-bottom:1px solid #dbe2df">
+          <div class="fd-panel" aria-hidden="true" style="height:240px;box-sizing:border-box;padding:24px 28px;display:{{ fd.show4 }};align-content:center;gap:8px;border-bottom:1px solid #dbe2df">
             <div class="fd-row" style="border:0;background:transparent;padding:0 2px;color:#4a5652"><span>$ queryapigate export nightly_orders --format parquet</span><span>02:00 · cron</span></div>
             <div class="fd-row" style="padding:8px 10px"><span style="overflow:visible;flex:1;display:grid;gap:6px"><span style="display:flex;justify-content:space-between;color:#626d69"><span>→ s3://exports/nightly_orders/2026-10-16.parquet</span><span style="display:grid"><span style="grid-area:1/1;animation:fd-done 6s infinite;color:oklch(0.52 0.11 170)">2,310 rows ✓</span></span></span><span style="display:block;height:6px;border-radius:3px;background:#e9eeec;overflow:hidden"><span style="display:block;height:100%;background:oklch(0.52 0.11 170);transform-origin:left;animation:fd-grow 6s infinite"></span></span></span></div>
             <div class="fd-row fd-dark" style="animation:fd-done 6s infinite"><span>resumed from row 1,200 after a dropped connection</span><span style="color:oklch(0.8 0.11 170)">no duplicates</span></div>
           </div>
-          <div style="padding:16px 18px 18px;display:grid;gap:8px;align-content:start">
-            <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#10201b;display:grid;place-items:center;color:oklch(0.8 0.11 170)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 17 6-6-6-6M12 19h8"/></svg></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Front door</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">04</span></div>
-            <h3 style="margin:0;font-size:16px;font-weight:600">Exports and CLI <code style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:400;color:oklch(0.52 0.11 170);margin-left:6px">queryapigate export</code></h3>
-            <p style="margin:0;font-size:13.5px;color:#4a5652">Full results to a file, in-process, built for cron, systemd timers and Kubernetes CronJobs.</p>
-          </div>
-        </article>
-        <!-- 05 Management API -->
-        <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)">
-          <div class="fd-panel" aria-hidden="true" style="height:160px;box-sizing:border-box;padding:18px;display:grid;align-content:center;gap:6px;border-bottom:1px solid #dbe2df">
+          <div class="fd-panel" aria-hidden="true" style="height:240px;box-sizing:border-box;padding:24px 28px;display:{{ fd.show5 }};align-content:center;gap:6px;border-bottom:1px solid #dbe2df">
             <div class="fd-row" style="animation:fd-take1 6s infinite"><span><b style="font-weight:500">POST</b> /api/v1/queries · {"name": "orders_by_customer", "publish": true}</span><span>201</span></div>
             <div class="fd-row" style="animation:fd-take2 6s infinite"><span><b style="font-weight:500">POST</b> /api/v1/api-keys · {"name": "partner-acme", "connections": ["shop"]}</span><span>201</span></div>
             <div class="fd-row" style="animation:fd-take3 6s infinite"><span><b style="font-weight:500">GET</b> /api/v1/audit?since=1h · who changed what, and when</span><span>200</span></div>
           </div>
-          <div style="padding:16px 18px 18px;display:grid;gap:8px;align-content:start">
-            <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#10201b;display:grid;place-items:center;color:oklch(0.8 0.11 170)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Front door</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">05</span></div>
-            <h3 style="margin:0;font-size:16px;font-weight:600">Management API <code style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:400;color:oklch(0.52 0.11 170);margin-left:6px">/api/v1</code></h3>
-            <p style="margin:0;font-size:13.5px;color:#4a5652">Everything the Console does, scriptable: connections, queries, keys, roles, audit.</p>
           </div>
-        </article>
+          <div style="padding:16px 22px 20px;display:grid;gap:6px;align-content:start">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Front door {{ fdCur.num }}</span><code style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">{{ fdCur.cmd }}</code></div>
+            <h3 style="margin:0;font-size:18px;font-weight:600">{{ fdCur.title }}</h3>
+            <p style="margin:0;font-size:14px;color:#4a5652;max-width:70ch">{{ fdCur.desc }}</p>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -697,9 +675,30 @@ X-API-Key: sk_…partner-acme
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { w: 1192, cat: 'all', catAuto: true, catHover: false, catRunning: true, catAnim: 'catbarA', inst: 'pip', lang: 'python', gh: null, pypi: null, release: null, step: 0, hovered: null, running: true, fading: false, copied: null };
+  state = { w: 1192, door: 0, fdAuto: true, fdHover: false, fdRunning: true, fdAnim: 'catbarA', cat: 'all', catAuto: true, catHover: false, catRunning: true, catAnim: 'catbarA', inst: 'pip', lang: 'python', gh: null, pypi: null, release: null, step: 0, hovered: null, running: true, fading: false, copied: null };
   stepsRef = React.createRef();
   dataRef = React.createRef();
+  fdRef = React.createRef();
+  // Front doors: one stage, five doors. The progress bar's 5s animation ends, fdNext shows the next door and flips
+  // the keyframe name so the bar restarts; a door's own panel animation restarts when it is shown. Hover pauses;
+  // picking a door stops the cycle.
+  doors = [
+    { title: 'REST endpoints', cmd: 'GET /q/<name>', icon: 'globe', desc: 'One endpoint per saved query, with OpenAPI, typed clients in about 50 languages and a Postman collection.' },
+    { title: 'MCP server', cmd: 'queryapigate mcp', icon: 'plug', desc: "Saved queries as tools for any MCP client. Write tools wait for a person's approval." },
+    { title: 'Live events', cmd: 'GET /events', icon: 'radio', desc: 'Server-sent events as queries run, fanned out across instances by queryapigate events.' },
+    { title: 'Exports and CLI', cmd: 'queryapigate export', icon: 'terminal', desc: 'Full results to a file, in-process, built for cron, systemd timers and Kubernetes CronJobs.' },
+    { title: 'Management API', cmd: '/api/v1', icon: 'sliders-horizontal', desc: 'Everything the Console does, scriptable: connections, queries, keys, roles, audit.' },
+  ];
+  fdNext = () => {
+    if (!this.state.fdAuto) return;
+    this.setState({ door: (this.state.door + 1) % this.doors.length, fdAnim: this.state.fdAnim === 'catbarA' ? 'catbarB' : 'catbarA' });
+  };
+  observeFd() {
+    const el = this.fdRef.current;
+    if (!el || this.ioFd) return;
+    this.ioFd = new IntersectionObserver(([e]) => this.setState({ fdRunning: e.isIntersecting }), { threshold: 0.2 });
+    this.ioFd.observe(el);
+  }
   // The "Your data" category filter cycles on its own: the progress bar's CSS animation (4s, see the markup)
   // ends, catNext picks the next category and flips the keyframe name so the bar restarts. Hovering pauses it;
   // choosing a category by hand stops it.
@@ -794,6 +793,7 @@ class Component extends DCLogic {
     this.ro.observe(el);
     this.observeSteps();
     this.observeData();
+    this.observeFd();
     const j = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
     j('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate').then(gh => gh && this.setState({ gh }));
     j('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate/releases/latest').then(release => release && this.setState({ release }));
@@ -803,14 +803,14 @@ class Component extends DCLogic {
       this.advance((this.state.step + 1) % this.stepData.length);
     }, this.stepMs);
   }
-  componentDidUpdate() { this.observeSteps(); this.observeData(); }
+  componentDidUpdate() { this.observeSteps(); this.observeData(); this.observeFd(); }
   observeSteps() {
     const ol = this.stepsRef.current;
     if (!ol || this.io) return;
     this.io = new IntersectionObserver(([e]) => this.setState({ running: e.isIntersecting }), { threshold: 0.2 });
     this.io.observe(ol);
   }
-  componentWillUnmount() { this.ro && this.ro.disconnect(); this.io && this.io.disconnect(); this.ioData && this.ioData.disconnect(); clearInterval(this.timer); clearTimeout(this.copyT); }
+  componentWillUnmount() { this.ro && this.ro.disconnect(); this.io && this.io.disconnect(); this.ioData && this.ioData.disconnect(); this.ioFd && this.ioFd.disconnect(); clearInterval(this.timer); clearTimeout(this.copyT); }
   renderVals() {
     const s = this.state.w / 1920;
     const cat = this.state.cat;
@@ -848,6 +848,15 @@ class Component extends DCLogic {
       wrapRef: this.wrapRef, diagramTransform: `scale(${s})`, wrapHeight: Math.round(1080 * s) + 'px',
       cats: this.cats.map(c => ({ label: c.label, go: () => this.setState({ cat: c.id, catAuto: false }), bg: c.id === cat ? '#10201b' : '#fff', color: c.id === cat ? '#e6efeb' : '#4a5652', border: c.id === cat ? '#10201b' : '#dbe2df' })),
       dbs, catNote: this.cats.find(c => c.id === cat).note,
+      fdRef: this.fdRef, fdNext: this.fdNext,
+      fdEnter: () => this.setState({ fdHover: true }), fdLeave: () => this.setState({ fdHover: false }),
+      fdBarAnim: this.state.fdAnim, fdBarOpacity: this.state.fdAuto ? 1 : 0,
+      fdBarPlay: this.state.fdAuto && !this.state.fdHover && this.state.fdRunning ? 'running' : 'paused',
+      doors: this.doors.map((d, i) => { const on = i === this.state.door; const g = 'oklch(0.52 0.11 170)'; return { num: '0' + (i + 1), title: d.title, cmd: d.cmd, iconUrl: 'https://unpkg.com/lucide-static@0.460.0/icons/' + d.icon + '.svg',
+        pressed: on ? 'true' : 'false', pick: () => this.setState({ door: i, fdAuto: false }),
+        bg: on ? '#fff' : 'transparent', border: on ? g : 'transparent', iconBg: on ? g : '#e9eeec', iconColor: on ? '#fff' : '#4a5652', numColor: on ? g : '#9fb3ac', cmdColor: on ? g : '#626d69' }; }),
+      fd: Object.fromEntries(this.doors.map((d, i) => ['show' + (i + 1), i === this.state.door ? 'grid' : 'none'])),
+      fdCur: { ...this.doors[this.state.door], num: '0' + (this.state.door + 1) },
       dataRef: this.dataRef, catNext: this.catNext,
       catEnter: () => this.setState({ catHover: true }), catLeave: () => this.setState({ catHover: false }),
       catBarAnim: this.state.catAnim, catBarOpacity: this.state.catAuto ? 1 : 0,
