@@ -190,7 +190,10 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
   state = { cat: 'All', q: '', path: null, guides: [] };
-  componentDidMount() { import('./guides.js').then(m => this.setState({ guides: m.guides })); }
+  componentDidMount() {
+    import('./guides.js').then(m => this.setState({ guides: m.guides }));
+    try { const id = new URLSearchParams(location.search).get('path'); if (id && this.paths.some(p => p.id === id)) this.setState({ path: id }); } catch (e) {}
+  }
   inputRef = React.createRef();
   cats = ["All","Start","Queries","Access","Agents","Events & exports","Operate","Govern"];
   // Reading paths: the order your own pages send people in (the first five, the Use-case cards, the Deploy checklist).
