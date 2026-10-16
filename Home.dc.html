@@ -43,6 +43,28 @@ a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 
 @media (max-width:480px){.db-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @keyframes catbarA{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes catbarB{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+/* Front doors: five cards, 3 + 2 on desktop, 2 columns on tablet, 1 on phone. Each panel loops a 6s CSS
+   animation; the un-animated base styles are the finished state, so reduced-motion shows a sensible still. */
+.fd-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
+.fd-panel{background:#f3f5f4}
+.fd-grid>article{grid-column:span 2;min-width:0}
+.fd-grid>article:nth-child(n+4){grid-column:span 3}
+@media (max-width:1000px){.fd-grid>article{grid-column:span 3}.fd-grid>article:last-child{grid-column:span 6}}
+@media (max-width:560px){.fd-grid>article,.fd-grid>article:last-child{grid-column:span 6}}
+.fd-row{font-family:'JetBrains Mono',monospace;font-size:11px;background:#fff;border:1px solid #c3cdc9;border-radius:6px;padding:6px 10px;color:#17201d;display:flex;justify-content:space-between;gap:8px;min-width:0;white-space:nowrap}
+.fd-row>span:first-child{overflow:hidden;text-overflow:ellipsis}
+.fd-dark{background:#10201b;border-color:#10201b;color:#e6efeb}
+@keyframes fd-in{0%{opacity:0;transform:translateY(6px)}8%{opacity:1;transform:none}86%{opacity:1;transform:none}94%,100%{opacity:0;transform:translateY(-4px)}}
+@keyframes fd-take1{0%,28%{background:#10201b;border-color:#10201b;color:#e6efeb}31%,100%{background:#fff;border-color:#c3cdc9;color:#17201d}}
+@keyframes fd-take2{0%,30%{background:#fff;border-color:#c3cdc9;color:#17201d}33%,61%{background:#10201b;border-color:#10201b;color:#e6efeb}64%,100%{background:#fff;border-color:#c3cdc9;color:#17201d}}
+@keyframes fd-take3{0%,63%{background:#fff;border-color:#c3cdc9;color:#17201d}66%,94%{background:#10201b;border-color:#10201b;color:#e6efeb}97%,100%{background:#fff;border-color:#c3cdc9;color:#17201d}}
+@keyframes fd-grow{0%{transform:scaleX(0)}72%{transform:scaleX(1)}92%{transform:scaleX(1)}100%{transform:scaleX(0)}}
+@keyframes fd-done{0%,70%{opacity:0}75%,92%{opacity:1}100%{opacity:0}}
+@keyframes fd-wait{0%,52%{opacity:1}58%,100%{opacity:0}}
+@keyframes fd-ok{0%,52%{opacity:0}58%,100%{opacity:1}}
+@keyframes fd-blink{0%,100%{opacity:1}50%{opacity:0.25}}
+@keyframes fd-scroll{0%{transform:translateY(0)}100%{transform:translateY(-50%)}}
+@media (prefers-reduced-motion:reduce){.fd-grid *{animation:none !important}}
 .gov-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
 .gov-paper{background-color:#f8faf9;background-image:linear-gradient(#e3eae6 1px,transparent 1px),linear-gradient(90deg,#e3eae6 1px,transparent 1px);background-size:16px 16px}
 @media (max-width:1100px){.gov-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -321,16 +343,87 @@ X-API-Key: sk_…partner-acme
 
   <section style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df">
     <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:36px">
-      <div style="display:grid;gap:10px">
-        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Front doors</span>
-        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">Save a query once. Serve it five ways.</h2>
+      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
+        <div style="display:grid;gap:10px">
+          <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Front doors</span>
+          <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">Save a query once. Serve it five ways.</h2>
+        </div>
+        <p style="margin:0;color:#4a5652;max-width:52ch;text-wrap:pretty">The same saved query behind every door, and the same identity, policy, masking and record on every call, whichever door it comes through.</p>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px">
-        <div style="display:grid;gap:8px;padding:22px;border:1px solid #dbe2df;border-radius:10px;align-content:start"><code style="font-family:'JetBrains Mono',monospace;font-size:13px;color:oklch(0.52 0.11 170)">GET /q/&lt;name&gt;</code><h3 style="margin:0;font-size:17px;font-weight:600">REST endpoints</h3><p style="margin:0;font-size:14.5px;color:#4a5652">One endpoint per saved query, with OpenAPI, typed clients in about 50 languages and a Postman collection.</p></div>
-        <div style="display:grid;gap:8px;padding:22px;border:1px solid #dbe2df;border-radius:10px;align-content:start"><code style="font-family:'JetBrains Mono',monospace;font-size:13px;color:oklch(0.52 0.11 170)">queryapigate mcp</code><h3 style="margin:0;font-size:17px;font-weight:600">MCP server</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Saved queries as tools for any MCP client. Write tools wait for a person's approval.</p></div>
-        <div style="display:grid;gap:8px;padding:22px;border:1px solid #dbe2df;border-radius:10px;align-content:start"><code style="font-family:'JetBrains Mono',monospace;font-size:13px;color:oklch(0.52 0.11 170)">GET /events</code><h3 style="margin:0;font-size:17px;font-weight:600;display:flex;gap:8px;align-items:baseline">Live events</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Server-sent events as queries run, fanned out across instances by <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate events</code>.</p></div>
-        <div style="display:grid;gap:8px;padding:22px;border:1px solid #dbe2df;border-radius:10px;align-content:start"><code style="font-family:'JetBrains Mono',monospace;font-size:13px;color:oklch(0.52 0.11 170)">queryapigate export</code><h3 style="margin:0;font-size:17px;font-weight:600">Exports and CLI</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Full results to a file, in-process, built for cron, systemd timers and Kubernetes CronJobs.</p></div>
-        <div style="display:grid;gap:8px;padding:22px;border:1px solid #dbe2df;border-radius:10px;align-content:start"><code style="font-family:'JetBrains Mono',monospace;font-size:13px;color:oklch(0.52 0.11 170)">/api/v1</code><h3 style="margin:0;font-size:17px;font-weight:600">Management API</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Everything the Console does, scriptable: connections, queries, keys, roles, audit.</p></div>
+      <div class="fd-grid">
+        <!-- 01 REST -->
+        <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)">
+          <div class="fd-panel" aria-hidden="true" style="height:160px;box-sizing:border-box;padding:18px;display:grid;align-content:center;gap:6px;border-bottom:1px solid #dbe2df">
+            <div class="fd-row" style="animation:fd-in 6s 0s infinite backwards"><span><span style="color:oklch(0.52 0.11 170)">GET</span> /q/orders_by_customer?customer=acme</span><span style="color:#626d69">X-API-Key</span></div>
+            <div class="fd-row fd-dark" style="animation:fd-in 6s 0.7s infinite backwards"><span>[{"id": 5, "status": "open", "email": <span style="color:oklch(0.82 0.12 80)">"a***@acme.io"</span>}, …]</span><span style="color:oklch(0.8 0.11 170)">200 · 15 ms</span></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;animation:fd-in 6s 1.4s infinite backwards"><span class="fd-row" style="padding:4px 8px;font-size:10.5px;color:#4a5652">openapi.json</span><span class="fd-row" style="padding:4px 8px;font-size:10.5px;color:#4a5652">postman.json</span><span class="fd-row" style="padding:4px 8px;font-size:10.5px;color:#4a5652">typed client · ~50 languages</span></div>
+          </div>
+          <div style="padding:16px 18px 18px;display:grid;gap:8px;align-content:start">
+            <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#10201b;display:grid;place-items:center;color:oklch(0.8 0.11 170)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20"/></svg></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Front door</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">01</span></div>
+            <h3 style="margin:0;font-size:16px;font-weight:600">REST endpoints <code style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:400;color:oklch(0.52 0.11 170);margin-left:6px">GET /q/&lt;name&gt;</code></h3>
+            <p style="margin:0;font-size:13.5px;color:#4a5652">One endpoint per saved query, with OpenAPI, typed clients in about 50 languages and a Postman collection.</p>
+          </div>
+        </article>
+        <!-- 02 MCP -->
+        <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)">
+          <div class="fd-panel" aria-hidden="true" style="height:160px;box-sizing:border-box;padding:18px;display:grid;align-content:center;gap:6px;border-bottom:1px solid #dbe2df">
+            <div class="fd-row" style="animation:fd-in 6s 0s infinite backwards"><span>tools/call <b style="font-weight:500">orders_by_customer</b></span><span style="color:oklch(0.52 0.11 170)">rows filtered by claims ✓</span></div>
+            <div class="fd-row" style="animation:fd-in 6s 0.7s infinite backwards"><span>tools/call <b style="font-weight:500">add_note</b> <span style="color:#626d69">(write)</span></span><span style="display:grid;min-width:0"><span style="grid-area:1/1;color:oklch(0.6 0.13 75);opacity:0;animation:fd-wait 6s infinite;white-space:nowrap">● awaiting approval</span><span style="grid-area:1/1;color:oklch(0.52 0.11 170);animation:fd-ok 6s infinite;white-space:nowrap">approved by ops@ ✓</span></span></div>
+            <div class="fd-row fd-dark" style="animation:fd-in 6s 1.4s infinite backwards"><span>{"inserted": 1}</span><span style="color:oklch(0.8 0.11 170)">audit written</span></div>
+          </div>
+          <div style="padding:16px 18px 18px;display:grid;gap:8px;align-content:start">
+            <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#10201b;display:grid;place-items:center;color:oklch(0.8 0.11 170)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a6 6 0 0 1-12 0V8z"/></svg></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Front door</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">02</span></div>
+            <h3 style="margin:0;font-size:16px;font-weight:600">MCP server <code style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:400;color:oklch(0.52 0.11 170);margin-left:6px">queryapigate mcp</code></h3>
+            <p style="margin:0;font-size:13.5px;color:#4a5652">Saved queries as tools for any MCP client. Write tools wait for a person's approval.</p>
+          </div>
+        </article>
+        <!-- 03 Live events -->
+        <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)">
+          <div class="fd-panel" aria-hidden="true" style="height:160px;box-sizing:border-box;padding:18px;display:grid;align-content:center;gap:6px;border-bottom:1px solid #dbe2df">
+            <div class="fd-row fd-dark"><span><span style="color:oklch(0.8 0.11 170)">GET</span> /events?key=partner-acme</span><span style="display:inline-flex;align-items:center;gap:6px;color:#9fb3ac"><i style="width:7px;height:7px;border-radius:50%;background:oklch(0.8 0.11 170);display:block;animation:fd-blink 1.6s infinite"></i>live</span></div>
+            <div style="height:74px;overflow:hidden;border:1px solid #c3cdc9;border-radius:6px;background:#fff">
+              <div style="display:grid;animation:fd-scroll 6s linear infinite">
+                <div class="fd-row" style="border:0;border-radius:0;border-bottom:1px solid #e9eeec"><span><span style="color:#626d69">query.run</span> orders_by_customer</span><span style="color:#626d69">12 ms</span></div>
+                <div class="fd-row" style="border:0;border-radius:0;border-bottom:1px solid #e9eeec"><span><span style="color:#626d69">query.run</span> daily_revenue</span><span style="color:#626d69">1.4 s</span></div>
+                <div class="fd-row" style="border:0;border-radius:0;border-bottom:1px solid #e9eeec"><span><span style="color:#626d69">export.done</span> nightly_orders</span><span style="color:#626d69">2,310 rows</span></div>
+                <div class="fd-row" style="border:0;border-radius:0;border-bottom:1px solid #e9eeec"><span><span style="color:#626d69">query.run</span> orders_by_customer</span><span style="color:#626d69">12 ms</span></div>
+                <div class="fd-row" style="border:0;border-radius:0;border-bottom:1px solid #e9eeec"><span><span style="color:#626d69">query.run</span> daily_revenue</span><span style="color:#626d69">1.4 s</span></div>
+                <div class="fd-row" style="border:0;border-radius:0;border-bottom:1px solid #e9eeec"><span><span style="color:#626d69">export.done</span> nightly_orders</span><span style="color:#626d69">2,310 rows</span></div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:16px 18px 18px;display:grid;gap:8px;align-content:start">
+            <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#10201b;display:grid;place-items:center;color:oklch(0.8 0.11 170)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5M19.1 4.9C23 8.8 23 15.1 19.1 19"/><circle cx="12" cy="12" r="2"/></svg></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Front door</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">03</span></div>
+            <h3 style="margin:0;font-size:16px;font-weight:600">Live events <code style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:400;color:oklch(0.52 0.11 170);margin-left:6px">GET /events</code></h3>
+            <p style="margin:0;font-size:13.5px;color:#4a5652">Server-sent events as queries run, fanned out across instances by <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate events</code>.</p>
+          </div>
+        </article>
+        <!-- 04 Exports -->
+        <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)">
+          <div class="fd-panel" aria-hidden="true" style="height:160px;box-sizing:border-box;padding:18px;display:grid;align-content:center;gap:8px;border-bottom:1px solid #dbe2df">
+            <div class="fd-row" style="border:0;background:transparent;padding:0 2px;color:#4a5652"><span>$ queryapigate export nightly_orders --format parquet</span><span>02:00 · cron</span></div>
+            <div class="fd-row" style="padding:8px 10px"><span style="overflow:visible;flex:1;display:grid;gap:6px"><span style="display:flex;justify-content:space-between;color:#626d69"><span>→ s3://exports/nightly_orders/2026-10-16.parquet</span><span style="display:grid"><span style="grid-area:1/1;animation:fd-done 6s infinite;color:oklch(0.52 0.11 170)">2,310 rows ✓</span></span></span><span style="display:block;height:6px;border-radius:3px;background:#e9eeec;overflow:hidden"><span style="display:block;height:100%;background:oklch(0.52 0.11 170);transform-origin:left;animation:fd-grow 6s infinite"></span></span></span></div>
+            <div class="fd-row fd-dark" style="animation:fd-done 6s infinite"><span>resumed from row 1,200 after a dropped connection</span><span style="color:oklch(0.8 0.11 170)">no duplicates</span></div>
+          </div>
+          <div style="padding:16px 18px 18px;display:grid;gap:8px;align-content:start">
+            <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#10201b;display:grid;place-items:center;color:oklch(0.8 0.11 170)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 17 6-6-6-6M12 19h8"/></svg></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Front door</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">04</span></div>
+            <h3 style="margin:0;font-size:16px;font-weight:600">Exports and CLI <code style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:400;color:oklch(0.52 0.11 170);margin-left:6px">queryapigate export</code></h3>
+            <p style="margin:0;font-size:13.5px;color:#4a5652">Full results to a file, in-process, built for cron, systemd timers and Kubernetes CronJobs.</p>
+          </div>
+        </article>
+        <!-- 05 Management API -->
+        <article style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden;display:grid;grid-template-rows:auto minmax(0,1fr)">
+          <div class="fd-panel" aria-hidden="true" style="height:160px;box-sizing:border-box;padding:18px;display:grid;align-content:center;gap:6px;border-bottom:1px solid #dbe2df">
+            <div class="fd-row" style="animation:fd-take1 6s infinite"><span><b style="font-weight:500">POST</b> /api/v1/queries · {"name": "orders_by_customer", "publish": true}</span><span>201</span></div>
+            <div class="fd-row" style="animation:fd-take2 6s infinite"><span><b style="font-weight:500">POST</b> /api/v1/api-keys · {"name": "partner-acme", "connections": ["shop"]}</span><span>201</span></div>
+            <div class="fd-row" style="animation:fd-take3 6s infinite"><span><b style="font-weight:500">GET</b> /api/v1/audit?since=1h · who changed what, and when</span><span>200</span></div>
+          </div>
+          <div style="padding:16px 18px 18px;display:grid;gap:8px;align-content:start">
+            <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#10201b;display:grid;place-items:center;color:oklch(0.8 0.11 170)"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Front door</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">05</span></div>
+            <h3 style="margin:0;font-size:16px;font-weight:600">Management API <code style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:400;color:oklch(0.52 0.11 170);margin-left:6px">/api/v1</code></h3>
+            <p style="margin:0;font-size:13.5px;color:#4a5652">Everything the Console does, scriptable: connections, queries, keys, roles, audit.</p>
+          </div>
+        </article>
       </div>
     </div>
   </section>
