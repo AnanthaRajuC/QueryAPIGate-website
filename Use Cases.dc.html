@@ -58,6 +58,44 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .f-sub{scrollbar-width:none;top:71px !important}
 .u-case{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}
 .u-case.u-flip > .u-code{order:-1}
+/* "Shape of the call" strip: who -> door -> the checks that matter here -> data. CSS-only 6s loop; the
+   un-animated base state is the finished one (checks lit), so reduced-motion shows a sensible still. */
+.u-strip{grid-column:1/-1;order:-2;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 12px;margin:-6px 0 -8px;border:1px solid #dbe2df;border-radius:10px;background:#f8faf9;font-family:'JetBrains Mono',monospace;font-size:11px;color:#17201d;min-width:0}
+.u-node{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:6px;background:#fff;border:1px solid #c3cdc9;white-space:nowrap}
+.u-node>small{font-size:10px;color:#626d69;letter-spacing:0.04em;text-transform:uppercase}
+.u-node.u-dark{background:#10201b;border-color:#10201b;color:#e6efeb}
+.u-node.u-dark>small{color:#9fb3ac}
+.u-node.u-data{animation:u-land 6s infinite backwards;animation-delay:3.6s;border-color:oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08)}
+.u-link{flex:none;width:20px;height:2px;background:#dbe2df;position:relative;border-radius:2px}
+.u-link::after{content:'';position:absolute;top:-2px;left:0;width:6px;height:6px;border-radius:50%;background:oklch(0.52 0.11 170);opacity:0;animation:u-travel 6s infinite}
+.u-link.l2::after{animation-delay:1.1s}
+/* The third connector is a row break: data sits on its own row, introduced by an arrow. */
+.u-link.l3{flex-basis:100%;width:auto;height:0;background:none}
+.u-link.l3::after{display:none}
+.u-node.u-data::before{content:'↳';color:#9fb3ac;margin-right:2px}
+.u-checks{display:inline-flex;gap:6px;flex-wrap:wrap}
+.u-chk{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:6px;white-space:nowrap;border:1px solid oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08);color:#17201d;animation:u-light 6s infinite backwards}
+.u-chk.c1{animation-delay:1.5s}.u-chk.c2{animation-delay:2.1s}.u-chk.c3{animation-delay:2.7s}.u-chk.c4{animation-delay:3.3s}
+.u-chk>b{font-weight:500;color:oklch(0.52 0.11 170)}
+.u-num{margin-left:auto;font-size:11px;color:#9fb3ac;white-space:nowrap}
+@keyframes u-travel{0%{left:0;opacity:0}2%{opacity:1}16%{left:14px;opacity:1}19%,100%{left:14px;opacity:0}}
+@keyframes u-light{0%{border-color:#c3cdc9;background:#fff;color:#626d69}6%,78%{border-color:oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08);color:#17201d}88%,100%{border-color:#c3cdc9;background:#fff;color:#626d69}}
+@keyframes u-land{0%{border-color:#c3cdc9;background:#fff}5%,38%{border-color:oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08)}42%,100%{border-color:#c3cdc9;background:#fff}}
+.u-strip-dark{background:#10201b;border-color:#243b34;color:#e6efeb}
+.u-strip-dark .u-node{background:#0c1915;border-color:#2a3d37;color:#e6efeb}
+.u-strip-dark .u-node>small{color:#9fb3ac}
+.u-strip-dark .u-node.u-dark{background:#e6efeb;border-color:#e6efeb;color:#10201b}
+.u-strip-dark .u-node.u-dark>small{color:#4a5652}
+.u-strip-dark .u-link{background:#2a3d37}
+.u-strip-dark .u-chk{color:#e6efeb;animation-name:u-light-dark}
+.u-strip-dark .u-chk>b{color:oklch(0.8 0.11 170)}
+.u-strip-dark .u-node.u-data{animation-name:u-land-dark}
+.u-strip-dark .u-num{color:#7c8f88}
+@keyframes u-light-dark{0%{border-color:#2a3d37;background:#0c1915;color:#9fb3ac}6%,78%{border-color:oklch(0.62 0.13 170 / 0.6);background:oklch(0.62 0.13 170 / 0.14);color:#e6efeb}88%,100%{border-color:#2a3d37;background:#0c1915;color:#9fb3ac}}
+@keyframes u-land-dark{0%{border-color:#2a3d37;background:#0c1915}5%,38%{border-color:oklch(0.62 0.13 170 / 0.6);background:oklch(0.62 0.13 170 / 0.14)}42%,100%{border-color:#2a3d37;background:#0c1915}}
+@media (max-width:1100px){.u-link.l2{display:none}}
+@media (max-width:640px){.u-link{display:none}.u-link.l3{display:block}.u-num{margin-left:0;width:100%}}
+@media (prefers-reduced-motion:reduce){.u-strip *{animation:none !important}.u-strip .u-link::after{display:none}}
 @media (max-width:960px){.u-case{grid-template-columns:minmax(0,1fr) !important}.u-case.u-flip > .u-code{order:2}.u-personas{grid-template-columns:repeat(2,minmax(0,1fr)) !important}.u-personas > .u-last{grid-column:span 2}}
 @media (max-width:640px){.u-personas{grid-template-columns:minmax(0,1fr) !important}.u-personas > .u-last{grid-column:span 1}}
 .f-bento > .f-last{grid-column:span 4}
@@ -123,6 +161,16 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       </div>
       <div style="display:grid;gap:24px">
         <article id="saas" class="f-2col u-case" style="background:#fff;border:1px solid #dbe2df;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
+          <div class="u-strip" role="img" aria-label="A signed-in user calls GET /q/revenue_by_month; the tenant comes from the token's claim, the role from the plan claim, the cache is per caller; the query runs on ClickHouse.">
+            <span class="u-node"><small>who</small>jwt:alice@acme</span>
+            <span class="u-link l1" aria-hidden="true"></span>
+            <span class="u-node u-dark"><small>door</small>GET /q/revenue_by_month</span>
+            <span class="u-link l2" aria-hidden="true"></span>
+            <span class="u-checks"><span class="u-chk c1">tenant from token <b>✓</b></span><span class="u-chk c2">role from plan <b>✓</b></span><span class="u-chk c3">cache per caller <b>✓</b></span></span>
+            <span class="u-link l3" aria-hidden="true"></span>
+            <span class="u-node u-data"><small>data</small>ClickHouse · analytics</span>
+            <span class="u-num">01 / 12</span>
+          </div>
           <div style="display:grid;gap:16px;min-width:0">
             <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/chart-column.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/chart-column.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">For SaaS products</span></div>
             <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(22px,2.4vw,30px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:#17201d">Put analytics in front of your customers, one tenant at a time</h3>
@@ -153,6 +201,16 @@ Authorization: Bearer eyJhbGciOi…   <span style="color:#9fb3ac"># acme's rows,
           </div>
         </article>
         <article id="internal" class="f-2col u-case u-flip" style="background:#fff;border:1px solid #dbe2df;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
+          <div class="u-strip" role="img" aria-label="An app user with their own JWT calls GET /q/my_open_tickets; the email filter comes from the token, CORS allows the tools origin, the cache is shared through Redis; the query runs on PostgreSQL.">
+            <span class="u-node"><small>who</small>jwt:bob@tools.internal</span>
+            <span class="u-link l1" aria-hidden="true"></span>
+            <span class="u-node u-dark"><small>door</small>GET /q/my_open_tickets</span>
+            <span class="u-link l2" aria-hidden="true"></span>
+            <span class="u-checks"><span class="u-chk c1">email from token <b>✓</b></span><span class="u-chk c2">CORS: tools.internal <b>✓</b></span><span class="u-chk c3">cache shared via Redis <b>✓</b></span></span>
+            <span class="u-link l3" aria-hidden="true"></span>
+            <span class="u-node u-data"><small>data</small>PostgreSQL · tickets</span>
+            <span class="u-num">02 / 12</span>
+          </div>
           <div style="display:grid;gap:16px;min-width:0">
             <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">For internal tools and dashboards</span></div>
             <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(22px,2.4vw,30px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:#17201d">Back an internal app without a backend team</h3>
@@ -181,6 +239,16 @@ QUERYAPIGATE_CORS_ORIGINS=https://tools.internal</pre>
           </div>
         </article>
         <article id="writes" class="f-2col u-case" style="background:#fff;border:1px solid #dbe2df;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
+          <div class="u-strip" role="img" aria-label="The partner key acme-orders calls POST /q/acme_submit_order; the server allows writes, only this one query may write for this key, sku and qty are typed and bound; the insert runs on the shop database.">
+            <span class="u-node"><small>who</small>key acme-orders</span>
+            <span class="u-link l1" aria-hidden="true"></span>
+            <span class="u-node u-dark"><small>door</small>POST /q/acme_submit_order</span>
+            <span class="u-link l2" aria-hidden="true"></span>
+            <span class="u-checks"><span class="u-chk c1">server allows writes <b>✓</b></span><span class="u-chk c2">this one query only <b>✓</b></span><span class="u-chk c3">sku, qty typed and bound <b>✓</b></span></span>
+            <span class="u-link l3" aria-hidden="true"></span>
+            <span class="u-node u-data"><small>data</small>PostgreSQL · shop</span>
+            <span class="u-num">03 / 12</span>
+          </div>
           <div style="display:grid;gap:16px;min-width:0">
             <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/pencil-line.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/pencil-line.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">For operational workflows</span></div>
             <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(22px,2.4vw,30px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:#17201d">Let a partner or a form write, through one approved query</h3>
@@ -220,6 +288,16 @@ X-API-Key: sk_live_…orders
       </div>
       <div style="display:grid;gap:24px">
         <article id="partner" class="f-2col u-case u-flip" style="background:#fff;border:1px solid #dbe2df;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
+          <div class="u-strip" role="img" aria-label="The partner key partner-acme calls GET /q/acme_orders; the key reaches one query and no schema, emails are hashed, and it is rate-limited, IP-restricted and expiring; it gets only its own rows.">
+            <span class="u-node"><small>who</small>key partner-acme</span>
+            <span class="u-link l1" aria-hidden="true"></span>
+            <span class="u-node u-dark"><small>door</small>GET /q/acme_orders</span>
+            <span class="u-link l2" aria-hidden="true"></span>
+            <span class="u-checks"><span class="u-chk c1">one query, no schema <b>✓</b></span><span class="u-chk c2">email hashed <b>✓</b></span><span class="u-chk c3">60/min · IP list · expiry <b>✓</b></span></span>
+            <span class="u-link l3" aria-hidden="true"></span>
+            <span class="u-node u-data"><small>data</small>acme_orders · their rows only</span>
+            <span class="u-num">04 / 12</span>
+          </div>
           <div style="display:grid;gap:16px;min-width:0">
             <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">For a partner or customer</span></div>
             <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(22px,2.4vw,30px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:#17201d">Hand a partner one query, not your schema</h3>
@@ -247,6 +325,16 @@ X-API-Key: sk_live_…9f3a</pre>
           </div>
         </article>
         <article id="pipelines" class="f-2col u-case" style="background:#fff;border:1px solid #dbe2df;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
+          <div class="u-strip" role="img" aria-label="A cron job at 02:00 runs queryapigate exports run; the incremental parameter is bound from the last watermark, one run holds the lease, writes are locked to the destination prefix; a Parquet file lands in the partner's S3 bucket.">
+            <span class="u-node"><small>who</small>cron 02:00</span>
+            <span class="u-link l1" aria-hidden="true"></span>
+            <span class="u-node u-dark"><small>door</small>queryapigate exports run</span>
+            <span class="u-link l2" aria-hidden="true"></span>
+            <span class="u-checks"><span class="u-chk c1">since = last watermark <b>✓</b></span><span class="u-chk c2">one run at a time <b>✓</b></span><span class="u-chk c3">locked to the prefix <b>✓</b></span></span>
+            <span class="u-link l3" aria-hidden="true"></span>
+            <span class="u-node u-data"><small>data</small>s3://acme-inbound/orders/…parquet</span>
+            <span class="u-num">05 / 12</span>
+          </div>
           <div style="display:grid;gap:16px;min-width:0">
             <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/calendar-clock.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/calendar-clock.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">For pipelines and partners' buckets</span></div>
             <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(22px,2.4vw,30px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:#17201d">Deliver a daily file, incrementally, to someone else's bucket</h3>
@@ -273,6 +361,16 @@ queryapigate exports run orders_daily
           </div>
         </article>
         <article id="events" class="f-2col u-case u-flip" style="background:#fff;border:1px solid #dbe2df;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
+          <div class="u-strip" role="img" aria-label="A browser with the key in a header opens GET /events; the feed is per key, covers every instance from the shared store, and can be filtered by query or kind; it reads the run history.">
+            <span class="u-node"><small>who</small>browser · key in header</span>
+            <span class="u-link l1" aria-hidden="true"></span>
+            <span class="u-node u-dark"><small>door</small>GET /events</span>
+            <span class="u-link l2" aria-hidden="true"></span>
+            <span class="u-checks"><span class="u-chk c1">per-key feed <b>✓</b></span><span class="u-chk c2">every instance, one stream <b>✓</b></span><span class="u-chk c3">filter by query · kind <b>✓</b></span></span>
+            <span class="u-link l3" aria-hidden="true"></span>
+            <span class="u-node u-data"><small>data</small>run history · shared store</span>
+            <span class="u-num">06 / 12</span>
+          </div>
           <div style="display:grid;gap:16px;min-width:0">
             <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">For operations screens</span></div>
             <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(22px,2.4vw,30px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:#17201d">A live view of what is being queried, by whom</h3>
@@ -315,6 +413,16 @@ data: {"type": "query.run", "source": "rest", "kind": "saved",
       </div>
       <div style="display:grid;gap:24px">
         <article id="selfserve" class="f-2col u-case" style="background:#fff;border:1px solid #dbe2df;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
+          <div class="u-strip" role="img" aria-label="The finance team's key lists GET /catalog and calls /q/revenue_by_region; the role reaches only the finance collection, read-only, within a 600 per hour budget; the query is cached for 300 seconds.">
+            <span class="u-node"><small>who</small>key finance-reporting</span>
+            <span class="u-link l1" aria-hidden="true"></span>
+            <span class="u-node u-dark"><small>door</small>GET /catalog → /q/revenue_by_region</span>
+            <span class="u-link l2" aria-hidden="true"></span>
+            <span class="u-checks"><span class="u-chk c1">collection finance only <b>✓</b></span><span class="u-chk c2">read-only <b>✓</b></span><span class="u-chk c3">600/hour budget <b>✓</b></span></span>
+            <span class="u-link l3" aria-hidden="true"></span>
+            <span class="u-node u-data"><small>data</small>revenue_by_region · cache 300s</span>
+            <span class="u-num">07 / 12</span>
+          </div>
           <div style="display:grid;gap:16px;min-width:0">
             <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/library.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/library.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">For data and analytics leads</span></div>
             <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(22px,2.4vw,30px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:#17201d">Self-serve data for every team, without handing out the database</h3>
@@ -340,6 +448,16 @@ curl -X POST https://data.example.com/api/v1/roles \
           </div>
         </article>
         <article id="files" class="f-2col u-case u-flip" style="background:#fff;border:1px solid #dbe2df;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
+          <div class="u-strip" role="img" aria-label="An analyst's key calls a saved query over the view events; DuckDB reads only the allowed paths, views are made automatically per prefix, grants and masking apply as usual; the data is Parquet in the acme-lake bucket.">
+            <span class="u-node"><small>who</small>an analyst's key</span>
+            <span class="u-link l1" aria-hidden="true"></span>
+            <span class="u-node u-dark"><small>door</small>saved query over view events</span>
+            <span class="u-link l2" aria-hidden="true"></span>
+            <span class="u-checks"><span class="u-chk c1">allowed_paths only <b>✓</b></span><span class="u-chk c2">auto views per prefix <b>✓</b></span><span class="u-chk c3">grants + masking as usual <b>✓</b></span></span>
+            <span class="u-link l3" aria-hidden="true"></span>
+            <span class="u-node u-data"><small>data</small>s3://acme-lake/events/*.parquet · DuckDB</span>
+            <span class="u-num">08 / 12</span>
+          </div>
           <div style="display:grid;gap:16px;min-width:0">
             <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/folder-open.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/folder-open.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">For data teams</span></div>
             <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(22px,2.4vw,30px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:#17201d">Turn a bucket of Parquet into a queryable API</h3>
@@ -366,6 +484,16 @@ SELECT date, count(*) FROM <span style="color:oklch(0.8 0.11 170)">events</span>
           </div>
         </article>
         <article id="legacy" class="f-2col u-case" style="background:#fff;border:1px solid #dbe2df;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
+          <div class="u-strip" role="img" aria-label="The procurement key calls GET /q/open_purchase_orders; the connection uses the vendor's driver through generic JDBC with a read-only database user, masking and audit apply as usual; the query runs on the Oracle ERP database.">
+            <span class="u-node"><small>who</small>key procurement</span>
+            <span class="u-link l1" aria-hidden="true"></span>
+            <span class="u-node u-dark"><small>door</small>GET /q/open_purchase_orders</span>
+            <span class="u-link l2" aria-hidden="true"></span>
+            <span class="u-checks"><span class="u-chk c1">vendor's driver via JDBC <b>✓</b></span><span class="u-chk c2">database user read-only <b>✓</b></span><span class="u-chk c3">masking + audit as usual <b>✓</b></span></span>
+            <span class="u-link l3" aria-hidden="true"></span>
+            <span class="u-node u-data"><small>data</small>Oracle · erp (jdbc)</span>
+            <span class="u-num">09 / 12</span>
+          </div>
           <div style="display:grid;gap:16px;min-width:0">
             <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">For legacy and vendor databases<span style="font-size:10px;font-weight:600;letter-spacing:0.06em;padding:3px 6px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12);color:oklch(0.6 0.13 75);margin-left:8px">EXPERIMENTAL</span></span></div>
             <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(22px,2.4vw,30px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:#17201d">Put a governed API in front of a database you can't change</h3>
@@ -401,6 +529,16 @@ X-API-Key: sk_live_…procurement</pre>
       </div>
       <div style="display:grid;gap:24px">
         <article id="agents" class="f-2col u-case u-flip" style="background:#0c1915;border:1px solid #243b34;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
+          <div class="u-strip u-strip-dark" role="img" aria-label="An agent authenticated with an API key or OAuth calls the MCP tool orders_by_customer; it gets the same grants as REST, only allowed tables, and writes wait for a person's approval; it reads the warehouse with masked columns marked.">
+            <span class="u-node"><small>who</small>agent · key or OAuth 2.1</span>
+            <span class="u-link l1" aria-hidden="true"></span>
+            <span class="u-node u-dark"><small>door</small>tools/call orders_by_customer</span>
+            <span class="u-link l2" aria-hidden="true"></span>
+            <span class="u-checks"><span class="u-chk c1">same grants as REST <b>✓</b></span><span class="u-chk c2">allowed tables only <b>✓</b></span><span class="u-chk c3">writes wait for approval <b>✓</b></span></span>
+            <span class="u-link l3" aria-hidden="true"></span>
+            <span class="u-node u-data"><small>data</small>warehouse · masked columns marked</span>
+            <span class="u-num">10 / 12</span>
+          </div>
           <div style="display:grid;gap:16px;min-width:0">
             <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.18);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.8 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac">For AI agents</span></div>
             <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(22px,2.4vw,30px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:#e6efeb">Let an agent query your data, governed like an app</h3>
@@ -439,6 +577,16 @@ write tools: close_ticket <span style="color:#9fb3ac">→ waits for a person's a
       </div>
       <div style="display:grid;gap:24px">
         <article id="compliance" class="f-2col u-case" style="background:#fff;border:1px solid #dbe2df;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
+          <div class="u-strip" role="img" aria-label="An auditor runs queryapigate audit verify; the signed chain is intact, the SIEM's copy verifies on its own, and a person's history can be forgotten by hash; it reads the audit log and the syslog copy.">
+            <span class="u-node"><small>who</small>the auditor</span>
+            <span class="u-link l1" aria-hidden="true"></span>
+            <span class="u-node u-dark"><small>door</small>queryapigate audit verify</span>
+            <span class="u-link l2" aria-hidden="true"></span>
+            <span class="u-checks"><span class="u-chk c1">signed chain intact <b>✓</b></span><span class="u-chk c2">SIEM copy verifies too <b>✓</b></span><span class="u-chk c3">forget by hash, on request <b>✓</b></span></span>
+            <span class="u-link l3" aria-hidden="true"></span>
+            <span class="u-node u-data"><small>data</small>audit log · rsyslog.log</span>
+            <span class="u-num">11 / 12</span>
+          </div>
           <div style="display:grid;gap:16px;min-width:0">
             <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">For security and compliance teams</span></div>
             <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(22px,2.4vw,30px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:#17201d">Answer the auditor from the running system</h3>
@@ -465,6 +613,16 @@ queryapigate history forget <span style="color:oklch(0.8 0.11 170)">jwt:alice@ex
           </div>
         </article>
         <article id="platform" class="f-2col u-case u-flip" style="background:#fff;border:1px solid #dbe2df;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
+          <div class="u-strip" role="img" aria-label="CI on a pull request runs queryapigate config diff and then apply on merge; the YAML holds no secret, prod is locked to the file, database credentials come from Vault per lease; it targets the production server deployed with Helm.">
+            <span class="u-node"><small>who</small>CI on a pull request</span>
+            <span class="u-link l1" aria-hidden="true"></span>
+            <span class="u-node u-dark"><small>door</small>queryapigate config diff → apply</span>
+            <span class="u-link l2" aria-hidden="true"></span>
+            <span class="u-checks"><span class="u-chk c1">no secret in the YAML <b>✓</b></span><span class="u-chk c2">config locked on prod <b>✓</b></span><span class="u-chk c3">Vault credentials per lease <b>✓</b></span></span>
+            <span class="u-link l3" aria-hidden="true"></span>
+            <span class="u-node u-data"><small>data</small>prod.example.com · Helm</span>
+            <span class="u-num">12 / 12</span>
+          </div>
           <div style="display:grid;gap:16px;min-width:0">
             <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/git-pull-request.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/git-pull-request.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">For platform teams</span></div>
             <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(22px,2.4vw,30px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:#17201d">Run it like the rest of your platform</h3>
