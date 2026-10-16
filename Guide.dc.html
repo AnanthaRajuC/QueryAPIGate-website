@@ -34,7 +34,14 @@ a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 
 #guide-body ul,#guide-body ol{margin:0 0 14px;padding-left:22px;color:#2b3532;max-width:72ch}
 #guide-body li{margin:4px 0}
 #guide-body code{font-family:"JetBrains Mono",monospace;font-size:0.88em;background:oklch(0.52 0.11 170 / 0.08);padding:2px 5px;border-radius:4px}
-#guide-body pre{background:#10201b;color:#e6efeb;border-radius:12px;padding:18px 20px;overflow-x:auto;margin:6px 0 20px;font-size:13px;line-height:1.65}
+/* Code blocks become terminal windows (see renderMd): the pre loses its own frame, the wrapper carries it. */
+#guide-body .md-term{background:#10201b;border-radius:12px;overflow:hidden;margin:6px 0 20px;min-width:0;box-shadow:0 20px 40px -28px rgba(16,32,27,0.45)}
+#guide-body .md-term-bar{display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #1b2f29}
+#guide-body .md-term-bar .dots{display:flex;gap:5px}#guide-body .md-term-bar .dots i{width:9px;height:9px;border-radius:50%;display:block}
+#guide-body .md-term-bar .lang{font-family:"JetBrains Mono",monospace;font-size:11px;color:#7c8f88}
+#guide-body pre{background:#10201b;color:#e6efeb;border-radius:0;padding:14px 16px;overflow-x:auto;margin:0;font-size:13px;line-height:1.65}
+.copy-btn{display:inline-flex;align-items:center;gap:6px;font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:500;color:#c5d3cd;background:#1b2f29;border:1px solid #2a3d37;border-radius:6px;padding:4px 9px;min-height:26px;cursor:pointer;margin-left:auto;transition:background 0.2s,color 0.2s}
+.copy-btn:hover{background:#24403a;color:#e6efeb}
 #guide-body pre code{background:none;padding:0;font-size:inherit;color:inherit}
 #guide-body blockquote{margin:0 0 14px;padding:12px 16px;border-left:3px solid oklch(0.52 0.11 170);background:#fff;border-radius:0 8px 8px 0;color:#4a5652}
 #guide-body blockquote p{margin:0}
@@ -158,7 +165,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         <a href="Enterprise.dc.html" style="color:#4a5652">Enterprise</a>
         <a href="Deploy.dc.html" style="color:#4a5652">Deploy</a>
         <a href="Docs.dc.html" style="color:#4a5652">Docs</a>
-        <div class="rs-dd rs-dd-right"><a href="Guides.dc.html" style="color:#17201d" aria-current="page">Guides</a><div class="rs-dd-panel"><div class="rs-dd-inner"><div class="rs-dd-grid"><div><small>How-to guides</small><a href="Guides.dc.html">All 59 guides</a><a href="Guides.dc.html?path=start">Path: Start here</a><a href="Guides.dc.html?path=partner">Path: Give a partner an API</a><a href="Guides.dc.html?path=agents">Path: Let agents in</a><a href="Guides.dc.html?path=data">Path: Ship data out</a><a href="Guides.dc.html?path=prod">Path: Go to production</a></div><div><small>Docs · Run it</small><a href="Guide.dc.html?d=INSTALLATION_AND_SETUP">Installation and setup</a><a href="Guide.dc.html?d=DEPLOYMENT">Deployment</a><a href="Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION">Database connections</a></div><div><small>Docs · Reference</small><a href="Guide.dc.html?d=API">API reference</a><a href="Guide.dc.html?d=MCP">MCP</a><a href="Guide.dc.html?d=EXAMPLES">Example APIs</a><a href="Guide.dc.html?d=QUERY_METADATA_MANAGEMENT">Query metadata</a></div><div><small>Docs · Security</small><a href="Guide.dc.html?d=THREAT_MODEL">Threat model</a><a href="Guide.dc.html?d=DATA_PROTECTION">Where data goes</a><a href="Guide.dc.html?d=SECURITY">Security policy</a><a href="Guide.dc.html?d=ARCHITECTURE">Architecture overview</a><a href="Guide.dc.html?d=QUESTIONNAIRE">Questionnaire answers</a><a href="Guide.dc.html?d=SBOM">SBOM and verification</a></div><div><small>Docs · Project</small><a href="Guide.dc.html?d=TECHNOLOGY_STACK">Technology stack</a><a href="Guide.dc.html?d=CONTRIBUTING">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT">Code of conduct</a></div></div><a class="rs-dd-all" href="Docs.dc.html">Docs: how the pieces fit, and where to start →</a></div></div></div>
+        <div class="rs-dd rs-dd-right"><a href="Guides.dc.html" style="color:#17201d" aria-current="page">Guides</a><div class="rs-dd-panel"><div class="rs-dd-inner"><div class="rs-dd-grid"><div><small>How-to guides</small><a href="Guides.dc.html">All 60 guides</a><a href="Guides.dc.html?path=start">Path: Start here</a><a href="Guides.dc.html?path=partner">Path: Give a partner an API</a><a href="Guides.dc.html?path=agents">Path: Let agents in</a><a href="Guides.dc.html?path=data">Path: Ship data out</a><a href="Guides.dc.html?path=prod">Path: Go to production</a></div><div><small>Docs · Run it</small><a href="Guide.dc.html?d=INSTALLATION_AND_SETUP">Installation and setup</a><a href="Guide.dc.html?d=DEPLOYMENT">Deployment</a><a href="Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION">Database connections</a></div><div><small>Docs · Reference</small><a href="Guide.dc.html?d=API">API reference</a><a href="Guide.dc.html?d=MCP">MCP</a><a href="Guide.dc.html?d=EXAMPLES">Example APIs</a><a href="Guide.dc.html?d=QUERY_METADATA_MANAGEMENT">Query metadata</a></div><div><small>Docs · Security</small><a href="Guide.dc.html?d=THREAT_MODEL">Threat model</a><a href="Guide.dc.html?d=DATA_PROTECTION">Where data goes</a><a href="Guide.dc.html?d=SECURITY">Security policy</a><a href="Guide.dc.html?d=ARCHITECTURE">Architecture overview</a><a href="Guide.dc.html?d=QUESTIONNAIRE">Questionnaire answers</a><a href="Guide.dc.html?d=SBOM">SBOM and verification</a></div><div><small>Docs · Project</small><a href="Guide.dc.html?d=TECHNOLOGY_STACK">Technology stack</a><a href="Guide.dc.html?d=CONTRIBUTING">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT">Code of conduct</a></div></div><a class="rs-dd-all" href="Docs.dc.html">Docs: how the pieces fit, and where to start →</a></div></div></div>
         <a href="Compare.dc.html" style="color:#4a5652">Compare</a>
         <a href="Trust.dc.html" style="color:#4a5652">Trust</a>
         <a href="Blog.dc.html" style="color:#4a5652">Blog</a>
@@ -255,6 +262,24 @@ class Component extends DCLogic {
     const html = window.marked.parse(this.state.md, { gfm: true, breaks: false });
     el.innerHTML = html;
     el.querySelectorAll('table').forEach(t => { const w = document.createElement('div'); w.className = 'md-table'; t.parentNode.insertBefore(w, t); w.appendChild(t); });
+    // every code block becomes a terminal window with a language label and a Copy button
+    const ICON = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
+    el.querySelectorAll('pre').forEach(pre => {
+      const code = pre.querySelector('code'); const text = (code || pre).textContent;
+      const m = (code && code.className.match(/language-([\w-]+)/)) || null;
+      let lang = m ? m[1] : (/^(\$ |curl |queryapigate |pip |docker |helm |kubectl |export )/m.test(text) ? 'shell' : 'text');
+      if (lang === 'bash' || lang === 'sh' || lang === 'shell') lang = 'shell';
+      const w = document.createElement('div'); w.className = 'md-term';
+      const bar = document.createElement('div'); bar.className = 'md-term-bar';
+      bar.innerHTML = '<span class="dots" aria-hidden="true"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></span><span class="lang">' + lang + '</span>';
+      const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'copy-btn'; btn.setAttribute('aria-label', 'Copy this ' + lang + ' block'); btn.innerHTML = ICON + 'Copy';
+      btn.addEventListener('click', () => {
+        const plain = text.replace(/^\$ /gm, '').replace(/\n$/, '');
+        try { navigator.clipboard && navigator.clipboard.writeText(plain); } catch (e) {}
+        btn.innerHTML = ICON + 'Copied'; clearTimeout(btn._t); btn._t = setTimeout(() => { btn.innerHTML = ICON + 'Copy'; }, 1400);
+      });
+      bar.appendChild(btn); pre.parentNode.insertBefore(w, pre); w.appendChild(bar); w.appendChild(pre);
+    });
     // identifiers in table cells may break only after an underscore or a dot, never mid-word
     el.querySelectorAll('td code, th code').forEach(c => { if (c.children.length === 0) c.innerHTML = c.textContent.replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch])).replace(/([_.])/g, '$1<wbr>'); });
     el.dataset.rendered = this.state.slug;

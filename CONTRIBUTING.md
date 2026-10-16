@@ -104,13 +104,14 @@ available at [http://contributor-covenant.org/version/1/4][version]
 git clone https://github.com/AnanthaRajuC/QueryAPIGate.git && cd QueryAPIGate
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
+python .github/scripts/fetch_h2_jar.py  # the H2 driver, from Maven Central - only for h2 connections, or a build
 
 ruff check .
 mypy queryapigate
 python -m unittest discover -s tests -t .
 ~~~
 
-`tests/test_integration.py` runs against real MySQL, PostgreSQL, ClickHouse and H2 servers when the matching
+`tests/test_integration.py` runs against real MySQL, PostgreSQL, ClickHouse, H2 and MongoDB servers when the matching
 `QUERYAPIGATE_IT_*` environment variables are set (see the file header); otherwise those tests are skipped. CI runs them
 against service containers. `tests/test_sql_guard_fuzz.py` property-tests the SQL guard and parameter binder with
 [Hypothesis](https://hypothesis.readthedocs.io/); a failure there prints a minimal reproducing example.
@@ -189,11 +190,15 @@ mkdocs serve
 
 1. Bump `__version__` in `queryapigate/__init__.py`, and `version` and `appVersion` in
    `deploy/helm/queryapigate/Chart.yaml` with it (a test fails if they differ), and turn `## [Unreleased]` in
-   CHANGELOG.md into a dated `## [X.Y.Z] - YYYY-MM-DD` section, with what upgraders must know first. Commit on `main`, push, and wait for CI.
-2. Tag that commit `vX.Y.Z` and push the tag: the Release workflow checks the tag against the version and the
-   changelog, builds the Console into the wheel and publishes to PyPI; the Docker workflow publishes the image.
-3. Add the release's upgrade fixtures (`tests/fixtures/stores/`, BACKLOG #65) from the published package, so every
-   later version is tested against a store it really wrote:
+   CHANGELOG.md into a dated `## [X.Y.Z] - YYYY-MM-DD` section, with what upgraders must know first. `main` takes
+   changes only through a pull request whose required checks pass: commit on a `release/X.Y.Z` branch, open a pull
+   request, and squash-merge it once it's green.
+2. Tag the merged commit on `main` `vX.Y.Z` and push the tag: the Release workflow checks the tag against the version
+   and the changelog, builds the Console into the wheel, publishes to PyPI with build provenance, and makes the GitHub
+   Release (the files, their `.intoto.jsonl`, the changelog's section as notes); the Docker workflow publishes the
+   image. Check one: `gh attestation verify <the wheel> --owner AnanthaRajuC`.
+3. Add the release's upgrade fixtures (`tests/fixtures/stores/`, BACKLOG #65) from the published package, on a
+   branch with step 4, so every later version is tested against a store it really wrote:
 
    ~~~bash
    python -m venv /tmp/qag-X.Y.Z && /tmp/qag-X.Y.Z/bin/pip install "queryapigate[server,postgres]==X.Y.Z"

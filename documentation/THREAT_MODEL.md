@@ -72,7 +72,10 @@ Every request carries (or omits) an `X-API-Key` header, checked once per request
   can't mix HMAC with public-key families (algorithm confusion), and `none` is never accepted. Grants come from
   a role, read live. A saved-query parameter declared `from_claim` is bound from the verified token, never from
   the request, which closes the "change `user_id` in the URL" class of bug (insecure direct object reference)
-  for queries written that way. Residual risk: a JWT can't be revoked before it expires.
+  for queries written that way. "Written that way" is the gap: a query granted to the same role without such a
+  parameter returns every user's rows. A role with `require_claim_binding` closes it - its users run only queries
+  that bind their token, by name or collection, never a connection or ad-hoc SQL - and is the setting for a role
+  whose users are customers. Residual risk: a JWT can't be revoked before it expires.
 
 #### Open-access mode: a deliberate default worth understanding
 
@@ -175,6 +178,42 @@ administrator a Console link that said what they liked in the Console's own erro
 Now only the code travels, and the Console says what each one means in its own words; the reason, with whatever the
 provider said, is in the audit log.
 
+### Workspaces: one team's reach, not another's (ADR 0023, experimental)
+
+Workspaces ([ADR 0023](adr/0023-workspaces.md)) let several teams administer one server: each owns its connections,
+saved queries, keys, roles, destinations and exports. The boundary they draw is **between teams who share a server**,
+not between a hosted service's tenants. What it holds against, and how:
+
+- **Every lookup is in one workspace.** A request's workspace is settled once (`app.settle_workspace()`, kept on the
+  request, never on a thread a later request reuses) and every statement on a workspace's table filters on it - names
+  are unique per workspace in the store's own keys, so there is nothing for a forgotten filter to match by name
+  alone across workspaces. Work that outlives the request - a stream's rows, queued history, events and usage counts
+  - carries the workspace it was started in. `tests/test_workspace_isolation.py` builds two workspaces with the same
+  names for everything and checks each route reaches only its own: a lookup that forgot its workspace shows up there
+  as the other workspace's data.
+- **A key can't leave its workspace**, prefix or not: its secret says which workspace it is in. Naming another, or
+  one that doesn't exist, is the same `404` - a caller can't use the error to list workspaces.
+- **A role from a membership is bounded twice**: its reach is its workspace's connections only, and it never holds
+  what only a server-wide role does (`adminroles.SERVER_ONLY`): administrators, settings, re-keying, erasing a
+  person, creating workspaces, `/metrics` and the instance list. A member naming a workspace they aren't in gets
+  `404`.
+- **What happened is per workspace**: audit entries carry their workspace inside the hash chain, so rewriting whose
+  an entry was breaks the chain; a member reads only their workspace's. Events reach only their workspace's
+  subscribers; the response cache, and its management, are per workspace.
+
+What it doesn't protect against - stated in the documentation's first paragraph about it:
+
+- **The people who run the server.** Server-wide owners and admins see and change every workspace, by design.
+- **Shared infrastructure.** One process, one store, one encryption key for every workspace's connection passwords.
+  A bug outside the lookups above - in the process, or in a driver - is a bug for every workspace.
+- **The databases themselves.** Two workspaces can each have a connection to the same database host; what a
+  workspace's connection can read is its database account's grants, as it always was.
+- **Folders.** A local-folder destination is allowed only in `default`: `QUERYAPIGATE_EXPORT_DIRS` is the server's,
+  and two workspaces writing under it could reach each other's files.
+
+Workspaces are experimental until a security review of this boundary, as `experimental.GRADUATION` requires of
+anything that guards access.
+
 ### Column masking: which values leave
 
 A `mask` grant on a key, role or export (ADR 0005) hashes, masks, nulls or drops the values of named
@@ -264,6 +303,33 @@ earlier, dialect-naive version of the guard. It happened not to be exploitable i
 but the project's own account of it calls it "a real failure of an explicitly documented guarantee" that
 "directly undermined auditability" - which is why the guard is now dialect-aware and exercised by a fuzz
 test on every change, not just trusted to keep working.
+
+### MongoDB: a find() and nothing else
+
+A `mongo` connection has no SQL guard to rely on; what keeps it read-only and inside its grants is that only one
+operation exists. Reviewed for its graduation to tier 1 in 0.37 ([ADR
+0022](adr/0022-mongodb-streaming-and-graduation.md)):
+
+- **Only `find()` is ever sent** - no aggregation pipeline, no write, no command a caller can name. There is no
+  `allow_writes` to get wrong.
+- **No server-side JavaScript.** `$where`, `$function` and `$accumulator` are refused in the filter, the projection
+  and the sort (`mongotools.py`), on every request and when a saved query is saved. Until 0.34.2 only the filter was
+  checked, and MongoDB 4.4+ evaluates `$function` in a projection: any key with a MongoDB connection could run
+  JavaScript on the database server.
+- **A parameter is a value, never operators.** A `:name` placeholder takes a string, number, boolean, null or a list
+  of those - `{"$ne": null}` is refused (`param_invalid`), not run as a filter matching the whole collection. Until
+  0.34.2 an untyped placeholder took any JSON.
+- **`allowed_tables` is the collections a key may read**, checked before the server is asked anything - in paged
+  runs, streams and exports. Until 0.34.1 it wasn't checked on MongoDB at all. Collection names are compared
+  case-insensitively, as table names are, so `orders` in a grant also reads a collection named `Orders`: a limit,
+  documented with the type.
+- **The time limit is the cursor's `maxTimeMS`**, over the whole cursor - a stream included - and the caller's
+  concurrency slot is held until the last document is read or the client leaves, when the cursor is closed on the
+  server.
+- **Column masking is refused** on MongoDB (`mask_unresolvable`) rather than applied to fields it can't trace.
+- **The refusals are properties under fuzzing**: `fuzz/fuzz_mongo.py` (ClusterFuzzLite, from 0.35.1) checks that no
+  server-side JavaScript survives into what MongoDB is sent and no parameter becomes an operator; the CI integration
+  job sends them to a real MongoDB 8.0.
 
 ### Secrets at rest
 

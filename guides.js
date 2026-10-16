@@ -11,7 +11,7 @@ export const guides = [
  {
   "num": "02",
   "slug": "02-connect-a-database",
-  "title": "Connect MySQL, PostgreSQL, ClickHouse, SQLite, DuckDB or H2",
+  "title": "Connect to PostgreSQL, MySQL, SQLite, DuckDB, ClickHouse or H2",
   "cat": "Start",
   "time": "5–15 min",
   "timeMin": 5,
@@ -38,7 +38,7 @@ export const guides = [
  {
   "num": "05",
   "slug": "05-try-the-built-in-example-apis",
-  "title": "Try QueryAPIGate without setting anything up",
+  "title": "Try it without any setup, using the built-in example APIs",
   "cat": "Start",
   "time": "2 min",
   "timeMin": 2,
@@ -56,7 +56,7 @@ export const guides = [
  {
   "num": "07",
   "slug": "07-group-queries-into-a-collection",
-  "title": "Group queries into a collection and grant a key access to all of them at once",
+  "title": "Group related queries into a collection",
   "cat": "Queries",
   "time": "5 min",
   "timeMin": 5,
@@ -182,7 +182,7 @@ export const guides = [
  {
   "num": "21",
   "slug": "21-verify-who-can-reach-what",
-  "title": "Verify who can reach what, before you find out the hard way",
+  "title": "Verify who can reach what",
   "cat": "Access",
   "time": "10 min",
   "timeMin": 10,
@@ -236,7 +236,7 @@ export const guides = [
  {
   "num": "27",
   "slug": "27-check-the-mcp-server-from-the-console",
-  "title": "Check whether your MCP server is actually running, from the Console",
+  "title": "Check whether your MCP server is running, from the Console",
   "cat": "Agents",
   "time": "3 min",
   "timeMin": 3,
@@ -281,7 +281,7 @@ export const guides = [
  {
   "num": "32",
   "slug": "32-deploy-with-docker",
-  "title": "Deploy QueryAPIGate with Docker for real",
+  "title": "Deploy with Docker for real",
   "cat": "Operate",
   "time": "30 min",
   "timeMin": 30,
@@ -290,7 +290,7 @@ export const guides = [
  {
   "num": "33",
   "slug": "33-back-up-and-restore",
-  "title": "Back up and restore QueryAPIGate's store",
+  "title": "Back up and restore the store",
   "cat": "Operate",
   "time": "15 min",
   "timeMin": 15,
@@ -479,7 +479,7 @@ export const guides = [
  {
   "num": "54",
   "slug": "54-install-on-kubernetes-with-helm",
-  "title": "Install QueryAPIGate on Kubernetes with Helm",
+  "title": "Install on Kubernetes with Helm",
   "cat": "Operate",
   "time": "15 min",
   "timeMin": 15,
@@ -529,6 +529,15 @@ export const guides = [
   "time": "20 min",
   "timeMin": 20,
   "outcome": "Proof that the image and chart you run were built by this repository's release workflow, from the commit it names - and a cluster that refuses anything else."
+ },
+ {
+  "num": "60",
+  "slug": "60-give-each-team-its-own-workspace",
+  "title": "Give each team its own workspace",
+  "cat": "Access",
+  "time": "15 min",
+  "timeMin": 15,
+  "outcome": "One QueryAPIGate serving several teams, each managing its own connections, saved queries and API keys in a workspace of its own - its owner running it without reaching anyone else's, its apps calling it as if it were the only one, and you, the platform team, seeing all of it."
  }
 ];
 
@@ -631,6 +640,30 @@ export const docs = [
   "path": "CODE_OF_CONDUCT.md",
   "title": "Code of conduct",
   "cat": "Project"
+ },
+ {
+  "slug": "CONFIGURATION",
+  "path": "documentation/CONFIGURATION.md",
+  "title": "Configuration",
+  "cat": "Reference"
+ },
+ {
+  "slug": "FEATURES",
+  "path": "documentation/FEATURES.md",
+  "title": "Features",
+  "cat": "Reference"
+ },
+ {
+  "slug": "SCREENSHOTS",
+  "path": "documentation/SCREENSHOTS.md",
+  "title": "A tour of the Console",
+  "cat": "Reference"
+ },
+ {
+  "slug": "WHY",
+  "path": "documentation/WHY.md",
+  "title": "Why QueryAPIGate",
+  "cat": "Reference"
  }
 ];
 

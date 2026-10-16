@@ -33,6 +33,27 @@ another workflow, another tag, or no signature - isn't a release of this project
 to read the SBOM: [guide 59](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/59-verify-a-release-before-you-run-it.md).
 Releases before 0.31 aren't signed.
 
+### SLSA level
+
+Releases meet **[SLSA](https://slsa.dev/spec/v1.0/levels) Build Level 2**: each artifact is built on a GitHub-hosted
+runner by a workflow in this repository, and comes with provenance - which workflow, at which commit, from which
+tag - that the build platform signs (GitHub artifact attestations, through Sigstore), so it can't be forged without
+that workflow. That holds for:
+
+- **the images and the Helm chart**, from 0.31 (`docker.yml`);
+- **the sdist and wheel on PyPI**, from 0.35.1 (`release.yml`). Earlier ones carry only PyPI's own attestations
+  (PEP 740), which say who uploaded them, not how they were built. To check one:
+
+  ```bash
+  pip download queryapigate==0.35.1 --no-deps -d .
+  gh attestation verify queryapigate-0.35.1-py3-none-any.whl --owner AnanthaRajuC
+  ```
+
+**Not Level 3.** Level 3 asks that the steps doing the build can't influence the provenance. Here the attestation is
+made in the same job as the build, so a compromised build step - a poisoned dependency of the build, say - could in
+principle shape what gets attested. Building and attesting in a reusable workflow, isolated from the caller, is the
+documented way to Level 3; it isn't done yet.
+
 ## Hardening checklist for deployments
 
 - Set `QUERYAPIGATE_API_KEY`, and put the service behind TLS (a reverse proxy) - the key is sent in a header. It is the
@@ -62,3 +83,5 @@ Releases before 0.31 aren't signed.
   expensive request cannot monopolise the service; setting the timeout to `0` removes that protection.
 - Prefer bound `:name` parameters over `{name}` text placeholders.
 - Note that `GET /api/v1/connections` reveals hosts, ports, users and database names (passwords are masked).
+- Plan for backing up and restoring the store - `queryapigate.db` in `QUERYAPIGATE_HOME`, or the PostgreSQL database
+  `QUERYAPIGATE_DATABASE_URL` names ([backups and restores](documentation/DEPLOYMENT.md#5-persistent-data-backups-and-restores)).
