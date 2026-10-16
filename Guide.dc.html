@@ -38,7 +38,11 @@ a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 
 #guide-body pre code{background:none;padding:0;font-size:inherit;color:inherit}
 #guide-body blockquote{margin:0 0 14px;padding:12px 16px;border-left:3px solid oklch(0.52 0.11 170);background:#fff;border-radius:0 8px 8px 0;color:#4a5652}
 #guide-body blockquote p{margin:0}
-#guide-body table{border-collapse:collapse;width:100%;margin:6px 0 20px;font-size:14px;background:#fff;border:1px solid #dbe2df;border-radius:10px;overflow:hidden}
+/* Tables: identifiers never break mid-word; a table wider than the column scrolls sideways inside its wrapper. */
+#guide-body .md-table{overflow-x:auto;margin:6px 0 20px;border:1px solid #dbe2df;border-radius:10px;background:#fff}
+#guide-body table{border-collapse:collapse;width:100%;margin:0;font-size:14px;background:#fff}
+#guide-body th,#guide-body td{overflow-wrap:normal;word-break:normal}
+#guide-body td code,#guide-body th code{white-space:normal;overflow-wrap:normal}
 #guide-body th,#guide-body td{text-align:left;padding:9px 12px;border-bottom:1px solid #dbe2df;vertical-align:top}
 #guide-body th{font-weight:600;background:#f3f5f4;font-size:12px;letter-spacing:0.04em;text-transform:uppercase;color:#4a5652}
 #guide-body tr:last-child td{border-bottom:none}
@@ -250,6 +254,9 @@ class Component extends DCLogic {
     if (!el || !this.state.md || !window.marked || el.dataset.rendered === this.state.slug) return;
     const html = window.marked.parse(this.state.md, { gfm: true, breaks: false });
     el.innerHTML = html;
+    el.querySelectorAll('table').forEach(t => { const w = document.createElement('div'); w.className = 'md-table'; t.parentNode.insertBefore(w, t); w.appendChild(t); });
+    // identifiers in table cells may break only after an underscore or a dot, never mid-word
+    el.querySelectorAll('td code, th code').forEach(c => { if (c.children.length === 0) c.innerHTML = c.textContent.replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch])).replace(/([_.])/g, '$1<wbr>'); });
     el.dataset.rendered = this.state.slug;
     el.querySelectorAll('a[href]').forEach(a => {
       const h = a.getAttribute('href');
