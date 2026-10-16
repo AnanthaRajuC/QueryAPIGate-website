@@ -114,6 +114,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .ft-badges{display:inline-flex;align-items:center;gap:10px}.ft-badges img{display:block;height:20px}
 @media (max-width:1100px){.ft-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ft-brand{grid-column:1/-1}}
 @media (max-width:560px){.ft-grid{grid-template-columns:minmax(0,1fr)}}
+.copy-btn{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:#c5d3cd;background:#1b2f29;border:1px solid #2a3d37;border-radius:6px;padding:4px 9px;min-height:26px;cursor:pointer;transition:background 0.2s,color 0.2s}
+.copy-btn:hover{background:#24403a;color:#e6efeb}
 </style>
 </helmet>
 <div data-screen-label="Features" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
@@ -188,11 +190,11 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
           <div style="display:flex;flex-wrap:wrap;gap:6px">
             <span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:0s">1 identify</span><span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:1s">2 limits</span><span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:2s">3 grant</span><span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:3s">4 validate</span><span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:4s">5 guard</span><span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:5s">6 run</span><span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:6s">7 mask</span><span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:7s">8 record</span>
           </div>
-          <pre style="margin:0;background:#10201b;border:1px solid #243b34;color:#e6efeb;border-radius:10px;padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65"><span style="color:oklch(0.8 0.11 170)">GET</span> /q/acme_orders?status=open
+          <div style="background:#10201b;border:1px solid #243b34;border-radius:10px;overflow:hidden;min-width:0;"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #243b34"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">request.http</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.04em;padding:3px 8px;border-radius:999px;background:oklch(0.62 0.13 170 / 0.14);color:oklch(0.8 0.11 170);border:1px solid oklch(0.62 0.13 170 / 0.35);white-space:nowrap">200 OK · 15 ms</span></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65;overflow-x:auto;min-width:0"><span style="color:oklch(0.8 0.11 170)">GET</span> /q/acme_orders?status=open
 X-API-Key: sk_…partner-acme
 
 <span style="color:#9fb3ac"># grant checked · parameters validated · email masked · run recorded</span>
-[{"id": 5, "status": "open", "email": <span style="color:oklch(0.82 0.12 80)">"a***@acme.io"</span>}]</pre>
+[{"id": 5, "status": "open", "email": <span style="color:oklch(0.82 0.12 80)">"a***@acme.io"</span>}]</pre></div>
         </div>
         <div style="grid-column:span 5;border:1px solid #243b34;border-radius:14px;background:#0c1915;padding:26px;display:grid;gap:16px;align-content:start">
           <div style="display:grid;gap:4px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:44px;line-height:1;font-weight:800">8</b><h3 style="margin:0;font-size:15px;font-weight:500;color:#9fb3ac">database types, one interface</h3></div>
@@ -259,20 +261,20 @@ X-API-Key: sk_…partner-acme
       </div>
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:48px;align-items:center">
         <div style="display:grid;gap:12px"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">Saved queries as endpoints</h3><p style="margin:0;color:#4a5652">Each saved query is versioned, has typed parameters with ranges and lengths, and keeps a run history. OpenAPI and a Postman collection are generated, and <a href="https://openapi-generator.tech/docs/generators">OpenAPI Generator</a> turns the spec into a typed client in about 50 languages. Group queries into collections and grant access to the whole collection at once.</p></div>
-        <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:22px 24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.65;min-width:0;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35)"><span style="color:#9fb3ac">$</span> curl 'http://127.0.0.1:5000/q/example_top_films?top_n=2&category=Comedy&format=csv' \
+        <div style="background:#10201b;border:none;border-radius:10px;overflow:hidden;min-width:0;box-shadow:0 20px 40px -24px rgba(16,32,27,0.5);"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #1b2f29"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">curl</span><button type="button" class="copy-btn" onClick="{{ copyCurl }}" aria-label="Copy" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedCurl }}</button></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.65;overflow-x:auto;min-width:0"><span style="color:#9fb3ac">$</span> curl 'http://127.0.0.1:5000/q/example_top_films?top_n=2&category=Comedy&format=csv' \
     -H 'X-API-Key: demo-key'
 title,category,rating,rentals,rank
 Electric Signal,Comedy,PG,977,1
-Crimson Garden,Comedy,PG-13,631,2</pre>
+Crimson Garden,Comedy,PG-13,631,2</pre></div>
       </div>
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:48px;align-items:center">
-        <div style="display:grid;gap:12px;min-width:0"><pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:22px 24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.65;min-width:0;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35)"><span style="color:#9fb3ac">// query_parameters</span>
+        <div style="display:grid;gap:12px;min-width:0"><div style="background:#10201b;border:none;border-radius:10px;overflow:hidden;min-width:0;box-shadow:0 20px 40px -24px rgba(16,32,27,0.5);"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #1b2f29"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">query_parameters.json</span><button type="button" class="copy-btn" onClick="{{ copyRules }}" aria-label="Copy" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedRules }}</button></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.65;overflow-x:auto;min-width:0"><span style="color:#9fb3ac">// query_parameters</span>
 {
   <span style="color:#a7d7c5">"rating"</span>:     {<span style="color:#a7d7c5">"type"</span>: "str", <span style="color:#a7d7c5">"enum"</span>: ["G","PG","R"], <span style="color:#a7d7c5">"default"</span>: "PG"},
   <span style="color:#a7d7c5">"max_length"</span>: {<span style="color:#a7d7c5">"type"</span>: "int", <span style="color:#a7d7c5">"min"</span>: 1, <span style="color:#a7d7c5">"max"</span>: 600},
   <span style="color:#a7d7c5">"title"</span>:      {<span style="color:#a7d7c5">"type"</span>: "str", <span style="color:#a7d7c5">"required"</span>: false, <span style="color:#a7d7c5">"pattern"</span>: "[A-Za-z ]+"},
   <span style="color:#a7d7c5">"customer"</span>:   {<span style="color:#a7d7c5">"type"</span>: "int", <span style="color:#a7d7c5">"from_claim"</span>: "sub"}
-}</pre>
+}</pre></div>
         <div style="background:#fff;border:1px solid #dbe2df;border-radius:12px;padding:16px 18px;display:grid;gap:12px;min-width:0">
           <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Try it</span><span style="font-size:13px;color:#626d69">Edit the values. The checks below run exactly as the rules above say, before anything reaches the database.</span></div>
           <div class="f-3col" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
@@ -280,8 +282,8 @@ Crimson Garden,Comedy,PG-13,631,2</pre>
             <label style="display:grid;gap:4px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#626d69">max_length<input class="f-in" value="{{ tp.max_length }}" onInput="{{ tpMax }}" inputmode="numeric" style="border-color:{{ tp.maxBorder }}"></label>
             <label style="display:grid;gap:4px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#626d69">title<input class="f-in" value="{{ tp.title }}" onInput="{{ tpTitle }}" placeholder="optional" style="border-color:{{ tp.titleBorder }}"></label>
           </div>
-          <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:10px;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;min-height:7.5em"><span style="color:#9fb3ac">$</span> curl '/q/films?{{ tp.qs }}' -H 'X-API-Key: demo-key'
-<span style="color:{{ tp.statusColor }}">{{ tp.status }}</span> {{ tp.body }}</pre>
+          <div style="background:#10201b;border:none;border-radius:10px;overflow:hidden;min-width:0;box-shadow:0 20px 40px -24px rgba(16,32,27,0.5);"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #1b2f29"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">response</span></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.6;overflow-x:auto;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere;min-height:7.5em"><span style="color:#9fb3ac">$</span> curl '/q/films?{{ tp.qs }}' -H 'X-API-Key: demo-key'
+<span style="color:{{ tp.statusColor }}">{{ tp.status }}</span> {{ tp.body }}</pre></div>
         </div>
         </div>
         <div style="display:grid;gap:12px"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">Typed parameters, checked before the database</h3><p style="margin:0;color:#4a5652">Each <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">:name</code> in the SQL is a bound parameter with a type, bounds, length, enum, pattern and default. A request that breaks a rule gets a 400 listing every problem and never reaches the database. <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">from_claim</code> takes a value from the caller's sign-in token instead of the request, so a user can only ever ask for their own rows.</p></div>
@@ -412,11 +414,11 @@ Crimson Garden,Comedy,PG-13,631,2</pre>
         <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">05 · Developers</span>
         <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Documented, predictable and scriptable</h2>
         <p style="margin:0;color:#4a5652;text-wrap:pretty">What it is like to build against. Every error has the same shape, every response carries a request ID, and the whole setup can live in one reviewed YAML file.</p>
-        <pre style="margin:0;background:#10201b;color:#e6efeb;border-radius:12px;padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65"><span style="color:#f2b8a0">403</span> {
+        <div style="background:#10201b;border:none;border-radius:10px;overflow:hidden;min-width:0;box-shadow:0 20px 40px -24px rgba(16,32,27,0.5);"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #1b2f29"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">error.json</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.04em;padding:3px 8px;border-radius:999px;background:oklch(0.62 0.13 170 / 0.14);color:oklch(0.8 0.11 170);border:1px solid oklch(0.62 0.13 170 / 0.35);white-space:nowrap">403 forbidden</span></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65;overflow-x:auto;min-width:0"><span style="color:#f2b8a0">403</span> {
   "error": "key may not run this query",
   "code": <span style="color:#a7d7c5">"forbidden"</span>,
   "request_id": "req_01J9…"
-}</pre>
+}</pre></div>
       </div>
       <div class="f-3col" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 32px">
         <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Interactive docs and a catalogue</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/docs</code> lists every saved query as its own endpoint with typed parameters; <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/catalog</code> tells each caller what it can call and on what terms: cached, writable, its rate limit.</p></div>
@@ -496,10 +498,10 @@ Crimson Garden,Comedy,PG-13,631,2</pre>
           <a href="Guides.dc.html" style="font-size:15px;font-weight:600;color:#e6efeb;padding:13px 22px;border:1px solid #2a3d37;border-radius:8px;text-decoration:none" style-hover="border-color:#9fb3ac;color:#fff;text-decoration:none">59 how-to guides</a>
         </div>
       </div>
-      <pre style="margin:0;background:#0c1915;border:1px solid #243b34;color:#e6efeb;border-radius:12px;padding:22px 24px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7"><span style="color:#9fb3ac">$</span> pip install queryapigate
+      <div style="background:#10201b;border:1px solid #243b34;border-radius:10px;overflow:hidden;min-width:0;"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #243b34"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">install · pip</span><button type="button" class="copy-btn" onClick="{{ copyPip }}" aria-label="Copy" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedPip }}</button></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;overflow-x:auto;min-width:0"><span style="color:#9fb3ac">$</span> pip install queryapigate
 <span style="color:#9fb3ac">$</span> queryapigate examples load
 <span style="color:#9fb3ac">$</span> queryapigate serve
-<span style="color:#9fb3ac"># Console at http://127.0.0.1:5000/console</span></pre>
+<span style="color:#9fb3ac"># Console at http://127.0.0.1:5000/console</span></pre></div>
     </div>
   </section>
 
@@ -535,7 +537,7 @@ Crimson Garden,Comedy,PG-13,631,2</pre>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;heroScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;home&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;designer&quot;,&quot;queries&quot;,&quot;api-keys&quot;,&quot;access-map&quot;,&quot;audit-log&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;showSubnav&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Navigation&quot;}}">
 class Component extends DCLogic {
-  state = { i: 0, active: '', tp: { rating: 'X', max_length: '900', title: '' }, gov: null, govPinned: false, pub: 3, rolled: false };
+  state = { i: 0, active: '', tp: { rating: 'X', max_length: '900', title: '' }, gov: null, govPinned: false, pub: 3, rolled: false, copied: null };
   sections = [
     { id: 'connect', num: '01', label: 'Connect' }, { id: 'build', num: '02', label: 'Build' }, { id: 'govern', num: '03', label: 'Govern' },
     { id: 'deliver', num: '04', label: 'Deliver' }, { id: 'developers', num: '05', label: 'Developers' }, { id: 'operate', num: '06', label: 'Operate' }, { id: 'prove', num: '07', label: 'Prove' },
@@ -559,7 +561,18 @@ class Component extends DCLogic {
     }, { rootMargin: '-25% 0px -60% 0px' });
     this.sections.forEach(s => { const el = document.getElementById(s.id); if (el) this.obs.observe(el); });
   }
-  componentWillUnmount() { if (this.obs) this.obs.disconnect(); }
+  componentWillUnmount() { if (this.obs) this.obs.disconnect(); clearTimeout(this.copyT); }
+  copy(key, text) {
+    return () => {
+      try { navigator.clipboard && navigator.clipboard.writeText(text); } catch (e) {}
+      this.setState({ copied: key }); clearTimeout(this.copyT); this.copyT = setTimeout(() => this.setState({ copied: null }), 1400);
+    };
+  }
+  snippets = {
+    Curl: "curl 'http://127.0.0.1:5000/q/example_top_films?top_n=2&category=Comedy&format=csv' \\\n    -H 'X-API-Key: demo-key'",
+    Rules: '{\n  "rating":     {"type": "str", "enum": ["G","PG","R"], "default": "PG"},\n  "max_length": {"type": "int", "min": 1, "max": 600},\n  "title":      {"type": "str", "required": false, "pattern": "[A-Za-z ]+"},\n  "customer":   {"type": "int", "from_claim": "sub"}\n}',
+    Pip: 'pip install queryapigate\nqueryapigate examples load\nqueryapigate serve',
+  };
   // Typed parameters demo: the rules shown in the snippet above it, applied to what the reader types.
   tpCheck() {
     const t = this.state.tp, errors = {}, bound = {};
@@ -595,6 +608,7 @@ class Component extends DCLogic {
   }
   demoVals() {
     const v = {};
+    Object.keys(this.snippets).forEach(k => { v['copy' + k] = this.copy(k, this.snippets[k]); v['copied' + k] = this.state.copied === k ? 'Copied' : 'Copy'; });
     // 1. typed parameters
     const r = this.tpCheck(); const t = this.state.tp; const red = 'oklch(0.55 0.18 25)', ok = '#c3cdc9';
     v.tp = { ...t, qs: r.qs, status: r.status, statusColor: r.statusColor, body: r.body, ratingBorder: r.errors.rating ? red : ok, maxBorder: r.errors.max_length ? red : ok, titleBorder: r.errors.title ? red : ok };

@@ -117,6 +117,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .ft-badges{display:inline-flex;align-items:center;gap:10px}.ft-badges img{display:block;height:20px}
 @media (max-width:1100px){.ft-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ft-brand{grid-column:1/-1}}
 @media (max-width:560px){.ft-grid{grid-template-columns:minmax(0,1fr)}}
+.copy-btn{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:#c5d3cd;background:#1b2f29;border:1px solid #2a3d37;border-radius:6px;padding:4px 9px;min-height:26px;cursor:pointer;transition:background 0.2s,color 0.2s}
+.copy-btn:hover{background:#24403a;color:#e6efeb}
 </style>
 </helmet>
 <div data-screen-label="Enterprise" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
@@ -182,13 +184,13 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:start">
         <div class="f-3col" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 32px"><div style="display:grid;gap:8px;padding:22px 0;border-top:1px solid #2a3d37;align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac">Tamper-evident</span><h3 style="margin:0;font-size:17px;font-weight:600">A signed hash chain</h3><p style="margin:0;font-size:14.5px;color:#9fb3ac">Each entry's hash covers the one before it, so changing, removing, inserting or reordering an entry breaks every hash after it. With <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_AUDIT_KEY</code> the chain is HMAC-signed with a key outside the store. The server checks it every 5 minutes.</p></div><div style="display:grid;gap:8px;padding:22px 0;border-top:1px solid #2a3d37;align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac">To your SIEM</span><h3 style="margin:0;font-size:17px;font-weight:600">Syslog over mutual TLS, or OTLP</h3><p style="margin:0;font-size:14.5px;color:#9fb3ac">Each entry is sent with its sequence number and hash. Tested on every push against rsyslog, syslog-ng and the OpenTelemetry Collector, including refused certificates and an outage. Stable since 0.32.</p><div style="display:flex;gap:8px 16px;flex-wrap:wrap;font-size:13.5px;font-weight:600"><a style="color:oklch(0.8 0.11 170)" href="Guide.dc.html?g=53-send-the-audit-log-to-your-siem">Guide 53 →</a></div></div><div style="display:grid;gap:8px;padding:22px 0;border-top:1px solid #2a3d37;align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac">Run history</span><h3 style="margin:0;font-size:17px;font-weight:600">Every call, attributed</h3><p style="margin:0;font-size:14.5px;color:#9fb3ac">Who ran which query version, from which front door, with status, rows and duration. Parameter values are never recorded.</p><div style="display:flex;gap:8px 16px;flex-wrap:wrap;font-size:13.5px;font-weight:600"><a style="color:oklch(0.8 0.11 170)" href="Guide.dc.html?g=20-read-the-audit-log">Read the audit log →</a></div></div><div style="display:grid;gap:8px;padding:22px 0;border-top:1px solid #2a3d37;align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac">Operations</span><h3 style="margin:0;font-size:17px;font-weight:600">Metrics, alerts and traces</h3><p style="margin:0;font-size:14.5px;color:#9fb3ac">Prometheus metrics per key, a Grafana dashboard, 25 kinds of alert, request IDs in structured logs. OpenTelemetry tracing is experimental.</p><div style="display:flex;gap:8px 16px;flex-wrap:wrap;font-size:13.5px;font-weight:600"><a style="color:oklch(0.8 0.11 170)" href="Guide.dc.html?g=35-wire-up-prometheus-and-grafana">Prometheus and Grafana →</a></div></div></div>
         <div style="display:grid;gap:14px">
-          <pre style="margin:0;background:#0c1915;border:1px solid #243b34;color:#e6efeb;border-radius:12px;padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0"><span style="color:#9fb3ac">$</span> queryapigate audit verify
+          <div style="background:#10201b;border:1px solid #243b34;border-radius:10px;overflow:hidden;min-width:0"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #243b34"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">audit · verify</span><button type="button" class="copy-btn" onClick="{{ copyAudit }}" aria-label="Copy the audit commands" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedAudit }}</button></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0"><span style="color:#9fb3ac">$</span> queryapigate audit verify
 <span style="color:#9fb3ac"># checks the chain in the store, naming the first broken entry
 
 </span><span style="color:#9fb3ac">$</span> queryapigate audit verify --file siem-export.log
 <span style="color:#9fb3ac"># checks the copy your SIEM received, on its own:
 </span><span style="color:#9fb3ac"># exact repeats from at-least-once delivery dropped,
-</span><span style="color:#9fb3ac"># a repeat that differs reported as conflicting_copies</span></pre>
+</span><span style="color:#9fb3ac"># a repeat that differs reported as conflicting_copies</span></pre></div>
           <p style="margin:0;font-size:14px;color:#9fb3ac">What the chain can't show on its own: the newest entries deleted, or a rewrite by someone holding both the store and the key. That is why the copy in your SIEM matters. <a href="Guide.dc.html?d=THREAT_MODEL#the-audit-trail" style="color:oklch(0.8 0.11 170)">The audit trail in the threat model →</a></p>
         </div>
       </div>
@@ -206,12 +208,12 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
           <p style="margin:0;color:#4a5652;font-size:15px"><b style="color:#17201d;font-weight:600">Kept out of a backup on purpose:</b> <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_SECRET_KEY</code>, which encrypts connection passwords, the admin key, and any environment variable a connection refers to. Keep them in your secrets manager. Scoped keys are in the store as hashes, so they keep working after a restore.</p>
           <div style="display:flex;gap:8px 16px;flex-wrap:wrap;font-size:13.5px;font-weight:600"><a href="Guide.dc.html?g=33-back-up-and-restore">Back up and restore →</a><a href="Guide.dc.html?d=DEPLOYMENT#5-persistent-data-backups-and-restores">Deployment guide →</a></div>
         </div>
-        <pre style="margin:0;background:#10201b;border:1px solid #243b34;color:#e6efeb;border-radius:12px;padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0"><span style="color:#9fb3ac"># SQLite: a consistent copy while the server keeps running
+        <div style="background:#10201b;border:1px solid #243b34;border-radius:10px;overflow:hidden;min-width:0"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #243b34"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">backup</span><button type="button" class="copy-btn" onClick="{{ copyBackup }}" aria-label="Copy the backup commands" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedBackup }}</button></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0"><span style="color:#9fb3ac"># SQLite: a consistent copy while the server keeps running
 </span><span style="color:#9fb3ac">$</span> queryapigate backup /data/backup.db --force
 
 <span style="color:#9fb3ac"># PostgreSQL: one snapshot, safe while serving
 </span><span style="color:#9fb3ac">$</span> pg_dump --format=custom --schema=public --no-owner --no-privileges \
-    --file="queryapigate-$(date +%F).dump" "$QUERYAPIGATE_DATABASE_URL"</pre>
+    --file="queryapigate-$(date +%F).dump" "$QUERYAPIGATE_DATABASE_URL"</pre></div>
       </div>
     </div>
   </section>
@@ -228,11 +230,11 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         <div style="display:grid;gap:16px">
           <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:22px;font-weight:700">Signed releases, SBOM and provenance</h3>
           <p style="margin:0;color:#4a5652;font-size:15px">The image and the Helm chart are signed keyless with cosign by the release workflow, by digest. Each platform carries an SPDX 2.3 SBOM and SLSA provenance naming the repository, workflow, commit and run. Every GitHub Action is pinned by commit and the base images by digest.</p>
-          <pre style="margin:0;background:#10201b;border:1px solid #243b34;color:#e6efeb;border-radius:12px;padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0"><span style="color:#9fb3ac">$</span> cosign verify ghcr.io/anantharajuc/queryapigate:0.34.2 \
-    --certificate-identity https://github.com/AnanthaRajuC/QueryAPIGate/.github/workflows/docker.yml@refs/tags/v0.34.2 \
+          <div style="background:#10201b;border:1px solid #243b34;border-radius:10px;overflow:hidden;min-width:0"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #243b34"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">cosign · verify</span><button type="button" class="copy-btn" onClick="{{ copyVerify }}" aria-label="Copy the cosign commands" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedVerify }}</button></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0"><span style="color:#9fb3ac">$</span> cosign verify ghcr.io/anantharajuc/queryapigate:{{ entVer }} \
+    --certificate-identity https://github.com/AnanthaRajuC/QueryAPIGate/.github/workflows/docker.yml@refs/tags/v{{ entVer }} \
     --certificate-oidc-issuer https://token.actions.githubusercontent.com
 
-<span style="color:#9fb3ac">$</span> docker buildx imagetools inspect ghcr.io/anantharajuc/queryapigate:0.34.2 --format '{<span></span>{json .SBOM}<span></span>}'</pre>
+<span style="color:#9fb3ac">$</span> docker buildx imagetools inspect ghcr.io/anantharajuc/queryapigate:{{ entVer }} --format '{<span></span>{json .SBOM}<span></span>}'</pre></div>
           <p style="margin:0;color:#4a5652;font-size:15px">Admit only signed releases to a cluster with Sigstore's policy-controller or Kyverno; both policies are in the guide, tested against signed, unsigned and wrongly signed images.</p>
           <p style="margin:0;color:#4a5652;font-size:15px">The project's own security practices are scored by <a href="https://scorecard.dev/viewer/?uri=github.com/AnanthaRajuC/QueryAPIGate">OpenSSF Scorecard</a>, an independent automated check from the Open Source Security Foundation. It runs on every change to the main branch and once a week, and the badge below always shows the latest score.</p>
           <a href="https://scorecard.dev/viewer/?uri=github.com/AnanthaRajuC/QueryAPIGate" style="justify-self:start;line-height:0" aria-label="OpenSSF Scorecard results for QueryAPIGate"><img src="https://api.scorecard.dev/projects/github.com/AnanthaRajuC/QueryAPIGate/badge" alt="OpenSSF Scorecard score for QueryAPIGate" height="20" style="height:20px;width:auto"></a>
@@ -307,9 +309,10 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"showSubnav":{"editor":"boolean","default":true,"tsType":"boolean","section":"Navigation"}}'>
 class Component extends DCLogic {
-  state = { active: '' };
+  state = { active: '', copied: null, pypi: null };
   sections = [{ id: 'identity', num: '01', label: 'Identity and access' }, { id: 'audit', num: '02', label: 'Audit' }, { id: 'availability', num: '03', label: 'Availability' }, { id: 'crypto', num: '04', label: 'Cryptography' }, { id: 'pack', num: '05', label: 'Security pack' }, { id: 'responsibility', num: '06', label: 'Responsibility' }];
   componentDidMount() {
+    fetch('https://pypi.org/pypi/queryapigate/json').then(r => r.ok ? r.json() : null).then(pypi => pypi && this.setState({ pypi })).catch(() => {});
     if (!('IntersectionObserver' in window)) return;
     this.vis = {};
     this.obs = new IntersectionObserver((entries) => {
@@ -319,10 +322,22 @@ class Component extends DCLogic {
     }, { rootMargin: '-25% 0px -60% 0px' });
     this.sections.forEach(s => { const el = document.getElementById(s.id); if (el) this.obs.observe(el); });
   }
-  componentWillUnmount() { if (this.obs) this.obs.disconnect(); }
+  componentWillUnmount() { if (this.obs) this.obs.disconnect(); clearTimeout(this.copyT); }
+  copy(key, text) {
+    return () => {
+      try { navigator.clipboard && navigator.clipboard.writeText(text); } catch (e) {}
+      this.setState({ copied: key }); clearTimeout(this.copyT); this.copyT = setTimeout(() => this.setState({ copied: null }), 1400);
+    };
+  }
+  // Plain-text versions of the three terminals, for the Copy buttons; {v} is the latest version from PyPI.
+  snippets = { Audit: 'queryapigate audit verify\n\nqueryapigate audit verify --file siem-export.log', Backup: 'queryapigate backup /data/backup.db --force\n\npg_dump --format=custom --schema=public --no-owner --no-privileges \\\n    --file="queryapigate-$(date +%F).dump" "$QUERYAPIGATE_DATABASE_URL"', Verify: 'cosign verify ghcr.io/anantharajuc/queryapigate:{v} \\\n    --certificate-identity https://github.com/AnanthaRajuC/QueryAPIGate/.github/workflows/docker.yml@refs/tags/v{v} \\\n    --certificate-oidc-issuer https://token.actions.githubusercontent.com\n\ndocker buildx imagetools inspect ghcr.io/anantharajuc/queryapigate:{v} --format \'{{json .SBOM}}\'' };
   renderVals() {
     const a = this.state.active;
+    const ver = this.state.pypi?.info?.version || '0.37.0';
+    const v = { entVer: ver };
+    Object.keys(this.snippets).forEach(k => { v['copy' + k] = this.copy(k, this.snippets[k].replace(/\{v\}/g, ver)); v['copied' + k] = this.state.copied === k ? 'Copied' : 'Copy'; });
     return {
+      ...v,
       subDisplay: (this.props.showSubnav ?? true) ? 'block' : 'none',
       sub: this.sections.map(s => ({ href: '#' + s.id, num: s.num, label: s.label, color: a === s.id ? '#fff' : '#9fb3ac', line: a === s.id ? 'oklch(0.62 0.13 170)' : 'transparent' })),
     };
