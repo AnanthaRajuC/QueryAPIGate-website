@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- site-meta -->
+<title>MCP server for AI agents - QueryAPIGate</title>
+<meta name="description" content="A governed MCP server for your databases: saved SQL as tools for Claude, Copilot, Cursor or your own agent, with least privilege, masking, human-approved writes, quotas and a tamper-evident audit trail. Self-hosted.">
+<meta name="theme-color" content="#10201b">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QueryAPIGate">
+<meta property="og:title" content="MCP server for AI agents - QueryAPIGate">
+<meta property="og:description" content="A governed MCP server for your databases: saved SQL as tools for Claude, Copilot, Cursor or your own agent, with least privilege, masking, human-approved writes, quotas and a tamper-evident audit trail. Self-hosted.">
+<meta name="twitter:card" content="summary">
+<!-- /site-meta -->
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0;background:#f3f5f4;color:#17201d;font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
+a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 170);text-decoration:underline}
+
+@media (max-width:1180px){
+  .rs-gh{display:none !important}
+  .rs-nav{gap:14px !important}
+}
+@media (max-width:1100px){
+  .rs-nav{gap:12px !important;font-size:14px !important}
+}
+@media (max-width:1024px){
+  .rs-cta{display:none !important}
+}
+.copy-btn{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:#c5d3cd;background:#1b2f29;border:1px solid #2a3d37;border-radius:6px;padding:4px 9px;min-height:26px;cursor:pointer;transition:background 0.2s,color 0.2s}
+.copy-btn:hover{background:#24403a;color:#e6efeb}
+.db-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:1100px){.db-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:480px){.db-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@keyframes catbarA{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes catbarB{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+/* Front doors: five cards, 3 + 2 on desktop, 2 columns on tablet, 1 on phone. Each panel loops a 6s CSS
+   animation; the un-animated base styles are the finished state, so reduced-motion shows a sensible still. */
+.fd-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px}
+.fd-panel{background:#f3f5f4}
+.fd-grid>article{grid-column:span 2;min-width:0}
+.fd-grid>article:nth-child(n+4){grid-column:span 3}
+@media (max-width:1000px){.fd-grid>article{grid-column:span 3}.fd-grid>article:last-child{grid-column:span 6}}
+@media (max-width:560px){.fd-grid>article,.fd-grid>article:last-child{grid-column:span 6}}
+.fd-row{font-family:'JetBrains Mono',monospace;font-size:11px;background:#fff;border:1px solid #c3cdc9;border-radius:6px;padding:6px 10px;color:#17201d;display:flex;justify-content:space-between;gap:8px;min-width:0;white-space:nowrap}
+.fd-row>span:first-child{overflow:hidden;text-overflow:ellipsis}
+.fd-dark{background:#10201b;border-color:#10201b;color:#e6efeb}
+@keyframes fd-in{0%{opacity:0;transform:translateY(6px)}8%{opacity:1;transform:none}86%{opacity:1;transform:none}94%,100%{opacity:0;transform:translateY(-4px)}}
+@keyframes fd-take1{0%,28%{background:#10201b;border-color:#10201b;color:#e6efeb}31%,100%{background:#fff;border-color:#c3cdc9;color:#17201d}}
+@keyframes fd-take2{0%,30%{background:#fff;border-color:#c3cdc9;color:#17201d}33%,61%{background:#10201b;border-color:#10201b;color:#e6efeb}64%,100%{background:#fff;border-color:#c3cdc9;color:#17201d}}
+@keyframes fd-take3{0%,63%{background:#fff;border-color:#c3cdc9;color:#17201d}66%,94%{background:#10201b;border-color:#10201b;color:#e6efeb}97%,100%{background:#fff;border-color:#c3cdc9;color:#17201d}}
+@keyframes fd-grow{0%{transform:scaleX(0)}72%{transform:scaleX(1)}92%{transform:scaleX(1)}100%{transform:scaleX(0)}}
+@keyframes fd-done{0%,70%{opacity:0}75%,92%{opacity:1}100%{opacity:0}}
+@keyframes fd-wait{0%,52%{opacity:1}58%,100%{opacity:0}}
+@keyframes fd-ok{0%,52%{opacity:0}58%,100%{opacity:1}}
+@keyframes fd-blink{0%,100%{opacity:1}50%{opacity:0.25}}
+@keyframes fd-scroll{0%{transform:translateY(0)}100%{transform:translateY(-50%)}}
+@media (prefers-reduced-motion:reduce){.fd-stage *{animation:none !important}}
+.gov-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.gov-paper{background-color:#f8faf9;background-image:linear-gradient(#e3eae6 1px,transparent 1px),linear-gradient(90deg,#e3eae6 1px,transparent 1px);background-size:16px 16px}
+@media (max-width:1100px){.gov-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.gov-grid{grid-template-columns:minmax(0,1fr)}.rs-pill{border-radius:14px !important;padding:10px 12px !important;align-items:flex-start !important}}
+@media (max-width:960px){
+  .rs-nav{flex:1 1 auto;min-width:0;flex-wrap:nowrap !important;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+  .rs-nav::-webkit-scrollbar{display:none}
+}
+@media (max-width:820px){
+  .rs-2col{grid-template-columns:minmax(0,1fr) !important}
+  .rs-aside{position:static !important;max-height:none !important}
+  .rs-nav{gap:10px 16px !important;font-size:13.5px !important;flex-wrap:nowrap !important;overflow-x:auto;width:100%;scrollbar-width:none;white-space:nowrap;padding-bottom:2px}
+  .rs-nav::-webkit-scrollbar{display:none}
+  .rs-navbar{flex-wrap:wrap !important;gap:12px 20px !important;padding:12px 16px !important}
+  .rs-cta{display:none !important}
+  .rs-pad{padding-left:16px !important;padding-right:16px !important}
+  .rs-hero{padding-top:48px !important}
+  .rs-hide{display:none !important}
+}
+
+
+/* architecture: full diagram on wide screens, stacked summary on phones */
+.arch-m{display:none}
+@media (max-width:700px){.arch-d{display:none}.arch-m{display:block}}
+@media (max-width:700px){.cmp-grid > div{padding:12px 14px !important;font-size:14px !important}.cmp-arrow{display:none !important}}
+
+/* integrations hub */
+.ig-grid{display:grid;grid-template-columns:minmax(0,1fr) 44px 208px 44px minmax(0,1fr);align-items:center}
+.ig-stack{display:grid;min-width:0}
+.ig-slot{position:relative;padding:8px 0}
+.ig-left .ig-slot{padding-right:26px}
+.ig-right .ig-slot{padding-left:26px}
+.ig-left .ig-slot::before,.ig-right .ig-slot::before{content:"";position:absolute;top:0;bottom:0}
+.ig-left .ig-slot::before{right:0;border-right:1.5px solid #c3cdc9}
+.ig-right .ig-slot::before{left:0;border-left:1.5px solid #c3cdc9}
+.ig-slot:first-child::before{top:50%}
+.ig-slot:last-child::before{bottom:50%}
+.ig-left .ig-slot::after,.ig-right .ig-slot::after{content:"";position:absolute;top:50%;width:26px;border-top:1.5px solid #c3cdc9}
+.ig-left .ig-slot::after{right:0}
+.ig-right .ig-slot::after{left:0}
+.ig-conn{border-top:1.5px solid #c3cdc9}
+.ig-card{background:#fff;border:1px solid #dbe2df;border-radius:12px;padding:14px 16px;display:grid;gap:10px}
+.ig-items{display:flex;flex-wrap:wrap;gap:6px 4px}
+.ig-item{position:relative;display:grid;justify-items:center;gap:6px;width:76px;text-align:center;font-size:12px;line-height:1.25;color:#4a5652}
+.ig-logo{width:44px;height:44px;border-radius:10px;border:1px solid #dbe2df;background:#fff;display:grid;place-items:center;transition:border-color .2s}
+.ig-mark{display:block;width:24px;height:24px;filter:grayscale(1);opacity:.72;transition:filter .2s,opacity .2s}
+.ig-glyph{display:block;width:22px;height:22px;background:#7c8783;transition:background .2s}
+.ig-item:hover .ig-mark{filter:none;opacity:1}
+.ig-item:hover .ig-glyph{background:oklch(0.52 0.11 170)}
+.ig-item:hover .ig-logo{border-color:#9fb3ac}
+.ig-ci{position:absolute;top:-6px;right:calc(50% - 30px);width:17px;height:17px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;box-shadow:0 0 0 2px #fff}
+.ig-more{font-size:12.5px;color:#626d69}
+.ig-hub{box-sizing:border-box;background:#10201b;color:#e6efeb;border-radius:18px;padding:26px 18px;display:grid;justify-items:center;gap:10px;text-align:center;box-shadow:0 30px 60px -30px rgba(16,32,27,0.5)}
+.ig-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@keyframes igIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:no-preference){@supports (animation-timeline:view()){
+  .ig-card,.ig-hub{animation:igIn linear both;animation-timeline:view();animation-range:entry 0% entry 55%}
+}}
+@media (max-width:900px){
+  .ig-grid{grid-template-columns:minmax(0,1fr);gap:12px}
+  .ig-conn{display:none}
+  .ig-hub{order:-1;justify-self:center;width:100%;max-width:340px}
+  .ig-left .ig-slot,.ig-right .ig-slot{padding:0}
+  .ig-left .ig-slot::before,.ig-right .ig-slot::before,.ig-left .ig-slot::after,.ig-right .ig-slot::after{display:none}
+  .ig-stack{gap:12px}
+}
+
+/* mobile menu + code wrapping */
+.rs-burger{display:none}
+.rs-menu-toggle{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-width:1180px){
+  .rs-burger{display:inline-grid;place-items:center;width:40px;height:40px;border:1px solid #c3cdc9;border-radius:8px;background:#fff;cursor:pointer;margin-left:auto;flex:none}
+  .rs-burger span{display:block;width:16px;height:2px;background:#17201d;border-radius:2px;box-shadow:0 -5px 0 #17201d,0 5px 0 #17201d}
+  .rs-actions{margin-left:0 !important}
+  .rs-gh{display:inline-block !important}
+  .rs-cta{display:inline-block !important}
+  .rs-nav{display:none !important;flex-basis:100%;flex-direction:column;align-items:flex-start;gap:0 !important;font-size:16px !important;overflow:visible !important;white-space:normal !important;border-top:1px solid #dbe2df;padding:8px 0 4px !important;margin-top:4px}
+  .rs-nav a{display:block;width:100%;padding:11px 4px;border-bottom:1px solid #e8edeb}
+  .rs-nav a:last-child{border-bottom:0}
+  .rs-menu-toggle:checked ~ .rs-nav{display:flex !important}
+  .rs-menu-toggle:checked ~ .rs-burger span{background:transparent;box-shadow:none}
+  .rs-menu-toggle:checked ~ .rs-burger span::before,.rs-menu-toggle:checked ~ .rs-burger span::after{content:"";position:absolute;width:18px;height:2px;background:#17201d;border-radius:2px}
+  .rs-menu-toggle:checked ~ .rs-burger span::before{transform:rotate(45deg)}
+  .rs-menu-toggle:checked ~ .rs-burger span::after{transform:rotate(-45deg)}
+  .rs-navbar{flex-wrap:wrap !important}
+}
+@media (max-width:820px){
+  .rs-cta{display:inline-block !important}
+  .rs-navbar{gap:12px !important}
+}
+@media (max-width:480px){
+  .rs-gh{display:none !important}
+}
+/* Use-cases dropdown in the top nav (desktop only; the burger menu keeps a plain link). */
+.rs-dd{position:relative}
+.rs-dd-panel{display:none;position:absolute;top:100%;left:-18px;padding-top:12px;z-index:30}
+.rs-dd:hover .rs-dd-panel,.rs-dd:focus-within .rs-dd-panel{display:block}
+.rs-dd-inner{background:#fff;border:1px solid #dbe2df;border-radius:14px;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35);padding:18px 20px 14px;display:grid;gap:14px;width:max-content;max-width:calc(100vw - 48px)}
+.rs-dd-grid{display:grid;grid-template-columns:repeat(5,max-content);gap:18px 28px}
+.rs-dd-grid>div{display:grid;gap:7px;align-content:start}
+.rs-dd-grid small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:#626d69;margin-bottom:2px}
+.rs-dd-grid a{font-size:13.5px;font-weight:500;color:#17201d;white-space:nowrap;text-decoration:none}
+.rs-dd-grid a:hover{color:oklch(0.52 0.11 170)}
+.rs-dd-all{font-size:13px;font-weight:600;border-top:1px solid #e8edeb;padding-top:12px;text-decoration:none}
+@media (max-width:1400px){.rs-dd-grid{grid-template-columns:repeat(3,max-content)}}
+@media (max-width:1180px){.rs-dd{width:100%}.rs-dd-panel{display:none !important}}
+/* Current page in the top nav: bold, ink-dark, with an accent underline (a left bar in the burger menu). */
+.rs-nav a[aria-current="page"]{color:#17201d !important;font-weight:600;text-decoration:underline;text-decoration-color:oklch(0.52 0.11 170);text-decoration-thickness:2px;text-underline-offset:7px}
+.rs-nav a[aria-current="page"]:hover{text-decoration-color:oklch(0.42 0.11 170)}
+@media (max-width:1180px){.rs-nav a[aria-current="page"]{text-decoration:none;box-shadow:inset 3px 0 0 oklch(0.52 0.11 170);padding-left:12px !important}}
+.rs-dd-right .rs-dd-panel{left:auto;right:-18px}
+/* MCP shortcut beside the GitHub icon: a tinted pill with the plug icon. */
+.rs-mcp{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;color:oklch(0.42 0.11 170);background:oklch(0.52 0.11 170 / 0.1);border:1px solid oklch(0.52 0.11 170 / 0.45);border-radius:999px;padding:5px 11px 5px 9px;text-decoration:none;transition:background 0.2s,border-color 0.2s,color 0.2s}
+.rs-mcp:hover{background:oklch(0.52 0.11 170 / 0.18);border-color:oklch(0.52 0.11 170);color:oklch(0.36 0.11 170);text-decoration:none}
+.rs-mcp svg{display:block}
+/* Footer */
+.ft a{text-decoration:none}.ft a:hover{text-decoration:underline}
+.ft-grid{display:grid;grid-template-columns:minmax(0,1.7fr) repeat(4,minmax(0,1fr));gap:36px 28px}
+.ft-brand{display:grid;gap:16px;align-content:start;min-width:0}
+.ft-col{display:grid;gap:10px;align-content:start}
+.ft-col a{color:#4a5652;font-size:14px}.ft-col a:hover{color:#17201d}
+.ft-h{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d;margin-bottom:2px}
+.ft-chip{font-size:11.5px;font-weight:500;color:#4a5652;background:#f3f5f4;border:1px solid #dbe2df;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.ft-btn{font-size:13.5px;font-weight:600;color:#17201d;border:1px solid #c3cdc9;border-radius:8px;padding:8px 13px;background:#fff}
+.ft-btn:hover{border-color:#17201d;text-decoration:none !important}
+.ft-btn-dark{background:#10201b;border-color:#10201b;color:#e6efeb}.ft-btn-dark:hover{background:#1b3a30;border-color:#1b3a30}
+.ft-bottom{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#626d69}
+.ft-badges{display:inline-flex;align-items:center;gap:10px}.ft-badges img{display:block;height:20px}
+@media (max-width:1100px){.ft-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ft-brand{grid-column:1/-1}}
+@media (max-width:560px){.ft-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* MCP page */
+.mcp-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.mcp-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.mcp-card{background:#fff;border:1px solid #dbe2df;border-radius:14px;padding:22px 24px;display:grid;gap:10px;align-content:start;min-width:0}
+.mcp-card h3{margin:0;font-size:18px;font-weight:600;letter-spacing:-0.005em}
+.mcp-card p{margin:0;font-size:14.5px;color:#4a5652}
+.mcp-card a.more{font-size:14px;font-weight:600}
+.mcp-num{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69;display:flex;align-items:center;gap:10px}
+.mcp-num b{font-family:'JetBrains Mono',monospace;width:28px;height:28px;border-radius:50%;background:#10201b;color:oklch(0.8 0.11 170);display:grid;place-items:center;font-size:12px;font-weight:500}
+.mcp-table{width:100%;border-collapse:collapse;font-size:14.5px}
+.mcp-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69;text-align:left;padding:12px 18px;background:#f3f5f4;border-bottom:1px solid #dbe2df}
+.mcp-table td{padding:14px 18px;border-bottom:1px solid #e9eeec;vertical-align:top;color:#4a5652}
+.mcp-table tr:last-child td{border-bottom:0}
+.mcp-table td:first-child{color:#17201d;font-weight:600}
+.mcp-table td.yes{background:#f3f9f6;color:#17201d}
+.mcp-faq details{background:#fff;border:1px solid #dbe2df;border-radius:12px;padding:0 20px}
+.mcp-faq summary{cursor:pointer;font-weight:600;font-size:15.5px;padding:16px 0;list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.mcp-faq summary::-webkit-details-marker{display:none}
+.mcp-faq summary::after{content:'+';font-family:'JetBrains Mono',monospace;color:#626d69;font-size:18px;line-height:1}
+.mcp-faq details[open] summary::after{content:'−'}
+.mcp-faq details p{margin:0 0 16px;color:#4a5652;font-size:14.5px}
+.mcp-flow{display:grid;grid-template-columns:minmax(0,1fr) 44px minmax(0,1.6fr) 44px minmax(0,1fr);gap:10px;align-items:center}
+.mcp-node{font-family:'JetBrains Mono',monospace;font-size:11.5px;background:#fff;border:1px solid #c3cdc9;border-radius:8px;padding:10px 12px;text-align:center;line-height:1.5;min-width:0}
+.mcp-node small{display:block;font-size:10.5px;color:#626d69}
+.mcp-link{height:2px;background:#c3cdc9;border-radius:2px;position:relative}
+.mcp-link::after{content:'';position:absolute;top:-3px;left:0;width:8px;height:8px;border-radius:50%;background:oklch(0.52 0.11 170);animation:t-right 4s linear infinite}
+@keyframes t-right{0%{left:0;opacity:0}4%{opacity:1}44%{left:calc(100% - 8px);opacity:1}48%,100%{left:calc(100% - 8px);opacity:0}}
+.f-chk{font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation:f-chk 8s infinite}
+@keyframes f-chk{0%,1%{border-color:#2a3d37;background:#10201b;color:#e6efeb}3%,11%{border-color:oklch(0.62 0.13 170 / 0.5);background:oklch(0.62 0.13 170 / 0.14);color:oklch(0.8 0.11 170)}14%,100%{border-color:#2a3d37;background:#10201b;color:#e6efeb}}
+@media (max-width:960px){.mcp-grid3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:820px){.mcp-grid2,.mcp-grid3{grid-template-columns:minmax(0,1fr)}.mcp-flow{grid-template-columns:minmax(0,1fr)}.mcp-link{display:none}}
+@media (prefers-reduced-motion:reduce){.mcp-link::after,.f-chk{animation:none}}
+</style>
+</helmet>
+<div data-screen-label="MCP" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
+  <nav style="position:sticky;top:0;z-index:20;background:rgba(243,245,244,0.9);backdrop-filter:blur(10px);border-bottom:1px solid #dbe2df">
+    <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
+      <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:#17201d;text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+      <div class="rs-actions" style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" title="GitHub" style="color:#4a5652;padding:8px 10px;line-height:0" style-hover="color:#17201d"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg></a>
+        <a href="MCP.dc.html" class="rs-mcp" aria-current="page" title="MCP server: saved queries as tools for AI agents"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a6 6 0 0 1-12 0V8z"/></svg>MCP</a>
+      </div>
+      <input type="checkbox" id="rs-menu" class="rs-menu-toggle" aria-label="Open menu">
+      <label for="rs-menu" class="rs-burger" aria-hidden="true"><span></span></label>
+      <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
+        <a href="Features.dc.html" style="color:#4a5652">Features</a>
+        <div class="rs-dd"><a href="Use Cases.dc.html" style="color:#4a5652">Use cases</a><div class="rs-dd-panel"><div class="rs-dd-inner"><div class="rs-dd-grid"><div><small>01 · Product teams</small><a href="use-cases/customer-analytics.dc.html">Customer analytics</a><a href="use-cases/internal-tools.dc.html">Internal tools</a><a href="use-cases/controlled-writes.dc.html">Controlled writes</a></div><div><small>02 · Partners and pipelines</small><a href="use-cases/partner-data-api.dc.html">Partner data API</a><a href="use-cases/scheduled-deliveries.dc.html">Scheduled deliveries</a><a href="use-cases/live-dashboards.dc.html">Live dashboards</a></div><div><small>03 · Data teams</small><a href="use-cases/self-serve-data.dc.html">Self-serve data</a><a href="use-cases/files-as-an-api.dc.html">Files as an API</a><a href="use-cases/legacy-databases.dc.html">Legacy databases</a></div><div><small>04 · AI</small><a href="use-cases/ai-agents.dc.html">AI agents</a></div><div><small>05 · Security and platform</small><a href="use-cases/compliance-and-audit.dc.html">Compliance and audit</a><a href="use-cases/platform-teams.dc.html">Platform teams</a></div></div><a class="rs-dd-all" href="Use Cases.dc.html">All twelve, with the shape of each call →</a></div></div></div>
+        <a href="Enterprise.dc.html" style="color:#4a5652">Enterprise</a>
+        <a href="Deploy.dc.html" style="color:#4a5652">Deploy</a>
+        <a href="Docs.dc.html" style="color:#4a5652">Docs</a>
+        <div class="rs-dd rs-dd-right"><a href="Guides.dc.html" style="color:#4a5652">Guides</a><div class="rs-dd-panel"><div class="rs-dd-inner"><div class="rs-dd-grid"><div><small>How-to guides</small><a href="Guides.dc.html">All 60 guides</a><a href="Guides.dc.html?path=start">Path: Start here</a><a href="Guides.dc.html?path=partner">Path: Give a partner an API</a><a href="Guides.dc.html?path=agents">Path: Let agents in</a><a href="Guides.dc.html?path=data">Path: Ship data out</a><a href="Guides.dc.html?path=prod">Path: Go to production</a></div><div><small>Docs · Run it</small><a href="Guide.dc.html?d=INSTALLATION_AND_SETUP">Installation and setup</a><a href="Guide.dc.html?d=DEPLOYMENT">Deployment</a><a href="Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION">Database connections</a></div><div><small>Docs · Reference</small><a href="Guide.dc.html?d=API">API reference</a><a href="Guide.dc.html?d=MCP">MCP</a><a href="Guide.dc.html?d=EXAMPLES">Example APIs</a><a href="Guide.dc.html?d=QUERY_METADATA_MANAGEMENT">Query metadata</a></div><div><small>Docs · Security</small><a href="Guide.dc.html?d=THREAT_MODEL">Threat model</a><a href="Guide.dc.html?d=DATA_PROTECTION">Where data goes</a><a href="Guide.dc.html?d=SECURITY">Security policy</a><a href="Guide.dc.html?d=ARCHITECTURE">Architecture overview</a><a href="Guide.dc.html?d=QUESTIONNAIRE">Questionnaire answers</a><a href="Guide.dc.html?d=SBOM">SBOM and verification</a></div><div><small>Docs · Project</small><a href="Guide.dc.html?d=TECHNOLOGY_STACK">Technology stack</a><a href="Guide.dc.html?d=CONTRIBUTING">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT">Code of conduct</a></div></div><a class="rs-dd-all" href="Docs.dc.html">Docs: how the pieces fit, and where to start →</a></div></div></div>
+        <a href="Compare.dc.html" style="color:#4a5652">Compare</a>
+        <a href="Trust.dc.html" style="color:#4a5652">Trust</a>
+        <a href="Blog.dc.html" style="color:#4a5652">Blog</a>
+        <a href="About.dc.html" style="color:#4a5652">About</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="rs-2col" style="max-width:1240px;margin:0 auto;padding:72px 24px 56px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:40px;align-items:center">
+    <div style="display:grid;gap:20px;min-width:0">
+      <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">QueryAPIGate for AI agents · MCP server</span>
+      <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(36px,4.8vw,60px);line-height:1.02;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">Give your AI agents your data, <span style="color:oklch(0.52 0.11 170)">and keep the keys.</span></h1>
+      <p style="margin:0;font-size:17.5px;color:#4a5652;max-width:58ch;text-wrap:pretty"><b style="color:#17201d">QueryAPIGate is a governed MCP server for your databases.</b> Your saved SQL queries become tools any MCP agent can call: Claude, your own agent, an IDE. The server, not the prompt, decides what each agent may see, change and spend. Masking, human approval for writes, quotas and a tamper-evident audit trail are built in, not bolted on.</p>
+      <p style="margin:0;font-size:15.5px;color:#4a5652;max-width:58ch;text-wrap:pretty">Self-hosted. Your data never leaves your infrastructure. Every database it reaches, it reaches with the credentials you gave it, never the agent's.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <a href="Guide.dc.html?g=24-let-an-agent-call-your-queries-via-mcp" style="font-size:15px;font-weight:600;background:#10201b;color:#e6efeb;padding:13px 22px;border-radius:8px;text-decoration:none">Get started in 10 minutes</a>
+        <a href="Guide.dc.html?d=MCP" style="font-size:15px;font-weight:600;color:#17201d;padding:13px 22px;border:1px solid #c3cdc9;border-radius:8px;background:#fff;text-decoration:none">Read the MCP reference</a>
+      </div>
+    </div>
+    <div style="background:#fff;border:1px solid #dbe2df;border-radius:14px;overflow:hidden;min-width:0;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35)">
+      <div class="fd-panel" aria-hidden="true" style="height:240px;box-sizing:border-box;padding:24px 28px;display:grid;align-content:center;gap:6px;border-bottom:1px solid #dbe2df">
+        <div class="fd-row" style="animation:fd-in 6s 0s infinite backwards"><span>tools/call <b style="font-weight:500">orders_by_customer</b></span><span style="color:oklch(0.52 0.11 170)">rows filtered by claims ✓</span></div>
+        <div class="fd-row" style="animation:fd-in 6s 0.7s infinite backwards"><span>tools/call <b style="font-weight:500">add_note</b> <span style="color:#626d69">(write)</span></span><span style="display:grid;min-width:0"><span style="grid-area:1/1;color:oklch(0.6 0.13 75);opacity:0;animation:fd-wait 6s infinite;white-space:nowrap">● awaiting approval</span><span style="grid-area:1/1;color:oklch(0.52 0.11 170);animation:fd-ok 6s infinite;white-space:nowrap">approved by ops@ ✓</span></span></div>
+        <div class="fd-row fd-dark" style="animation:fd-in 6s 1.4s infinite backwards"><span>{"inserted": 1}</span><span style="color:oklch(0.8 0.11 170)">audit written</span></div>
+      </div>
+      <div style="padding:16px 22px 20px;display:grid;gap:6px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Front door 02</span><code style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">queryapigate mcp</code></div>
+        <h3 style="margin:0;font-size:18px;font-weight:600">Saved queries as tools</h3>
+        <p style="margin:0;font-size:14px;color:#4a5652">A read tool returns rows the caller may see. A write tool returns a link; a person approves it, then it runs once, inside a transaction, and lands in the audit log.</p>
+      </div>
+    </div>
+  </header>
+
+  <section style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df">
+    <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:36px">
+      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:40px;align-items:start">
+        <div style="display:grid;gap:14px">
+          <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">The problem</span>
+          <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Security said no. Here's how they say yes.</h2>
+          <p style="margin:0;color:#4a5652;text-wrap:pretty">Everyone wants to "connect the AI to the database". The first design that comes to mind, an MCP server holding a database login and offering the agent <code>execute_sql</code>, is the one security teams rightly block:</p>
+          <ul style="margin:0;padding:0;list-style:none;display:grid;gap:10px;font-size:14.5px;color:#4a5652">
+            <li style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.65 0.2 25 / 0.15);color:oklch(0.55 0.2 25);font-size:11px;font-weight:700;display:grid;place-items:center">✕</span><span>An agent is <b style="color:#17201d">an untrusted user that is very fast and very easy to fool.</b> One poisoned document in its context and it will ask for anything.</span></li>
+            <li style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.65 0.2 25 / 0.15);color:oklch(0.55 0.2 25);font-size:11px;font-weight:700;display:grid;place-items:center">✕</span><span>"Please don't read the salaries table" in a system prompt is <b style="color:#17201d">a request, not a control.</b></span></li>
+            <li style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.65 0.2 25 / 0.15);color:oklch(0.55 0.2 25);font-size:11px;font-weight:700;display:grid;place-items:center">✕</span><span>Nobody can answer the questions that matter afterwards: <i>which agent read what, for whom, and who allowed it?</i></span></li>
+          </ul>
+          <p style="margin:0;color:#4a5652;text-wrap:pretty">QueryAPIGate moves every one of those rules out of the prompt and into the server. The agent can be tricked; <b style="color:#17201d">the gateway can't be talked out of its grants.</b></p>
+        </div>
+        <div role="img" aria-label="MCP clients call QueryAPIGate over Streamable HTTP, signed in through your identity provider or with an API key. QueryAPIGate is the trust boundary: it identifies the caller, checks what they may reach, validates parameters, guards the SQL, masks, applies rate limits and quotas, has a person approve each write, and records everything. It reaches your databases with the connection's own credentials." style="border:1px solid #dbe2df;border-radius:14px;background:#f8faf9;padding:22px;display:grid;gap:16px">
+          <div class="mcp-flow">
+            <div class="mcp-node">Claude · Copilot · Cursor · your agent<small>MCP clients · Streamable HTTP</small></div>
+            <div class="mcp-link" aria-hidden="true"></div>
+            <div class="mcp-node" style="background:#10201b;border-color:#10201b;color:#e6efeb">QueryAPIGate<small style="color:#9fb3ac">the trust boundary · OAuth sign-in or an API key</small></div>
+            <div class="mcp-link" aria-hidden="true"></div>
+            <div class="mcp-node">PostgreSQL · MySQL · SQLite · DuckDB · ClickHouse · MongoDB · files<small>the connection's own credentials, never the agent's</small></div>
+          </div>
+          <div style="display:grid;gap:8px">
+            <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Every call, in the server, in this order</span>
+            <div style="display:flex;flex-wrap:wrap;gap:6px" aria-hidden="true"><span class="f-chk" style="animation-delay:0s">1 who is calling</span><span class="f-chk" style="animation-delay:1s">2 what they may reach</span><span class="f-chk" style="animation-delay:2s">3 check parameters</span><span class="f-chk" style="animation-delay:3s">4 guard the SQL</span><span class="f-chk" style="animation-delay:4s">5 mask</span><span class="f-chk" style="animation-delay:5s">6 rate &amp; quota</span><span class="f-chk" style="animation-delay:6s">7 a person approves writes</span><span class="f-chk" style="animation-delay:7s">8 on the record</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
+    <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
+      <div style="display:grid;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">What agents get, and what they never get</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Eight controls, in the server</h2></div>
+      <p style="margin:0;color:#4a5652;max-width:52ch;text-wrap:pretty">Each is a grant, a setting or a policy you configure once; none of them lives in a prompt.</p>
+    </div>
+    <div class="mcp-grid2"><div class="mcp-card"><div class="mcp-num"><b>01</b></div><h3>Curated tools, not a database login</h3><p>Write the SQL once. Publish it. It's a tool, with a typed input schema generated from its declared parameters: the agent can't send a value the parameter's rules refuse, and every value is a bound parameter, never text spliced into SQL.</p><p>When an agent does need to explore, two ad-hoc tools, <code>list_tables</code> and <code>execute_sql</code>, are available <b>only</b> to a key granted a connection, limited to the tables you list, and <b>always read-only</b>: over MCP, <code>execute_sql</code> never writes, whatever the same key could do over REST.</p><a class="more" href="Guide.dc.html?g=25-mcp-ad-hoc-tools">Ad-hoc tools, limited to the tables you choose →</a></div><div class="mcp-card"><div class="mcp-num"><b>02</b></div><h3>Least privilege, per agent</h3><p>Each agent gets its own key, or signs in as the person it acts for, with exactly the queries, collections, connections and tables it needs. <code>tools/list</code> shows an agent only what it may call; calling anything else by name is refused. The same grant applies over REST: an agent can never reach more than an application with the same key.</p></div><div class="mcp-card"><div class="mcp-num"><b>03</b></div><h3>Masking that follows the data, not the column name</h3><p>Hash, mask or drop a column for a caller (<code>email</code>, <code>national_id</code>, <code>salary</code>) and QueryAPIGate traces it through the SQL: renamed (<code>SELECT email AS contact</code>), joined, inside an expression, through a view. A query whose columns it can't trace is <b>refused before it runs</b>, not answered with the value unmasked. The agent is told which columns it gets masked, so it doesn't guess.</p><a class="more" href="Guide.dc.html?g=45-hide-personal-data-from-a-partner-or-an-ai-agent">Hide personal data from a partner or an AI agent →</a></div><div class="mcp-card"><div class="mcp-num"><b>04</b></div><h3>Agents that write, only when a person says yes</h3><p>Mark a saved query for agents and its first call writes nothing: it returns a link. A person sees the agent, the SQL, <b>the exact arguments</b> and the row ceiling, and approves or rejects it in the Console. The agent then runs exactly that write, once, before the approval expires, inside a transaction that rolls back if it changes more rows than allowed. The credential that asked can never approve its own write.</p><a class="more" href="Guide.dc.html?g=49-let-an-agent-write-with-a-person-approving-each-write">Let an agent write, with a person approving each write →</a></div><div class="mcp-card"><div class="mcp-num"><b>05</b></div><h3>Agents sign in as the person they act for</h3><p>A hosted AI client doesn't hold a shared key: it follows MCP's OAuth 2.1 authorization, and your identity provider, any OpenID Connect provider (tested with Keycloak), signs the person in. The agent then acts under <b>that person's role and masking rules</b>, and a query that binds a parameter to the token (<code>from_claim</code>) returns only that person's rows. QueryAPIGate checks tokens and issues none; it never sees a password, and a token issued for REST is never accepted for MCP, or the reverse.</p><a class="more" href="Guide.dc.html?g=46-let-ai-clients-sign-in-through-your-identity-provider">Let AI clients sign in through your identity provider →</a></div><div class="mcp-card"><div class="mcp-num"><b>06</b></div><h3>Limits that hold when an agent loops</h3><p>Per-agent rate limits, daily or monthly quotas on calls <i>and</i> rows, a cap on concurrent queries, a query time limit, and a row cap on every tool result (<code>QUERYAPIGATE_MCP_MAX_ROWS</code>, 200 by default, sized for a context window). Shared across every instance through Redis, and across REST and MCP together.</p></div><div class="mcp-card"><div class="mcp-num"><b>07</b></div><h3>Everything on the record</h3><p>Every tool call lands in run history with <code>"transport": "mcp"</code>: which agent, which query, which arguments' names, how many rows. Every change to who may do what is in an audit log with a <b>hash chain</b>, so an edited or deleted entry is detectable, and it streams to your SIEM. The Agents screen shows each agent's use; an alert fires when an agent suddenly reads far more than its usual.</p><a class="more" href="Guide.dc.html?g=47-tell-agents-what-your-data-means-and-see-what-they-did">Tell agents what your data means, and see what they did →</a></div><div class="mcp-card"><div class="mcp-num"><b>08</b></div><h3>Agents that understand your data</h3><p>Most wrong answers aren't the model's fault: nobody told it that revenue is <code>SUM(payment.amount)</code>, not <code>rental.amount</code>. QueryAPIGate imports your database's own table and column comments, lets you write the rest (which joins to use, what each metric means) and gives it to the agent with every <code>list_tables</code> and as an MCP resource per connection. Results come back as <code>structuredContent</code> with an <code>outputSchema</code>, so your code reads rows, not prose.</p><a class="more" href="Guide.dc.html?g=26-mcp-structured-results">Structured results →</a></div></div>
+  </section>
+
+  <section style="background:#10201b;color:#e6efeb">
+    <div class="rs-2col" style="max-width:1240px;margin:0 auto;padding:64px 24px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:40px;align-items:center">
+      <div style="display:grid;gap:12px">
+        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)">One governance layer, every front door</span>
+        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">There is no "AI security" to configure separately from "API security"</h2>
+        <p style="margin:0;color:#9fb3ac;text-wrap:pretty">The rules an agent meets are <b style="color:#e6efeb">the same code</b> a REST call, a live-event subscription and a scheduled export go through. Write a query once and it is, at the same time, an MCP tool, a versioned REST endpoint and an export to your data lake, each governed identically.</p>
+      </div>
+      <div style="display:grid;gap:0;font-family:'JetBrains Mono',monospace;font-size:13px;border:1px solid #243b34;border-radius:12px;background:#0c1915;overflow:hidden">
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid #243b34"><span>REST</span><span style="color:#7c8f88">GET /q/&lt;name&gt;</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid #243b34;background:oklch(0.62 0.13 170 / 0.1)"><span style="color:oklch(0.8 0.11 170)">MCP</span><span style="color:oklch(0.8 0.11 170)">tools/call &lt;name&gt;</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid #243b34"><span>Events</span><span style="color:#7c8f88">GET /events</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid #243b34"><span>Exports</span><span style="color:#7c8f88">queryapigate export</span></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;padding:12px 16px"><span>Management</span><span style="color:#7c8f88">/api/v1</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
+    <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
+      <div style="display:grid;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Your security review, answered</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">What your security team asks</h2></div>
+      <p style="margin:0;color:#4a5652;max-width:52ch;text-wrap:pretty">Each answer is a control on the server, with a guide that shows it working.</p>
+    </div>
+    <div style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden"><div style="overflow-x:auto"><table class="mcp-table" style="min-width:560px"><thead><tr><th style="width:34%">Your security team asks</th><th>QueryAPIGate</th></tr></thead><tbody><tr><td>Can the agent run arbitrary SQL?</td><td class="yes">Only if you grant it <code>execute_sql</code> on named connections and tables, and then read-only, always.</td></tr><tr><td>Can it write?</td><td class="yes">Only through queries you marked for agents, each write approved by a person, capped in rows.</td></tr><tr><td>Can it see personal data?</td><td class="yes">Not the columns you mask: traced through the SQL, refused when it can't be traced.</td></tr><tr><td>What if it's prompt-injected?</td><td class="yes">It can ask for anything; it gets only what its grant allows. The boundary is the server, not the model.</td></tr><tr><td>Whose identity does it act under?</td><td class="yes">Its own key, or the signed-in person's, with their role and row-level <code>from_claim</code> binding.</td></tr><tr><td>Can it run up costs or load?</td><td class="yes">Rate limits, quotas on calls and rows, concurrency caps, time limits and a result row cap.</td></tr><tr><td>Can we prove what it did?</td><td class="yes">Run history for every call; a hash-chained audit log, streamed to your SIEM.</td></tr><tr><td>Where does our data go?</td><td class="yes">Nowhere: self-hosted, on your infrastructure, reaching your databases with your credentials.</td></tr></tbody></table></div></div>
+  </section>
+
+  <section style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df">
+    <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
+      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
+        <div style="display:grid;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">How it compares</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">The tools, and the governance</h2></div>
+        <p style="margin:0;color:#4a5652;max-width:52ch;text-wrap:pretty"><b style="color:#17201d">Use a toolkit if</b> you need the widest database coverage and will build governance yourself. <b style="color:#17201d">Use QueryAPIGate if</b> the question is <i>"may this agent see this, change that, and can we prove what it did?"</i></p>
+      </div>
+      <div style="border:1px solid #dbe2df;border-radius:12px;overflow:hidden"><div style="overflow-x:auto"><table class="mcp-table" style="min-width:720px"><thead><tr><th style="width:24%">Approach</th><th>What you get</th><th>What's missing</th></tr></thead><tbody><tr><td><b>A raw database MCP server</b></td><td>An agent with <code>execute_sql</code> on a database login; quick for one developer.</td><td>Least privilege, masking, approvals, quotas, an audit trail: everything security asks for.</td></tr><tr><td><b>A vendor's MCP server</b></td><td>Deep support for that one database or platform.</td><td>One set of rules across PostgreSQL, MySQL, ClickHouse, MongoDB, DuckDB and files, and a REST API from the same query.</td></tr><tr><td><b>A tools toolkit</b><br><span style="font-weight:400;color:#626d69">for example Google's MCP Toolbox for Databases</span></td><td>SQL defined as tools across many databases, OIDC sign-in with claim-bound parameters, SDKs for agent frameworks.</td><td>Column masking, approved writes, per-agent quotas and rate limits, a tamper-evident audit log and an admin Console aren't part of it (per its documentation, October 2026).</td></tr><tr><td><b>QueryAPIGate</b></td><td class="yes">The tools <i>and</i> the governance: grants, masking, approvals, quotas, audit, SSO, on the same rules as your REST APIs.</td><td>Fewer database types than the broadest toolkits; no NL-to-SQL, by design: it serves the queries you curated.</td></tr></tbody></table></div></div>
+    </div>
+  </section>
+
+  <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
+    <div style="display:grid;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Who it's for</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Teams whose next question is "can we prove it?"</h2></div>
+    <div class="mcp-grid3"><div class="mcp-card"><h3 style="font-size:16.5px">Rolling out Claude, ChatGPT or Copilot internally</h3><p>Your security team blocked "connect the AI to the database" and needs least privilege, masking and an audit trail before saying yes.</p></div><div class="mcp-card"><h3 style="font-size:16.5px">Regulated industries</h3><p>Fintech, health, insurance: masking, approval of every change and a provable record are what compliance asks for.</p></div><div class="mcp-card"><h3 style="font-size:16.5px">SaaS companies offering an MCP server to their customers</h3><p>Per-customer keys, quotas and <code>from_claim</code> row binding turn "connect your AI to your data in our product" into configuration, not a project.</p></div><div class="mcp-card"><h3 style="font-size:16.5px">Data teams who own the definitions</h3><p>"Revenue means X" written once, so every agent answers the same way.</p></div><div class="mcp-card"><h3 style="font-size:16.5px">Platform teams serving many teams</h3><p>One gateway, each team in its own workspace (experimental).</p></div></div>
+  </section>
+
+  <section style="background:#10201b;color:#e6efeb">
+    <div class="rs-2col" style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:40px;align-items:center">
+      <div style="display:grid;gap:14px">
+        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)">Ten minutes</span>
+        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Ten minutes to your first governed tool</h2>
+        <p style="margin:0;color:#9fb3ac;text-wrap:pretty">Save a query in the Console's API Designer and publish it: it's a tool. Create a key for your agent with only the queries it needs. Point any MCP client that speaks Streamable HTTP at <code style="font-family:'JetBrains Mono',monospace;color:#e6efeb">http://&lt;host&gt;:5001/mcp</code> with the key as the <code style="font-family:'JetBrains Mono',monospace;color:#e6efeb">X-API-Key</code> header, or turn on OAuth and let it sign in.</p>
+        <div style="display:flex;gap:8px 18px;flex-wrap:wrap;font-size:14.5px;font-weight:600"><a href="Guide.dc.html?g=24-let-an-agent-call-your-queries-via-mcp" style="color:oklch(0.8 0.11 170)">The step-by-step guide →</a><a href="Guide.dc.html?g=27-check-the-mcp-server-from-the-console" style="color:oklch(0.8 0.11 170)">Check the MCP server from the Console →</a></div>
+      </div>
+      <div style="background:#10201b;border:1px solid #243b34;border-radius:10px;overflow:hidden;min-width:0">
+        <div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #243b34"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">install · mcp</span><button type="button" class="copy-btn" onClick="{{ copyStart }}" aria-label="Copy the install commands" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedStart }}</button></div>
+        <pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;overflow-x:auto;min-width:0"><span style="color:#9fb3ac">$</span> pip install "queryapigate[server,mcp]"
+<span style="color:#9fb3ac">$</span> queryapigate serve &amp;        <span style="color:#9fb3ac"># the REST API and the Console, on :5000</span>
+<span style="color:#9fb3ac">$</span> queryapigate mcp            <span style="color:#9fb3ac"># the MCP server, on :5001/mcp · same store, same rules</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
+    <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:32px;align-items:start">
+      <div style="display:grid;gap:16px">
+        <div style="display:grid;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Built to be trusted</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Stable where it counts, tested for real</h2></div>
+        <ul style="margin:0;padding:0;list-style:none;display:grid;gap:12px;font-size:14.5px;color:#4a5652">
+          <li style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span><b style="color:#17201d">Stable where it counts.</b> OAuth for AI clients, write tools with approval and the data dictionary are under the project's compatibility promise since 0.30.</span></li>
+          <li style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span><b style="color:#17201d">Tested for real.</b> Every guide is run against a real server; MCP is exercised with the official MCP SDK; OAuth against a real identity provider; the SQL guard and parameter rules under continuous fuzzing.</span></li>
+          <li style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span><b style="color:#17201d">Signed releases</b> with SLSA Build Level 2 provenance, verifiable before you run them.</span></li>
+          <li style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span><b style="color:#17201d">Self-hosted and source-available</b> (FSL-1.1-MIT: each release becomes MIT after two years).</span></li>
+        </ul>
+      </div>
+      <div class="mcp-card" style="background:#f8faf9">
+        <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Honest limits</span>
+        <ul style="margin:0;padding:0 0 0 18px;display:grid;gap:10px;font-size:14.5px;color:#4a5652">
+          <li>Masking isn't available on MongoDB, H2 or generic JDBC connections; a caller with mask rules is refused there.</li>
+          <li>Approved writes run on PostgreSQL, MySQL (transactional tables), SQLite and DuckDB; one <code>INSERT</code>, <code>UPDATE</code> or <code>DELETE</code> per tool.</li>
+          <li>OAuth needs JWT access tokens signed with an asymmetric key; QueryAPIGate checks tokens and doesn't issue them.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df">
+    <div class="rs-2col" style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:40px;align-items:start">
+      <div style="display:grid;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">FAQ</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Questions people ask before they connect an agent</h2></div>
+      <div class="mcp-faq" style="display:grid;gap:10px"><details open><summary>Does the AI model ever see database credentials?</summary><p>No. Agents authenticate to QueryAPIGate; QueryAPIGate reaches your databases with each connection's own credentials, stored encrypted, and never passes a token or password on.</p></details><details><summary>Which AI clients work?</summary><p>Any MCP client that speaks Streamable HTTP and can send a header (for an API key) or follow MCP's OAuth (for sign-in): agent frameworks, IDE assistants and hosted assistants' connectors.</p></details><details><summary>Can an agent read data it shouldn't by rephrasing its question?</summary><p>Its question doesn't matter; its grant does. It can call only the tools its key or role allows; <code>execute_sql</code>, if granted at all, is read-only and limited to the tables you named; masked columns stay masked however the SQL is written, or the query is refused.</p></details><details><summary>Do I have to rewrite anything for REST?</summary><p>No, it's the same query. The tool you publish for agents is also <code>GET /q/&lt;name&gt;</code>, with an OpenAPI description, and can be exported to Parquet on S3 on a schedule.</p></details><details><summary>What happens when an agent loops?</summary><p>Its rate limit refuses it, its quota stops it for the day or month, and its concurrency cap keeps it from tying up your database, each a clear, machine-readable error it can act on.</p></details></div>
+    </div>
+  </section>
+
+  <section style="background:#10201b;color:#e6efeb">
+    <div class="rs-2col" style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:40px;align-items:center">
+      <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(26px,3vw,36px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Your agents can be fast, helpful and easy to fool. <span style="color:oklch(0.8 0.11 170)">Your data layer shouldn't be.</span></h2>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end">
+        <a href="Guide.dc.html?g=24-let-an-agent-call-your-queries-via-mcp" style="font-size:15px;font-weight:600;background:#e6efeb;color:#10201b;padding:13px 22px;border-radius:8px;text-decoration:none">Get started</a>
+        <a href="Guide.dc.html?d=MCP" style="font-size:15px;font-weight:600;color:#e6efeb;padding:13px 22px;border:1px solid #2a3d37;border-radius:8px;text-decoration:none">MCP reference</a>
+        <a href="Guide.dc.html?d=THREAT_MODEL" style="font-size:15px;font-weight:600;color:#e6efeb;padding:13px 22px;border:1px solid #2a3d37;border-radius:8px;text-decoration:none">Threat model</a>
+      </div>
+    </div>
+  </section>
+  <footer class="ft" style="border-top:1px solid #dbe2df;background:#fff">
+    <div style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;gap:40px">
+      <div class="ft-grid">
+        <div class="ft-brand">
+          <a href="Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:#17201d;text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+          <p style="margin:0;font-size:14px;color:#4a5652;max-width:34ch;text-wrap:pretty">One governed gate between your databases and everything that asks them for data. Self-hosted: your data never leaves your infrastructure.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="ft-chip">Self-hosted</span><span class="ft-chip">FSL-1.1-MIT</span><span class="ft-chip">Signed releases + SBOM</span><span class="ft-chip">FIPS-approved crypto</span><span class="ft-chip">Python 3.11+</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            <a href="Docs.dc.html#install" class="ft-btn ft-btn-dark">Install →</a>
+            <a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases/latest" class="ft-btn">Latest release →</a>
+            <a href="Guide.dc.html?d=MCP" class="ft-btn">MCP server →</a>
+          </div>
+        </div>
+        <div class="ft-col"><span class="ft-h">Product</span><a href="Features.dc.html">Features</a><a href="Use Cases.dc.html">Use cases</a><a href="Deploy.dc.html">Deploy</a><a href="Compare.dc.html">Compare</a><a href="Roadmap.dc.html">Roadmap</a><a href="Changelog.dc.html">Changelog</a></div>
+        <div class="ft-col"><span class="ft-h">Resources</span><a href="Docs.dc.html">Docs</a><a href="Guides.dc.html">How-to guides</a><a href="Guide.dc.html?d=API">API reference</a><a href="Guide.dc.html?d=MCP">MCP server</a><a href="https://AnanthaRajuC.github.io/QueryAPIGate/">Full reference site</a><a href="Blog.dc.html">Blog</a></div>
+        <div class="ft-col"><span class="ft-h">Trust</span><a href="Trust.dc.html">Trust center</a><a href="Enterprise.dc.html">Enterprise</a><a href="Security.dc.html">Security</a><a href="Support.dc.html">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new">Report a vulnerability</a></div>
+        <div class="ft-col"><span class="ft-h">Project</span><a href="About.dc.html">About</a><a href="Stack.dc.html">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE">Licence (FSL-1.1-MIT)</a></div>
+      </div>
+      <div class="ft-bottom">
+        <span>© 2026 QueryAPIGate · FSL-1.1-MIT, each version MIT after two years · Experimental features are labelled in the product and the changelog.</span>
+        <span class="ft-badges">
+          <a href="https://github.com/AnanthaRajuC/QueryAPIGate/actions/workflows/ci.yml" aria-label="CI workflow status"><img src="https://github.com/AnanthaRajuC/QueryAPIGate/actions/workflows/ci.yml/badge.svg" alt="CI status" height="20"></a>
+          <a href="https://scorecard.dev/viewer/?uri=github.com/AnanthaRajuC/QueryAPIGate" aria-label="OpenSSF Scorecard"><img src="https://api.scorecard.dev/projects/github.com/AnanthaRajuC/QueryAPIGate/badge" alt="OpenSSF Scorecard score" height="20"></a>
+          <a href="https://github.com/AnanthaRajuC/QueryAPIGate" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" style="color:#4a5652;display:inline-flex"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg></a>
+        </span>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { copied: null };
+  componentWillUnmount() { clearTimeout(this.copyT); }
+  copy(key, text) {
+    return () => {
+      try { navigator.clipboard && navigator.clipboard.writeText(text); } catch (e) {}
+      this.setState({ copied: key }); clearTimeout(this.copyT); this.copyT = setTimeout(() => this.setState({ copied: null }), 1400);
+    };
+  }
+  renderVals() {
+    return {
+      copyStart: this.copy('start', 'pip install "queryapigate[server,mcp]"\nqueryapigate serve &\nqueryapigate mcp'),
+      copiedStart: this.state.copied === 'start' ? 'Copied' : 'Copy',
+    };
+  }
+}
+</script>
+</body>
+</html>
