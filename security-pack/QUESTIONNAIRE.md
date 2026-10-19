@@ -1,7 +1,7 @@
 # Vendor security questionnaire: pre-filled answers
 
 These are answers to the questions a vendor security questionnaire (SIG Lite, CAIQ, or a customer's own) usually
-asks, for **QueryAPIGate 0.34.2**. QueryAPIGate is a self-hosted, source-available (FSL-1.1-MIT) gateway that turns
+asks, for **QueryAPIGate 0.40.0**. QueryAPIGate is a self-hosted, open source (Apache-2.0) gateway that turns
 saved SQL into governed REST, MCP, event and export endpoints.
 
 How to read them:

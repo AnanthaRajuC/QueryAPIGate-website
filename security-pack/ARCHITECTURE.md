@@ -10,7 +10,7 @@ items are in [QUESTIONNAIRE.md](QUESTIONNAIRE.md).
 
 ## 1. What it is, and the trust boundary
 
-QueryAPIGate is a self-hosted gateway, source-available under FSL-1.1-MIT. It turns saved SQL queries into REST
+QueryAPIGate is a self-hosted gateway, open source under Apache-2.0. It turns saved SQL queries into REST
 endpoints, MCP tools for AI agents, live server-sent events and exports. A saved query is versioned, and its
 parameters are typed and bound to the driver rather than written into the SQL. Every call goes through one governed
 path: authentication, limits, grants, a SQL guard, masking and a run-history record. It is a Python (Flask)
