@@ -147,6 +147,13 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .ft-badges{display:inline-flex;align-items:center;gap:10px}.ft-badges img{display:block;height:20px}
 @media (max-width:1100px){.ft-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ft-brand{grid-column:1/-1}}
 @media (max-width:560px){.ft-grid{grid-template-columns:minmax(0,1fr)}}
+/* "On this page" rail: h2s as top-level links, h3s indented; the heading in view is marked. */
+.g-toc a{display:block;padding:5px 0 5px 14px;margin-left:-1px;border-left:2px solid transparent;color:#626d69;text-decoration:none;line-height:1.4;overflow-wrap:anywhere;transition:color 0.15s,border-color 0.15s}
+.g-toc a.h3{padding-left:26px;font-size:12.5px}
+.g-toc a:hover{color:#17201d;text-decoration:none}
+.g-toc a.on{color:#17201d;font-weight:600;border-left-color:oklch(0.52 0.11 170)}
+#guide-body h2,#guide-body h3{scroll-margin-top:92px}
+@media (max-width:1100px){.g-layout{grid-template-columns:220px minmax(0,1fr) !important}.g-toc{display:none !important}}
 </style>
 </helmet>
 <div data-screen-label="Guide" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
@@ -174,7 +181,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </nav>
 
-  <div class="rs-2col" style="max-width:1240px;margin:0 auto;padding:56px 24px 88px;display:grid;grid-template-columns:240px minmax(0,1fr);gap:56px;align-items:start">
+  <div id="top" class="rs-2col g-layout" style="max-width:1280px;margin:0 auto;padding:56px 24px 88px;display:grid;grid-template-columns:220px minmax(0,1fr) 200px;gap:48px;align-items:start">
     <aside class="rs-aside" style="position:sticky;top:84px;display:grid;gap:4px;font-size:13.5px;max-height:calc(100vh - 110px);overflow:auto">
       <a href="{{ backHref }}" style="color:#4a5652;padding:4px 0 12px;font-weight:500">{{ backLabel }}</a>
       <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69;padding-bottom:6px">{{ catLabel }}</span>
@@ -196,6 +203,12 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         <sc-if value="{{ next }}" hint-placeholder-val="{{ false }}"><a href="{{ next.href }}" style="display:grid;gap:4px;padding:16px 18px;background:#fff;border:1px solid #dbe2df;border-radius:10px;color:#17201d;text-align:right;grid-column:2" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-size:12px;color:#626d69">Next →</span><b style="font-weight:600">{{ next.title }}</b></a></sc-if>
       </nav>
     </article>
+
+    <aside class="g-toc rs-aside" aria-label="On this page" style="position:sticky;top:84px;gap:10px;font-size:13px;max-height:calc(100vh - 110px);overflow:auto;display:{{ tocDisplay }}">
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">On this page</span>
+      <nav ref="{{ tocRef }}" style="display:grid;gap:2px;border-left:1px solid #dbe2df"></nav>
+      <a href="#top" style="font-size:12.5px;color:#626d69;padding-top:8px">Back to top ↑</a>
+    </aside>
   </div>
 
   <footer class="ft" style="border-top:1px solid #dbe2df;background:#fff">
@@ -230,8 +243,9 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { md: null, error: null, slug: null };
+  state = { md: null, error: null, slug: null, tocCount: 0 };
   bodyRef = React.createRef();
+  tocRef = React.createRef();
   componentDidMount() {
     import('./guides.js').then(m => {
       this.guides = m.guides; this.docs = m.docs; this.posts = m.posts;
@@ -246,6 +260,7 @@ class Component extends DCLogic {
     });
   }
   componentDidUpdate() { this.renderMd(); this.setTitle(); }
+  componentWillUnmount() { this.tocScroll && window.removeEventListener('scroll', this.tocScroll); }
   setTitle() {
     const kind = this.kind || 'g';
     const gs = (kind === 'd' ? this.docs : kind === 'p' ? this.posts : this.guides) || [];
@@ -283,6 +298,7 @@ class Component extends DCLogic {
     // identifiers in table cells may break only after an underscore or a dot, never mid-word
     el.querySelectorAll('td code, th code').forEach(c => { if (c.children.length === 0) c.innerHTML = c.textContent.replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch])).replace(/([_.])/g, '$1<wbr>'); });
     el.dataset.rendered = this.state.slug;
+    this.setState({ tocCount: 0 });
     el.querySelectorAll('a[href]').forEach(a => {
       const h = a.getAttribute('href');
       let m = h.match(/^(?:\.\.?\/)?(?:how-to\/)?(\d\d-[a-z0-9-]+)\.md(#.*)?$/);
@@ -297,6 +313,23 @@ class Component extends DCLogic {
     });
     el.querySelectorAll('img[src^="../"]').forEach(img => img.src = 'https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/' + img.getAttribute('src').slice(3));
     el.querySelectorAll('h2, h3').forEach(h => { if (!h.id) h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); });
+    this.buildToc(el);
+  }
+  // "On this page": one link per h2 and h3; the one whose section is in view is marked as you scroll.
+  buildToc(el) {
+    const toc = this.tocRef.current; if (!toc) return;
+    const heads = [...el.querySelectorAll('h2, h3')].filter(h => h.textContent.trim());
+    toc.innerHTML = '';
+    if (heads.length < 2) { this.setState({ tocCount: 0 }); return; }
+    heads.forEach(h => { const a = document.createElement('a'); a.href = '#' + h.id; a.textContent = h.textContent.replace(/\s*#$/, ''); a.className = h.tagName === 'H3' ? 'h3' : ''; a.dataset.for = h.id; toc.appendChild(a); });
+    if (this.tocObs) this.tocObs.disconnect();
+    const mark = (id) => toc.querySelectorAll('a').forEach(a => a.classList.toggle('on', a.dataset.for === id));
+    // the active heading is the last one above the reading line (a third of the way down the viewport)
+    const update = () => { const line = window.innerHeight * 0.33; let cur = heads[0]; for (const h of heads) { if (h.getBoundingClientRect().top <= line) cur = h; else break; } mark(cur.id); };
+    this.tocScroll && window.removeEventListener('scroll', this.tocScroll);
+    this.tocScroll = () => { if (this.tocRaf) return; this.tocRaf = requestAnimationFrame(() => { this.tocRaf = 0; update(); }); };
+    window.addEventListener('scroll', this.tocScroll, { passive: true }); update();
+    this.setState({ tocCount: heads.length });
     if (location.hash) { const t = el.querySelector(location.hash); if (t) window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - 90 }); }
   }
   renderVals() {
@@ -310,7 +343,7 @@ class Component extends DCLogic {
     const backHref = kind === 'd' ? 'Docs.dc.html' : kind === 'p' ? 'Blog.dc.html' : 'Guides.dc.html';
     const backLabel = kind === 'd' ? '← Docs' : kind === 'p' ? '← Blog' : '← All guides';
     return {
-      bodyRef: this.bodyRef, error: this.state.error, backHref, backLabel,
+      bodyRef: this.bodyRef, tocRef: this.tocRef, tocDisplay: this.state.tocCount ? 'grid' : 'none', error: this.state.error, backHref, backLabel,
       kindLabel: kind === 'd' ? 'Documentation' : kind === 'p' ? (g ? g.date : 'Blog') : 'Guide ' + (g ? g.num : ''),
       showRepo: !!repoPath,
       num: g ? g.num : '', title: g ? g.title : 'Loading…', catLabel: g ? g.cat : '',
