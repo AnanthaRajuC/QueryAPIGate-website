@@ -153,7 +153,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .g-toc a:hover{color:#17201d;text-decoration:none}
 .g-toc a.on{color:#17201d;font-weight:600;border-left-color:oklch(0.52 0.11 170)}
 #guide-body h2,#guide-body h3{scroll-margin-top:92px}
-@media (max-width:1100px){.g-layout{grid-template-columns:220px minmax(0,1fr) !important}.g-toc{display:none !important}}
+@media (max-width:1100px){.g-layout{grid-template-columns:230px minmax(0,1fr) !important;gap:48px !important}.g-toc{display:none !important}}
+@media (max-width:820px){.g-layout{padding-left:20px !important;padding-right:20px !important}}
 </style>
 </helmet>
 <div data-screen-label="Guide" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
@@ -181,7 +182,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </nav>
 
-  <div id="top" class="rs-2col g-layout" style="max-width:1280px;margin:0 auto;padding:56px 24px 88px;display:grid;grid-template-columns:220px minmax(0,1fr) 200px;gap:48px;align-items:start">
+  <div id="top" class="rs-2col g-layout" style="max-width:1600px;margin:0 auto;padding:56px 32px 88px;display:grid;grid-template-columns:250px minmax(0,1fr) 230px;gap:56px;align-items:start">
     <aside class="rs-aside" style="position:sticky;top:84px;display:grid;gap:4px;font-size:13.5px;max-height:calc(100vh - 110px);overflow:auto">
       <a href="{{ backHref }}" style="color:#4a5652;padding:4px 0 12px;font-weight:500">{{ backLabel }}</a>
       <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69;padding-bottom:6px">{{ catLabel }}</span>
