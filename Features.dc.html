@@ -578,22 +578,6 @@ Crimson Garden,Comedy,PG-13,631,2</pre></div>
     <div class="f-pad f-tabnav" style="max-width:1240px;margin:0 auto;padding:0 24px 64px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><a href="{{ tabs.prove.prevHref }}" onClick="{{ tabs.prove.prevGo }}" style="display:{{ tabs.prove.prevDisplay }};font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">← {{ tabs.prove.prevLabel }}</a><a href="{{ tabs.prove.nextHref }}" onClick="{{ tabs.prove.nextGo }}" style="display:{{ tabs.prove.nextDisplay }};margin-left:auto;font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">{{ tabs.prove.nextLabel }} →</a></div>
   </section>
 
-  <section style="background:#10201b;color:#e6efeb">
-    <div class="f-pad f-2col" style="max-width:1240px;margin:0 auto;padding:80px 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center">
-      <div style="display:grid;gap:14px">
-        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Running in a minute. Governed from the first call.</h2>
-        <p style="margin:0;color:#9fb3ac;text-wrap:pretty">Self-hosted: your data never leaves your infrastructure. pip, Docker or Helm; the example APIs load with one command.</p>
-        <div style="display:flex;gap:12px;flex-wrap:wrap">
-          <a href="Docs.dc.html#install" style="font-size:15px;font-weight:600;background:#e6efeb;color:#10201b;padding:13px 22px;border-radius:8px;text-decoration:none" style-hover="background:#fff;color:#10201b;text-decoration:none">All install options</a>
-          <a href="Guides.dc.html" style="font-size:15px;font-weight:600;color:#e6efeb;padding:13px 22px;border:1px solid #2a3d37;border-radius:8px;text-decoration:none" style-hover="border-color:#9fb3ac;color:#fff;text-decoration:none">62 how-to guides</a>
-        </div>
-      </div>
-      <div style="background:#10201b;border:1px solid #243b34;border-radius:10px;overflow:hidden;min-width:0;"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #243b34"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">install · pip</span><button type="button" class="copy-btn" onClick="{{ copyPip }}" aria-label="Copy" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedPip }}</button></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.7;overflow-x:auto;min-width:0"><span style="color:#9fb3ac">$</span> pip install queryapigate
-<span style="color:#9fb3ac">$</span> queryapigate examples load
-<span style="color:#9fb3ac">$</span> queryapigate serve
-<span style="color:#9fb3ac"># Console at http://127.0.0.1:5000/console</span></pre></div>
-    </div>
-  </section>
 
   <footer class="ft" style="border-top:1px solid #dbe2df;background:#fff">
     <div style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;gap:40px">
