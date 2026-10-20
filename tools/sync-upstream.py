@@ -7,7 +7,7 @@ What it does, in order:
   2. Rebuilds the `guides` export in guides.js from upstream's how-to/how-to.md index: number, slug, title and
      section, plus each guide's "Time" and "You'll end up with" line. A guide already in guides.js keeps the
      category it was given here; a new one gets the category its upstream section maps to (SECTION_MAP).
-     New top-level documents in documentation/ are added to the `docs` export under Reference, titled from their H1.
+     New top-level documents in documentation/ are added to the `docs` export, grouped by DOC_CAT (else Reference), titled from their H1.
   3. Rewrites the guide count wherever a page states it ("All 59 guides", "59 how-to guides", the home-page stat).
 
 Run it by hand (python3 tools/sync-upstream.py) or let .github/workflows/sync-upstream.yml run it daily.
@@ -25,6 +25,13 @@ SECTION_MAP = {  # upstream how-to.md section -> this site's category, for guide
     'Reference walkthroughs': 'Operate',
 }
 CATEGORY_ORDER = ['Start', 'Queries', 'Access', 'Agents', 'Events & exports', 'Operate', 'Govern']
+DOC_CAT = {  # top-level documents whose group the site sets by hand; anything else new lands under Reference
+    'INSTALLATION_AND_SETUP': 'Run it', 'CONFIGURATION': 'Run it', 'DEPLOYMENT': 'Run it', 'DATABASE_CONNECTION_CONFIGURATION': 'Run it',
+    'API': 'Reference', 'MCP': 'Reference', 'FEATURES': 'Reference', 'EXAMPLES': 'Reference', 'QUERY_METADATA_MANAGEMENT': 'Reference', 'SCREENSHOTS': 'Reference',
+    'THREAT_MODEL': 'Security', 'DATA_PROTECTION': 'Security', 'SECURITY': 'Security', 'ARCHITECTURE': 'Security', 'QUESTIONNAIRE': 'Security', 'SBOM': 'Security',
+    'WHY': 'Project', 'TECHNOLOGY_STACK': 'Project', 'CONTRIBUTING': 'Project', 'CODE_OF_CONDUCT': 'Project',
+}
+DOC_GROUP_ORDER = ['Run it', 'Reference', 'Security', 'Project']
 
 def api(path):
     req = urllib.request.Request(f'https://api.github.com/repos/{REPO}/contents/{path}?ref={BRANCH}',
@@ -95,7 +102,9 @@ def rebuild_index():
         txt = open(os.path.join(ROOT, 'documentation', name), encoding='utf-8').read()
         h1 = re.search(r'^#\s+(.+?)\s*$', txt, re.M)
         docs.append({'slug': re.sub(r'\.md$', '', name, flags=re.I), 'path': 'documentation/' + name,
-                     'title': clean(h1.group(1)) if h1 else name, 'cat': 'Reference'})
+                     'title': clean(h1.group(1)) if h1 else name, 'cat': DOC_CAT.get(re.sub(r'\.md$', '', name, flags=re.I), 'Reference')})
+    for d in docs: d['cat'] = DOC_CAT.get(d['slug'], d.get('cat', 'Reference'))
+    docs.sort(key=lambda d: (DOC_GROUP_ORDER.index(d['cat']) if d['cat'] in DOC_GROUP_ORDER else 99, list(DOC_CAT).index(d['slug']) if d['slug'] in DOC_CAT else 99))
     new = ('export const guides = ' + json.dumps(guides, indent=1, ensure_ascii=False) + ';\n\n'
            'export const docs = ' + json.dumps(docs, indent=1, ensure_ascii=False) + ';\n\n'
            'export const posts = ' + json.dumps(posts, indent=1, ensure_ascii=False) + ';\n')

@@ -549,6 +549,12 @@ export const docs = [
   "cat": "Run it"
  },
  {
+  "slug": "CONFIGURATION",
+  "path": "documentation/CONFIGURATION.md",
+  "title": "Configuration",
+  "cat": "Run it"
+ },
+ {
   "slug": "DEPLOYMENT",
   "path": "documentation/DEPLOYMENT.md",
   "title": "Deployment",
@@ -573,6 +579,12 @@ export const docs = [
   "cat": "Reference"
  },
  {
+  "slug": "FEATURES",
+  "path": "documentation/FEATURES.md",
+  "title": "Features",
+  "cat": "Reference"
+ },
+ {
   "slug": "EXAMPLES",
   "path": "documentation/EXAMPLES.md",
   "title": "Example APIs",
@@ -582,6 +594,12 @@ export const docs = [
   "slug": "QUERY_METADATA_MANAGEMENT",
   "path": "documentation/QUERY_METADATA_MANAGEMENT.md",
   "title": "Query metadata",
+  "cat": "Reference"
+ },
+ {
+  "slug": "SCREENSHOTS",
+  "path": "documentation/SCREENSHOTS.md",
+  "title": "A tour of the Console",
   "cat": "Reference"
  },
  {
@@ -624,6 +642,12 @@ export const docs = [
   "repoUrl": "https://github.com/AnanthaRajuC/QueryAPIGate-website/blob/main/security-pack/SBOM.md"
  },
  {
+  "slug": "WHY",
+  "path": "documentation/WHY.md",
+  "title": "Why QueryAPIGate",
+  "cat": "Project"
+ },
+ {
   "slug": "TECHNOLOGY_STACK",
   "path": "documentation/TECHNOLOGY_STACK.MD",
   "title": "Technology stack",
@@ -640,30 +664,6 @@ export const docs = [
   "path": "CODE_OF_CONDUCT.md",
   "title": "Code of conduct",
   "cat": "Project"
- },
- {
-  "slug": "CONFIGURATION",
-  "path": "documentation/CONFIGURATION.md",
-  "title": "Configuration",
-  "cat": "Reference"
- },
- {
-  "slug": "FEATURES",
-  "path": "documentation/FEATURES.md",
-  "title": "Features",
-  "cat": "Reference"
- },
- {
-  "slug": "SCREENSHOTS",
-  "path": "documentation/SCREENSHOTS.md",
-  "title": "A tour of the Console",
-  "cat": "Reference"
- },
- {
-  "slug": "WHY",
-  "path": "documentation/WHY.md",
-  "title": "Why QueryAPIGate",
-  "cat": "Reference"
  }
 ];
 
