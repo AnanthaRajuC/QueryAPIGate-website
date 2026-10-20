@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- site-meta -->
+<title>Standards and specifications - QueryAPIGate</title>
+<meta name="description" content="The open standards QueryAPIGate is built on: MCP, OpenAPI, OAuth 2.1 and OpenID Connect, the RFCs behind token validation, syslog and OpenTelemetry for audit and observability, and the cryptography at rest. Verified against v0.40.0.">
+<meta name="theme-color" content="#10201b">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QueryAPIGate">
+<meta property="og:title" content="Standards and specifications - QueryAPIGate">
+<meta property="og:description" content="The open standards QueryAPIGate is built on: MCP, OpenAPI, OAuth 2.1 and OpenID Connect, the RFCs behind token validation, syslog and OpenTelemetry for audit and observability, and the cryptography at rest. Verified against v0.40.0.">
+<meta name="twitter:card" content="summary">
+<!-- /site-meta -->
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0;background:#f3f5f4;color:#17201d;font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
+a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 170);text-decoration:underline}
+
+@media (max-width:1180px){
+  .rs-gh{display:none !important}
+  .rs-nav{gap:14px !important}
+}
+@media (max-width:1100px){
+  .rs-nav{gap:12px !important;font-size:14px !important}
+}
+@media (max-width:1024px){
+  .rs-cta{display:none !important}
+}
+@media (max-width:960px){
+  .rs-nav{flex:1 1 auto;min-width:0;flex-wrap:nowrap !important;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+  .rs-nav::-webkit-scrollbar{display:none}
+}
+@media (max-width:820px){
+  .rs-2col{grid-template-columns:minmax(0,1fr) !important}
+  .rs-aside{position:static !important;max-height:none !important}
+  .rs-nav{gap:10px 16px !important;font-size:13.5px !important;flex-wrap:nowrap !important;overflow-x:auto;width:100%;scrollbar-width:none;white-space:nowrap;padding-bottom:2px}
+  .rs-nav::-webkit-scrollbar{display:none}
+  .rs-navbar{flex-wrap:wrap !important;gap:12px 20px !important;padding:12px 16px !important}
+  .rs-cta{display:none !important}
+  .rs-pad{padding-left:16px !important;padding-right:16px !important}
+  .rs-hero{padding-top:48px !important}
+  .rs-hide{display:none !important}
+}
+
+/* mobile menu + code wrapping */
+.rs-burger{display:none}
+.rs-menu-toggle{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-width:1180px){
+  .rs-burger{display:inline-grid;place-items:center;width:40px;height:40px;border:1px solid #c3cdc9;border-radius:8px;background:#fff;cursor:pointer;margin-left:auto;flex:none}
+  .rs-burger span{display:block;width:16px;height:2px;background:#17201d;border-radius:2px;box-shadow:0 -5px 0 #17201d,0 5px 0 #17201d}
+  .rs-actions{margin-left:0 !important}
+  .rs-gh{display:inline-block !important}
+  .rs-cta{display:inline-block !important}
+  .rs-nav{display:none !important;flex-basis:100%;flex-direction:column;align-items:flex-start;gap:0 !important;font-size:16px !important;overflow:visible !important;white-space:normal !important;border-top:1px solid #dbe2df;padding:8px 0 4px !important;margin-top:4px}
+  .rs-nav a{display:block;width:100%;padding:11px 4px;border-bottom:1px solid #e8edeb}
+  .rs-nav a:last-child{border-bottom:0}
+  .rs-menu-toggle:checked ~ .rs-nav{display:flex !important}
+  .rs-menu-toggle:checked ~ .rs-burger span{background:transparent;box-shadow:none}
+  .rs-menu-toggle:checked ~ .rs-burger span::before,.rs-menu-toggle:checked ~ .rs-burger span::after{content:"";position:absolute;width:18px;height:2px;background:#17201d;border-radius:2px}
+  .rs-menu-toggle:checked ~ .rs-burger span::before{transform:rotate(45deg)}
+  .rs-menu-toggle:checked ~ .rs-burger span::after{transform:rotate(-45deg)}
+  .rs-navbar{flex-wrap:wrap !important}
+}
+@media (max-width:820px){
+  .rs-cta{display:inline-block !important}
+  .rs-navbar{gap:12px !important}
+}
+@media (max-width:480px){
+  .rs-gh{display:none !important}
+}
+/* Use-cases dropdown in the top nav (desktop only; the burger menu keeps a plain link). */
+.rs-dd{position:relative}
+.rs-dd-panel{display:none;position:absolute;top:100%;left:-18px;padding-top:12px;z-index:30}
+.rs-dd-inner{background:#fff;border:1px solid #dbe2df;border-radius:14px;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35);padding:18px 20px 14px;display:grid;gap:14px;width:max-content;max-width:calc(100vw - 48px)}
+.rs-dd-grid{display:grid;grid-template-columns:repeat(5,max-content);gap:18px 28px}
+.rs-dd-grid>div{display:grid;gap:7px;align-content:start}
+.rs-dd-grid small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:#626d69;margin-bottom:2px}
+.rs-dd-grid a{font-size:13.5px;font-weight:500;color:#17201d;white-space:nowrap;text-decoration:none}
+.rs-dd-grid a:hover{color:oklch(0.52 0.11 170)}
+.rs-dd-all{font-size:13px;font-weight:600;border-top:1px solid #e8edeb;padding-top:12px;text-decoration:none}
+@media (max-width:1400px){.rs-dd-grid{grid-template-columns:repeat(3,max-content)}}
+@media (max-width:1180px){.rs-dd{width:100%}.rs-dd-panel{display:none !important}}
+/* Current page in the top nav: bold, ink-dark, with an accent underline (a left bar in the burger menu). */
+.rs-nav a[aria-current="page"]{color:#17201d !important;font-weight:600;text-decoration:underline;text-decoration-color:oklch(0.52 0.11 170);text-decoration-thickness:2px;text-underline-offset:7px}
+.rs-nav a[aria-current="page"]:hover{text-decoration-color:oklch(0.42 0.11 170)}
+@media (max-width:1180px){.rs-nav a[aria-current="page"]{text-decoration:none;box-shadow:inset 3px 0 0 oklch(0.52 0.11 170);padding-left:12px !important}}
+.rs-dd-right .rs-dd-panel{left:auto;right:-18px}
+/* Dropdown triggers: a caret that turns while open; the panel stays open for a moment after the pointer leaves,
+   and the trigger's hover area reaches down to the panel so crossing the gap never closes it. */
+.rs-dd>a{display:inline-flex;align-items:center;gap:5px;padding:14px 0;margin:-14px 0}
+.rs-caret{transition:transform 0.2s;flex:none}
+.rs-dd:hover>a .rs-caret,.rs-dd:focus-within>a .rs-caret{transform:rotate(180deg)}
+.rs-dd-panel{display:block;visibility:hidden;opacity:0;transition:opacity 0.15s,visibility 0s linear 0.25s}
+.rs-dd:hover .rs-dd-panel,.rs-dd:focus-within .rs-dd-panel,.rs-dd-panel:hover{visibility:visible;opacity:1;transition-delay:0s}
+@media (max-width:1180px){.rs-caret{display:none}.rs-dd>a{padding:11px 4px;margin:0}}
+/* Use-cases mega menu: the panel spans the whole nav bar, one card per use case. */
+.rs-navbar{position:relative}
+.rs-dd.rs-mega{position:static}
+.rs-mega .rs-dd-panel{left:24px;right:24px;padding-top:0;top:calc(100% - 1px)}
+.rs-mega-inner{width:auto !important;max-width:none !important;padding:22px 24px 20px !important;gap:18px !important}
+.rs-mega-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid #e8edeb}
+.rs-mega-head>div{display:grid;gap:4px}
+.rs-mega-eyebrow{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)}
+.rs-mega-head b{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.01em;color:#17201d}
+.rs-mega-all{font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap}
+.rs-mega-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.rs-mega-card{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start;padding:12px;border-radius:10px;text-decoration:none;color:#17201d;transition:background 0.15s}
+.rs-mega-card:hover{background:#f3f5f4;text-decoration:none}
+.rs-mega-ico{width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.1);position:relative}
+.rs-mega-ico::after{content:'';position:absolute;inset:9px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.rs-mega-txt{display:grid;gap:2px;min-width:0}
+.rs-mega-txt small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#626d69}
+.rs-mega-txt b{font-size:14px;font-weight:600}
+.rs-mega-txt>span{font-size:12.5px;color:#4a5652;line-height:1.4}
+@media (max-width:1400px){.rs-mega-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* Guides mega menu: reading paths on the left, documentation grouped on the right. */
+.rs-mega-body{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.3fr);gap:28px}
+.rs-mega-sub{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69}
+.rs-mega-paths{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;align-content:start}
+.rs-mega-paths .rs-mega-sub{grid-column:1/-1;margin-bottom:4px}
+.rs-mega-path{display:grid;gap:2px;padding:10px 12px;border-radius:10px;text-decoration:none;color:#17201d;transition:background 0.15s}
+.rs-mega-path:hover{background:#f3f5f4;text-decoration:none}
+.rs-mega-path small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#626d69}
+.rs-mega-path b{font-size:14px;font-weight:600}
+.rs-mega-path>span{font-size:12.5px;color:#4a5652;line-height:1.4}
+.rs-mega-docs{display:grid;gap:12px;align-content:start;padding-left:28px;border-left:1px solid #e8edeb}
+.rs-mega-docgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.rs-mega-docgrid>div{display:grid;gap:6px;align-content:start}
+.rs-mega-docgrid small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#626d69;margin-bottom:2px}
+.rs-mega-docgrid a{font-size:13.5px;font-weight:500;color:#17201d;text-decoration:none;line-height:1.35}
+.rs-mega-docgrid a:hover{color:oklch(0.52 0.11 170)}
+.rs-mega-more{font-size:13px;font-weight:600;text-decoration:none;padding-top:8px;border-top:1px solid #e8edeb}
+@media (max-width:1400px){.rs-mega-docgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* MCP shortcut beside the GitHub icon: a tinted pill with the plug icon. */
+.rs-mcp{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;color:oklch(0.42 0.11 170);background:oklch(0.52 0.11 170 / 0.1);border:1px solid oklch(0.52 0.11 170 / 0.45);border-radius:999px;padding:5px 11px 5px 9px;text-decoration:none;transition:background 0.2s,border-color 0.2s,color 0.2s}
+.rs-mcp:hover{background:oklch(0.52 0.11 170 / 0.18);border-color:oklch(0.52 0.11 170);color:oklch(0.36 0.11 170);text-decoration:none}
+.rs-mcp svg{display:block}
+/* Footer */
+.ft a{text-decoration:none}.ft a:hover{text-decoration:underline}
+.ft-grid{display:grid;grid-template-columns:minmax(0,1.7fr) repeat(4,minmax(0,1fr));gap:36px 28px}
+.ft-brand{display:grid;gap:16px;align-content:start;min-width:0}
+.ft-col{display:grid;gap:10px;align-content:start}
+.ft-col a{color:#4a5652;font-size:14px}.ft-col a:hover{color:#17201d}
+.ft-h{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d;margin-bottom:2px}
+.ft-chip{font-size:11.5px;font-weight:500;color:#4a5652;background:#f3f5f4;border:1px solid #dbe2df;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.ft-btn{font-size:13.5px;font-weight:600;color:#17201d;border:1px solid #c3cdc9;border-radius:8px;padding:8px 13px;background:#fff}
+.ft-btn:hover{border-color:#17201d;text-decoration:none !important}
+.ft-btn-dark{background:#10201b;border-color:#10201b;color:#e6efeb}.ft-btn-dark:hover{background:#1b3a30;border-color:#1b3a30}
+.ft-bottom{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#626d69}
+.ft-badges{display:inline-flex;align-items:center;gap:10px}.ft-badges img{display:block;height:20px}
+@media (max-width:1100px){.ft-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ft-brand{grid-column:1/-1}}
+@media (max-width:560px){.ft-grid{grid-template-columns:minmax(0,1fr)}}
+/* "What each layer defends against": each card replays an attempt and the layer's answer on a 6s loop. */
+.sec-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+@media (max-width:1000px){.sec-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.sec-grid{grid-template-columns:minmax(0,1fr)}.sec-panel{height:auto;min-height:150px}.sec-row{flex-direction:column;align-items:flex-start;gap:2px;white-space:normal}.sec-row>span:first-child{overflow:visible;overflow-wrap:anywhere}}
+.sec-panel{height:150px;box-sizing:border-box;padding:18px;display:grid;align-content:center;gap:6px;background:#f3f5f4;border-bottom:1px solid #dbe2df}
+.sec-row{display:flex;justify-content:space-between;gap:10px;align-items:center;min-width:0;font-family:'JetBrains Mono',monospace;font-size:11px;background:#fff;border:1px solid #c3cdc9;border-radius:6px;padding:6px 10px;color:#17201d;white-space:nowrap;animation:sec-in 9s infinite backwards}
+.sec-row>span:first-child{overflow:hidden;text-overflow:ellipsis}
+.sec-st{flex:none;color:#626d69}
+.sec-ok .sec-st{color:oklch(0.52 0.11 170)}
+.sec-bad{border-color:#e0b4ab}.sec-bad .sec-st{color:oklch(0.55 0.18 25)}
+.sec-warn .sec-st{color:oklch(0.6 0.13 75)}
+.sec-dark{background:#10201b;border-color:#10201b;color:#e6efeb}.sec-dark .sec-st{color:oklch(0.8 0.11 170)}
+.sec-num{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac}
+@keyframes sec-in{0%{opacity:0;transform:translateY(6px)}7%{opacity:1;transform:none}88%{opacity:1;transform:none}95%,100%{opacity:0;transform:translateY(-4px)}}
+@media (prefers-reduced-motion:reduce){.sec-row{animation:none}}
+@media (max-width:820px){.hc-grid{grid-template-columns:minmax(0,1fr) !important}}
+/* Standards page */
+.st-table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:640px}
+.st-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69;text-align:left;padding:12px 18px;background:#f3f5f4;border-bottom:1px solid #dbe2df}
+.st-table td{padding:13px 18px;border-bottom:1px solid #e9eeec;vertical-align:top;color:#4a5652}
+.st-table tr:last-child td{border-bottom:0}
+.st-table td b{font-weight:600;color:#17201d}
+.st-table td a{font-family:'JetBrains Mono',monospace;font-size:12.5px;white-space:nowrap}
+.st-table code{font-family:'JetBrains Mono',monospace;font-size:0.9em;background:#f3f5f4;border:1px solid #dbe2df;border-radius:4px;padding:1px 5px;color:#17201d}
+</style>
+</helmet>
+<div data-screen-label="Standards" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
+  <nav style="position:sticky;top:0;z-index:20;background:rgba(243,245,244,0.9);backdrop-filter:blur(10px);border-bottom:1px solid #dbe2df">
+    <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
+      <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:#17201d;text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+      <div class="rs-actions" style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" title="GitHub" style="color:#4a5652;padding:8px 10px;line-height:0" style-hover="color:#17201d"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg></a>
+        <a href="MCP.dc.html" class="rs-mcp" title="MCP server: saved queries as tools for AI agents"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a6 6 0 0 1-12 0V8z"/></svg>MCP</a>
+      </div>
+      <input type="checkbox" id="rs-menu" class="rs-menu-toggle" aria-label="Open menu">
+      <label for="rs-menu" class="rs-burger" aria-hidden="true"><span></span></label>
+      <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
+        <a href="Features.dc.html" style="color:#4a5652">Features</a>
+        <div class="rs-dd rs-mega"><a href="Use Cases.dc.html" style="color:#4a5652">Use cases<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Use cases</span><b>Twelve jobs people hire QueryAPIGate for</b></div><a href="Use Cases.dc.html" class="rs-mega-all">All twelve, with the shape of each call →</a></div><div class="rs-mega-grid"><a class="rs-mega-card" href="use-cases/customer-analytics.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/chart-column.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Customer analytics</b><span>Analytics in your product, one tenant at a time</span></span></a><a class="rs-mega-card" href="use-cases/internal-tools.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Internal tools</b><span>Back an internal app without a backend team</span></span></a><a class="rs-mega-card" href="use-cases/controlled-writes.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/pencil-line.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Controlled writes</b><span>Let a partner or a form write, through one approved query</span></span></a><a class="rs-mega-card" href="use-cases/partner-data-api.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Partner data API</b><span>Hand a partner one query, not your schema</span></span></a><a class="rs-mega-card" href="use-cases/scheduled-deliveries.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/calendar-clock.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Scheduled deliveries</b><span>Deliver a daily file, incrementally, to someone else&#x27;s bucket</span></span></a><a class="rs-mega-card" href="use-cases/live-dashboards.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Live dashboards</b><span>A live view of what is being queried, by whom</span></span></a><a class="rs-mega-card" href="use-cases/self-serve-data.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/library.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Self-serve data</b><span>Data for every team, without handing out the database</span></span></a><a class="rs-mega-card" href="use-cases/files-as-an-api.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/folder-open.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Files as an API</b><span>Turn a bucket of Parquet into a queryable API</span></span></a><a class="rs-mega-card" href="use-cases/legacy-databases.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Legacy databases</b><span>A governed API in front of a database you can&#x27;t change</span></span></a><a class="rs-mega-card" href="use-cases/ai-agents.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span class="rs-mega-txt"><small>AI</small><b>AI agents</b><span>Let an agent query your data, governed like an app</span></span></a><a class="rs-mega-card" href="use-cases/compliance-and-audit.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-mega-txt"><small>Security and platform</small><b>Compliance and audit</b><span>Answer the auditor from the running system</span></span></a><a class="rs-mega-card" href="use-cases/platform-teams.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-pull-request.svg)"></span><span class="rs-mega-txt"><small>Security and platform</small><b>Platform teams</b><span>Run it like the rest of your platform</span></span></a></div></div></div></div>
+        <a href="Enterprise.dc.html" style="color:#4a5652">Enterprise</a>
+        <a href="Deploy.dc.html" style="color:#4a5652">Deploy</a>
+        <a href="Docs.dc.html" style="color:#4a5652">Docs</a>
+        <div class="rs-dd rs-mega rs-mega-guides"><a href="Guides.dc.html" style="color:#4a5652">Guides<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Guides and documentation</span><b>60 how-to guides, each run against a real server</b></div><a href="Guides.dc.html" class="rs-mega-all">All 60 guides, with times and outcomes →</a></div><div class="rs-mega-body"><div class="rs-mega-paths"><span class="rs-mega-sub">Reading paths</span><a class="rs-mega-path" href="Guides.dc.html?path=start"><small>01 → 05 · 5 guides · ≈42 min</small><b>Start here</b><span>The first five, in order: a query, a database, an API key.</span></a><a class="rs-mega-path" href="Guides.dc.html?path=partner"><small>13 → 50 · 7 guides · ≈53 min</small><b>Give a partner an API</b><span>One query, hashed columns, limits, an expiry, a rotation plan.</span></a><a class="rs-mega-path" href="Guides.dc.html?path=agents"><small>24 → 49 · 5 guides · ≈85 min</small><b>Let agents in</b><span>MCP tools, what the data means, and writes a person approves.</span></a><a class="rs-mega-path" href="Guides.dc.html?path=data"><small>41 → 28 · 4 guides · ≈65 min</small><b>Ship data out</b><span>Files as an API, scheduled deliveries, a live feed of runs.</span></a><a class="rs-mega-path" href="Guides.dc.html?path=prod"><small>23 → 59 · 8 guides · ≈135 min</small><b>Go to production</b><span>The Deploy page checklist, as guides.</span></a></div><div class="rs-mega-docs"><span class="rs-mega-sub">Documentation</span><div class="rs-mega-docgrid"><div><small>Run it</small><a href="Guide.dc.html?d=INSTALLATION_AND_SETUP">Installation and setup</a><a href="Guide.dc.html?d=CONFIGURATION">Configuration</a><a href="Guide.dc.html?d=DEPLOYMENT">Deployment</a><a href="Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION">Database connections</a></div><div><small>Reference</small><a href="Guide.dc.html?d=API">API reference</a><a href="Guide.dc.html?d=MCP">MCP server</a><a href="Guide.dc.html?d=FEATURES">Features</a><a href="Guide.dc.html?d=EXAMPLES">Example APIs</a><a href="Guide.dc.html?d=QUERY_METADATA_MANAGEMENT">Query metadata</a><a href="Guide.dc.html?d=SCREENSHOTS">A tour of the Console</a></div><div><small>Security</small><a href="Guide.dc.html?d=THREAT_MODEL">Threat model</a><a href="Standards.dc.html">Standards and specifications</a><a href="Guide.dc.html?d=DATA_PROTECTION">Where data goes</a><a href="Guide.dc.html?d=SECURITY">Security policy</a><a href="Guide.dc.html?d=ARCHITECTURE">Architecture overview</a><a href="Guide.dc.html?d=QUESTIONNAIRE">Questionnaire answers</a><a href="Guide.dc.html?d=SBOM">SBOM and verification</a></div><div><small>Project</small><a href="Guide.dc.html?d=WHY">Why QueryAPIGate</a><a href="Guide.dc.html?d=TECHNOLOGY_STACK">Technology stack</a><a href="Guide.dc.html?d=CONTRIBUTING">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT">Code of conduct</a></div></div><a href="Docs.dc.html" class="rs-mega-more">Docs: how the pieces fit, and where to start →</a></div></div></div></div></div>
+        <a href="Compare.dc.html" style="color:#4a5652">Compare</a>
+        <a href="Trust.dc.html" style="color:#4a5652">Trust</a>
+        <a href="Blog.dc.html" style="color:#4a5652">Blog</a>
+        <a href="About.dc.html" style="color:#4a5652">About</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="rs-2col" style="max-width:1240px;margin:0 auto;padding:72px 24px 40px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
+    <div style="display:grid;gap:14px">
+      <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Standards and specifications</span>
+      <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(34px,4.5vw,54px);line-height:1.04;font-weight:800;letter-spacing:-0.02em;max-width:20ch;text-wrap:balance">Built on published standards, not bespoke mechanisms</h1>
+    </div>
+    <div style="display:grid;gap:14px">
+      <p style="margin:0;font-size:17px;color:#4a5652;max-width:52ch;text-wrap:pretty">So a security or platform team can evaluate QueryAPIGate against specs they already trust, and so it drops into existing identity, observability and compliance infrastructure. Each entry names the standard, the RFC or specification, and what QueryAPIGate uses it for.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 24px">
+        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">25</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">standards</span></div>
+        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">15</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">IETF RFCs</span></div>
+        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">4</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">areas</span></div>
+        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1;color:oklch(0.52 0.11 170)">✓</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">verified against v0.40.0</span></div>
+      </div>
+    </div>
+  </header>
+  <nav aria-label="Sections" style="max-width:1240px;margin:0 auto;padding:0 24px 32px;display:flex;flex-wrap:wrap;gap:8px"><a href="#s01" style="display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:#4a5652;background:#fff;border:1px solid #dbe2df;border-radius:999px;padding:7px 14px;text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.52 0.11 170)">01</span>Agent and API access<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fb3ac">4</span></a><a href="#s02" style="display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:#4a5652;background:#fff;border:1px solid #dbe2df;border-radius:999px;padding:7px 14px;text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.52 0.11 170)">02</span>Authentication and authorization<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fb3ac">9</span></a><a href="#s03" style="display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:#4a5652;background:#fff;border:1px solid #dbe2df;border-radius:999px;padding:7px 14px;text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.52 0.11 170)">03</span>Audit, observability and operations<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fb3ac">7</span></a><a href="#s04" style="display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;color:#4a5652;background:#fff;border:1px solid #dbe2df;border-radius:999px;padding:7px 14px;text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.52 0.11 170)">04</span>Transport and cryptography<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fb3ac">5</span></a></nav>
+
+  <section id="s01" style="scroll-margin-top:84px">
+    <div style="max-width:1240px;margin:0 auto;padding:64px 24px;display:grid;gap:24px">
+      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
+        <div style="display:grid;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">01 · 4 standards</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:28px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Agent and API access</h2></div>
+        <p style="margin:0;color:#4a5652;max-width:52ch;text-wrap:pretty">How agents and applications reach the server, and how the server describes itself.</p>
+      </div>
+      <div style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden"><div style="overflow-x:auto"><table class="st-table"><thead><tr><th style="width:26%">Standard</th><th style="width:24%">Reference</th><th>What QueryAPIGate uses it for</th></tr></thead><tbody><tr><td><b>Model Context Protocol (MCP)</b></td><td><a href="https://modelcontextprotocol.io/specification" target="_blank" rel="noopener">modelcontextprotocol.io · Streamable HTTP transport ↗</a></td><td>How AI agents call saved queries as governed tools.</td></tr><tr><td><b>OpenAPI</b></td><td><a href="https://spec.openapis.org/oas/v3.0.3" target="_blank" rel="noopener">OpenAPI 3.0 ↗</a></td><td>The machine-readable description of the whole REST API, served at <code>/openapi.json</code>.</td></tr><tr><td><b>Server-Sent Events (SSE)</b></td><td><a href="https://html.spec.whatwg.org/multipage/server-sent-events.html" target="_blank" rel="noopener">WHATWG HTML · <code>text/event-stream</code> ↗</a></td><td>The live <code>/events</code> stream of query runs to many clients at once.</td></tr><tr><td><b>OpenAI-compatible embeddings API</b></td><td><a href="https://platform.openai.com/docs/api-reference/embeddings" target="_blank" rel="noopener">de-facto request/response shape ↗</a></td><td>Semantic search calls any embeddings endpoint that speaks the OpenAI <code>{input, model} → {data: [{embedding}]}</code> shape.</td></tr></tbody></table></div></div>
+    </div>
+  </section>
+  <section id="s02" style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df;scroll-margin-top:84px">
+    <div style="max-width:1240px;margin:0 auto;padding:64px 24px;display:grid;gap:24px">
+      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
+        <div style="display:grid;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">02 · 9 standards</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:28px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Authentication and authorization</h2></div>
+        <p style="margin:0;color:#4a5652;max-width:52ch;text-wrap:pretty">Agent and user access is standard OAuth 2.0 / OpenID Connect. QueryAPIGate is a resource server that trusts your identity provider, never a parallel password store.</p>
+      </div>
+      <div style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden"><div style="overflow-x:auto"><table class="st-table"><thead><tr><th style="width:26%">Standard</th><th style="width:24%">Reference</th><th>What QueryAPIGate uses it for</th></tr></thead><tbody><tr><td><b>OAuth 2.0 / 2.1</b></td><td><a href="https://oauth.net/2.1/" target="_blank" rel="noopener">The OAuth authorization framework ↗</a></td><td>The authorization model for the MCP server and JWT-authenticated REST.</td></tr><tr><td><b>OpenID Connect + Discovery</b></td><td><a href="https://openid.net/specs/openid-connect-discovery-1_0.html" target="_blank" rel="noopener">OIDC Core and Discovery ↗</a></td><td>Signing in users from any OIDC provider: Keycloak, Okta, Entra, Auth0, Cognito, Firebase.</td></tr><tr><td><b>Authorization Server Metadata</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc8414" target="_blank" rel="noopener">RFC 8414 ↗</a></td><td>Finding an identity provider's keys and endpoints from its published metadata.</td></tr><tr><td><b>Protected Resource Metadata</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc9728" target="_blank" rel="noopener">RFC 9728 ↗</a></td><td>The MCP server advertises itself at <code>/.well-known/oauth-protected-resource</code>: what it is, who issues its tokens, and the scope required.</td></tr><tr><td><b>Resource Indicators for OAuth</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc8707" target="_blank" rel="noopener">RFC 8707 ↗</a></td><td>The token's audience (<code>aud</code>) must be the server's own URI: a token minted for the MCP server is refused against REST or anything else.</td></tr><tr><td><b>JWT Profile for OAuth Access Tokens</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc9068" target="_blank" rel="noopener">RFC 9068 ↗</a></td><td>Reading scopes from an access token (<code>scope</code> / <code>scp</code>).</td></tr><tr><td><b>Authorization Code + PKCE</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc7636" target="_blank" rel="noopener">RFC 7636 ↗</a></td><td>The Console sign-in flow runs in the browser with PKCE, so the browser never holds a long-lived token.</td></tr><tr><td><b>JWT / JWS / JWK and JWKS</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc7519" target="_blank" rel="noopener">RFC 7519 / 7515 / 7517 ↗</a></td><td>The token format, its signature, and fetching the provider's public keys from a JWKS URL (cached, refreshed on an unknown key id).</td></tr><tr><td><b>JWT Best Current Practices</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc8725" target="_blank" rel="noopener">RFC 8725 ↗</a></td><td>Only the configured algorithms are accepted (RS256), never <code>none</code>, never an HMAC downgrade; <code>exp</code>, <code>iss</code> and <code>aud</code> are validated.</td></tr></tbody></table></div></div><p style="margin:0;font-size:14px;color:#626d69"><i>On the roadmap:</i> opaque access tokens via Token Introspection (<a href="https://www.rfc-editor.org/rfc/rfc7662" target="_blank" rel="noopener">RFC 7662</a>); JWT access tokens only in the current release.</p>
+    </div>
+  </section>
+  <section id="s03" style="scroll-margin-top:84px">
+    <div style="max-width:1240px;margin:0 auto;padding:64px 24px;display:grid;gap:24px">
+      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
+        <div style="display:grid;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">03 · 7 standards</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:28px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Audit, observability and operations</h2></div>
+        <p style="margin:0;color:#4a5652;max-width:52ch;text-wrap:pretty">How the record leaves the server, and what the tools you already run can read.</p>
+      </div>
+      <div style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden"><div style="overflow-x:auto"><table class="st-table"><thead><tr><th style="width:26%">Standard</th><th style="width:24%">Reference</th><th>What QueryAPIGate uses it for</th></tr></thead><tbody><tr><td><b>Syslog protocol</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc5424" target="_blank" rel="noopener">RFC 5424 ↗</a></td><td>The format of audit entries streamed to a SIEM (facility 13, "log audit").</td></tr><tr><td><b>Syslog over TLS</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc5425" target="_blank" rel="noopener">RFC 5425 ↗</a></td><td>Encrypted delivery of the audit stream (<code>tls://host:6514</code>).</td></tr><tr><td><b>Syslog over TCP (octet counting)</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc6587" target="_blank" rel="noopener">RFC 6587 ↗</a></td><td>Framed, loss-detectable delivery over TCP; UDP is refused.</td></tr><tr><td><b>OpenTelemetry</b></td><td><a href="https://opentelemetry.io/docs/specs/semconv/database/" target="_blank" rel="noopener">OTel tracing and semantic conventions ↗</a></td><td>Distributed traces, with connection types mapped to the <code>db.system</code> semantic convention.</td></tr><tr><td><b>Prometheus exposition format</b></td><td><a href="https://prometheus.io/docs/instrumenting/exposition_formats/" target="_blank" rel="noopener">Prometheus text format ↗</a></td><td>Metrics at <code>/metrics</code>.</td></tr><tr><td><b>HTTP Caching</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc9111" target="_blank" rel="noopener">RFC 9111 ↗</a></td><td>Correct <code>Cache-Control</code> semantics, including <code>no-store</code>, so a CDN or caching proxy never serves one caller's rows to another.</td></tr><tr><td><b>Deprecation HTTP header</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc9745" target="_blank" rel="noopener">RFC 9745 ↗</a></td><td>Deprecated API routes carry a <code>Deprecation</code> header with the date.</td></tr></tbody></table></div></div>
+    </div>
+  </section>
+  <section id="s04" style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df;scroll-margin-top:84px">
+    <div style="max-width:1240px;margin:0 auto;padding:64px 24px;display:grid;gap:24px">
+      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
+        <div style="display:grid;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">04 · 5 standards</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:28px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Transport and cryptography</h2></div>
+        <p style="margin:0;color:#4a5652;max-width:52ch;text-wrap:pretty">What protects data in flight and at rest, and the primitives behind keys and the audit chain.</p>
+      </div>
+      <div style="background:#fff;border:1px solid #dbe2df;border-radius:12px;overflow:hidden"><div style="overflow-x:auto"><table class="st-table"><thead><tr><th style="width:26%">Standard</th><th style="width:24%">Reference</th><th>What QueryAPIGate uses it for</th></tr></thead><tbody><tr><td><b>TLS / mutual TLS</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc5280" target="_blank" rel="noopener">X.509 path validation · RFC 5280 ↗</a></td><td>Transport security; optional client-certificate authentication, validated strictly against a configured CA.</td></tr><tr><td><b>Fernet (AES-128-CBC + HMAC-SHA256)</b></td><td><a href="https://cryptography.io/en/latest/fernet/" target="_blank" rel="noopener">The cryptography library's Fernet ↗</a></td><td>Encrypting stored connection passwords and secrets at rest under <code>QUERYAPIGATE_SECRET_KEY</code>.</td></tr><tr><td><b>SHA-256 / HMAC-SHA256</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc2104" target="_blank" rel="noopener">FIPS 180-4 · RFC 2104 ↗</a></td><td>API keys and admin tokens are stored only as a SHA-256 hash (the secret is shown once); the audit log is an HMAC-SHA256 hash chain, each entry hashed over the previous.</td></tr><tr><td><b>CORS</b></td><td><a href="https://fetch.spec.whatwg.org/#http-cors-protocol" target="_blank" rel="noopener">WHATWG Fetch ↗</a></td><td>Controlling which browser origins may call the API.</td></tr><tr><td><b>CIDR notation</b></td><td><a href="https://www.rfc-editor.org/rfc/rfc4632" target="_blank" rel="noopener">RFC 4632 ↗</a></td><td>Per-key IP allow-lists (<code>allowed_ips</code>).</td></tr></tbody></table></div></div>
+    </div>
+  </section>
+
+  <section style="max-width:1240px;margin:0 auto;padding:56px 24px 88px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px">
+    <div style="display:grid;gap:8px;align-content:start"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:18px;font-weight:700">Implemented, not aspirational</h3><p style="margin:0;font-size:15px;color:#4a5652">Every reference on this page is implemented in the current release (v0.40.0) unless marked "on the roadmap", and was verified against the QueryAPIGate codebase.</p></div>
+    <div style="display:grid;gap:8px;align-content:start"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:18px;font-weight:700">Where to go next</h3><p style="margin:0;font-size:15px;color:#4a5652">How these fit together is on the <a href="Security.dc.html">Security</a> and <a href="Trust.dc.html">Trust</a> pages; the reasoning behind each control is in the <a href="Guide.dc.html?d=THREAT_MODEL">threat model</a>; the cryptography in detail is on the <a href="Enterprise.dc.html#crypto">Enterprise page</a>.</p></div>
+  </section>
+  <footer class="ft" style="border-top:1px solid #dbe2df;background:#fff">
+    <div style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;gap:40px">
+      <div class="ft-grid">
+        <div class="ft-brand">
+          <a href="Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:#17201d;text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+          <p style="margin:0;font-size:14px;color:#4a5652;max-width:34ch;text-wrap:pretty">One governed gate between your databases and everything that asks them for data. Self-hosted: your data never leaves your infrastructure.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="ft-chip">Self-hosted</span><span class="ft-chip">Apache-2.0</span><span class="ft-chip">Signed releases + SBOM</span><span class="ft-chip">FIPS-approved crypto</span><span class="ft-chip">Python 3.11+</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            <a href="Docs.dc.html#install" class="ft-btn ft-btn-dark">Install →</a>
+            <a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases/latest" class="ft-btn">Latest release →</a>
+            <a href="Guide.dc.html?d=MCP" class="ft-btn">MCP server →</a>
+          </div>
+        </div>
+        <div class="ft-col"><span class="ft-h">Product</span><a href="Features.dc.html">Features</a><a href="Use Cases.dc.html">Use cases</a><a href="Deploy.dc.html">Deploy</a><a href="Compare.dc.html">Compare</a><a href="Roadmap.dc.html">Roadmap</a><a href="Changelog.dc.html">Changelog</a></div>
+        <div class="ft-col"><span class="ft-h">Resources</span><a href="Docs.dc.html">Docs</a><a href="Guides.dc.html">How-to guides</a><a href="Guide.dc.html?d=API">API reference</a><a href="Guide.dc.html?d=MCP">MCP server</a><a href="https://AnanthaRajuC.github.io/QueryAPIGate/">Full reference site</a><a href="Blog.dc.html">Blog</a></div>
+        <div class="ft-col"><span class="ft-h">Trust</span><a href="Trust.dc.html">Trust center</a><a href="Enterprise.dc.html">Enterprise</a><a href="Security.dc.html">Security</a><a href="Support.dc.html">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new">Report a vulnerability</a></div>
+        <div class="ft-col"><span class="ft-h">Project</span><a href="About.dc.html">About</a><a href="Stack.dc.html">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE">Licence (Apache-2.0)</a></div>
+      </div>
+      <div class="ft-bottom">
+        <span>© 2026 QueryAPIGate · Apache-2.0 · Experimental features are labelled in the product and the changelog.</span>
+        <span class="ft-badges">
+          <a href="https://github.com/AnanthaRajuC/QueryAPIGate/actions/workflows/ci.yml" aria-label="CI workflow status"><img src="https://github.com/AnanthaRajuC/QueryAPIGate/actions/workflows/ci.yml/badge.svg" alt="CI status" height="20"></a>
+          <a href="https://scorecard.dev/viewer/?uri=github.com/AnanthaRajuC/QueryAPIGate" aria-label="OpenSSF Scorecard"><img src="https://api.scorecard.dev/projects/github.com/AnanthaRajuC/QueryAPIGate/badge" alt="OpenSSF Scorecard score" height="20"></a>
+          <a href="https://github.com/AnanthaRajuC/QueryAPIGate" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" style="color:#4a5652;display:inline-flex"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg></a>
+        </span>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
