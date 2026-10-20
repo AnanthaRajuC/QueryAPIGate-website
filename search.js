@@ -19,6 +19,7 @@
     '.rs-search:hover{border-color:#17201d;color:#17201d}.rs-search svg{flex:none}.rs-search kbd{font-family:"JetBrains Mono",monospace;font-size:10.5px;color:#626d69;border:1px solid #dbe2df;border-radius:4px;padding:1px 5px;background:#f8faf9}',
     '@media (max-width:1400px){.rs-search span,.rs-search kbd{display:none}.rs-search{width:34px;padding:0;justify-content:center}}',
     '@media (max-width:1180px){.rs-search{width:auto;padding:0 10px 0 9px}.rs-search span{display:inline}}',
+    '@media (max-width:640px){.rs-search{width:34px;padding:0;justify-content:center}.rs-search span{display:none}}',
     '#qs{position:fixed;inset:0;z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:9vh 16px 16px;background:rgba(16,32,27,.45);backdrop-filter:blur(2px)}',
     '#qs[hidden]{display:none}',
     '#qs .qs-box{width:min(760px,100%);max-height:82vh;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;background:#fff;border-radius:14px;box-shadow:0 40px 80px -20px rgba(16,32,27,.5);overflow:hidden;font-family:"Instrument Sans",system-ui,sans-serif;color:#17201d}',

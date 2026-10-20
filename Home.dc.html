@@ -24,6 +24,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+.req-tab{font:inherit;display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 7px;border-radius:999px;border:1px solid;cursor:pointer;font-size:13.5px;font-weight:600;transition:background 0.2s,color 0.2s,border-color 0.2s}
+.req-tab small{font-weight:400;font-size:12px}
+.req-tab .req-ico{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;flex:none;transition:background 0.2s}
+@media (max-width:700px){.req-steps{display:flex !important;overflow-x:auto;gap:4px;scrollbar-width:none;padding-bottom:4px}.req-steps>li{flex:none;width:190px}.req-steps .req-line{display:none}}
 @media (max-width:640px){.hero-badges{grid-template-columns:minmax(0,max-content) !important}}
 .hs-row{display:flex;flex-wrap:wrap;margin-top:4px;border:1px solid #dbe2df;border-radius:12px;background:#fff;overflow:hidden}
 .hs-tile{display:flex;align-items:center;gap:12px;padding:12px 20px;flex:1 1 auto;box-sizing:border-box;min-width:0;border-left:1px solid #dbe2df}
@@ -357,41 +361,65 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   </section>
 
   <section style="background:#10201b;color:#e6efeb">
-    <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:36px">
+    <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
       <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end">
         <div style="display:grid;gap:10px">
           <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)">One call, step by step</span>
           <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">What happens to every request</h2>
-          <p style="margin:0;color:#9fb3ac;max-width:70ch">The same path for REST, MCP, events and exports. Follow one partner call through all eight stages; a stage that fails stops the call with a typed error code.</p>
+          <p style="margin:0;color:#9fb3ac;max-width:72ch">The same eight stages for REST, MCP, live events and exports. Pick a caller, follow its call, see what each stage produces, and what the call gets back when a stage refuses.</p>
         </div>
-        <div class="rs-hide" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#9fb3ac;display:grid;gap:4px;text-align:right"><span><span style="color:oklch(0.8 0.11 170)">GET</span> /q/orders_by_customer?customer=acme</span><span>X-API-Key: sk_live_…9f3a</span></div>
+        <div class="rs-hide" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#9fb3ac;display:grid;gap:4px;text-align:right">
+          <sc-for list="{{ reqLines }}" as="l" hint-placeholder-count="2"><span><span style="color:oklch(0.8 0.11 170)">{{ l.verb }}</span>{{ l.rest }}</span></sc-for>
+        </div>
+      </div>
+
+      <div class="rs-2col" style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px 32px;align-items:center">
+        <div role="tablist" aria-label="Caller" style="display:flex;gap:6px;flex-wrap:wrap">
+          <sc-for list="{{ scenarios }}" as="sc" hint-placeholder-count="4">
+            <button type="button" role="tab" aria-selected="{{ sc.selected }}" onClick="{{ sc.pick }}" class="req-tab" style="background:{{ sc.bg }};color:{{ sc.color }};border-color:{{ sc.border }}"><span class="req-ico" style="background:{{ sc.iconBg }}"><span style="display:block;width:13px;height:13px;background:{{ sc.iconColor }};-webkit-mask:url({{ sc.iconUrl }}) center/contain no-repeat;mask:url({{ sc.iconUrl }}) center/contain no-repeat"></span></span>{{ sc.label }}<small style="color:{{ sc.whoColor }}">{{ sc.who }}</small></button>
+          </sc-for>
+        </div>
+        <div style="display:grid;gap:6px;min-width:0">
+          <div style="display:flex;justify-content:space-between;gap:12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88"><span>where the time goes, stage by stage</span><span>{{ totalMs }}</span></div>
+          <div style="display:flex;gap:3px;height:8px" aria-hidden="true">
+            <sc-for list="{{ timeBar }}" as="tb" hint-placeholder-count="8"><span onClick="{{ tb.pick }}" title="{{ tb.title }}" style="flex:{{ tb.flex }};min-width:5px;border-radius:2px;background:{{ tb.bg }};cursor:pointer;transition:background 0.3s"></span></sc-for>
+          </div>
+        </div>
       </div>
 
       <div class="rs-2col" style="display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:28px;align-items:stretch">
-        <ol ref="{{ stepsRef }}" style="list-style:none;margin:0;padding:0;display:grid;grid-auto-rows:minmax(0,1fr);position:relative">
+        <ol class="req-steps" ref="{{ stepsRef }}" style="list-style:none;margin:0;padding:0;display:grid;grid-auto-rows:minmax(0,1fr);position:relative">
           <sc-for list="{{ steps }}" as="st" hint-placeholder-count="8">
             <li onClick="{{ st.pick }}" onMouseEnter="{{ st.hover }}" onMouseLeave="{{ unhover }}" class="rs-2col" style="position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px;align-items:center;padding:9px 12px 9px 10px;border-radius:10px;cursor:pointer;background:{{ st.rowBg }};transition:background 0.35s">
-              <span style="position:absolute;left:29px;top:0;width:2px;height:50%;background:{{ st.lineTop }};transition:background 0.35s"></span>
-              <span style="position:absolute;left:29px;bottom:0;width:2px;height:50%;background:{{ st.lineBottom }};transition:background 0.35s"></span>
+              <span class="req-line" style="position:absolute;left:29px;top:0;width:2px;height:50%;background:{{ st.lineTop }};transition:background 0.35s"></span>
+              <span class="req-line" style="position:absolute;left:29px;bottom:0;width:2px;height:50%;background:{{ st.lineBottom }};transition:background 0.35s"></span>
               <span style="position:relative;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:{{ st.nodeBg }};border:1px solid {{ st.nodeBorder }};box-shadow:{{ st.nodeGlow }};transition:background 0.35s,border-color 0.35s,box-shadow 0.35s"><span style="display:block;width:18px;height:18px;background:{{ st.iconColor }};-webkit-mask:url({{ st.iconUrl }}) center/contain no-repeat;mask:url({{ st.iconUrl }}) center/contain no-repeat;transition:background 0.35s"></span></span>
-              <span style="display:grid;gap:1px;min-width:0"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ st.numColor }};transition:color 0.35s">{{ st.num }}</span><b style="font-size:14.5px;font-weight:600;color:{{ st.titleColor }};transition:color 0.35s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ st.title }}</b></span>
+              <span style="display:grid;gap:1px;min-width:0"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ st.numColor }};transition:color 0.35s">{{ st.num }} · {{ st.ms }}</span><b style="font-size:14.5px;font-weight:600;color:{{ st.titleColor }};transition:color 0.35s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ st.title }}</b></span>
             </li>
           </sc-for>
         </ol>
 
-        <div style="position:relative;border:1px solid #2a3d37;border-radius:14px;background:radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.52 0.11 170 / 0.18), transparent 70%),#0c1915;padding:26px 28px 28px;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:18px;min-width:0;overflow:hidden">
-          <div style="position:absolute;left:0;right:0;top:0;height:2px;background:#1b2f29"><span style="display:block;height:100%;background:oklch(0.62 0.13 170);transform-origin:left;transform:{{ barTransform }};transition:{{ barTransition }}"></span></div>
-          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
-            <div style="display:flex;align-items:baseline;gap:12px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">Stage {{ cur.num }} · {{ cur.layer }}</span></div>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.04em;padding:4px 9px;border-radius:999px;background:oklch(0.62 0.13 170 / 0.14);color:oklch(0.8 0.11 170);border:1px solid oklch(0.62 0.13 170 / 0.35)">{{ cur.status }}</span>
+        <div style="position:relative;border:1px solid {{ panelBorder }};border-radius:14px;background:radial-gradient(ellipse 70% 50% at 50% 0%, {{ panelGlow }}, transparent 70%),#0c1915;padding:26px 28px 24px;display:grid;grid-template-rows:auto auto auto minmax(0,1fr) auto;gap:16px;min-width:0;overflow:hidden;transition:border-color 0.3s">
+          <div style="position:absolute;left:0;right:0;top:0;height:2px;background:#1b2f29"><span style="display:block;height:100%;background:{{ barColor }};transform-origin:left;transform:{{ barTransform }};transition:{{ barTransition }}"></span></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">Stage {{ cur.num }} · {{ cur.layer }} · {{ cur.who }}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.04em;padding:4px 9px;border-radius:999px;background:{{ cur.statusBg }};color:{{ cur.statusColor }};border:1px solid {{ cur.statusBorder }};transition:background 0.3s,color 0.3s,border-color 0.3s">{{ cur.status }}</span>
           </div>
-          <div style="display:grid;gap:6px;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">{{ cur.title }}</h3><p style="margin:0;color:#9fb3ac;max-width:62ch">{{ cur.desc }}</p></div>
+          <div style="display:grid;gap:6px;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">{{ cur.title }}</h3><p style="margin:0;color:#9fb3ac;max-width:66ch">{{ cur.desc }}</p></div>
           <div style="display:grid;gap:1px;background:#1b2f29;border:1px solid #1b2f29;border-radius:10px;overflow:hidden;align-self:start;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
             <sc-for list="{{ cur.rows }}" as="r" hint-placeholder-count="3">
-              <div class="rs-2col" style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;padding:10px 14px;background:#0f201b;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.5"><span style="color:#7c8f88">{{ r.k }}</span><span style="color:#e6efeb;overflow-wrap:anywhere">{{ r.v }} <span style="color:{{ r.markColor }}">{{ r.mark }}</span></span></div>
+              <div class="rs-2col" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px;padding:9px 14px;background:#0f201b;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.5"><span style="color:#7c8f88">{{ r.k }}</span><span style="color:#e6efeb;overflow-wrap:anywhere">{{ r.v }} <span style="color:{{ r.markColor }}">{{ r.mark }}</span></span></div>
             </sc-for>
           </div>
-          <div style="display:flex;justify-content:space-between;gap:16px;font-size:12.5px;color:#7c8f88;flex-wrap:wrap"><span>If this stage fails: <code style="font-family:'JetBrains Mono',monospace;color:oklch(0.72 0.18 25)">{{ cur.fail }}</code></span><span style="font-family:'JetBrains Mono',monospace">cumulative {{ cur.elapsed }}</span></div>
+          <div style="border:1px solid {{ cur.outBorder }};border-radius:10px;overflow:hidden;background:#0a1512;align-self:start;min-width:0;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s,border-color 0.3s">
+            <div style="display:flex;align-items:center;gap:10px;padding:6px 10px 6px 12px;border-bottom:1px solid #1b2f29"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:8px;height:8px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:8px;height:8px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:8px;height:8px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ cur.outLabelColor }}">{{ cur.outLabel }}</span></div>
+            {{ outNode }}
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px 20px;flex-wrap:wrap;font-size:12.5px;color:#7c8f88">
+            <button type="button" onClick="{{ failToggle.go }}" disabled="{{ failToggle.disabled }}" style="font:inherit;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:8px;border:1px solid {{ failToggle.border }};background:{{ failToggle.bg }};color:{{ failToggle.color }};cursor:{{ failToggle.cursor }};transition:background 0.2s,color 0.2s,border-color 0.2s">{{ failToggle.label }}</button>
+            <span style="display:flex;gap:6px 14px;flex-wrap:wrap;flex:1;min-width:0"><sc-for list="{{ cur.links }}" as="lk" hint-placeholder-count="3"><a href="{{ lk.h }}" style="color:#9fb3ac;font-weight:500;white-space:nowrap" style-hover="color:#e6efeb">{{ lk.t }} →</a></sc-for></span>
+            <span style="font-family:'JetBrains Mono',monospace;white-space:nowrap">cumulative {{ cur.elapsed }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -776,7 +804,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { w: 1192, run: 0, door: 0, fdAuto: true, fdHover: false, fdRunning: true, fdAnim: 'catbarA', cat: 'all', catAuto: true, catHover: false, catRunning: true, catAnim: 'catbarA', inst: 'pip', lang: 'python', gh: null, pypi: null, release: null, step: 0, hovered: null, running: true, fading: false, copied: null };
+  state = { w: 1192, run: 0, door: 0, scn: 0, reqFail: false, fdAuto: true, fdHover: false, fdRunning: true, fdAnim: 'catbarA', cat: 'all', catAuto: true, catHover: false, catRunning: true, catAnim: 'catbarA', inst: 'pip', lang: 'python', gh: null, pypi: null, release: null, step: 0, hovered: null, running: true, fading: false, copied: null };
   stepsRef = React.createRef();
   dataRef = React.createRef();
   fdRef = React.createRef();
@@ -814,23 +842,133 @@ class Component extends DCLogic {
     this.ioData = new IntersectionObserver(([e]) => this.setState({ catRunning: e.isIntersecting }), { threshold: 0.2 });
     this.ioData.observe(el);
   }
+  // "What happens to every request": the eight stages, then four callers walked through them. Values follow the API
+  // reference (error codes, headers, field names) so the walkthrough matches the product.
   stepData = [
-    { num: '01', layer: 'Identity', icon: 'key-round', title: 'Identify the caller', desc: 'The key, admin token, JWT or OAuth token is resolved to a named principal with roles and scopes.', status: 'KEY RESOLVED', elapsed: '0.3 ms', fail: '401 unauthorized',
-      rows: [['credential', 'X-API-Key sk_live_…9f3a', '', ''], ['principal', 'partner-acme', '· role reader', 'ok'], ['scope', 'connections [orders_pg] · read-only', '', '']] },
-    { num: '02', layer: 'Identity', icon: 'gauge', title: 'Apply its limits', desc: 'Per-key rate limit, IP allow-list and expiry are checked before any work is done.', status: 'WITHIN LIMITS', elapsed: '0.5 ms', fail: '429 rate_limited',
-      rows: [['rate limit', '60/minute · 14 used', '', 'ok'], ['client ip', '203.0.113.7 ∈ 203.0.113.0/24', '', 'ok'], ['expires', new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10), '· 90 days left', 'ok']] },
-    { num: '03', layer: 'Policy', icon: 'shield-check', title: 'Check the grant', desc: 'Is this query, on this connection, in this mode, granted to this principal? Directly or through a collection.', status: 'GRANTED', elapsed: '0.7 ms', fail: '403 forbidden',
-      rows: [['query', 'orders_by_customer v7', '', 'ok'], ['connection', 'orders_pg', '', 'ok'], ['mode', 'read', '· via collection partners', 'ok']] },
-    { num: '04', layer: 'Policy', icon: 'braces', title: 'Validate parameters', desc: 'Each parameter is coerced to its declared type and checked against ranges and lengths. Values are bound, never spliced into SQL.', status: '2 PARAMS BOUND', elapsed: '0.9 ms', fail: '400 param_invalid',
-      rows: [['customer', '"acme" → str · len 4 ≤ 64', '', 'ok'], ['page_size', '50 → int · ≤ 100', '', 'ok'], ['binding', '$1 = acme · $2 = 50', '', '']] },
-    { num: '05', layer: 'Policy', icon: 'scan-search', title: 'Guard the SQL', desc: 'A guard classifies the statement: one statement, read-only unless writes are allowed. Tables are checked against the allow-list with sqlglot.', status: 'STATEMENT SAFE', elapsed: '2.1 ms', fail: '403 table_not_allowed',
-      rows: [['statements', '1 · SELECT', '', 'ok'], ['tables', '{orders, customers} ⊆ allowed', '', 'ok'], ['writes', 'none · read-only key', '', 'ok']] },
-    { num: '06', layer: 'Execution', icon: 'play', title: 'Run it', desc: 'A pooled connection runs the bound statement under a time limit and row limit; writes run inside a transaction.', status: '38 ROWS', elapsed: '14.3 ms', fail: '504 query_timeout',
-      rows: [['pool', 'orders_pg · 3/10 in use', '', ''], ['limits', 'timeout 30 s · rows ≤ 1000', '', 'ok'], ['result', '38 rows · 12.2 ms · cache miss', '', '']] },
-    { num: '07', layer: 'Execution', icon: 'eye-off', title: 'Mask and format', desc: 'Masking rules are traced to source columns through joins and aliases, then the result is serialised in the format asked for.', status: '1 COLUMN MASKED', elapsed: '15.1 ms', fail: '403 mask_unresolvable',
-      rows: [['customers.email', 'a***@acme.io', '· rule partial', 'mask'], ['format', 'json · 38 rows · 6.1 kB', '', ''], ['cache', 'stored · ttl 60 s', '', '']] },
-    { num: '08', layer: 'Record', icon: 'scroll-text', title: 'Record it', desc: 'Run history, metrics and an event are written. Changes to configuration go to the audit log with the administrator who made them.', status: '200 OK', elapsed: '15.4 ms', fail: 'never blocks the response',
-      rows: [['run', '#184203 · 200 · 15 ms', '', 'ok'], ['metric', 'requests_total{key="partner-acme"} +1', '', ''], ['event', 'query.run → /events', '', '']] },
+    { num: '01', layer: 'Identity', icon: 'key-round', title: 'Identify the caller', desc: 'The key, admin token, JWT or OAuth token is resolved to a named principal with roles and scopes.',
+      links: [['Guide 13 · Set up a scoped API key', 'Guide.dc.html?g=13-set-up-a-scoped-api-key'], ['Guide 46 · AI clients sign in through your IdP', 'Guide.dc.html?g=46-let-ai-clients-sign-in-through-your-identity-provider'], ['Reference · Authentication', 'Guide.dc.html?d=API#authentication-and-permissions']] },
+    { num: '02', layer: 'Identity', icon: 'gauge', title: 'Apply its limits', desc: 'Per-key rate limit, IP allow-list, expiry, quota and concurrency cap are checked before any work is done.',
+      links: [['Guide 17 · Rate-limit a key', 'Guide.dc.html?g=17-rate-limit-a-key'], ['Guide 18 · Restrict a key to IPs', 'Guide.dc.html?g=18-restrict-a-key-to-ips'], ['Guide 52 · Quota and concurrency cap', 'Guide.dc.html?g=52-give-a-partner-a-quota-and-a-concurrency-cap'], ['Reference · Rate limiting', 'Guide.dc.html?d=API#rate-limiting-and-cors']] },
+    { num: '03', layer: 'Policy', icon: 'shield-check', title: 'Check the grant', desc: 'Is this query, on this connection, in this mode, granted to this principal? Directly or through a collection.',
+      links: [['Guide 14 · One query for a partner', 'Guide.dc.html?g=14-give-a-partner-one-query-only'], ['Guide 21 · Verify who can reach what', 'Guide.dc.html?g=21-verify-who-can-reach-what'], ['Reference · Collections', 'Guide.dc.html?d=API#collections']] },
+    { num: '04', layer: 'Policy', icon: 'braces', title: 'Validate parameters', desc: 'Each parameter is coerced to its declared type and checked against ranges and lengths. Values are bound, never spliced into SQL.',
+      links: [['Guide 06 · Use bound parameters safely', 'Guide.dc.html?g=06-use-bound-parameters-safely'], ['Reference · Parameter rules', 'Guide.dc.html?d=API#parameter-rules']] },
+    { num: '05', layer: 'Policy', icon: 'scan-search', title: 'Guard the SQL', desc: 'A guard classifies the statement: one statement, read-only unless writes are allowed. Tables are checked against the allow-list with sqlglot.',
+      links: [['Guide 16 · Restrict a key to tables', 'Guide.dc.html?g=16-restrict-a-key-to-tables'], ['Guide 10 · Allow a saved query to write', 'Guide.dc.html?g=10-allow-a-saved-query-to-write-data'], ['Reference · Execute SQL', 'Guide.dc.html?d=API#execute-sql']] },
+    { num: '06', layer: 'Execution', icon: 'play', title: 'Run it', desc: 'A pooled connection runs the bound statement under a time limit and row limit; writes run inside a transaction.',
+      links: [['Guide 37 · Tune the connection pool', 'Guide.dc.html?g=37-tune-the-connection-pool'], ['Guide 09 · Stream a large export', 'Guide.dc.html?g=09-stream-a-large-export'], ['Reference · Run a saved query', 'Guide.dc.html?d=API#run-a-saved-query']] },
+    { num: '07', layer: 'Execution', icon: 'eye-off', title: 'Mask and format', desc: 'Masking rules are traced to source columns through joins and aliases, then the result is serialised in the format asked for.',
+      links: [['Guide 45 · Hide personal data', 'Guide.dc.html?g=45-hide-personal-data-from-a-partner-or-an-ai-agent'], ['Reference · Column masking', 'Guide.dc.html?d=API#column-masking']] },
+    { num: '08', layer: 'Record', icon: 'scroll-text', title: 'Record it', desc: 'Run history, a metric and an event are written after the response. Changes to configuration go to the audit log with the administrator who made them.',
+      links: [['Guide 20 · Read the audit log', 'Guide.dc.html?g=20-read-the-audit-log'], ['Guide 53 · Send the audit log to your SIEM', 'Guide.dc.html?g=53-send-the-audit-log-to-your-siem'], ['Reference · Run history', 'Guide.dc.html?d=API#run-history']] },
+  ];
+  // Per caller: the request, then for each stage the status pill, the three rows, the artefact the stage produces (a
+  // code block; lines starting with # or → render muted), what happens if it fails, and the time the stage took.
+  scenarios = [
+    { id: 'rest', label: 'REST', who: 'a partner app', icon: 'globe', req: ['GET /q/orders_by_customer?customer=acme&page_size=50', 'X-API-Key: sk_live_…9f3a'], stages: [
+      { status: 'KEY RESOLVED', ms: 0.3, rows: [['credential', 'X-API-Key sk_live_…9f3a', '', ''], ['principal', 'partner-acme', '· role reader', 'ok'], ['scope', 'connections [orders_pg] · read-only', '', '']],
+        out: ['# the principal, as every later stage sees it', '{"principal": "partner-acme", "kind": "api_key", "role": "reader",', ' "connections": ["orders_pg"], "collections": ["partners"]}'],
+        fail: { code: '401 unauthorized', body: '{"error": "Missing or wrong X-API-Key", "code": "unauthorized",\n "request_id": "9f2c41d07a1b"}', rec: 'access log · 401 · key sha256:…e41c · nothing else ran' } },
+      { status: 'WITHIN LIMITS', ms: 0.2, rows: [['rate limit', '60/minute · 14 used', '', 'ok'], ['client ip', '203.0.113.7 ∈ 203.0.113.0/24', '', 'ok'], ['expires', 'EXPIRES', '· 90 days left', 'ok']],
+        out: ['# the key, as the server holds it', '{"name": "partner-acme", "rate_limit": "60/minute", "allowed_ips": ["203.0.113.0/24"],', ' "expires_at": "EXPIRES", "max_concurrent": 4, "quota": {"calls": 50000, "period": "month"}}', '→ headers on the way out: X-RateLimit-Limit: 60 · X-RateLimit-Remaining: 45'],
+        fail: { code: '429 rate_limited', body: 'Retry-After: 12\n{"error": "Rate limit exceeded: 60/minute", "code": "rate_limited",\n "retry_after": 12, "request_id": "9f2c41d07a1b"}', rec: 'metric queryapigate_requests_total{status="429"} +1 · alert rate_limited for partner-acme' } },
+      { status: 'GRANTED', ms: 0.2, rows: [['query', 'orders_by_customer v7', '', 'ok'], ['connection', 'orders_pg', '', 'ok'], ['mode', 'read', '· via collection partners', 'ok']],
+        out: ['# what this key can reach (GET /api/v1/api-keys/partner-acme/access)', '{"queries": {"orders_by_customer": "via collection partners", "orders_summary": "direct"},', ' "connections": {"orders_pg": "saved queries only"}}'],
+        fail: { code: '403 forbidden', body: '{"error": "This key may not run orders_by_customer", "code": "forbidden",\n "request_id": "9f2c41d07a1b"}', rec: 'access log · 403 · partner-acme · orders_by_customer' } },
+      { status: '2 PARAMS BOUND', ms: 0.2, rows: [['customer', '"acme" → str · len 4 ≤ 64', '', 'ok'], ['page_size', '50 → int · ≤ 100', '', 'ok'], ['binding', '$1 = acme · $2 = 50', '', '']],
+        out: ['SELECT o.id, o.total, o.status, c.email', 'FROM orders o JOIN customers c USING (customer_id)', 'WHERE c.slug = $1', 'ORDER BY o.placed_at DESC LIMIT $2', "# $1 = 'acme' · $2 = 50 · bound by the driver, never spliced into the text"],
+        fail: { code: '400 param_invalid', body: '{"error": "page_size must be at most 100", "code": "param_invalid",\n "errors": {"page_size": "must be at most 100"}, "request_id": "9f2c41d07a1b"}', rec: 'run history · 400 · no statement reached the database' } },
+      { status: 'STATEMENT SAFE', ms: 1.2, rows: [['statements', '1 · SELECT', '', 'ok'], ['tables', '{orders, customers} ⊆ allowed', '', 'ok'], ['writes', 'none · read-only key', '', 'ok']],
+        out: ['# sqlglot, dialect postgres', 'statement   SELECT · read', 'tables      orders, customers', 'allowed     orders, customers, products', 'verdict     safe · 1 statement · no write'],
+        fail: { code: '403 table_not_allowed', body: '{"error": "This API key may only query these tables: orders, customers, products",\n "code": "table_not_allowed", "request_id": "9f2c41d07a1b"}', rec: 'alert table_not_allowed · key partner-acme · audit entry written' } },
+      { status: '38 ROWS', ms: 12.2, rows: [['pool', 'orders_pg · 3/10 in use', '', ''], ['limits', 'timeout 30 s · rows ≤ 1000', '', 'ok'], ['result', '38 rows · 12.2 ms · cache miss', '', '']],
+        out: ['# orders_pg · PostgreSQL 16 · pooled connection #3', 'SET statement_timeout = 30000', 'SELECT o.id, o.total, o.status, c.email … LIMIT 50', '→ 38 rows · 12.2 ms'],
+        fail: { code: '504 query_timeout', body: '{"error": "Query ran past its time limit of 30 s and was cancelled", "code": "query_timeout",\n "request_id": "9f2c41d07a1b"}', rec: 'run history · 504 · 30,000 ms · cancelled on the database, the connection returned to the pool' } },
+      { status: '1 COLUMN MASKED', ms: 0.8, rows: [['customers.email', 'a***@acme.io', '· rule partial', 'mask'], ['format', 'json · 38 rows · 6.1 kB', '', ''], ['cache', 'stored · ttl 60 s', '', '']],
+        out: ['HTTP/1.1 200 OK', 'X-Request-Id: 9f2c41d07a1b · X-Row-Count: 38 · X-Cache: MISS', '[{"id": 18421, "total": 129.00, "status": "shipped", "email": "a***@acme.io"},', ' {"id": 18402, "total": 48.50, "status": "paid", "email": "j***@acme.io"}, …]'],
+        fail: { code: '403 mask_unresolvable', body: '{"error": "Result column email could not be traced to a source column; refused rather than served unmasked",\n "code": "mask_unresolvable", "request_id": "9f2c41d07a1b"}', rec: 'alert mask_unresolvable · query orders_by_customer v7 · nothing was sent' } },
+      { status: '200 OK', ms: 0.3, rows: [['run', '#184203 · 200 · 15 ms', '', 'ok'], ['metric', 'requests_total{key="partner-acme"} +1', '', ''], ['event', 'query.run → /events', '', '']],
+        out: ['log     200 GET /q/orders_by_customer key=partner-acme rows=38 ms=15 request_id=9f2c41d07a1b', 'metric  queryapigate_requests_total{query="orders_by_customer",key="partner-acme",status="200"} +1', 'event   {"type": "query.run", "source": "rest", "query": "orders_by_customer", "rows": 38}', '# parameter values are never logged; the query string is left out of the access log'],
+        fail: null },
+    ] },
+    { id: 'mcp', label: 'MCP', who: 'an AI agent', icon: 'bot', req: ['POST /mcp · tools/call orders_by_customer {"customer": "acme"}', 'Authorization: Bearer eyJhbGciOi… · OAuth 2.1, scope queryapigate.mcp'], stages: [
+      { status: 'TOKEN VERIFIED', ms: 0.6, rows: [['token', 'OAuth 2.1 · iss sso.example.com · exp in 14 min', '', 'ok'], ['principal', 'agent@acme', '· role analyst', 'ok'], ['scope', 'queryapigate.mcp', '', 'ok']],
+        out: ['# verified against the provider\'s JWKS, keys cached', '{"sub": "agent@acme", "iss": "https://sso.example.com/realms/data",', ' "scope": "queryapigate.mcp", "role": "analyst", "connections": ["orders_pg"]}'],
+        fail: { code: '403 insufficient_scope', body: '{"error": "Token lacks scope queryapigate.mcp", "code": "insufficient_scope",\n "request_id": "c41d07a1b9f2"}', rec: 'access log · 403 · sub agent@acme · no tool ran' } },
+      { status: 'WITHIN LIMITS', ms: 0.2, rows: [['rate limit', '120/minute · 31 used', '', 'ok'], ['concurrency', '1 of 4 running', '', 'ok'], ['quota', '1,840 of 10,000 calls this month', '', 'ok']],
+        out: ['# limits come from the role, the same way a key\'s do', '{"role": "analyst", "rate_limit": "120/minute", "max_concurrent": 4,', ' "quota": {"calls": 10000, "period": "month", "used": 1840}}'],
+        fail: { code: '429 too_many_concurrent', body: 'Retry-After: 1\n{"error": "agent@acme already has 4 queries running", "code": "too_many_concurrent",\n "request_id": "c41d07a1b9f2"}', rec: 'metric queryapigate_requests_total{status="429"} +1' } },
+      { status: 'TOOL GRANTED', ms: 0.2, rows: [['tool', 'orders_by_customer', '· mcp on', 'ok'], ['connection', 'orders_pg', '', 'ok'], ['mode', 'read', '· writes wait for a person', 'ok']],
+        out: ['# tools/list for this token: the same grants GET /catalog applies', '["orders_by_customer", "orders_summary", "describe_table", "list_tables"]', '→ a query whose mcp flag is off is not listed, and not callable by name'],
+        fail: { code: '404 mcp_disabled', body: '{"error": "orders_by_customer is not exposed as an MCP tool", "code": "mcp_disabled",\n "request_id": "c41d07a1b9f2"}', rec: 'access log · 404 · tools/call orders_by_customer · agent@acme' } },
+      { status: '2 PARAMS BOUND', ms: 0.2, rows: [['customer', '"acme" → str · from inputSchema', '', 'ok'], ['page_size', 'absent → default 50', '', 'ok'], ['binding', '$1 = acme · $2 = 50', '', '']],
+        out: ['# inputSchema, generated from the saved query\'s parameters', '{"customer": {"type": "string", "description": "customer slug", "example": "acme"}}', 'arguments   {"customer": "acme"}', "bound       $1 = 'acme' · $2 = 50"],
+        fail: { code: '400 param_required', body: '{"isError": true, "content": [{"type": "text",\n "text": "{\\"error\\": \\"customer is required\\", \\"code\\": \\"param_required\\"}"}]}', rec: 'run history · 400 · no statement reached the database' } },
+      { status: 'STATEMENT SAFE', ms: 1.2, rows: [['statements', '1 · SELECT', '', 'ok'], ['tables', '{orders, customers} ⊆ allowed', '', 'ok'], ['writes', 'none · MCP is read-only', '', 'ok']],
+        out: ['# sqlglot, dialect postgres', 'statement   SELECT · read', 'tables      orders, customers', 'allowed     orders, customers, products', 'verdict     safe · execute_sql over MCP is always read-only'],
+        fail: { code: '403 read_only', body: '{"error": "Writes are not allowed over MCP; use a write tool and wait for approval",\n "code": "read_only", "request_id": "c41d07a1b9f2"}', rec: 'alert read_only · agent@acme · audit entry written' } },
+      { status: '38 ROWS', ms: 12.4, rows: [['pool', 'orders_pg · 3/10 in use', '', ''], ['limits', 'timeout 30 s · rows ≤ 200 (MCP cap)', '', 'ok'], ['result', '38 rows · 12.4 ms', '', '']],
+        out: ['# orders_pg · the same code path GET /q/<name> takes', 'SELECT o.id, o.total, o.status, c.email … LIMIT 200', '→ 38 rows · 12.4 ms · under QUERYAPIGATE_MCP_MAX_ROWS = 200, nothing truncated'],
+        fail: { code: '504 query_timeout', body: '{"isError": true, "content": [{"type": "text",\n "text": "{\\"error\\": \\"Query ran past its time limit of 30 s\\", \\"code\\": \\"query_timeout\\"}"}]}', rec: 'run history · 504 · cancelled on the database' } },
+      { status: '1 COLUMN MASKED', ms: 0.9, rows: [['customers.email', 'a***@acme.io', '· rule partial', 'mask'], ['result', 'structured · outputSchema', '', ''], ['cap', '38 < 200', '· no "more rows" note', '']],
+        out: ['{"content": [{"type": "text", "text": "[{\\"id\\": 18421, \\"email\\": \\"a***@acme.io\\", …}]"}],', ' "structuredContent": {"rows": [{"id": 18421, "total": 129.0, "status": "shipped", "email": "a***@acme.io"}, …],', '                       "row_count": 38}}', '# the agent sees the masked value; the rule is the same one REST applies'],
+        fail: { code: '403 mask_unresolvable', body: '{"isError": true, "content": [{"type": "text",\n "text": "{\\"error\\": \\"Result column email could not be traced to a source column\\", \\"code\\": \\"mask_unresolvable\\"}"}]}', rec: 'alert mask_unresolvable · nothing was sent' } },
+      { status: 'RECORDED', ms: 0.3, rows: [['run', '#184204 · 200 · 16 ms', '· source mcp', 'ok'], ['history', 'Console → History, like a REST call', '', ''], ['event', 'query.run · source "mcp"', '', '']],
+        out: ['log     200 tools/call orders_by_customer sub=agent@acme rows=38 ms=16 request_id=c41d07a1b9f2', 'metric  queryapigate_requests_total{query="orders_by_customer",source="mcp",status="200"} +1', 'event   {"type": "query.run", "source": "mcp", "query": "orders_by_customer", "rows": 38}', '# agent usage shows up in the Console per key, tool and day'],
+        fail: null },
+    ] },
+    { id: 'events', label: 'Live events', who: 'a dashboard', icon: 'radio', req: ['GET /events?query=orders_by_customer   (text/event-stream)', 'X-API-Key: sk_live_…c2d1 · key ops-screen'], stages: [
+      { status: 'KEY RESOLVED', ms: 0.3, rows: [['credential', 'X-API-Key sk_live_…c2d1', '', ''], ['principal', 'ops-screen', '· role reader', 'ok'], ['scope', 'collections [ops]', '', '']],
+        out: ['{"principal": "ops-screen", "kind": "api_key", "role": "reader", "collections": ["ops"]}', '# a stream is opened with the same credential a query would be'],
+        fail: { code: '401 unauthorized', body: '{"error": "Missing or wrong X-API-Key", "code": "unauthorized",\n "request_id": "07a1b9f2c41d"}', rec: 'access log · 401 · no stream opened' } },
+      { status: 'SLOT TAKEN', ms: 0.1, rows: [['rate limit', '60/minute · 2 used', '', 'ok'], ['streams', '7 of 32 slots in use', '', 'ok'], ['expires', 'EXPIRES', '· 90 days left', 'ok']],
+        out: ['# live-event slots are a server-wide cap, on top of the key\'s own limits', 'QUERYAPIGATE_EVENTS_MAX_STREAMS = 32 · in use 7 → 8'],
+        fail: { code: '503 too_many_streams', body: 'Retry-After: 5\n{"error": "Every live-event stream slot is taken; retry shortly", "code": "too_many_streams",\n "request_id": "07a1b9f2c41d"}', rec: 'metric queryapigate_events_streams_refused_total +1' } },
+      { status: 'GRANTED', ms: 0.2, rows: [['filter', 'query=orders_by_customer', '', 'ok'], ['grant', 'orders_by_customer', '· via collection ops', 'ok'], ['rule', 'a key hears only runs it could run itself', '', '']],
+        out: ['# the stream is filtered by the key\'s grants, not by the filter alone', 'may hear   orders_by_customer, orders_summary', 'asked for  orders_by_customer', '→ events for any other query are never sent to this key'],
+        fail: { code: '403 forbidden', body: '{"error": "This key may not run orders_by_customer", "code": "forbidden",\n "request_id": "07a1b9f2c41d"}', rec: 'access log · 403 · ops-screen' } },
+      { status: 'FILTER PARSED', ms: 0.1, rows: [['query', '"orders_by_customer" → name', '', 'ok'], ['since', 'absent → now', '', 'ok'], ['heartbeat', '15 s', '', '']],
+        out: ['# the only parameters a stream takes', 'query   orders_by_customer   (a saved query name, or omitted for all the key may hear)', 'since   now', '→ nothing here reaches a database'],
+        fail: { code: '400 param_invalid', body: '{"error": "since must be an ISO 8601 timestamp", "code": "param_invalid",\n "errors": {"since": "not a timestamp"}, "request_id": "07a1b9f2c41d"}', rec: 'run history · 400 · no stream opened' } },
+      { status: 'NO SQL TO GUARD', ms: 0.0, rows: [['statements', 'none', '· a stream runs no query', ''], ['carries', 'run metadata only', '· never a row', 'ok'], ['writes', 'none', '', 'ok']],
+        out: ['# a live-event stream is a subscription, not a query', '→ the guard has nothing to classify; the runs it reports were each guarded when they ran'],
+        fail: null },
+      { status: 'STREAM OPEN', ms: 1.6, rows: [['connection', 'HTTP/1.1 · text/event-stream', '', 'ok'], ['fan-out', 'Redis pub/sub · 3 instances', '', 'ok'], ['first event', 'after 2.1 s', '· someone ran the query', '']],
+        out: ['HTTP/1.1 200 OK', 'Content-Type: text/event-stream · Cache-Control: no-store', ': heartbeat', 'data: {"type": "query.run", "source": "rest", "query": "orders_by_customer", "rows": 38, "ms": 15, "key": "partner-acme"}', '# runs on any instance reach every open stream, through Redis'],
+        fail: { code: 'connection dropped', body: '# the client reconnects with Last-Event-ID; nothing is replayed from before the key\'s own window', 'rec': 'tracing · one span per stream, not one per event' } },
+      { status: 'NOTHING TO MASK', ms: 0.1, rows: [['payload', 'counts, timings, names', '· never a value', 'ok'], ['format', 'SSE · one JSON object per line', '', ''], ['masking', 'not needed', '· no rows pass', '']],
+        out: ['data: {"type": "query.run", "occurred_at": "2026-10-20 09:14:02", "kind": "saved",', '       "query": "orders_by_customer", "version": 7, "rows": 38, "ms": 15, "status": 200}', '# the event says a run happened and how it went; the rows stayed with the caller who ran it'],
+        fail: null },
+      { status: 'ONE SPAN', ms: 0.1, rows: [['trace', 'GET /events', '· one span per stream', 'ok'], ['metric', 'events_streams_open 8', '', ''], ['history', 'runs are recorded by the call that ran them', '', '']],
+        out: ['log     200 GET /events key=ops-screen query=orders_by_customer stream=open', 'metric  queryapigate_events_streams_open 8', '# the stream itself is not a run; each event already has its own run-history row'],
+        fail: null },
+    ] },
+    { id: 'export', label: 'Export', who: 'a cron job', icon: 'calendar-clock', req: ['POST /api/v1/exports/nightly_orders/runs', 'Authorization: Bearer adm_…7e2 · administrator pipeline-nightly'], stages: [
+      { status: 'TOKEN RESOLVED', ms: 0.3, rows: [['credential', 'admin token adm_…7e2', '', ''], ['principal', 'pipeline-nightly', '· role operator', 'ok'], ['scope', 'exports · run and read', '', '']],
+        out: ['{"principal": "pipeline-nightly", "kind": "admin_token", "role": "operator",', ' "capabilities": ["exports.run", "exports.read"]}', '# a pipeline gets its own administrator and token, never a person\'s'],
+        fail: { code: '401 unauthorized', body: '{"error": "Missing or wrong bearer token", "code": "unauthorized",\n "request_id": "1b9f2c41d07a"}', rec: 'access log · 401 · no run started' } },
+      { status: 'LEASE TAKEN', ms: 0.4, rows: [['lease', 'nightly_orders', '· no other run holds it', 'ok'], ['rate limit', 'operator · 600/minute', '', 'ok'], ['expires', 'token · 2027-04-01', '', 'ok']],
+        out: ['# one run at a time per export, across every instance', 'lease   nightly_orders · held by pipeline-nightly · 1h', '→ a second POST while this runs answers 409 export_running with retry_after'],
+        fail: { code: '409 export_running', body: '{"error": "Another run of nightly_orders holds its lease", "code": "export_running",\n "retry_after": 2400, "request_id": "1b9f2c41d07a"}', rec: 'access log · 409 · nothing written' } },
+      { status: 'ALLOWED', ms: 0.2, rows: [['capability', 'exports.run', '· role operator', 'ok'], ['query', 'orders_changed v3', '', 'ok'], ['destination', 's3://acme-exports/orders/', '· tested at creation', 'ok']],
+        out: ['# the export carries its own query, connection and destination', '{"name": "nightly_orders", "query": "orders_changed", "connection": "orders_pg",', ' "destination": "acme-s3", "format": "parquet", "incremental": {"column": "updated_at"}}'],
+        fail: { code: '403 role_forbidden', body: '{"error": "Role viewer cannot run exports", "code": "role_forbidden",\n "capability": "exports.run", "role": "viewer", "request_id": "1b9f2c41d07a"}', rec: 'audit · role_forbidden · pipeline-nightly · exports.run' } },
+      { status: 'WATERMARK BOUND', ms: 0.2, rows: [['since', '2026-10-19T02:00:00Z', '· last watermark', 'ok'], [':since', 'bound as timestamptz', '', 'ok'], ['binding', '$1 = 2026-10-19T02:00:00Z', '', '']],
+        out: ['SELECT id, total, status, email, updated_at', 'FROM orders JOIN customers USING (customer_id)', 'WHERE updated_at > $1', 'ORDER BY updated_at', "# $1 = '2026-10-19T02:00:00Z' · the largest updated_at the last run delivered"],
+        fail: { code: '400 invalid_watermark', body: '{"error": "updated_at is not in the result, or holds values that cannot be compared", "code": "invalid_watermark",\n "request_id": "1b9f2c41d07a"}', rec: 'run history · 400 · watermark unchanged' } },
+      { status: 'STATEMENT SAFE', ms: 1.1, rows: [['statements', '1 · SELECT', '', 'ok'], ['tables', '{orders, customers}', '· admin connection, no allow-list', 'ok'], ['writes', 'none', '', 'ok']],
+        out: ['# sqlglot, dialect postgres', 'statement   SELECT · read', 'tables      orders, customers', 'verdict     safe · 1 statement'],
+        fail: { code: '400 multiple_statements', body: '{"error": "More than one SQL statement", "code": "multiple_statements",\n "request_id": "1b9f2c41d07a"}', rec: 'run history · 400 · nothing reached the database' } },
+      { status: '2,310 ROWS STREAMED', ms: 1380, rows: [['pool', 'orders_pg · 4/10 in use', '', ''], ['limits', 'timeout 30 min · streamed', '· constant memory', 'ok'], ['result', '2,310 rows · 1.4 s', '', '']],
+        out: ['# streamed through DuckDB, never held in memory as a whole', 'SELECT … WHERE updated_at > $1 ORDER BY updated_at', '→ 2,310 rows · 1.38 s · 4 fetch batches of 1,000'],
+        fail: { code: '502 connection_failed', body: '{"error": "orders_pg could not be reached", "code": "connection_failed",\n "request_id": "1b9f2c41d07a"}', rec: 'run history · 502 · watermark unchanged, the run is sent again next time' } },
+      { status: '1 COLUMN MASKED', ms: 210, rows: [['customers.email', 'a***@acme.io', '· rule partial', 'mask'], ['format', 'parquet · 412 kB', '', ''], ['object', 's3://acme-exports/orders/2026-10-20.parquet', '', 'ok']],
+        out: ['# masking applies before the file is written; the destination never sees a raw value', 'PUT s3://acme-exports/orders/2026-10-20.parquet · 412 kB · parquet, 2,310 rows', '→ written whole, then the watermark moves'],
+        fail: { code: '502 destination_unreachable', body: '{"error": "acme-s3 could not be written to: AccessDenied", "code": "destination_unreachable",\n "request_id": "1b9f2c41d07a"}', rec: 'run history · 502 · watermark unchanged · alert destination_unreachable' } },
+      { status: '201 CREATED', ms: 0.4, rows: [['run', '#918 · 201 · 1.6 s', '', 'ok'], ['watermark', '2026-10-19T02:00:00Z → 2026-10-20T01:58:41Z', '', 'ok'], ['event', 'export.run → /events', '', '']],
+        out: ['HTTP/1.1 201 Created', '{"id": 918, "object": "s3://acme-exports/orders/2026-10-20.parquet", "rows": 2310, "bytes": 412011,', ' "watermark": {"from": "2026-10-19T02:00:00Z", "to": "2026-10-20T01:58:41Z"}}', '# the watermark moved only after the object was written: a failed run is never lost'],
+        fail: null },
+    ] },
   ];
   stepMs = 3200;
   // Shown in the announcement pill above the hero, after the live version number. Update per release.
@@ -854,6 +992,47 @@ class Component extends DCLogic {
     { id: 'helm', label: 'Helm', icon: 'helm', brand: '0F1689', code: v => '$ kubectl create secret generic queryapigate --from-literal=QUERYAPIGATE_API_KEY=change-me\n$ helm install queryapigate oci://ghcr.io/anantharajuc/charts/queryapigate \\\n    --version ' + v + ' --set existingSecret=queryapigate',
       note: 'One pod on SQLite, or several on PostgreSQL and Redis. Signed; verify before you run it.' },
   ];
+  fmtMs(ms) { return ms >= 1000 ? (ms / 1000).toFixed(1) + ' s' : ms >= 100 ? Math.round(ms) + ' ms' : ms.toFixed(1) + ' ms'; }
+  reqVals() {
+    const h = React.createElement, sc = this.scenarios[this.state.scn], stages = sc.stages, k = this.state.step, st = this.stepData[k], sg = stages[k];
+    const expires = new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10), fix = t => String(t).replace(/EXPIRES/g, expires);
+    const failing = !!(this.state.reqFail && sg.fail);
+    const green = 'oklch(0.62 0.13 170)', red = 'oklch(0.65 0.2 25)', dim = '#2a3d37', accent = failing ? red : green;
+    const cum = stages.slice(0, k + 1).reduce((t, x) => t + x.ms, 0), total = stages.reduce((t, x) => t + x.ms, 0);
+    const steps = this.stepData.map((d, i) => {
+      const active = k === i, done = i < k, g = active && failing ? red : green;
+      return {
+        num: d.num, ms: this.fmtMs(stages[i].ms), title: d.title, iconUrl: 'https://unpkg.com/lucide-static@0.460.0/icons/' + d.icon + '.svg',
+        pick: () => { this.advance(i); }, hover: () => this.setState({ hovered: i }),
+        rowBg: active ? 'rgba(255,255,255,0.04)' : 'transparent',
+        lineTop: i === 0 ? 'transparent' : (done || active ? green : dim), lineBottom: i === this.stepData.length - 1 ? 'transparent' : (done ? green : dim),
+        nodeBg: active ? g : done ? '#16302a' : '#10201b', nodeBorder: active || done ? g : dim,
+        nodeGlow: active ? '0 0 0 6px ' + (failing ? 'oklch(0.65 0.2 25 / 0.18)' : 'oklch(0.62 0.13 170 / 0.18)') + ', 0 0 24px ' + (failing ? 'oklch(0.65 0.2 25 / 0.45)' : 'oklch(0.62 0.13 170 / 0.45)') : 'none',
+        iconColor: active ? '#0c1915' : done ? 'oklch(0.8 0.11 170)' : '#7c8f88', numColor: active ? 'oklch(0.8 0.11 170)' : '#7c8f88', titleColor: active ? '#e6efeb' : done ? '#c5d3cd' : '#9fb3ac',
+      };
+    });
+    const lines = failing ? sg.fail.body.split('\n').concat(['# recorded: ' + sg.fail.rec]) : sg.out.map(fix);
+    const outNode = h('pre', { key: sc.id + k + failing, style: { margin: 0, padding: '10px 14px 12px', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', lineHeight: 1.6, color: '#e6efeb', overflowX: 'auto', whiteSpace: 'pre' } },
+      lines.map((l, i) => h('span', { key: i, style: { display: 'block', color: /^(#|→|\/\/|:)/.test(l) ? '#7c8f88' : (failing && /^[A-Z][a-z-]+:/.test(l)) ? 'oklch(0.82 0.12 80)' : '#e6efeb' } }, l)));
+    return {
+      steps,
+      cur: { num: st.num, layer: st.layer, who: sc.who, title: st.title, desc: st.desc,
+        status: failing ? sg.fail.code : sg.status,
+        statusBg: failing ? 'oklch(0.65 0.2 25 / 0.14)' : 'oklch(0.62 0.13 170 / 0.14)', statusColor: failing ? 'oklch(0.8 0.15 25)' : 'oklch(0.8 0.11 170)', statusBorder: failing ? 'oklch(0.65 0.2 25 / 0.4)' : 'oklch(0.62 0.13 170 / 0.35)',
+        rows: sg.rows.map(r => ({ k: r[0], v: fix(r[1]) + (r[2] ? ' ' + r[2] : ''), mark: r[3] === 'ok' ? '✓' : r[3] === 'mask' ? '●' : '', markColor: r[3] === 'mask' ? 'oklch(0.82 0.12 80)' : 'oklch(0.72 0.13 170)' })),
+        outLabel: failing ? 'the call gets back · ' + sg.fail.code : 'what this stage produces', outLabelColor: failing ? 'oklch(0.8 0.15 25)' : '#7c8f88', outBorder: failing ? 'oklch(0.65 0.2 25 / 0.4)' : '#1b2f29',
+        links: st.links.map(l => ({ t: l[0], h: l[1] })), elapsed: this.fmtMs(cum) },
+      outNode,
+      panelBorder: failing ? 'oklch(0.65 0.2 25 / 0.5)' : '#2a3d37', panelGlow: failing ? 'oklch(0.65 0.2 25 / 0.16)' : 'oklch(0.52 0.11 170 / 0.18)', barColor: accent,
+      failToggle: sg.fail
+        ? { label: failing ? '← Back to the call that passed' : 'What if this stage refuses?', disabled: false, cursor: 'pointer', go: () => this.setState({ reqFail: !this.state.reqFail }),
+            bg: failing ? 'oklch(0.65 0.2 25 / 0.14)' : 'transparent', color: failing ? 'oklch(0.8 0.15 25)' : '#9fb3ac', border: failing ? 'oklch(0.65 0.2 25 / 0.5)' : '#2a3d37' }
+        : { label: 'This stage never fails the call', disabled: true, cursor: 'default', go: () => {}, bg: 'transparent', color: '#626d69', border: '#1b2f29' },
+      totalMs: this.fmtMs(total) + ' for the whole call',
+      timeBar: stages.map((x, i) => ({ flex: String(Math.sqrt(x.ms + 0.05).toFixed(3)), title: 'Stage ' + this.stepData[i].num + ' · ' + this.stepData[i].title + ' · ' + this.fmtMs(x.ms), pick: () => this.advance(i),
+        bg: i === k ? accent : i < k ? 'oklch(0.62 0.13 170 / 0.45)' : dim })),
+    };
+  }
   advance(next) {
     this.setState({ fading: true });
     clearTimeout(this.fadeT);
@@ -975,25 +1154,10 @@ class Component extends DCLogic {
       catBarPlay: this.state.catAuto && !this.state.catHover && this.state.catRunning ? 'running' : 'paused',
       stepsRef: this.stepsRef,
       unhover: () => this.setState({ hovered: null }),
-      steps: this.stepData.map((d, i) => {
-        const active = this.state.step === i, done = i < this.state.step;
-        const g = 'oklch(0.62 0.13 170)', dim = '#2a3d37';
-        return {
-          num: d.num, title: d.title, iconUrl: 'https://unpkg.com/lucide-static@0.460.0/icons/' + d.icon + '.svg',
-          pick: () => { this.advance(i); },
-          hover: () => this.setState({ hovered: i }),
-          rowBg: active ? 'rgba(255,255,255,0.04)' : 'transparent',
-          lineTop: i === 0 ? 'transparent' : (done || active ? g : dim),
-          lineBottom: i === this.stepData.length - 1 ? 'transparent' : (done ? g : dim),
-          nodeBg: active ? g : done ? '#16302a' : '#10201b',
-          nodeBorder: active || done ? g : dim,
-          nodeGlow: active ? '0 0 0 6px oklch(0.62 0.13 170 / 0.18), 0 0 24px oklch(0.62 0.13 170 / 0.45)' : 'none',
-          iconColor: active ? '#0c1915' : done ? 'oklch(0.8 0.11 170)' : '#7c8f88',
-          numColor: active ? 'oklch(0.8 0.11 170)' : '#7c8f88',
-          titleColor: active ? '#e6efeb' : done ? '#c5d3cd' : '#9fb3ac',
-        };
-      }),
-      cur: (() => { const d = this.stepData[this.state.step]; return { ...d, rows: d.rows.map(r => ({ k: r[0], v: r[1] + (r[2] ? ' ' + r[2] : ''), mark: r[3] === 'ok' ? '✓' : r[3] === 'mask' ? '●' : '', markColor: r[3] === 'mask' ? 'oklch(0.82 0.12 80)' : 'oklch(0.72 0.13 170)' })) }; })(),
+      scenarios: this.scenarios.map((sc, i) => { const on = i === this.state.scn; return { label: sc.label, who: sc.who, selected: on ? 'true' : 'false', iconUrl: 'https://unpkg.com/lucide-static@0.460.0/icons/' + sc.icon + '.svg',
+        pick: () => { this.setState({ scn: i, reqFail: false }); }, bg: on ? '#e6efeb' : 'transparent', color: on ? '#10201b' : '#9fb3ac', border: on ? '#e6efeb' : '#2a3d37', iconBg: on ? '#10201b' : '#1b2f29', iconColor: on ? '#e6efeb' : '#9fb3ac', whoColor: on ? '#4a5652' : '#626d69' }; }),
+      reqLines: this.scenarios[this.state.scn].req.map(l => { const m = l.match(/^(GET|POST)\s/); return m ? { verb: m[1] + ' ', rest: l.slice(m[0].length) } : { verb: '', rest: l }; }),
+      ...this.reqVals(),
       detailOpacity: this.state.fading ? 0 : 1,
       detailShift: this.state.fading ? 'translateY(6px)' : 'translateY(0)',
       barTransform: this.state.fading ? 'scaleX(0)' : (this.state.hovered !== null ? 'scaleX(1)' : 'scaleX(1)'),
