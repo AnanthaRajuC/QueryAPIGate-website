@@ -179,4 +179,21 @@
     }
   });
   window.QSearch = { open: open, close: close };
+
+  // GitHub star count beside the GitHub icon in the nav: fetched once an hour, cached in localStorage, filled into
+  // every [data-gh-stars] once the page's runtime has rendered the nav.
+  (function () {
+    var KEY = 'qag-gh-stars', TTL = 3600000, value = null;
+    function fmt(n) { return n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '') + 'k' : String(n); }
+    function fill() { if (value === null) return true; var els = document.querySelectorAll('[data-gh-stars]'); for (var i = 0; i < els.length; i++) if (els[i].textContent !== value) els[i].textContent = value; return els.length > 0; }
+    function got(n) { value = fmt(n); fill(); }
+    try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && Date.now() - c.t < TTL) got(c.n); } catch (e) {}
+    if (value === null) {
+      fetch('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate').then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { if (d && typeof d.stargazers_count === 'number') { try { localStorage.setItem(KEY, JSON.stringify({ n: d.stargazers_count, t: Date.now() })); } catch (e) {} got(d.stargazers_count); } })
+        .catch(function () {});
+    }
+    var tries = 0, timer = setInterval(function () { if ((value !== null && fill()) || ++tries > 40) clearInterval(timer); }, 250);
+    if (window.MutationObserver) new MutationObserver(function () { fill(); }).observe(document.documentElement, { childList: true, subtree: true });
+  })();
 })();

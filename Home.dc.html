@@ -15,7 +15,25 @@
 <meta name="twitter:card" content="summary">
 <!-- /site-meta -->
 <script src="./support.js"></script>
-<script src="./search.js" defer></script>
+<script src="./search.js?v=2" defer></script>
+<script>
+(function () {
+  // Section rail on the left: marks the section in view and keeps the hash out of the address bar.
+  var ids = ['top','architecture','doors','clients','governance','data','compare','run','roadmap','open'], raf = 0;
+  function update() {
+    raf = 0;
+    var links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
+    var line = window.innerHeight * 0.35, cur = ids[0];
+    for (var i = 0; i < ids.length; i++) { var el = document.getElementById(ids[i]); if (el && el.getBoundingClientRect().top <= line) cur = ids[i]; }
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = ids[ids.length - 1];
+    for (var j = 0; j < links.length; j++) links[j].classList.toggle('on', links[j].getAttribute('data-rail') === cur);
+  }
+  function tick() { if (!raf) raf = requestAnimationFrame(update); }
+  window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
+  document.addEventListener('click', function (e) { var a = e.target.closest('.rail a[data-rail]'); if (!a) return; var el = document.getElementById(a.getAttribute('data-rail')); if (!el) return; e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
+})();
+</script>
 </head>
 <body>
 <x-dc>
@@ -24,6 +42,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+.rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:30;display:grid;gap:13px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
+.rail a{display:flex;align-items:center;gap:12px;color:#9fb3ac;text-decoration:none;transition:color 0.2s}
+.rail a::before{content:'';flex:none;width:22px;height:1px;background:#c3cdc9;transition:width 0.25s,background 0.25s,height 0.25s}
+.rail a:hover{color:#17201d;text-decoration:none}
+.rail a.on{color:#17201d}.rail a.on::before{width:40px;height:2px;background:oklch(0.52 0.11 170)}
+@media (max-width:1599px){.rail span{opacity:0;visibility:hidden;transform:translateX(-6px);transition:opacity 0.2s,transform 0.2s,visibility 0.2s}.rail:hover span{opacity:1;visibility:visible;transform:none}}
+@media (max-width:1279px){.rail{display:none}}
+@media (prefers-reduced-motion:reduce){.rail a::before,.rail span{transition:none}}
+.rs-ghn svg{display:block}
+.rs-ghn-n{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1;color:#626d69;min-width:0}
+.rs-ghn-n:empty{display:none}
 .req-in{font:inherit;font-size:12.5px;color:#17201d;background:#fff;border:1px solid #c3cdc9;border-radius:5px;padding:1px 4px;margin:0 1px}
 .req-in:focus{outline:2px solid oklch(0.52 0.11 170 / 0.35);outline-offset:1px}
 .req-key{font:inherit;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid;font-size:12.5px;font-weight:600;cursor:pointer;transition:background 0.2s,color 0.2s,border-color 0.2s}
@@ -37,13 +66,21 @@
 @media (max-width:700px){.req-head{min-height:84px}.req-desc{min-height:7.8em !important}.req-rows>div{grid-template-columns:96px minmax(0,1fr) !important}.req-rows>div>span:last-child{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-width:0;height:3em}.req-links{min-height:120px !important}.req-foot{min-height:82px !important}}
 @media (max-width:700px){.req-steps{display:flex !important;overflow-x:auto;gap:4px;scrollbar-width:none;padding-bottom:4px}.req-steps>li{flex:none;width:190px}.req-steps .req-line{display:none}}
 @media (max-width:640px){.hero-badges{grid-template-columns:minmax(0,max-content) !important}}
-.hs-row{display:flex;flex-wrap:wrap;margin-top:4px;border:1px solid #dbe2df;border-radius:12px;background:#fff;overflow:hidden}
-.hs-tile{display:flex;align-items:center;gap:12px;padding:12px 20px;flex:1 1 auto;box-sizing:border-box;min-width:0;border-left:1px solid #dbe2df}
-.hs-tile:first-child{border-left:none}
-.hs-ico{flex:none;width:34px;height:34px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.1);position:relative}
-.hs-ico::after{content:'';position:absolute;inset:8px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
-@media (max-width:900px){.hs-tile{flex:1 1 33%;border-left:none;border-top:1px solid #dbe2df}.hs-tile:nth-child(-n+3){border-top:none}}
-@media (max-width:520px){.hs-tile{flex:1 1 50%;padding:10px 14px;border-left:none}.hs-tile:nth-child(3){border-top:1px solid #dbe2df}.hs-tile:nth-child(even){border-left:1px solid #dbe2df}}
+.hs-row{display:flex;flex-wrap:wrap;margin-top:4px;gap:4px 0}
+.hs-tile{display:flex;align-items:center;gap:14px;padding:11px 20px 11px 0;flex:1 1 auto;box-sizing:border-box;min-width:0}
+.hs-ico{flex:none;width:46px;height:46px;border-radius:11px;background:oklch(0.52 0.11 170 / 0.1);position:relative}
+.hs-ico::after{content:'';position:absolute;inset:7px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.hs-cycle::after{display:none}
+.hs-cycle img{position:absolute;inset:5px;width:36px;height:36px;opacity:0;animation:hs-cycle 14s linear infinite}
+@keyframes hs-cycle{0%{opacity:0;transform:scale(0.85)}3%{opacity:1;transform:scale(1)}14.3%{opacity:1;transform:scale(1)}17.5%,100%{opacity:0;transform:scale(0.85)}}
+.hs-cycle-8 img{animation-name:hs-cycle8;animation-duration:14s}
+.hs-glyph{position:absolute;inset:7px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat;opacity:0;animation:hs-cycle5 10s linear infinite}
+@keyframes hs-cycle5{0%{opacity:0;transform:scale(0.85)}4%{opacity:1;transform:scale(1)}20%{opacity:1;transform:scale(1)}24.5%,100%{opacity:0;transform:scale(0.85)}}
+.hs-fmt{position:absolute;inset:0;display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;letter-spacing:-0.06em;color:oklch(0.45 0.11 170);opacity:0;animation:hs-cycle8 14s linear infinite}
+@keyframes hs-cycle8{0%{opacity:0;transform:scale(0.85)}2.5%{opacity:1;transform:scale(1)}12.5%{opacity:1;transform:scale(1)}15.5%,100%{opacity:0;transform:scale(0.85)}}
+@media (prefers-reduced-motion:reduce){.hs-cycle img,.hs-glyph,.hs-fmt{animation:none}.hs-cycle img:first-child,.hs-glyph:first-child,.hs-fmt:first-child{opacity:1}}
+@media (max-width:900px){.hs-tile{flex:1 1 33%}}
+@media (max-width:520px){.hs-tile{flex:1 1 50%;padding:10px 12px 10px 0}}
 body{margin:0;background:#f3f5f4;color:#17201d;font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
 a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 170);text-decoration:underline}
 
@@ -240,8 +277,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
       <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:#17201d;text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
       <div class="rs-actions" style="margin-left:auto;display:flex;gap:10px;align-items:center">
-        <button type="button" class="rs-search" data-search aria-label="Search the documentation (Ctrl+K)" title="Search · Ctrl+K"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span>Search</span><kbd>Ctrl K</kbd></button><a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" title="GitHub" style="color:#4a5652;padding:8px 10px;line-height:0" style-hover="color:#17201d"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg></a>
-        <div class="rs-dd rs-dd-mcp"><a href="MCP.dc.html" class="rs-mcp" title="MCP server: saved queries as tools for AI agents"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a6 6 0 0 1-12 0V8z"/></svg>MCP<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-dd-mcp-inner"><small>MCP · AI agents</small><a href="MCP.dc.html"><b>MCP server for AI agents</b><span>What agents get, what they never get, and how to connect a client.</span></a><a href="Agent Checklist.dc.html"><b>Against Altinity's agent-safety checklist</b><span>Nineteen recommendations, point by point: 16 covered.</span></a><a href="Guide.dc.html?d=MCP"><b>MCP reference</b><span>Tools, resources, OAuth and every setting, from the documentation.</span></a><a href="Guide.dc.html?g=24-let-an-agent-call-your-queries-via-mcp"><b>Guide 24: let an agent call your queries</b><span>The ten-minute walkthrough, run against a real server.</span></a></div></div></div>
+        <button type="button" class="rs-search" data-search aria-label="Search the documentation (Ctrl+K)" title="Search · Ctrl+K"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span>Search</span><kbd>Ctrl K</kbd></button>        <div class="rs-dd rs-dd-mcp"><a href="MCP.dc.html" class="rs-mcp" title="MCP server: saved queries as tools for AI agents"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a6 6 0 0 1-12 0V8z"/></svg>MCP<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-dd-mcp-inner"><small>MCP · AI agents</small><a href="MCP.dc.html"><b>MCP server for AI agents</b><span>What agents get, what they never get, and how to connect a client.</span></a><a href="Agent Checklist.dc.html"><b>Against Altinity's agent-safety checklist</b><span>Nineteen recommendations, point by point: 16 covered.</span></a><a href="Guide.dc.html?d=MCP"><b>MCP reference</b><span>Tools, resources, OAuth and every setting, from the documentation.</span></a><a href="Guide.dc.html?g=24-let-an-agent-call-your-queries-via-mcp"><b>Guide 24: let an agent call your queries</b><span>The ten-minute walkthrough, run against a real server.</span></a></div></div></div>
       </div>
       <input type="checkbox" id="rs-menu" class="rs-menu-toggle" aria-label="Open menu">
       <label for="rs-menu" class="rs-burger" aria-hidden="true"><span></span></label>
@@ -255,8 +291,21 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         <a class="rs-sub" href="Compare.dc.html" style="color:#4a5652">Compare</a><a class="rs-sub" href="Trust.dc.html" style="color:#4a5652">Trust center</a><a class="rs-sub" href="Enterprise.dc.html" style="color:#4a5652">Enterprise</a><a class="rs-sub" href="Security.dc.html" style="color:#4a5652">Security</a><a class="rs-sub" href="Standards.dc.html" style="color:#4a5652">Standards and specifications</a>
         <a href="Blog.dc.html" style="color:#4a5652">Blog</a>
         <a href="About.dc.html" style="color:#4a5652">About</a>
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-ghn" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" title="GitHub" style="color:#4a5652;display:inline-flex;align-items:center;gap:6px" style-hover="color:#17201d"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg><span class="rs-ghn-n" data-gh-stars aria-label="GitHub stars"></span></a>
       </div>
     </div>
+  </nav>
+  <nav class="rail" aria-label="Sections">
+    <a href="#top" data-rail="top"><span>Start</span></a>
+    <a href="#architecture" data-rail="architecture"><span>Architecture</span></a>
+    <a href="#doors" data-rail="doors"><span>Front doors</span></a>
+    <a href="#clients" data-rail="clients"><span>Clients</span></a>
+    <a href="#governance" data-rail="governance"><span>Governance</span></a>
+    <a href="#data" data-rail="data"><span>Your data</span></a>
+    <a href="#compare" data-rail="compare"><span>What you skip</span></a>
+    <a href="#run" data-rail="run"><span>Run it</span></a>
+    <a href="#roadmap" data-rail="roadmap"><span>Roadmap</span></a>
+    <a href="#open" data-rail="open"><span>Open source</span></a>
   </nav>
 
   <div class="rs-pad" style="max-width:1240px;margin:0 auto;padding:28px 24px 0;display:flex;justify-content:center">
@@ -266,7 +315,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </a>
   </div>
 
-  <header class="rs-2col" style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px 56px;align-items:center">
+  <header id="top" class="rs-2col" style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;scroll-margin-top:72px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px 56px;align-items:center">
     <div style="display:grid;gap:22px;min-width:0">
       <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(38px,5vw,64px);line-height:1.02;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">One governed gate between your databases and <span style="color:oklch(0.52 0.11 170)">everything that asks them for data</span>.</h1>
       <p style="margin:0;font-size:18px;color:#4a5652;max-width:58ch;text-wrap:pretty">Write the SQL once. QueryAPIGate publishes it as a REST endpoint, an MCP tool for AI agents, a live event stream and a scheduled export. Each call checks who is asking and what they may see, and leaves a record.</p>
@@ -308,12 +357,11 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
     <div style="grid-column:1/-1">
       <div class="hs-row" aria-label="At a glance">
-        <div class="hs-tile"><span class="hs-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)" aria-hidden="true"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">9</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">database types</span></div></div>
-        <div class="hs-tile"><span class="hs-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/door-open.svg)" aria-hidden="true"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">5</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">front doors</span></div></div>
-        <div class="hs-tile"><span class="hs-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-output.svg)" aria-hidden="true"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">8</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">output formats</span></div></div>
-        <div class="hs-tile"><span class="hs-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/code.svg)" aria-hidden="true"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">~50</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">client languages</span></div></div>
+        <div class="hs-tile"><span class="hs-ico hs-cycle" aria-hidden="true"><img src="https://cdn.simpleicons.org/postgresql" alt="" width="20" height="20" style="animation-delay:0s"><img src="https://cdn.simpleicons.org/mysql" alt="" width="20" height="20" style="animation-delay:2s"><img src="https://cdn.simpleicons.org/sqlite" alt="" width="20" height="20" style="animation-delay:4s"><img src="https://cdn.simpleicons.org/duckdb" alt="" width="20" height="20" style="animation-delay:6s"><img src="https://cdn.simpleicons.org/clickhouse" alt="" width="20" height="20" style="animation-delay:8s"><img src="https://cdn.simpleicons.org/mongodb" alt="" width="20" height="20" style="animation-delay:10s"><img src="https://cdn.simpleicons.org/trino" alt="" width="20" height="20" style="animation-delay:12s"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">9</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">database types</span></div></div>
+        <div class="hs-tile"><span class="hs-ico hs-cycle" aria-hidden="true"><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/globe.svg);animation-delay:0s"></i><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/plug.svg);animation-delay:2s"></i><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg);animation-delay:4s"></i><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/terminal.svg);animation-delay:6s"></i><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/sliders-horizontal.svg);animation-delay:8s"></i></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">5</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">front doors</span></div></div>
+        <div class="hs-tile"><span class="hs-ico hs-cycle" aria-hidden="true"><b class="hs-fmt" style="animation-delay:0s">JSON</b><b class="hs-fmt" style="animation-delay:1.75s">NDJSON</b><b class="hs-fmt" style="animation-delay:3.5s">CSV</b><b class="hs-fmt" style="animation-delay:5.25s">TSV</b><b class="hs-fmt" style="animation-delay:7s">PARQUET</b><b class="hs-fmt" style="animation-delay:8.75s">XLSX</b><b class="hs-fmt" style="animation-delay:10.5s">HTML</b><b class="hs-fmt" style="animation-delay:12.25s">MD</b></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">8</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">output formats</span></div></div>
+        <div class="hs-tile"><span class="hs-ico hs-cycle hs-cycle-8" aria-hidden="true"><img src="https://cdn.simpleicons.org/python" alt="" width="20" height="20" style="animation-delay:0s"><img src="https://cdn.simpleicons.org/typescript" alt="" width="20" height="20" style="animation-delay:1.75s"><img src="https://cdn.simpleicons.org/openjdk" alt="" width="20" height="20" style="animation-delay:3.5s"><img src="https://cdn.simpleicons.org/go" alt="" width="20" height="20" style="animation-delay:5.25s"><img src="https://cdn.simpleicons.org/dotnet" alt="" width="20" height="20" style="animation-delay:7s"><img src="https://cdn.simpleicons.org/rust" alt="" width="20" height="20" style="animation-delay:8.75s"><img src="https://cdn.simpleicons.org/kotlin" alt="" width="20" height="20" style="animation-delay:10.5s"><img src="https://cdn.simpleicons.org/ruby" alt="" width="20" height="20" style="animation-delay:12.25s"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">~50</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">client languages</span></div></div>
         <div class="hs-tile"><span class="hs-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/book-open.svg)" aria-hidden="true"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">62</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">how-to guides</span></div></div>
-        <sc-if value="{{ hasStars }}" hint-placeholder-val="{{ false }}"><div class="hs-tile"><span class="hs-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/star.svg)" aria-hidden="true"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">{{ stars }}</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">GitHub stars</span></div></div></sc-if>
       </div>
     </div>
   </header>
@@ -346,7 +394,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section>
+  <section id="doors" style="scroll-margin-top:72px">
     <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
       <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end">
         <div style="display:grid;gap:10px">
@@ -424,7 +472,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   </section>
 
 
-  <section style="max-width:1240px;margin:0 auto;padding:72px 24px">
+  <section id="clients" style="scroll-margin-top:72px;max-width:1240px;margin:0 auto;padding:72px 24px">
     <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:48px;align-items:center">
       <div style="display:grid;gap:16px">
         <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Client libraries</span>
@@ -453,7 +501,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   </section>
 
 
-  <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
+  <section id="governance" style="scroll-margin-top:72px;max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
     <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
       <div style="display:grid;gap:10px">
         <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Governance</span>
@@ -516,7 +564,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
+  <section id="data" style="scroll-margin-top:72px;max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
     <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
       <div style="display:grid;gap:10px">
         <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Your data</span>
@@ -574,7 +622,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df">
+  <section id="compare" style="scroll-margin-top:72px;background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df">
     <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:32px">
       <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
         <div style="display:grid;gap:10px">
@@ -605,7 +653,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:32px">
+  <section id="run" style="scroll-margin-top:72px;max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:32px">
     <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
       <div style="display:grid;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Run it</span>
       <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">A running server in minutes, wherever you run things</h2></div>
@@ -678,7 +726,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       </div>
     </div>
   </section>
-  <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
+  <section id="roadmap" style="scroll-margin-top:72px;max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
     <div style="display:grid;gap:10px">
       <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Where it's going</span>
       <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">Toward 1.0</h2>
@@ -692,7 +740,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     <a href="Roadmap.dc.html" style="font-weight:600;justify-self:start">Full roadmap →</a>
   </section>
 
-  <section style="max-width:1240px;margin:0 auto;padding:0 24px 88px">
+  <section id="open" style="scroll-margin-top:72px;max-width:1240px;margin:0 auto;padding:0 24px 88px">
     <div class="rs-2col" style="background:#10201b;color:#e6efeb;border-radius:16px;padding:48px;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:32px;align-items:center">
       <div style="display:grid;gap:12px">
         <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:32px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Open source, built in the open</h2>
