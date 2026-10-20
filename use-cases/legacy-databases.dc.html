@@ -68,15 +68,13 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .u-link{flex:none;width:20px;height:2px;background:#dbe2df;position:relative;border-radius:2px}
 .u-link::after{content:'';position:absolute;top:-2px;left:0;width:6px;height:6px;border-radius:50%;background:oklch(0.52 0.11 170);opacity:0;animation:u-travel 6s infinite}
 .u-link.l2::after{animation-delay:1.1s}
-/* The third connector is a row break: data sits on its own row, introduced by an arrow. */
-.u-link.l3{flex-basis:100%;width:auto;height:0;background:none}
-.u-link.l3::after{display:none}
-.u-node.u-data::before{content:'↳';color:#9fb3ac;margin-right:2px}
+.u-link.l3::after{animation-delay:2.8s}
+/* Below 1480px the data node no longer fits beside the checks: the third connector becomes a row break and data sits on its own row, introduced by an arrow. */
+@media (max-width:1479px){.u-link.l3{flex-basis:100%;width:auto;height:0;background:none}.u-link.l3::after{display:none}.u-node.u-data::before{content:'↳';color:#9fb3ac;margin-right:2px}}
 .u-checks{display:inline-flex;gap:6px;flex-wrap:wrap}
 .u-chk{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:6px;white-space:nowrap;border:1px solid oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08);color:#17201d;animation:u-light 6s infinite backwards}
 .u-chk.c1{animation-delay:1.5s}.u-chk.c2{animation-delay:2.1s}.u-chk.c3{animation-delay:2.7s}.u-chk.c4{animation-delay:3.3s}
 .u-chk>b{font-weight:500;color:oklch(0.52 0.11 170)}
-.u-num{margin-left:auto;font-size:11px;color:#9fb3ac;white-space:nowrap}
 @keyframes u-travel{0%{left:0;opacity:0}2%{opacity:1}16%{left:14px;opacity:1}19%,100%{left:14px;opacity:0}}
 @keyframes u-light{0%{border-color:#c3cdc9;background:#fff;color:#626d69}6%,78%{border-color:oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08);color:#17201d}88%,100%{border-color:#c3cdc9;background:#fff;color:#626d69}}
 @keyframes u-land{0%{border-color:#c3cdc9;background:#fff}5%,38%{border-color:oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08)}42%,100%{border-color:#c3cdc9;background:#fff}}
@@ -89,11 +87,10 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .u-strip-dark .u-chk{color:#e6efeb;animation-name:u-light-dark}
 .u-strip-dark .u-chk>b{color:oklch(0.8 0.11 170)}
 .u-strip-dark .u-node.u-data{animation-name:u-land-dark}
-.u-strip-dark .u-num{color:#7c8f88}
 @keyframes u-light-dark{0%{border-color:#2a3d37;background:#0c1915;color:#9fb3ac}6%,78%{border-color:oklch(0.62 0.13 170 / 0.6);background:oklch(0.62 0.13 170 / 0.14);color:#e6efeb}88%,100%{border-color:#2a3d37;background:#0c1915;color:#9fb3ac}}
 @keyframes u-land-dark{0%{border-color:#2a3d37;background:#0c1915}5%,38%{border-color:oklch(0.62 0.13 170 / 0.6);background:oklch(0.62 0.13 170 / 0.14)}42%,100%{border-color:#2a3d37;background:#0c1915}}
 @media (max-width:1100px){.u-link.l2{display:none}}
-@media (max-width:640px){.u-link{display:none}.u-link.l3{display:block}.u-num{margin-left:0;width:100%}}
+@media (max-width:640px){.u-link{display:none}.u-link.l3{display:block}}
 @media (prefers-reduced-motion:reduce){.u-strip *{animation:none !important}.u-strip .u-link::after{display:none}}
 @media (max-width:960px){.u-case{grid-template-columns:minmax(0,1fr) !important}.u-case.u-flip > .u-code{order:2}.u-personas{grid-template-columns:repeat(2,minmax(0,1fr)) !important}.u-personas > .u-last{grid-column:span 2}}
 @media (max-width:640px){.u-personas{grid-template-columns:minmax(0,1fr) !important}.u-personas > .u-last{grid-column:span 1}}
@@ -226,11 +223,11 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       </div>
     </div>
   </nav>
-  <header class="f-pad" style="max-width:1240px;margin:0 auto;padding:56px 24px 8px;display:grid;gap:14px">
+  <header class="f-pad" style="max-width:1480px;margin:0 auto;padding:56px 24px 8px;display:grid;gap:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:#626d69"><a href="../Use Cases.dc.html" style="color:#4a5652;font-weight:500">Use cases</a><span aria-hidden="true">/</span><a href="../Use Cases.dc.html#g-data" style="color:#4a5652;font-weight:500">Data teams</a><span aria-hidden="true">/</span><span style="color:#17201d;font-weight:600">Legacy databases</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9fb3ac">09 / 12</span></div>
   </header>
   <section style="">
-    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:16px 24px 64px;display:grid;gap:24px">
+    <div class="f-pad" style="max-width:1480px;margin:0 auto;padding:16px 24px 64px;display:grid;gap:24px">
 <article id="legacy" class="f-2col u-case" style="background:#fff;border:1px solid #dbe2df;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
           <div class="u-strip" role="img" aria-label="The procurement key calls GET /q/open_purchase_orders; the connection uses the vendor's driver through generic JDBC with a read-only database user, masking and audit apply as usual; the query runs on the Oracle ERP database.">
             <span class="u-node"><small>who</small>key procurement</span>
@@ -240,7 +237,6 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
             <span class="u-checks"><span class="u-chk c1">vendor's driver via JDBC <b>✓</b></span><span class="u-chk c2">database user read-only <b>✓</b></span><span class="u-chk c3">masking + audit as usual <b>✓</b></span></span>
             <span class="u-link l3" aria-hidden="true"></span>
             <span class="u-node u-data"><small>data</small>Oracle · erp (jdbc)</span>
-            <span class="u-num">09 / 12</span>
           </div>
           <div style="display:grid;gap:16px;min-width:0">
             <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">For legacy and vendor databases<span style="font-size:10px;font-weight:600;letter-spacing:0.06em;padding:3px 6px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12);color:oklch(0.6 0.13 75);margin-left:8px">EXPERIMENTAL</span></span></div>
@@ -268,14 +264,14 @@ X-API-Key: sk_live_…procurement</pre>
         </article>
     </div>
   </section>
-  <section aria-label="More use cases" style="max-width:1240px;margin:0 auto;padding:0 24px 72px;display:grid;gap:14px">
+  <section aria-label="More use cases" style="max-width:1480px;margin:0 auto;padding:0 24px 72px;display:grid;gap:14px">
     <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">More use cases</span><a href="../Use Cases.dc.html" style="font-size:13.5px;font-weight:600;margin-left:auto">All twelve →</a></div>
     <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px">
       <a href="files-as-an-api.dc.html" style="display:grid;gap:6px;padding:18px 20px;background:#fff;border:1px solid #dbe2df;border-radius:12px;color:#17201d;text-decoration:none" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#626d69">← 08 · Data teams</span><b style="font-weight:600">Files as an API</b><span style="font-size:13.5px;color:#4a5652">Turn a bucket of Parquet into a queryable API</span></a>
       <a href="ai-agents.dc.html" style="display:grid;gap:6px;padding:18px 20px;background:#fff;border:1px solid #dbe2df;border-radius:12px;color:#17201d;text-decoration:none;text-align:right" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#626d69">10 · AI →</span><b style="font-weight:600">AI agents</b><span style="font-size:13.5px;color:#4a5652">Let an agent query your data, governed like an app</span></a>
     </div>
   </section>
-<section style="max-width:1240px;margin:0 auto;padding:88px 24px">
+<section style="max-width:1480px;margin:0 auto;padding:88px 24px">
     <div class="f-2col" style="background:#10201b;color:#e6efeb;border-radius:16px;padding:clamp(24px,5vw,48px);display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:32px;align-items:center">
       <div style="display:grid;gap:12px"><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">Not sure which fits?</h2><p style="margin:0;color:#9fb3ac;max-width:60ch">The example APIs ship with a generated database and one scoped key per scenario, so you can try each of these in a few minutes without connecting anything of your own.</p></div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end"><a href="../Docs.dc.html#quickstart" style="font-size:15px;font-weight:600;background:#e6efeb;color:#10201b;padding:12px 18px;border-radius:8px;text-decoration:none" style-hover="background:#fff">Run the examples</a><a href="../Compare.dc.html" style="font-size:15px;font-weight:600;color:#e6efeb;padding:12px 18px;border:1px solid #2a3d37;border-radius:8px;text-decoration:none" style-hover="border-color:#9fb3ac">Compare alternatives</a></div>
