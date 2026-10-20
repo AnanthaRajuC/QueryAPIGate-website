@@ -27,9 +27,9 @@
     for (var i = 0; i < ids.length; i++) { var el = document.getElementById(ids[i]); if (el && el.getBoundingClientRect().top <= line) cur = ids[i]; }
     if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = ids[ids.length - 1];
     for (var j = 0; j < links.length; j++) links[j].classList.toggle('on', links[j].getAttribute('data-rail') === cur);
-    // Out of the way: hidden until the visitor scrolls, and while it would sit over the architecture frame.
+    // Out of the way while it would sit over the architecture frame.
     var rail = document.querySelector('.rail'), frame = document.querySelector('.arch-d > div');
-    var hide = window.scrollY < 60;
+    var hide = false;
     if (!hide && rail && frame) { var a = rail.getBoundingClientRect(), f = frame.getBoundingClientRect(); hide = a.bottom > f.top && a.top < f.bottom && a.right > f.left; }
     if (rail) rail.classList.toggle('hide', hide);
   }
@@ -73,9 +73,20 @@
 @media (max-width:700px){.req-head{min-height:84px}.req-desc{min-height:7.8em !important}.req-rows>div{grid-template-columns:96px minmax(0,1fr) !important}.req-rows>div>span:last-child{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-width:0;height:3em}.req-links{min-height:120px !important}.req-foot{min-height:82px !important}}
 @media (max-width:700px){.req-steps{display:flex !important;overflow-x:auto;gap:4px;scrollbar-width:none;padding-bottom:4px}.req-steps>li{flex:none;width:190px}.req-steps .req-line{display:none}}
 @media (max-width:640px){.hero-badges{grid-template-columns:minmax(0,max-content) !important}}
-.hs-row{display:flex;flex-wrap:wrap;margin-top:4px;gap:4px 0}
-.hs-tile{display:flex;align-items:center;gap:14px;padding:11px 20px 11px 0;flex:1 1 auto;box-sizing:border-box;min-width:0}
-.hs-ico{flex:none;width:46px;height:46px;border-radius:11px;background:oklch(0.52 0.11 170 / 0.1);position:relative}
+.hs-row{display:flex;flex-wrap:wrap;margin-top:4px;gap:4px 12px}
+.hs-tile[aria-expanded=true]{background:oklch(0.52 0.11 170 / 0.1)}.hs-tile[aria-expanded=true] b{color:oklch(0.52 0.11 170)}
+.hs-tile{border-radius:12px;padding-left:12px !important;margin-left:-12px;transition:background 0.3s}.hs-tile b{transition:color 0.2s}.hs-tile:hover b{color:oklch(0.52 0.11 170)}
+.hs-detail{position:relative;margin-top:6px;padding:14px 0 4px;min-height:150px;box-sizing:content-box}
+.hs-detail::before{content:'';position:absolute;left:0;right:0;top:0;height:1px;background:radial-gradient(circle,#b3bfba 0.4px,transparent 0.7px) 0 0/8px 1px repeat-x}
+@media (max-width:640px){.hs-detail{min-height:336px}.hs-detail .hs-detail-pane{min-height:336px}}
+.hs-detail-pane{display:flex;flex-direction:column;gap:12px;min-height:150px}.hs-detail-pane p{margin:0;font-size:14px;color:#4a5652;text-wrap:pretty}.hs-detail-pane>a{font-size:14px;font-weight:600;margin-top:auto;align-self:flex-start}
+.hs-detail-pane code{font-family:'JetBrains Mono',monospace;font-size:0.9em;background:#f3f5f4;border:1px solid #dbe2df;border-radius:5px;padding:1px 6px}
+.hs-chips{display:flex;flex-wrap:wrap;gap:6px}.hs-chip{display:inline-flex;align-items:center;gap:7px;padding:5px 10px 5px 8px;border-radius:7px;background:#f3f5f4;border:1px solid #dbe2df;font-size:13px;font-weight:500}
+.hs-chip em{font-style:normal;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:oklch(0.6 0.13 75)}.hs-chip-mono{font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:5px 10px}
+.hs-doors{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 24px}.hs-doors span{display:grid;gap:4px;min-width:0}.hs-doors b{font-size:13.5px;font-weight:600}.hs-doors code{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:oklch(0.52 0.11 170);background:none;border:0;padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:900px){.hs-doors{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.hs-tile{display:flex;align-items:center;gap:14px;padding:11px 14px 11px 0;flex:1 1 auto;box-sizing:border-box;min-width:0}
+.hs-ico{flex:none;width:46px;height:46px;border-radius:11px;background:transparent;position:relative}
 .hs-ico::after{content:'';position:absolute;inset:7px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
 .hs-cycle::after{display:none}
 .hs-cycle img{position:absolute;inset:5px;width:36px;height:36px;opacity:0;animation:hs-cycle 14s linear infinite}
@@ -389,13 +400,20 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         <span style="display:inline-flex;align-items:center;gap:6px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(0.52 0.11 170)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>Python 3.11+, one process</span>
       </div>
     </div>
-    <div style="grid-column:1/-1">
+    <div style="grid-column:1/-1" ref="{{ hs.ref }}" onMouseEnter="{{ hs.enter }}" onMouseLeave="{{ hs.leave }}">
       <div class="hs-row" aria-label="At a glance">
-        <div class="hs-tile"><span class="hs-ico hs-cycle" aria-hidden="true"><img src="https://cdn.simpleicons.org/postgresql" alt="" width="20" height="20" style="animation-delay:0s"><img src="https://cdn.simpleicons.org/mysql" alt="" width="20" height="20" style="animation-delay:2s"><img src="https://cdn.simpleicons.org/sqlite" alt="" width="20" height="20" style="animation-delay:4s"><img src="https://cdn.simpleicons.org/duckdb" alt="" width="20" height="20" style="animation-delay:6s"><img src="https://cdn.simpleicons.org/clickhouse" alt="" width="20" height="20" style="animation-delay:8s"><img src="https://cdn.simpleicons.org/mongodb" alt="" width="20" height="20" style="animation-delay:10s"><img src="https://cdn.simpleicons.org/trino" alt="" width="20" height="20" style="animation-delay:12s"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">9</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">database types</span></div></div>
-        <div class="hs-tile"><span class="hs-ico hs-cycle" aria-hidden="true"><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/globe.svg);animation-delay:0s"></i><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/plug.svg);animation-delay:2s"></i><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg);animation-delay:4s"></i><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/terminal.svg);animation-delay:6s"></i><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/sliders-horizontal.svg);animation-delay:8s"></i></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">5</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">front doors</span></div></div>
-        <div class="hs-tile"><span class="hs-ico hs-cycle" aria-hidden="true"><b class="hs-fmt" style="animation-delay:0s">JSON</b><b class="hs-fmt" style="animation-delay:1.75s">NDJSON</b><b class="hs-fmt" style="animation-delay:3.5s">CSV</b><b class="hs-fmt" style="animation-delay:5.25s">TSV</b><b class="hs-fmt" style="animation-delay:7s">PARQUET</b><b class="hs-fmt" style="animation-delay:8.75s">XLSX</b><b class="hs-fmt" style="animation-delay:10.5s">HTML</b><b class="hs-fmt" style="animation-delay:12.25s">MD</b></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">8</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">output formats</span></div></div>
-        <div class="hs-tile"><span class="hs-ico hs-cycle hs-cycle-8" aria-hidden="true"><img src="https://cdn.simpleicons.org/python" alt="" width="20" height="20" style="animation-delay:0s"><img src="https://cdn.simpleicons.org/typescript" alt="" width="20" height="20" style="animation-delay:1.75s"><img src="https://cdn.simpleicons.org/openjdk" alt="" width="20" height="20" style="animation-delay:3.5s"><img src="https://cdn.simpleicons.org/go" alt="" width="20" height="20" style="animation-delay:5.25s"><img src="https://cdn.simpleicons.org/dotnet" alt="" width="20" height="20" style="animation-delay:7s"><img src="https://cdn.simpleicons.org/rust" alt="" width="20" height="20" style="animation-delay:8.75s"><img src="https://cdn.simpleicons.org/kotlin" alt="" width="20" height="20" style="animation-delay:10.5s"><img src="https://cdn.simpleicons.org/ruby" alt="" width="20" height="20" style="animation-delay:12.25s"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">~50</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">client languages</span></div></div>
-        <div class="hs-tile"><span class="hs-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/book-open.svg)" aria-hidden="true"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">62</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">how-to guides</span></div></div>
+        <div class="hs-tile" role="button" tabindex="0" aria-expanded="{{ hs.db.open }}" onClick="{{ hs.db.go }}" onKeyDown="{{ hs.db.key }}" style="cursor:pointer"><span class="hs-ico hs-cycle" aria-hidden="true"><img src="https://cdn.simpleicons.org/postgresql" alt="" width="20" height="20" style="animation-delay:0s"><img src="https://cdn.simpleicons.org/mysql" alt="" width="20" height="20" style="animation-delay:2s"><img src="https://cdn.simpleicons.org/sqlite" alt="" width="20" height="20" style="animation-delay:4s"><img src="https://cdn.simpleicons.org/duckdb" alt="" width="20" height="20" style="animation-delay:6s"><img src="https://cdn.simpleicons.org/clickhouse" alt="" width="20" height="20" style="animation-delay:8s"><img src="https://cdn.simpleicons.org/mongodb" alt="" width="20" height="20" style="animation-delay:10s"><img src="https://cdn.simpleicons.org/trino" alt="" width="20" height="20" style="animation-delay:12s"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">9</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">database types</span></div></div>
+        <div class="hs-tile" role="button" tabindex="0" aria-expanded="{{ hs.doors.open }}" onClick="{{ hs.doors.go }}" onKeyDown="{{ hs.doors.key }}" style="cursor:pointer"><span class="hs-ico hs-cycle" aria-hidden="true"><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/globe.svg);animation-delay:0s"></i><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/plug.svg);animation-delay:2s"></i><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg);animation-delay:4s"></i><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/terminal.svg);animation-delay:6s"></i><i class="hs-glyph" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/sliders-horizontal.svg);animation-delay:8s"></i></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">5</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">front doors</span></div></div>
+        <div class="hs-tile" role="button" tabindex="0" aria-expanded="{{ hs.fmt.open }}" onClick="{{ hs.fmt.go }}" onKeyDown="{{ hs.fmt.key }}" style="cursor:pointer"><span class="hs-ico hs-cycle" aria-hidden="true"><b class="hs-fmt" style="animation-delay:0s">JSON</b><b class="hs-fmt" style="animation-delay:1.75s">NDJSON</b><b class="hs-fmt" style="animation-delay:3.5s">CSV</b><b class="hs-fmt" style="animation-delay:5.25s">TSV</b><b class="hs-fmt" style="animation-delay:7s">XML</b><b class="hs-fmt" style="animation-delay:8.75s">YAML</b><b class="hs-fmt" style="animation-delay:10.5s">XLSX</b><b class="hs-fmt" style="animation-delay:12.25s">PARQUET</b></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">8</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">output formats</span></div></div>
+        <div class="hs-tile" role="button" tabindex="0" aria-expanded="{{ hs.langs.open }}" onClick="{{ hs.langs.go }}" onKeyDown="{{ hs.langs.key }}" style="cursor:pointer"><span class="hs-ico hs-cycle hs-cycle-8" aria-hidden="true"><img src="https://cdn.simpleicons.org/python" alt="" width="20" height="20" style="animation-delay:0s"><img src="https://cdn.simpleicons.org/typescript" alt="" width="20" height="20" style="animation-delay:1.75s"><img src="https://cdn.simpleicons.org/openjdk" alt="" width="20" height="20" style="animation-delay:3.5s"><img src="https://cdn.simpleicons.org/go" alt="" width="20" height="20" style="animation-delay:5.25s"><img src="https://cdn.simpleicons.org/dotnet" alt="" width="20" height="20" style="animation-delay:7s"><img src="https://cdn.simpleicons.org/rust" alt="" width="20" height="20" style="animation-delay:8.75s"><img src="https://cdn.simpleicons.org/kotlin" alt="" width="20" height="20" style="animation-delay:10.5s"><img src="https://cdn.simpleicons.org/ruby" alt="" width="20" height="20" style="animation-delay:12.25s"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">~50</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">client languages</span></div></div>
+        <div class="hs-tile" role="button" tabindex="0" aria-expanded="{{ hs.guides.open }}" onClick="{{ hs.guides.go }}" onKeyDown="{{ hs.guides.key }}" style="cursor:pointer"><span class="hs-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/book-open.svg)" aria-hidden="true"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">62</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">how-to guides</span></div></div>
+      </div>
+      <div class="hs-detail" style="display:{{ hs.display }}">
+        <div class="hs-detail-pane" style="display:{{ hs.db.show }}"><div class="hs-chips"><span class="hs-chip"><img src="https://cdn.simpleicons.org/postgresql" alt="" width="16" height="16" style="display:block;width:16px;height:16px">PostgreSQL</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/mysql" alt="" width="16" height="16" style="display:block;width:16px;height:16px">MySQL</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/sqlite" alt="" width="16" height="16" style="display:block;width:16px;height:16px">SQLite</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/duckdb" alt="" width="16" height="16" style="display:block;width:16px;height:16px">DuckDB</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/clickhouse" alt="" width="16" height="16" style="display:block;width:16px;height:16px">ClickHouse</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/mongodb" alt="" width="16" height="16" style="display:block;width:16px;height:16px">MongoDB</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/trino" alt="" width="16" height="16" style="display:block;width:16px;height:16px">Trino <em>exp</em></span><span class="hs-chip">H2 <em>exp</em></span><span class="hs-chip">Generic JDBC <em>exp</em></span></div><p>PostgreSQL, MySQL, SQLite, DuckDB, ClickHouse and MongoDB are Tier 1: under the compatibility promise and tested against the real database in CI. Trino, H2 and generic JDBC are experimental, and labelled so in the product. Files in S3, GCS, R2, over HTTPS or on disk read through DuckDB.</p><a href="Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION">The support matrix →</a></div>
+        <div class="hs-detail-pane" style="display:{{ hs.doors.show }}"><div class="hs-doors"><span><b>REST</b><code>GET /q/&lt;name&gt;</code></span><span><b>MCP</b><code>queryapigate mcp</code></span><span><b>Events</b><code>GET /events</code></span><span><b>Exports</b><code>queryapigate export</code></span><span><b>Management</b><code>/api/v1</code></span></div><p>One saved query behind every door, and the same eight stages on every call: identity, policy, execution, record.</p><a href="#doors">Follow a call through the stages →</a></div>
+        <div class="hs-detail-pane" style="display:{{ hs.fmt.show }}"><div class="hs-chips"><span class="hs-chip hs-chip-mono">JSON</span><span class="hs-chip hs-chip-mono">NDJSON</span><span class="hs-chip hs-chip-mono">CSV</span><span class="hs-chip hs-chip-mono">TSV</span><span class="hs-chip hs-chip-mono">XML</span><span class="hs-chip hs-chip-mono">YAML</span><span class="hs-chip hs-chip-mono">XLSX</span><span class="hs-chip hs-chip-mono">PARQUET</span></div><p>Paged by default. Constant-memory streaming with <code>?stream=true</code> for CSV, TSV, NDJSON and Parquet, however large the result; <code>queryapigate export</code> writes the same formats to a file, a bucket or a folder.</p><a href="Guide.dc.html?d=API#common-query-parameters">Reference · query parameters →</a></div>
+        <div class="hs-detail-pane" style="display:{{ hs.langs.show }}"><div class="hs-chips"><span class="hs-chip"><img src="https://cdn.simpleicons.org/python" alt="" width="16" height="16" style="display:block;width:16px;height:16px">Python</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/typescript" alt="" width="16" height="16" style="display:block;width:16px;height:16px">TypeScript</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/openjdk" alt="" width="16" height="16" style="display:block;width:16px;height:16px">Java</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/go" alt="" width="16" height="16" style="display:block;width:16px;height:16px">Go</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/dotnet" alt="" width="16" height="16" style="display:block;width:16px;height:16px">C#</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/kotlin" alt="" width="16" height="16" style="display:block;width:16px;height:16px">Kotlin</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/ruby" alt="" width="16" height="16" style="display:block;width:16px;height:16px">Ruby</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/rust" alt="" width="16" height="16" style="display:block;width:16px;height:16px">Rust</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/php" alt="" width="16" height="16" style="display:block;width:16px;height:16px">PHP</span><span class="hs-chip"><img src="https://cdn.simpleicons.org/swift" alt="" width="16" height="16" style="display:block;width:16px;height:16px">Swift</span><span class="hs-chip">and about 40 more</span></div><p>Every server publishes a complete OpenAPI 3.0 spec with each saved query as its own typed endpoint. Point OpenAPI Generator at it and every query becomes a typed method, with parameter rules checked before the request is sent.</p><a href="#clients">Generate a client →</a></div>
+        <div class="hs-detail-pane" style="display:{{ hs.guides.show }}"><p>Short how-to guides in seven categories, from the first endpoint to a SIEM stream, each run against a real server in CI. Five reading paths put them in order, and every box of the architecture diagram has a path of its own.</p><a href="Guides.dc.html">All guides, with times and outcomes →</a></div>
       </div>
     </div>
   </header>
@@ -764,7 +782,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { w: 1192, releases: null, scn: 0, reqFail: false, reqKey: 0, reqAlt: false, reqTopN: '5', reqCat: 'Comedy', reqPinned: false, govI: 0, govAuto: true, govHover: false, govRun: true, govAnim: 'catbarA', cat: 'all', catAuto: true, catHover: false, catRunning: true, catAnim: 'catbarA', inst: 'pip', lang: 'python', gh: null, pypi: null, release: null, step: 0, hovered: null, running: true, fading: false, copied: null };
+  state = { w: 1192, releases: null, hsOpen: 'db', hsAuto: true, hsHover: false, hsRun: true, scn: 0, reqFail: false, reqKey: 0, reqAlt: false, reqTopN: '5', reqCat: 'Comedy', reqPinned: false, govI: 0, govAuto: true, govHover: false, govRun: true, govAnim: 'catbarA', cat: 'all', catAuto: true, catHover: false, catRunning: true, catAnim: 'catbarA', inst: 'pip', lang: 'python', gh: null, pypi: null, release: null, step: 0, hovered: null, running: true, fading: false, copied: null };
   stepsRef = React.createRef();
   govRef = React.createRef(); dataRef = React.createRef();
   // The two tabbed stages (Governance, Your data) cycle on their own: the active tab's bar is a 6s CSS animation;
@@ -945,8 +963,8 @@ class Component extends DCLogic {
         out: ['# what this key can reach', '{"queries": {"example_all_rentals": "via collection examples-export", "example_rentals_since": "via collection examples-export"}}'],
         fail: { code: '403 forbidden', body: '{"error": "This key may not run example_all_rentals", "code": "forbidden",\n "request_id": "1b9f2c41d07a"}', rec: 'access log · 403 · example-export' } },
       { status: 'NO PARAMETERS', ms: 0.1, rows: [['parameters', 'none declared', '', 'ok'], ['stream', 'true', '· an option, not a parameter', ''], ['format', 'csv', '· one of eight', 'ok']],
-        out: ['# example_all_rentals takes no parameters; stream and format shape the response, not the query', 'stream   true   → rows leave as they arrive, constant memory', 'format   csv    → json, ndjson, csv, tsv, parquet, xlsx, html, markdown'],
-        fail: { code: '400 param_invalid', body: '{"error": "format must be one of json, ndjson, csv, tsv, parquet, xlsx, html, markdown", "code": "param_invalid",\n "request_id": "1b9f2c41d07a"}', rec: 'run history · 400 · nothing ran' } },
+        out: ['# example_all_rentals takes no parameters; stream and format shape the response, not the query', 'stream   true   → rows leave as they arrive, constant memory', 'format   csv    → json, ndjson, csv, tsv, xml, yaml, xlsx, parquet; csv, tsv, ndjson and parquet stream'],
+        fail: { code: '400 param_invalid', body: '{"error": "format must be one of json, ndjson, csv, tsv, xml, yaml, xlsx, parquet", "code": "param_invalid",\n "request_id": "1b9f2c41d07a"}', rec: 'run history · 400 · nothing ran' } },
       { status: 'STATEMENT SAFE', ms: 1.4, rows: [['statements', '1 · SELECT', '', 'ok'], ['tables', '{rental, film, customer, payment, staff, store}', '· six tables, five joins', 'ok'], ['writes', 'none', '', 'ok']],
         out: ['# sqlglot, dialect sqlite', 'statement   SELECT · read', 'tables      rental, film, customer, payment, staff, store', 'verdict     safe · 1 statement · the Console\'s query-flow diagram draws these five joins'],
         fail: { code: '400 multiple_statements', body: '{"error": "More than one SQL statement", "code": "multiple_statements",\n "request_id": "1b9f2c41d07a"}', rec: 'run history · 400 · nothing reached the database' } },
@@ -1003,6 +1021,26 @@ class Component extends DCLogic {
     { tag_name: 'v0.36.0', html_url: 'https://github.com/AnanthaRajuC/QueryAPIGate/releases/tag/v0.36.0', body: 'A role for customer-facing APIs: its signed-in users run only saved queries that bind their own token.' },
     { tag_name: 'v0.35.1', html_url: 'https://github.com/AnanthaRajuC/QueryAPIGate/releases/tag/v0.35.1', body: 'Two security fixes anyone running allowed_tables or ad-hoc SQL should take, plus CodeQL, fuzzing and build provenance.' },
   ];
+  hsKeys = ['db', 'doors', 'fmt', 'langs', 'guides'];
+  hsRef = React.createRef();
+  // The tiles' details cycle every 3s while the strip is in view and not hovered; clicking a tile stops the cycle.
+  hsTick() {
+    if (!this.state.hsAuto || this.state.hsHover || !this.state.hsRun) return;
+    const i = this.hsKeys.indexOf(this.state.hsOpen);
+    this.setState({ hsOpen: this.hsKeys[(i + 1) % this.hsKeys.length] });
+  }
+  observeHs() {
+    const el = this.hsRef.current; if (!el || this.ioHs) return;
+    this.ioHs = new IntersectionObserver(([e]) => this.setState({ hsRun: e.isIntersecting }), { threshold: 0.2 });
+    this.ioHs.observe(el);
+  }
+  hsVals() {
+    const open = this.state.hsOpen, keys = this.hsKeys;
+    const v = { display: open ? 'block' : 'none', ref: this.hsRef, enter: () => this.setState({ hsHover: true }), leave: () => this.setState({ hsHover: false }) };
+    keys.forEach(k => { const on = open === k, go = () => this.setState({ hsOpen: on ? null : k, hsAuto: false });
+      v[k] = { open: on ? 'true' : 'false', show: on ? 'flex' : 'none', go, key: e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } } }; });
+    return v;
+  }
   headline(body) {
     const intro = (body || '').replace(/\r/g, '').split(/\n#{2,4}\s/)[0];
     const text = intro.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*`]/g, '').replace(/\s+/g, ' ').trim();
@@ -1185,6 +1223,8 @@ class Component extends DCLogic {
     this.observeSteps();
     this.observeData();
     this.observeCats();
+    this.observeHs();
+    this.hsTimer = setInterval(() => this.hsTick(), 3000);
     const j = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
     j('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate').then(gh => gh && this.setState({ gh }));
     j('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate/releases/latest').then(release => release && this.setState({ release }));
@@ -1198,14 +1238,14 @@ class Component extends DCLogic {
       this.advance((this.state.step + 1) % this.stepData.length);
     }, this.stepMs);
   }
-  componentDidUpdate() { this.observeSteps(); this.observeData(); this.observeCats(); }
+  componentDidUpdate() { this.observeSteps(); this.observeData(); this.observeCats(); this.observeHs(); }
   observeSteps() {
     const ol = this.stepsRef.current;
     if (!ol || this.io) return;
     this.io = new IntersectionObserver(([e]) => this.setState({ running: e.isIntersecting }), { threshold: 0.2 });
     this.io.observe(ol);
   }
-  componentWillUnmount() { window.removeEventListener('hashchange', this.onCallHash); this.ro && this.ro.disconnect(); this.io && this.io.disconnect(); this.io_gov && this.io_gov.disconnect(); this.ioData && this.ioData.disconnect(); clearInterval(this.timer); clearTimeout(this.copyT); }
+  componentWillUnmount() { window.removeEventListener('hashchange', this.onCallHash); this.ro && this.ro.disconnect(); this.io && this.io.disconnect(); this.io_gov && this.io_gov.disconnect(); this.ioHs && this.ioHs.disconnect(); clearInterval(this.hsTimer); this.ioData && this.ioData.disconnect(); clearInterval(this.timer); clearTimeout(this.copyT); }
   renderVals() {
     const s = this.state.w / 1920;
     const cat = this.state.cat;
@@ -1233,6 +1273,7 @@ class Component extends DCLogic {
       ...live,
       installTabs: this.installs.map(x => { const on = x.id === inst.id; return { label: x.label, logo: 'https://cdn.simpleicons.org/' + x.icon + '/' + (on ? 'e6efeb' : x.brand), selected: on ? 'true' : 'false', go: () => this.setState({ inst: x.id }), bg: on ? '#10201b' : '#fff', color: on ? '#e6efeb' : '#4a5652', border: on ? '#10201b' : '#c3cdc9' }; }),
       bands: this.bands(),
+      hs: this.hsVals(),
       installPanes: this.installs.map(x => { const on = x.id === inst.id; return { code: x.code(ver), note: x.note, links: x.links.map(l => ({ t: l[0], h: l[1] })), vis: on ? 'visible' : 'hidden', hidden: on ? 'false' : 'true' }; }),
       installFile: 'install · ' + inst.label,
       langTabs: this.langs.map(x => { const on = x.id === this.state.lang; return { label: x.label, selected: on ? 'true' : 'false', go: () => this.setState({ lang: x.id }), bg: on ? '#e6efeb' : 'transparent', color: on ? '#10201b' : '#9fb3ac', border: on ? '#e6efeb' : '#2a3d37' }; }),
