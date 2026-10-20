@@ -88,3 +88,5 @@ Everything below in one file: https://anantharajuc.github.io/QueryAPIGate-websit
 - [Guide 58: Keep the server's own secrets, and its metrics, in](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=58-keep-the-servers-own-secrets-and-metrics-in): how-to, Operate
 - [Guide 59: Verify a release before you run it](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=59-verify-a-release-before-you-run-it): how-to, Govern
 - [Guide 60: Give each team its own workspace](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=60-give-each-team-its-own-workspace): how-to, Access
+- [Guide 61: Connect to Trino](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=61-connect-to-trino): how-to, Start
+- [Guide 62: See what's being used, from the Console](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=62-see-whats-being-used-from-the-console): how-to, Operate

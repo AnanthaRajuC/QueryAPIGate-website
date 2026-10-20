@@ -538,6 +538,24 @@ export const guides = [
   "time": "15 min",
   "timeMin": 15,
   "outcome": "One QueryAPIGate serving several teams, each managing its own connections, saved queries and API keys in a workspace of its own - its owner running it without reaching anyone else's, its apps calling it as if it were the only one, and you, the platform team, seeing all of it."
+ },
+ {
+  "num": "61",
+  "slug": "61-connect-to-trino",
+  "title": "Connect to Trino",
+  "cat": "Start",
+  "time": "10 min",
+  "timeMin": 10,
+  "outcome": "One connection that reaches every catalog behind a Trino endpoint - Hive, Iceberg, Delta, Kafka, object stores, other databases - each one a governed, saved REST and MCP query, with allowed_tables, masking and a real query time limit."
+ },
+ {
+  "num": "62",
+  "slug": "62-see-whats-being-used-from-the-console",
+  "title": "See what's being used, from the Console",
+  "cat": "Operate",
+  "time": "10 min",
+  "timeMin": 10,
+  "outcome": "A clear read on which keys, connections, queries and tools are actually in use - which ones are busy, which are granted but never touched - without wiring up any external monitoring."
  }
 ];
 
