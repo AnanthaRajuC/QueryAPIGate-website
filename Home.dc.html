@@ -24,8 +24,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-.req-chip{font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 8px;border:1px solid #2a3d37;border-radius:6px;color:#9fb3ac;text-decoration:none;transition:border-color 0.15s,color 0.15s}
-.req-chip:hover{border-color:#9fb3ac;color:#e6efeb;text-decoration:none}
+.req-chip{font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 8px;border:1px solid #dbe2df;border-radius:6px;color:#626d69;background:#fff;text-decoration:none;transition:border-color 0.15s,color 0.15s}
+.req-chip:hover{border-color:#17201d;color:#17201d;text-decoration:none}
 .req-tab{font:inherit;display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 7px;border-radius:999px;border:1px solid;cursor:pointer;font-size:13.5px;font-weight:600;transition:background 0.2s,color 0.2s,border-color 0.2s}
 .req-tab small{font-weight:400;font-size:12px}
 .req-tab .req-ico{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;flex:none;transition:background 0.2s}
@@ -340,16 +340,16 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section style="background:#10201b;color:#e6efeb">
+  <section>
     <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
       <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px;align-items:end">
         <div style="display:grid;gap:10px">
-          <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)">Front doors</span>
+          <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Front doors</span>
           <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Save a query once. Serve it five ways.</h2>
-          <p style="margin:0;color:#9fb3ac;max-width:72ch">The same saved query behind every door, and the same eight stages on every call: identity, policy, execution, record. Pick a door, follow one call through, see what each stage produces, and what the call gets back when a stage refuses.</p>
+          <p style="margin:0;color:#4a5652;max-width:72ch">The same saved query behind every door, and the same eight stages on every call: identity, policy, execution, record. Pick a door, follow one call through, see what each stage produces, and what the call gets back when a stage refuses.</p>
         </div>
-        <div class="rs-hide" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#9fb3ac;display:grid;gap:4px;text-align:right;max-width:520px;min-width:0">
-          <sc-for list="{{ reqLines }}" as="l" hint-placeholder-count="2"><span><span style="color:oklch(0.8 0.11 170)">{{ l.verb }}</span>{{ l.rest }}</span></sc-for>
+        <div class="rs-hide" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#626d69;display:grid;gap:4px;text-align:right;max-width:520px;min-width:0">
+          <sc-for list="{{ reqLines }}" as="l" hint-placeholder-count="2"><span><span style="color:oklch(0.52 0.11 170)">{{ l.verb }}</span>{{ l.rest }}</span></sc-for>
           <span style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;padding-top:4px"><sc-for list="{{ reqChips }}" as="c" hint-placeholder-count="3"><a class="req-chip" href="{{ c.h }}">{{ c.t }}</a></sc-for></span>
         </div>
       </div>
@@ -361,7 +361,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
           </sc-for>
         </div>
         <div style="display:grid;gap:6px;min-width:0;flex:1 1 320px">
-          <div style="display:flex;justify-content:space-between;gap:12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88;white-space:nowrap"><span>where the time goes, stage by stage</span><span>{{ totalMs }}</span></div>
+          <div style="display:flex;justify-content:space-between;gap:12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#626d69;white-space:nowrap"><span>where the time goes, stage by stage</span><span>{{ totalMs }}</span></div>
           <div style="display:flex;gap:3px;height:8px" aria-hidden="true">
             <sc-for list="{{ timeBar }}" as="tb" hint-placeholder-count="8"><span onClick="{{ tb.pick }}" title="{{ tb.title }}" style="flex:{{ tb.flex }};min-width:5px;border-radius:2px;background:{{ tb.bg }};cursor:pointer;transition:background 0.3s"></span></sc-for>
           </div>
@@ -372,33 +372,33 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         <ol class="req-steps" ref="{{ stepsRef }}" style="list-style:none;margin:0;padding:0;display:grid;grid-auto-rows:minmax(0,1fr);position:relative">
           <sc-for list="{{ steps }}" as="st" hint-placeholder-count="8">
             <li onClick="{{ st.pick }}" onMouseEnter="{{ st.hover }}" onMouseLeave="{{ unhover }}" class="rs-2col" style="position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px;align-items:center;padding:9px 12px 9px 10px;border-radius:10px;cursor:pointer;background:{{ st.rowBg }};transition:background 0.35s">
-              <span class="req-line" style="position:absolute;left:29px;top:0;width:2px;height:50%;background:{{ st.lineTop }};transition:background 0.35s"></span>
-              <span class="req-line" style="position:absolute;left:29px;bottom:0;width:2px;height:50%;background:{{ st.lineBottom }};transition:background 0.35s"></span>
-              <span style="position:relative;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:{{ st.nodeBg }};border:1px solid {{ st.nodeBorder }};box-shadow:{{ st.nodeGlow }};transition:background 0.35s,border-color 0.35s,box-shadow 0.35s"><span style="display:block;width:18px;height:18px;background:{{ st.iconColor }};-webkit-mask:url({{ st.iconUrl }}) center/contain no-repeat;mask:url({{ st.iconUrl }}) center/contain no-repeat;transition:background 0.35s"></span></span>
+              <span class="req-line" style="position:absolute;z-index:0;left:29px;top:0;width:2px;height:50%;background:{{ st.lineTop }};transition:background 0.35s"></span>
+              <span class="req-line" style="position:absolute;z-index:0;left:29px;bottom:0;width:2px;height:50%;background:{{ st.lineBottom }};transition:background 0.35s"></span>
+              <span style="position:relative;z-index:1;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:{{ st.nodeBg }};border:1px solid {{ st.nodeBorder }};box-shadow:{{ st.nodeGlow }};transition:background 0.35s,border-color 0.35s,box-shadow 0.35s"><span style="display:block;width:18px;height:18px;background:{{ st.iconColor }};-webkit-mask:url({{ st.iconUrl }}) center/contain no-repeat;mask:url({{ st.iconUrl }}) center/contain no-repeat;transition:background 0.35s"></span></span>
               <span style="display:grid;gap:1px;min-width:0"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ st.numColor }};transition:color 0.35s">{{ st.num }} · {{ st.ms }}</span><b style="font-size:14.5px;font-weight:600;color:{{ st.titleColor }};transition:color 0.35s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ st.title }}</b></span>
             </li>
           </sc-for>
         </ol>
 
-        <div style="position:relative;border:1px solid {{ panelBorder }};border-radius:14px;background:radial-gradient(ellipse 70% 50% at 50% 0%, {{ panelGlow }}, transparent 70%),#0c1915;padding:26px 28px 24px;display:grid;grid-template-rows:auto auto auto minmax(0,1fr) auto;gap:16px;min-width:0;overflow:hidden;transition:border-color 0.3s">
-          <div style="position:absolute;left:0;right:0;top:0;height:2px;background:#1b2f29"><span style="display:block;height:100%;background:{{ barColor }};transform-origin:left;transform:{{ barTransform }};transition:{{ barTransition }}"></span></div>
+        <div style="position:relative;border:1px solid {{ panelBorder }};border-radius:14px;background:radial-gradient(ellipse 70% 50% at 50% 0%, {{ panelGlow }}, transparent 70%),#fff;padding:26px 28px 24px;display:grid;grid-template-rows:auto auto auto auto minmax(0,1fr);gap:16px;min-width:0;overflow:hidden;transition:border-color 0.3s;align-content:start">
+          <div style="position:absolute;left:0;right:0;top:0;height:2px;background:#e8edeb"><span style="display:block;height:100%;background:{{ barColor }};transform-origin:left;transform:{{ barTransform }};transition:{{ barTransition }}"></span></div>
           <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">Stage {{ cur.num }} · {{ cur.layer }} · {{ cur.who }}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">Stage {{ cur.num }} · {{ cur.layer }} · {{ cur.who }}</span>
             <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.04em;padding:4px 9px;border-radius:999px;background:{{ cur.statusBg }};color:{{ cur.statusColor }};border:1px solid {{ cur.statusBorder }};transition:background 0.3s,color 0.3s,border-color 0.3s">{{ cur.status }}</span>
           </div>
-          <div style="display:grid;gap:6px;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">{{ cur.title }}</h3><p style="margin:0;color:#9fb3ac;max-width:66ch">{{ cur.desc }}</p></div>
-          <div style="display:grid;gap:1px;background:#1b2f29;border:1px solid #1b2f29;border-radius:10px;overflow:hidden;align-self:start;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
+          <div style="display:grid;gap:6px;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">{{ cur.title }}</h3><p style="margin:0;color:#4a5652;max-width:66ch;min-height:3.1em">{{ cur.desc }}</p></div>
+          <div style="display:grid;gap:1px;background:#dbe2df;border:1px solid #dbe2df;border-radius:10px;overflow:hidden;align-self:start;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
             <sc-for list="{{ cur.rows }}" as="r" hint-placeholder-count="3">
-              <div class="rs-2col" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px;padding:9px 14px;background:#0f201b;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.5"><span style="color:#7c8f88">{{ r.k }}</span><span style="color:#e6efeb;overflow-wrap:anywhere">{{ r.v }} <span style="color:{{ r.markColor }}">{{ r.mark }}</span></span></div>
+              <div class="rs-2col" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px;padding:9px 14px;background:#f8faf9;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.5"><span style="color:#626d69">{{ r.k }}</span><span style="color:#17201d;overflow-wrap:anywhere">{{ r.v }} <span style="color:{{ r.markColor }}">{{ r.mark }}</span></span></div>
             </sc-for>
           </div>
           <div style="border:1px solid {{ cur.outBorder }};border-radius:10px;overflow:hidden;background:#0a1512;align-self:start;min-width:0;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s,border-color 0.3s">
             <div style="display:flex;align-items:center;gap:10px;padding:6px 10px 6px 12px;border-bottom:1px solid #1b2f29"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:8px;height:8px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:8px;height:8px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:8px;height:8px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ cur.outLabelColor }}">{{ cur.outLabel }}</span></div>
             {{ outNode }}
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px 20px;flex-wrap:wrap;font-size:12.5px;color:#7c8f88">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px 20px;flex-wrap:wrap;font-size:12.5px;color:#626d69;min-height:58px">
             <button type="button" onClick="{{ failToggle.go }}" disabled="{{ failToggle.disabled }}" style="font:inherit;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:8px;border:1px solid {{ failToggle.border }};background:{{ failToggle.bg }};color:{{ failToggle.color }};cursor:{{ failToggle.cursor }};transition:background 0.2s,color 0.2s,border-color 0.2s">{{ failToggle.label }}</button>
-            <span style="display:flex;gap:6px 14px;flex-wrap:wrap;flex:1;min-width:0"><sc-for list="{{ cur.links }}" as="lk" hint-placeholder-count="3"><a href="{{ lk.h }}" style="color:#9fb3ac;font-weight:500;white-space:nowrap" style-hover="color:#e6efeb">{{ lk.t }} →</a></sc-for></span>
+            <span style="display:flex;gap:6px 14px;flex-wrap:wrap;flex:1;min-width:0"><sc-for list="{{ cur.links }}" as="lk" hint-placeholder-count="3"><a href="{{ lk.h }}" style="color:#4a5652;font-weight:500;white-space:nowrap" style-hover="color:#17201d">{{ lk.t }} →</a></sc-for></span>
             <span style="font-family:'JetBrains Mono',monospace;white-space:nowrap">cumulative {{ cur.elapsed }}</span>
           </div>
         </div>
@@ -919,40 +919,40 @@ class Component extends DCLogic {
     const h = React.createElement, sc = this.scenarios[this.state.scn], stages = sc.stages, k = this.state.step, st = this.stepData[k], sg = stages[k];
     const expires = new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10), fix = t => String(t).replace(/EXPIRES/g, expires);
     const failing = !!(this.state.reqFail && sg.fail);
-    const green = 'oklch(0.62 0.13 170)', red = 'oklch(0.65 0.2 25)', dim = '#2a3d37', accent = failing ? red : green;
+    const green = 'oklch(0.52 0.11 170)', red = 'oklch(0.62 0.2 25)', dim = '#dbe2df', accent = failing ? red : green;
     const cum = stages.slice(0, k + 1).reduce((t, x) => t + x.ms, 0), total = stages.reduce((t, x) => t + x.ms, 0);
     const steps = this.stepData.map((d, i) => {
       const active = k === i, done = i < k, g = active && failing ? red : green;
       return {
         num: d.num, ms: this.fmtMs(stages[i].ms), title: d.title, iconUrl: 'https://unpkg.com/lucide-static@0.460.0/icons/' + d.icon + '.svg',
         pick: () => { this.advance(i); }, hover: () => this.setState({ hovered: i }),
-        rowBg: active ? 'rgba(255,255,255,0.04)' : 'transparent',
+        rowBg: active ? '#f3f5f4' : 'transparent',
         lineTop: i === 0 ? 'transparent' : (done || active ? green : dim), lineBottom: i === this.stepData.length - 1 ? 'transparent' : (done ? green : dim),
-        nodeBg: active ? g : done ? '#16302a' : '#10201b', nodeBorder: active || done ? g : dim,
-        nodeGlow: active ? '0 0 0 6px ' + (failing ? 'oklch(0.65 0.2 25 / 0.18)' : 'oklch(0.62 0.13 170 / 0.18)') + ', 0 0 24px ' + (failing ? 'oklch(0.65 0.2 25 / 0.45)' : 'oklch(0.62 0.13 170 / 0.45)') : 'none',
-        iconColor: active ? '#0c1915' : done ? 'oklch(0.8 0.11 170)' : '#7c8f88', numColor: active ? 'oklch(0.8 0.11 170)' : '#7c8f88', titleColor: active ? '#e6efeb' : done ? '#c5d3cd' : '#9fb3ac',
+        nodeBg: active ? g : done ? '#dcefe8' : '#fff', nodeBorder: active || done ? g : '#c3cdc9',
+        nodeGlow: active ? '0 0 0 6px ' + (failing ? 'oklch(0.62 0.2 25 / 0.16)' : 'oklch(0.52 0.11 170 / 0.16)') + ', 0 0 20px ' + (failing ? 'oklch(0.62 0.2 25 / 0.35)' : 'oklch(0.52 0.11 170 / 0.35)') : 'none',
+        iconColor: active ? '#fff' : done ? 'oklch(0.52 0.11 170)' : '#9fb3ac', numColor: active ? 'oklch(0.52 0.11 170)' : '#9fb3ac', titleColor: active ? '#17201d' : done ? '#17201d' : '#4a5652',
       };
     });
     const lines = failing ? sg.fail.body.split('\n').concat(['# recorded: ' + sg.fail.rec]) : sg.out.map(fix);
-    const outNode = h('pre', { key: sc.id + k + failing, style: { margin: 0, padding: '10px 14px 12px', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', lineHeight: 1.6, color: '#e6efeb', overflowX: 'auto', whiteSpace: 'pre' } },
+    const outNode = h('pre', { key: sc.id + k + failing, style: { margin: 0, padding: '10px 14px 12px', minHeight: '96px', boxSizing: 'content-box', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px', lineHeight: 1.6, color: '#e6efeb', overflowX: 'auto', whiteSpace: 'pre' } },
       lines.map((l, i) => h('span', { key: i, style: { display: 'block', color: /^(#|→|\/\/|:)/.test(l) ? '#7c8f88' : (failing && /^[A-Z][a-z-]+:/.test(l)) ? 'oklch(0.82 0.12 80)' : '#e6efeb' } }, l)));
     return {
       steps,
       cur: { num: st.num, layer: st.layer, who: sc.who, title: st.title, desc: st.desc,
         status: failing ? sg.fail.code : sg.status,
-        statusBg: failing ? 'oklch(0.65 0.2 25 / 0.14)' : 'oklch(0.62 0.13 170 / 0.14)', statusColor: failing ? 'oklch(0.8 0.15 25)' : 'oklch(0.8 0.11 170)', statusBorder: failing ? 'oklch(0.65 0.2 25 / 0.4)' : 'oklch(0.62 0.13 170 / 0.35)',
-        rows: sg.rows.map(r => ({ k: r[0], v: fix(r[1]) + (r[2] ? ' ' + r[2] : ''), mark: r[3] === 'ok' ? '✓' : r[3] === 'mask' ? '●' : '', markColor: r[3] === 'mask' ? 'oklch(0.82 0.12 80)' : 'oklch(0.72 0.13 170)' })),
+        statusBg: failing ? 'oklch(0.62 0.2 25 / 0.1)' : 'oklch(0.52 0.11 170 / 0.1)', statusColor: failing ? 'oklch(0.5 0.18 25)' : 'oklch(0.42 0.11 170)', statusBorder: failing ? 'oklch(0.62 0.2 25 / 0.4)' : 'oklch(0.52 0.11 170 / 0.35)',
+        rows: sg.rows.map(r => ({ k: r[0], v: fix(r[1]) + (r[2] ? ' ' + r[2] : ''), mark: r[3] === 'ok' ? '✓' : r[3] === 'mask' ? '●' : '', markColor: r[3] === 'mask' ? 'oklch(0.6 0.13 75)' : 'oklch(0.52 0.11 170)' })),
         outLabel: failing ? 'the call gets back · ' + sg.fail.code : 'what this stage produces', outLabelColor: failing ? 'oklch(0.8 0.15 25)' : '#7c8f88', outBorder: failing ? 'oklch(0.65 0.2 25 / 0.4)' : '#1b2f29',
         links: st.links.map(l => ({ t: l[0], h: l[1] })), elapsed: this.fmtMs(cum) },
       outNode,
-      panelBorder: failing ? 'oklch(0.65 0.2 25 / 0.5)' : '#2a3d37', panelGlow: failing ? 'oklch(0.65 0.2 25 / 0.16)' : 'oklch(0.52 0.11 170 / 0.18)', barColor: accent,
+      panelBorder: failing ? 'oklch(0.62 0.2 25 / 0.5)' : '#dbe2df', panelGlow: failing ? 'oklch(0.62 0.2 25 / 0.1)' : 'oklch(0.52 0.11 170 / 0.08)', barColor: accent,
       failToggle: sg.fail
         ? { label: failing ? '← Back to the call that passed' : 'What if this stage refuses?', disabled: false, cursor: 'pointer', go: () => this.setState({ reqFail: !this.state.reqFail }),
-            bg: failing ? 'oklch(0.65 0.2 25 / 0.14)' : 'transparent', color: failing ? 'oklch(0.8 0.15 25)' : '#9fb3ac', border: failing ? 'oklch(0.65 0.2 25 / 0.5)' : '#2a3d37' }
-        : { label: 'This stage never fails the call', disabled: true, cursor: 'default', go: () => {}, bg: 'transparent', color: '#626d69', border: '#1b2f29' },
+            bg: failing ? 'oklch(0.62 0.2 25 / 0.1)' : '#fff', color: failing ? 'oklch(0.5 0.18 25)' : '#4a5652', border: failing ? 'oklch(0.62 0.2 25 / 0.5)' : '#c3cdc9' }
+        : { label: 'This stage never fails the call', disabled: true, cursor: 'default', go: () => {}, bg: '#fff', color: '#9fb3ac', border: '#e8edeb' },
       totalMs: this.fmtMs(total) + ' for the whole call',
       timeBar: stages.map((x, i) => ({ flex: String(Math.sqrt(x.ms + 0.05).toFixed(3)), title: 'Stage ' + this.stepData[i].num + ' · ' + this.stepData[i].title + ' · ' + this.fmtMs(x.ms), pick: () => this.advance(i),
-        bg: i === k ? accent : i < k ? 'oklch(0.62 0.13 170 / 0.45)' : dim })),
+        bg: i === k ? accent : i < k ? 'oklch(0.52 0.11 170 / 0.4)' : dim })),
     };
   }
   advance(next) {
@@ -1067,12 +1067,12 @@ class Component extends DCLogic {
       stepsRef: this.stepsRef,
       unhover: () => this.setState({ hovered: null }),
       scenarios: this.scenarios.map((sc, i) => { const on = i === this.state.scn; return { label: sc.label, who: sc.who, selected: on ? 'true' : 'false', iconUrl: 'https://unpkg.com/lucide-static@0.460.0/icons/' + sc.icon + '.svg',
-        pick: () => { this.setState({ scn: i, reqFail: false }); }, bg: on ? '#e6efeb' : 'transparent', color: on ? '#10201b' : '#9fb3ac', border: on ? '#e6efeb' : '#2a3d37', iconBg: on ? '#10201b' : '#1b2f29', iconColor: on ? '#e6efeb' : '#9fb3ac', whoColor: on ? '#4a5652' : '#626d69' }; }),
+        pick: () => { this.setState({ scn: i, reqFail: false }); }, bg: on ? '#10201b' : '#fff', color: on ? '#e6efeb' : '#4a5652', border: on ? '#10201b' : '#dbe2df', iconBg: on ? 'oklch(0.52 0.11 170)' : '#e9eeec', iconColor: on ? '#fff' : '#4a5652', whoColor: on ? '#9fb3ac' : '#9fb3ac' }; }),
       reqChips: (this.scenarios[this.state.scn].chips || []).map(c => ({ t: c[0], h: c[1] })),
       reqLines: this.scenarios[this.state.scn].req.map(l => { const m = l.match(/^(GET|POST)\s/); return m ? { verb: m[1] + ' ', rest: l.slice(m[0].length) } : { verb: '', rest: l }; }),
       ...this.reqVals(),
-      detailOpacity: this.state.fading ? 0 : 1,
-      detailShift: this.state.fading ? 'translateY(6px)' : 'translateY(0)',
+      detailOpacity: this.state.fading ? 0.45 : 1,
+      detailShift: 'none',
       barTransform: this.state.fading ? 'scaleX(0)' : (this.state.hovered !== null ? 'scaleX(1)' : 'scaleX(1)'),
       barTransition: this.state.fading ? 'none' : 'transform ' + (this.stepMs - 220) + 'ms linear',
     };
