@@ -303,7 +303,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         <div style="display:grid;gap:10px;min-width:0;width:100%">
           <div role="tablist" aria-label="Install with" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
             <sc-for list="{{ installTabs }}" as="t" hint-placeholder-count="3">
-              <button role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.go }}" style="font-size:13px;font-weight:500;padding:6px 12px;border-radius:999px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.color }};cursor:pointer;font-family:'JetBrains Mono',monospace;transition:background 0.2s,color 0.2s,border-color 0.2s">{{ t.label }}</button>
+              <button role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.go }}" style="font-size:13px;font-weight:500;padding:6px 12px;border-radius:999px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.color }};cursor:pointer;font-family:'JetBrains Mono',monospace;transition:background 0.2s,color 0.2s,border-color 0.2s;display:inline-flex;align-items:center;gap:7px"><img src="{{ t.logo }}" alt="" width="14" height="14" style="display:block">{{ t.label }}</button>
             </sc-for>
           </div>
           <div style="background:#10201b;border-radius:10px;overflow:hidden;min-width:0;box-shadow:0 20px 40px -24px rgba(16,32,27,0.5)">
@@ -876,11 +876,11 @@ class Component extends DCLogic {
     { id: 'csharp', label: 'C#', code: null, gen: 'csharp', usage: '// 2. every saved query is a typed method\nvar api = new SavedQueriesLiveApi(config);\nvar rows = api.RunExampleTopFilms(category: "Comedy", topN: 2);\n// [{ Title = "Electric Signal", Rating = "PG", Rentals = 977, ... }, ...]\n\napi.RunExampleTopFilms(topN: 500);\n// ApiException: 400 param_invalid - top_n is 1 to 50' },
   ];
   installs = [
-    { id: 'pip', label: 'pip', code: v => '$ pip install queryapigate\n$ QUERYAPIGATE_API_KEY=change-me queryapigate serve',
+    { id: 'pip', label: 'pip', icon: 'python', brand: '3776AB', code: v => '$ pip install queryapigate\n$ QUERYAPIGATE_API_KEY=change-me queryapigate serve',
       note: 'Python 3.11+. Add drivers as extras: queryapigate[postgres,mysql].' },
-    { id: 'docker', label: 'Docker', code: v => '$ docker run -p 5000:5000 -v queryapigate-data:/data \\\n    -e QUERYAPIGATE_API_KEY=change-me ghcr.io/anantharajuc/queryapigate:' + v,
+    { id: 'docker', label: 'Docker', icon: 'docker', brand: '2496ED', code: v => '$ docker run -p 5000:5000 -v queryapigate-data:/data \\\n    -e QUERYAPIGATE_API_KEY=change-me ghcr.io/anantharajuc/queryapigate:' + v,
       note: 'Every driver except H2, plus Redis, MCP and tracing. Signed, with an SBOM.' },
-    { id: 'helm', label: 'Helm', code: v => '$ kubectl create secret generic queryapigate --from-literal=QUERYAPIGATE_API_KEY=change-me\n$ helm install queryapigate oci://ghcr.io/anantharajuc/charts/queryapigate \\\n    --version ' + v + ' --set existingSecret=queryapigate',
+    { id: 'helm', label: 'Helm', icon: 'helm', brand: '0F1689', code: v => '$ kubectl create secret generic queryapigate --from-literal=QUERYAPIGATE_API_KEY=change-me\n$ helm install queryapigate oci://ghcr.io/anantharajuc/charts/queryapigate \\\n    --version ' + v + ' --set existingSecret=queryapigate',
       note: 'One pod on SQLite, or several on PostgreSQL and Redis. Signed; verify before you run it.' },
   ];
   advance(next) {
@@ -979,7 +979,7 @@ class Component extends DCLogic {
     const inst = this.installs.find(x => x.id === this.state.inst);
     return {
       ...live,
-      installTabs: this.installs.map(x => { const on = x.id === inst.id; return { label: x.label, selected: on ? 'true' : 'false', go: () => this.setState({ inst: x.id }), bg: on ? '#10201b' : '#fff', color: on ? '#e6efeb' : '#4a5652', border: on ? '#10201b' : '#c3cdc9' }; }),
+      installTabs: this.installs.map(x => { const on = x.id === inst.id; return { label: x.label, logo: 'https://cdn.simpleicons.org/' + x.icon + '/' + (on ? 'e6efeb' : x.brand), selected: on ? 'true' : 'false', go: () => this.setState({ inst: x.id }), bg: on ? '#10201b' : '#fff', color: on ? '#e6efeb' : '#4a5652', border: on ? '#10201b' : '#c3cdc9' }; }),
       installPanes: this.installs.map(x => { const on = x.id === inst.id; return { code: x.code(ver), note: x.note, vis: on ? 'visible' : 'hidden', hidden: on ? 'false' : 'true' }; }),
       installFile: 'install · ' + inst.label,
       langTabs: this.langs.map(x => { const on = x.id === this.state.lang; return { label: x.label, selected: on ? 'true' : 'false', go: () => this.setState({ lang: x.id }), bg: on ? '#e6efeb' : 'transparent', color: on ? '#10201b' : '#9fb3ac', border: on ? '#e6efeb' : '#2a3d37' }; }),
