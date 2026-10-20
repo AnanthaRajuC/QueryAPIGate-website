@@ -335,7 +335,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
     <div style="grid-column:1/-1">
       <div style="display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:6px">
-        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">8</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">database types</span></div>
+        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">9</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">database types</span></div>
         <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">5</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">front doors</span></div>
         <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">8</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">output formats</span></div>
         <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">~50</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">client languages</span></div>
@@ -357,7 +357,9 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       <span aria-hidden="true" style="justify-self:center;color:#9fb3ac;font-size:18px;line-height:1">↓</span>
       <div style="background:#10201b;color:#e6efeb;border-radius:12px;padding:16px 18px;display:grid;gap:6px"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)">The governed core</span><b style="font-weight:600">Identity → policy → execution → record</b><span style="font-size:14px;color:#9fb3ac">Identify the caller, apply its limits, check the grant, validate parameters, guard the SQL, run it, mask and format, record it.</span></div>
       <span aria-hidden="true" style="justify-self:center;color:#9fb3ac;font-size:18px;line-height:1">↓</span>
-      <div style="background:#fff;border:1px solid #dbe2df;border-radius:12px;padding:16px 18px;display:grid;gap:6px"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Your data</span><b style="font-weight:600;color:#17201d">Databases, files and deliveries</b><span style="font-size:14px;color:#4a5652">PostgreSQL, MySQL, SQLite, DuckDB, ClickHouse, plus MongoDB, H2 and JDBC; Parquet, CSV and JSON in S3, GCS or R2.</span></div>
+      <div style="background:#fff;border:1px solid #dbe2df;border-radius:12px;padding:16px 18px;display:grid;gap:6px"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Your data</span><b style="font-weight:600;color:#17201d">Databases, files and deliveries</b><span style="font-size:14px;color:#4a5652">PostgreSQL, MySQL, SQLite, DuckDB, ClickHouse and MongoDB, plus Trino, H2 and JDBC; Parquet, CSV and JSON in S3, GCS or R2.</span></div>
+      <span aria-hidden="true" style="justify-self:center;color:#9fb3ac;font-size:18px;line-height:1">↓</span>
+      <div style="background:#fff;border:1px solid #dbe2df;border-radius:12px;padding:16px 18px;display:grid;gap:6px"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Reports to</span><b style="font-weight:600;color:#17201d">Log · traces · metrics · audit · secrets</b><span style="font-size:14px;color:#4a5652">Each call goes to stdout, OpenTelemetry, Prometheus and your SIEM as counts, timings and audit entries, never a row or a credential. Secrets come from Vault or AWS and are never stored.</span></div>
     </div>
   </section>
   <section class="arch-d" style="max-width:1920px;margin:0 auto;padding:0 24px 72px">
@@ -897,7 +899,7 @@ class Component extends DCLogic {
     };
   }
   cats = [
-    { id: 'all', label: 'All', note: 'Eight database types, plus files on disk or in object storage, behind one saved-query interface. Native drivers where they exist, generic JDBC for the rest.' },
+    { id: 'all', label: 'All', note: 'Nine database types, plus files on disk or in object storage, behind one saved-query interface. Native drivers where they exist, generic JDBC for the rest.' },
     { id: 'oltp', label: 'Relational / OLTP', note: 'Row stores behind applications. Writes are opt-in per connection and narrowed to specific operations.' },
     { id: 'olap', label: 'Analytical / OLAP', note: 'Column stores for aggregates over large tables. Streaming and Parquet output fit naturally here.' },
     { id: 'embedded', label: 'Embedded', note: 'In-process engines, no server to run. SQLite is also the default store for QueryAPIGate itself.' },
