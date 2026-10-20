@@ -19,7 +19,7 @@
 <script>
 (function () {
   // Section rail on the left: marks the section in view and keeps the hash out of the address bar.
-  var ids = ['top','architecture','doors','clients','governance','data','compare','run','roadmap','open'], raf = 0;
+  var ids = ['top','architecture','doors','clients','governance','data','compare','roadmap','open'], raf = 0;
   function update() {
     raf = 0;
     var links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
@@ -27,6 +27,11 @@
     for (var i = 0; i < ids.length; i++) { var el = document.getElementById(ids[i]); if (el && el.getBoundingClientRect().top <= line) cur = ids[i]; }
     if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = ids[ids.length - 1];
     for (var j = 0; j < links.length; j++) links[j].classList.toggle('on', links[j].getAttribute('data-rail') === cur);
+    // Out of the way: hidden until the visitor scrolls, and while it would sit over the architecture frame.
+    var rail = document.querySelector('.rail'), frame = document.querySelector('.arch-d > div');
+    var hide = window.scrollY < 60;
+    if (!hide && rail && frame) { var a = rail.getBoundingClientRect(), f = frame.getBoundingClientRect(); hide = a.bottom > f.top && a.top < f.bottom && a.right > f.left; }
+    if (rail) rail.classList.toggle('hide', hide);
   }
   function tick() { if (!raf) raf = requestAnimationFrame(update); }
   window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
@@ -42,7 +47,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-.rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:30;display:grid;gap:13px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
+.rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:30;display:grid;gap:13px;transition:opacity 0.25s;}
+.rail.hide{opacity:0;pointer-events:none}
+.rail{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
 .rail a{display:flex;align-items:center;gap:12px;color:#9fb3ac;text-decoration:none;transition:color 0.2s}
 .rail a::before{content:'';flex:none;width:22px;height:1px;background:#c3cdc9;transition:width 0.25s,background 0.25s,height 0.25s}
 .rail a:hover{color:#17201d;text-decoration:none}
@@ -303,7 +310,6 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     <a href="#governance" data-rail="governance"><span>Governance</span></a>
     <a href="#data" data-rail="data"><span>Your data</span></a>
     <a href="#compare" data-rail="compare"><span>What you skip</span></a>
-    <a href="#run" data-rail="run"><span>Run it</span></a>
     <a href="#roadmap" data-rail="roadmap"><span>Roadmap</span></a>
     <a href="#open" data-rail="open"><span>Open source</span></a>
   </nav>
@@ -342,11 +348,12 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
           </div>
           <div style="display:grid">
             <sc-for list="{{ installPanes }}" as="p" hint-placeholder-count="3">
-              <span aria-hidden="{{ p.hidden }}" style="grid-area:1/1;visibility:{{ p.vis }};font-size:13px;color:#626d69">{{ p.note }}</span>
+              <span aria-hidden="{{ p.hidden }}" style="grid-area:1/1;visibility:{{ p.vis }};font-size:13px;color:#626d69">{{ p.note }} <sc-for list="{{ p.links }}" as="lk" hint-placeholder-count="2"><a href="{{ lk.h }}" style="font-weight:600;white-space:nowrap">{{ lk.t }}</a> </sc-for></span>
             </sc-for>
           </div>
         </div>
         <a href="Docs.dc.html#install" style="font-size:15px;font-weight:600;color:#17201d;padding:12px 18px;border:1px solid #c3cdc9;border-radius:8px;background:#fff;text-decoration:none" style-hover="border-color:#17201d">All install options →</a>
+        <a href="Deploy.dc.html" style="font-size:14px;font-weight:600">Reference architectures and measured performance →</a>
       </div>
       <div class="hero-badges" style="display:grid;grid-template-columns:repeat(2,max-content);gap:10px 24px;font-size:13px;color:#4a5652">
         <span style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(0.52 0.11 170)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 6h.01M6 18h.01"/></svg>Self-hosted: your data never leaves</span>
@@ -653,88 +660,17 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section id="run" style="scroll-margin-top:72px;max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:32px">
-    <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
-      <div style="display:grid;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Run it</span>
-      <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">A running server in minutes, wherever you run things</h2></div>
-      <p style="margin:0;color:#4a5652;max-width:52ch;text-wrap:pretty">The same server three ways. Load the examples and the first request works at once: a small generated database and four worked APIs. The image and the chart are signed, with provenance and an SBOM. <a href="Deploy.dc.html">Reference architectures and measured performance →</a></p>
-    </div>
-    <div style="display:grid;gap:22px">
-      <div role="tablist" aria-label="Run it with" style="display:flex;gap:6px;flex-wrap:wrap">
-        <sc-for list="{{ runTabs }}" as="t" hint-placeholder-count="3">
-          <button type="button" role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.go }}" style="font:inherit;display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:9px 16px;border-radius:999px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.color }};cursor:pointer;transition:background 0.2s,color 0.2s,border-color 0.2s"><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;color:{{ t.numColor }}">{{ t.num }}</span>{{ t.label }}</button>
-        </sc-for>
-      </div>
-      <div style="display:grid;min-width:0">
-        <div class="rs-2col" aria-hidden="{{ run.hid1 }}" style="grid-area:1/1;visibility:{{ run.vis1 }};display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:32px;align-items:center">
-          <div style="display:grid;gap:14px;align-content:start;min-width:0">
-          <div style="display:grid;gap:6px"><div style="display:flex;align-items:center;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">pip</span></div><h3 style="margin:0;font-size:18px;font-weight:600">On your machine</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Python 3.11 or later. SQLite included; add drivers as extras.</p></div>
-          <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:14px;font-weight:600"><a href="Docs.dc.html#install">Install and extras →</a></div>
-        </div>
-          <div style="background:#10201b;border-radius:10px;overflow:hidden;min-width:0;box-shadow:0 20px 40px -24px rgba(16,32,27,0.5)">
-          <div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #1b2f29">
-            <span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">run · pip</span>
-            <button type="button" class="copy-btn" onClick="{{ runCopy1 }}" aria-label="Copy the pip commands" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ runCopied1 }}</button>
-          </div>
-          <pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0;min-height:11.9em;box-sizing:content-box"><span style="color:#9fb3ac">$</span> pip install queryapigate
-<span style="color:#9fb3ac">$</span> export QUERYAPIGATE_API_KEY=demo-key
-<span style="color:#9fb3ac">$</span> queryapigate examples load
-<span style="color:#9fb3ac">$</span> queryapigate serve
-<span style="color:#9fb3ac"># http://127.0.0.1:5000 · Console at /console</span></pre>
-        </div>
-        </div>
-        <div class="rs-2col" aria-hidden="{{ run.hid2 }}" style="grid-area:1/1;visibility:{{ run.vis2 }};display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:32px;align-items:center">
-          <div style="display:grid;gap:14px;align-content:start;min-width:0">
-          <div style="display:grid;gap:6px"><div style="display:flex;align-items:center;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">docker</span></div><h3 style="margin:0;font-size:18px;font-weight:600">In a container</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Every driver except H2, plus Redis, MCP and tracing. <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">-h2</code> tags add Java for H2 and JDBC.</p></div>
-          <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:14px;font-weight:600"><a href="Guide.dc.html?g=32-deploy-with-docker">Guide 32 →</a><a href="Guide.dc.html?g=42-run-several-instances">Guide 42 →</a></div>
-        </div>
-          <div style="background:#10201b;border-radius:10px;overflow:hidden;min-width:0;box-shadow:0 20px 40px -24px rgba(16,32,27,0.5)">
-          <div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #1b2f29">
-            <span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">run · Docker</span>
-            <button type="button" class="copy-btn" onClick="{{ runCopy2 }}" aria-label="Copy the Docker commands" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ runCopied2 }}</button>
-          </div>
-          <pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0;min-height:11.9em;box-sizing:content-box"><span style="color:#9fb3ac">$</span> docker run -p 5000:5000 \
-    -v queryapigate-data:/data \
-    -e QUERYAPIGATE_API_KEY=change-me \
-    ghcr.io/anantharajuc/queryapigate:{{ runVer }}
-
-<span style="color:#9fb3ac"># several instances behind Caddy
-</span><span style="color:#9fb3ac">$</span> docker compose up -d</pre>
-        </div>
-        </div>
-        <div class="rs-2col" aria-hidden="{{ run.hid3 }}" style="grid-area:1/1;visibility:{{ run.vis3 }};display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:32px;align-items:center">
-          <div style="display:grid;gap:14px;align-content:start;min-width:0">
-          <div style="display:grid;gap:6px"><div style="display:flex;align-items:center;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">helm</span></div><h3 style="margin:0;font-size:18px;font-weight:600">On Kubernetes</h3><p style="margin:0;font-size:14.5px;color:#4a5652">One pod on SQLite, or several on PostgreSQL and Redis. Non-root, read-only root filesystem.</p></div>
-          <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:14px;font-weight:600"><a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm">Guide 54 →</a><a href="Guide.dc.html?g=59-verify-a-release-before-you-run-it">Verify the release →</a></div>
-        </div>
-          <div style="background:#10201b;border-radius:10px;overflow:hidden;min-width:0;box-shadow:0 20px 40px -24px rgba(16,32,27,0.5)">
-          <div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #1b2f29">
-            <span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">run · Helm</span>
-            <button type="button" class="copy-btn" onClick="{{ runCopy3 }}" aria-label="Copy the Helm commands" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ runCopied3 }}</button>
-          </div>
-          <pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0;min-height:11.9em;box-sizing:content-box"><span style="color:#9fb3ac">$</span> kubectl create secret generic queryapigate \
-    --from-literal=QUERYAPIGATE_API_KEY=change-me
-<span style="color:#9fb3ac">$</span> helm install queryapigate \
-    oci://ghcr.io/anantharajuc/charts/queryapigate \
-    --version {{ runVer }} \
-    {{ runHelmSet }}</pre>
-        </div>
-        </div>
-      </div>
-    </div>
-  </section>
   <section id="roadmap" style="scroll-margin-top:72px;max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
     <div style="display:grid;gap:10px">
       <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Where it's going</span>
       <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">Toward 1.0</h2>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;border-top:2px solid oklch(0.52 0.11 170);padding-top:16px">
-      <div style="display:grid;gap:4px;align-content:start"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:17px">0.23 – 0.26</b><span style="font-size:14px;color:#4a5652">Tracing, security headers, per-key limits and quotas, a tamper-evident audit log, a Helm chart</span></div>
-      <div style="display:grid;gap:4px;align-content:start"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:17px">0.27 – 0.29</b><span style="font-size:14px;color:#4a5652">Configuration as code, secrets managers and short-lived credentials, FIPS and where data goes</span></div>
-      <div style="display:grid;gap:4px;align-content:start"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:17px;color:oklch(0.52 0.11 170)">0.30 – 0.34 · now</b><span style="font-size:14px;color:#4a5652">Eight features graduate, signed releases, the SIEM stream, live events and Vault secrets stable</span></div>
+      <sc-for list="{{ bands }}" as="b" hint-placeholder-count="3">
+        <div style="display:grid;gap:8px;align-content:start;min-width:0"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:17px;color:{{ b.color }}">{{ b.label }}</b>
+          <sc-for list="{{ b.items }}" as="it" hint-placeholder-count="3"><a href="{{ it.href }}" target="_blank" rel="noopener noreferrer" style="display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;font-size:14px;color:#4a5652;text-decoration:none" style-hover="color:#17201d"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170);padding-top:2px">{{ it.v }}</span><span>{{ it.text }}</span></a></sc-for>
+        </div>
+      </sc-for>
       <div style="display:grid;gap:4px;align-content:start"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:17px">1.0.0-rc1 · next</b><span style="font-size:14px;color:#4a5652">The freeze: the compatibility promise becomes a contract</span></div>
     </div>
     <a href="Roadmap.dc.html" style="font-weight:600;justify-self:start">Full roadmap →</a>
@@ -786,7 +722,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { w: 1192, run: 0, scn: 0, reqFail: false, reqKey: 0, reqAlt: false, reqTopN: '5', reqCat: 'Comedy', reqPinned: false, cat: 'all', catAuto: true, catHover: false, catRunning: true, catAnim: 'catbarA', inst: 'pip', lang: 'python', gh: null, pypi: null, release: null, step: 0, hovered: null, running: true, fading: false, copied: null };
+  state = { w: 1192, releases: null, scn: 0, reqFail: false, reqKey: 0, reqAlt: false, reqTopN: '5', reqCat: 'Comedy', reqPinned: false, cat: 'all', catAuto: true, catHover: false, catRunning: true, catAnim: 'catbarA', inst: 'pip', lang: 'python', gh: null, pypi: null, release: null, step: 0, hovered: null, running: true, fading: false, copied: null };
   stepsRef = React.createRef();
   dataRef = React.createRef();
   // The "Your data" category filter cycles on its own: the progress bar's CSS animation (4s, see the markup)
@@ -987,6 +923,36 @@ class Component extends DCLogic {
     ] },
   ];
   stepMs = 3200;
+  // "Toward 1.0": the last releases from GitHub, grouped into three bands with the newest marked "now". Used until
+  // the live list arrives, and if it never does: the releases as of 2026-10-20.
+  releaseFallback = [
+    { tag_name: 'v0.41.0', html_url: 'https://github.com/AnanthaRajuC/QueryAPIGate/releases/tag/v0.41.0', body: 'Trino joins the native connection types (experimental): one connection federates every catalog behind a Trino endpoint.' },
+    { tag_name: 'v0.40.0', html_url: 'https://github.com/AnanthaRajuC/QueryAPIGate/releases/tag/v0.40.0', body: 'MCP for AI agents: a dedicated MCP screen in the Console, per-query control over what is exposed, and tools agents can actually use.' },
+    { tag_name: 'v0.39.0', html_url: 'https://github.com/AnanthaRajuC/QueryAPIGate/releases/tag/v0.39.0', body: 'QueryAPIGate is now open source, under Apache-2.0.' },
+    { tag_name: 'v0.38.0', html_url: 'https://github.com/AnanthaRajuC/QueryAPIGate/releases/tag/v0.38.0', body: 'Workspaces (experimental): several teams on one server, each running its own connections, saved queries, keys, roles and exports.' },
+    { tag_name: 'v0.37.0', html_url: 'https://github.com/AnanthaRajuC/QueryAPIGate/releases/tag/v0.37.0', body: 'MongoDB graduates to tier 1, under the compatibility promise: a find() now streams its whole result.' },
+    { tag_name: 'v0.36.0', html_url: 'https://github.com/AnanthaRajuC/QueryAPIGate/releases/tag/v0.36.0', body: 'A role for customer-facing APIs: its signed-in users run only saved queries that bind their own token.' },
+    { tag_name: 'v0.35.1', html_url: 'https://github.com/AnanthaRajuC/QueryAPIGate/releases/tag/v0.35.1', body: 'Two security fixes anyone running allowed_tables or ad-hoc SQL should take, plus CodeQL, fuzzing and build provenance.' },
+  ];
+  headline(body) {
+    const intro = (body || '').replace(/\r/g, '').split(/\n#{2,4}\s/)[0];
+    const text = intro.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/[*`]/g, '').replace(/\s+/g, ' ').trim();
+    const cut = text.search(/:\s| - /); let h = cut >= 12 ? text.slice(0, cut) : (text.match(/^.*?[.!?](\s|$)/) || [text])[0];
+    h = h.trim().replace(/[.:]$/, ''); return h.length > 84 ? h.slice(0, 81).replace(/\s+\S*$/, '') + '…' : h;
+  }
+  bands() {
+    const list = (this.state.releases || this.releaseFallback).slice();
+    const minor = t => t.replace(/^v/, '').split('.').slice(0, 2).join('.');
+    const seen = {}, rel = [];
+    list.forEach(r => { const m = minor(r.tag_name); if (!seen[m]) { seen[m] = true; rel.push(r); } });   // newest first, one per minor
+    const recent = rel.slice(0, 9).reverse(), n = recent.length, size = Math.ceil(n / 3), out = [];
+    for (let i = 0; i < n; i += size) {
+      const grp = recent.slice(i, i + size), last = i + size >= n;
+      out.push({ label: minor(grp[0].tag_name) + (grp.length > 1 ? ' – ' + minor(grp[grp.length - 1].tag_name) : '') + (last ? ' · now' : ''), color: last ? 'oklch(0.52 0.11 170)' : '#17201d',
+        items: grp.slice().reverse().map(r => ({ v: r.tag_name.replace(/^v/, '').replace(/\.0$/, ''), text: this.headline(r.body), href: r.html_url })) });
+    }
+    return out;
+  }
   // Shown in the announcement pill above the hero, after the live version number. Update per release.
   releaseNote = 'signed images, SBOM and the Helm chart';
   // Client-library examples. The generate command is the same for every language except -g; the usage
@@ -1001,13 +967,14 @@ class Component extends DCLogic {
     { id: 'csharp', label: 'C#', code: null, gen: 'csharp', usage: '// 2. every saved query is a typed method\nvar api = new SavedQueriesLiveApi(config);\nvar rows = api.RunExampleTopFilms(category: "Comedy", topN: 2);\n// [{ Title = "Electric Signal", Rating = "PG", Rentals = 977, ... }, ...]\n\napi.RunExampleTopFilms(topN: 500);\n// ApiException: 400 param_invalid - top_n is 1 to 50' },
   ];
   installs = [
-    { id: 'pip', label: 'pip', icon: 'python', brand: '3776AB', code: v => '$ pip install queryapigate\n$ QUERYAPIGATE_API_KEY=change-me queryapigate serve',
-      note: 'Python 3.11+. Add drivers as extras: queryapigate[postgres,mysql].' },
-    { id: 'docker', label: 'Docker', icon: 'docker', brand: '2496ED', code: v => '$ docker run -p 5000:5000 -v queryapigate-data:/data \\\n    -e QUERYAPIGATE_API_KEY=change-me ghcr.io/anantharajuc/queryapigate:' + v,
-      note: 'Every driver except H2, plus Redis, MCP and tracing. Signed, with an SBOM.' },
-    { id: 'helm', label: 'Helm', icon: 'helm', brand: '0F1689', code: v => '$ kubectl create secret generic queryapigate --from-literal=QUERYAPIGATE_API_KEY=change-me\n$ helm install queryapigate oci://ghcr.io/anantharajuc/charts/queryapigate \\\n    --version ' + v + ' --set existingSecret=queryapigate',
-      note: 'One pod on SQLite, or several on PostgreSQL and Redis. Signed; verify before you run it.' },
+    { id: 'pip', label: 'pip', icon: 'python', brand: '3776AB', code: v => '$ pip install queryapigate\n$ export QUERYAPIGATE_API_KEY=demo-key\n$ queryapigate examples load\n$ queryapigate serve\n# http://127.0.0.1:5000 · Console at /console',
+      note: 'Python 3.11+. SQLite included; add drivers as extras: queryapigate[postgres,mysql]. Load the examples and the first request works at once.', links: [['Install and extras →', 'Docs.dc.html#install']] },
+    { id: 'docker', label: 'Docker', icon: 'docker', brand: '2496ED', code: v => '$ docker run -p 5000:5000 -v queryapigate-data:/data \\\n    -e QUERYAPIGATE_API_KEY=change-me ghcr.io/anantharajuc/queryapigate:' + v + '\n\n# several instances behind Caddy\n$ docker compose up -d',
+      note: 'Every driver except H2, plus Redis, MCP and tracing. The image is signed, with provenance and an SBOM.', links: [['Guide 32 · Docker →', 'Guide.dc.html?g=32-deploy-with-docker'], ['Guide 42 · Several instances →', 'Guide.dc.html?g=42-run-several-instances']] },
+    { id: 'helm', label: 'Helm', icon: 'helm', brand: '0F1689', code: v => '$ kubectl create secret generic queryapigate --from-literal=QUERYAPIGATE_API_KEY=change-me\n$ helm install queryapigate oci://ghcr.io/anantharajuc/charts/queryapigate \\\n    --version ' + v + ' ' + this.runHelmSet,
+      note: 'One pod on SQLite, or several on PostgreSQL and Redis. The chart is signed; verify it before you run it.', links: [['Guide 54 · Helm →', 'Guide.dc.html?g=54-install-on-kubernetes-with-helm'], ['Verify the release →', 'Guide.dc.html?g=59-verify-a-release-before-you-run-it']] },
   ];
+  runHelmSet = '--set existingSecret=queryapigate --wait';
   fmtMs(ms) { return ms >= 1000 ? (ms / 1000).toFixed(1) + ' s' : ms >= 100 ? Math.round(ms) + ' ms' : ms.toFixed(1) + ' ms'; }
   // Deep links: #call=<door>/<stage>/<ok|refused>/<key>. Read on load and on hashchange; written when the visitor picks.
   readCallHash() {
@@ -1151,6 +1118,7 @@ class Component extends DCLogic {
     const j = u => fetch(u).then(r => r.ok ? r.json() : null).catch(() => null);
     j('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate').then(gh => gh && this.setState({ gh }));
     j('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate/releases/latest').then(release => release && this.setState({ release }));
+    j('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate/releases?per_page=20').then(list => Array.isArray(list) && list.length && this.setState({ releases: list.filter(r => !r.draft && !r.prerelease) }));
     j('https://pypi.org/pypi/queryapigate/json').then(pypi => pypi && this.setState({ pypi }));
     this.readCallHash();
     this.onCallHash = () => { this.readCallHash(); };
@@ -1189,24 +1157,13 @@ class Component extends DCLogic {
     };
     const ver = pyVer || '0.34.2';
     live.pillVersion = 'v' + ver;
-    live.runVer = ver;
-    const runOpts = [{ num: '01', label: 'pip' }, { num: '02', label: 'Docker' }, { num: '03', label: 'Helm' }];
-    live.runTabs = runOpts.map((o, i) => { const on = i === this.state.run; return { num: o.num, label: o.label, selected: on ? 'true' : 'false', go: () => this.setState({ run: i }),
-      bg: on ? '#10201b' : '#fff', color: on ? '#e6efeb' : '#4a5652', border: on ? '#10201b' : '#c3cdc9', numColor: on ? 'oklch(0.8 0.11 170)' : '#9fb3ac' }; });
-    live.run = {}; runOpts.forEach((o, i) => { const on = i === this.state.run; live.run['vis' + (i + 1)] = on ? 'visible' : 'hidden'; live.run['hid' + (i + 1)] = on ? 'false' : 'true'; });
-    live.runHelmSet = '--set existingSecret=queryapigate --wait';
-    const runCmds = {
-      run1: 'pip install queryapigate\nexport QUERYAPIGATE_API_KEY=demo-key\nqueryapigate examples load\nqueryapigate serve',
-      run2: 'docker run -p 5000:5000 \\\n    -v queryapigate-data:/data \\\n    -e QUERYAPIGATE_API_KEY=change-me \\\n    ghcr.io/anantharajuc/queryapigate:' + ver + '\n\n# several instances behind Caddy\ndocker compose up -d',
-      run3: 'kubectl create secret generic queryapigate \\\n    --from-literal=QUERYAPIGATE_API_KEY=change-me\nhelm install queryapigate \\\n    oci://ghcr.io/anantharajuc/charts/queryapigate \\\n    --version ' + ver + ' \\\n    --set existingSecret=queryapigate --wait',
-    };
-    [1, 2, 3].forEach(i => { live['runCopy' + i] = this.copy('run' + i, runCmds['run' + i]); live['runCopied' + i] = this.state.copied === 'run' + i ? 'Copied' : 'Copy'; });
     live.pillNote = this.releaseNote;
     const inst = this.installs.find(x => x.id === this.state.inst);
     return {
       ...live,
       installTabs: this.installs.map(x => { const on = x.id === inst.id; return { label: x.label, logo: 'https://cdn.simpleicons.org/' + x.icon + '/' + (on ? 'e6efeb' : x.brand), selected: on ? 'true' : 'false', go: () => this.setState({ inst: x.id }), bg: on ? '#10201b' : '#fff', color: on ? '#e6efeb' : '#4a5652', border: on ? '#10201b' : '#c3cdc9' }; }),
-      installPanes: this.installs.map(x => { const on = x.id === inst.id; return { code: x.code(ver), note: x.note, vis: on ? 'visible' : 'hidden', hidden: on ? 'false' : 'true' }; }),
+      bands: this.bands(),
+      installPanes: this.installs.map(x => { const on = x.id === inst.id; return { code: x.code(ver), note: x.note, links: x.links.map(l => ({ t: l[0], h: l[1] })), vis: on ? 'visible' : 'hidden', hidden: on ? 'false' : 'true' }; }),
       installFile: 'install · ' + inst.label,
       langTabs: this.langs.map(x => { const on = x.id === this.state.lang; return { label: x.label, selected: on ? 'true' : 'false', go: () => this.setState({ lang: x.id }), bg: on ? '#e6efeb' : 'transparent', color: on ? '#10201b' : '#9fb3ac', border: on ? '#e6efeb' : '#2a3d37' }; }),
       langPanes: this.langs.map(x => { const on = x.id === this.state.lang; const code = x.code ?? (this.langGen(x.gen) + x.usage); return { vis: on ? 'visible' : 'hidden', hidden: on ? 'false' : 'true', lines: code.split('\n').map(t => ({ t, color: /^\s*(#|\/\/)/.test(t) ? '#9fb3ac' : '#e6efeb' })) }; }),
