@@ -1,0 +1,90 @@
+# QueryAPIGate
+
+> One governed gate between your databases and everything that asks them for data: saved SQL published as REST endpoints, MCP tools for AI agents, live events and scheduled exports, with identity, grants, parameter validation, masking and an audit record on every call. Self-hosted, Python, Apache-2.0.
+
+Site: https://anantharajuc.github.io/QueryAPIGate-website/
+Repository: https://github.com/AnanthaRajuC/QueryAPIGate
+Everything below in one file: https://anantharajuc.github.io/QueryAPIGate-website/llms-full.txt
+
+## Documentation and guides
+
+- [Installation and setup](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=INSTALLATION_AND_SETUP): documentation, Run it
+- [Configuration](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=CONFIGURATION): documentation, Run it
+- [Deployment](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=DEPLOYMENT): documentation, Run it
+- [Database connections](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION): documentation, Run it
+- [API reference](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=API): documentation, Reference
+- [MCP server](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=MCP): documentation, Reference
+- [Features](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=FEATURES): documentation, Reference
+- [Example APIs](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=EXAMPLES): documentation, Reference
+- [Query metadata](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=QUERY_METADATA_MANAGEMENT): documentation, Reference
+- [A tour of the Console](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=SCREENSHOTS): documentation, Reference
+- [Threat model](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=THREAT_MODEL): documentation, Security
+- [Where data goes](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=DATA_PROTECTION): documentation, Security
+- [Security policy](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=SECURITY): documentation, Security
+- [Architecture overview](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=ARCHITECTURE): documentation, Security
+- [Security questionnaire answers](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=QUESTIONNAIRE): documentation, Security
+- [SBOM and release verification](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=SBOM): documentation, Security
+- [Why QueryAPIGate](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=WHY): documentation, Project
+- [Technology stack](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=TECHNOLOGY_STACK): documentation, Project
+- [Contributing](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=CONTRIBUTING): documentation, Project
+- [Code of conduct](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=CODE_OF_CONDUCT): documentation, Project
+- [Guide 01: Turn your first SQL query into a REST API](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=01-turn-your-first-sql-query-into-a-rest-api): how-to, Start
+- [Guide 02: Connect to PostgreSQL, MySQL, SQLite, DuckDB, ClickHouse or H2](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=02-connect-a-database): how-to, Start
+- [Guide 03: Connect to anything else via generic JDBC](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=03-connect-via-generic-jdbc): how-to, Start
+- [Guide 04: Connect to MongoDB](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=04-connect-to-mongodb): how-to, Start
+- [Guide 05: Try it without any setup, using the built-in example APIs](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=05-try-the-built-in-example-apis): how-to, Start
+- [Guide 06: Use bound parameters safely](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=06-use-bound-parameters-safely): how-to, Queries
+- [Guide 07: Group related queries into a collection](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=07-group-queries-into-a-collection): how-to, Queries
+- [Guide 08: Cache a saved query's response](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=08-cache-a-saved-query): how-to, Queries
+- [Guide 09: Export a large result without running out of memory](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=09-stream-a-large-export): how-to, Queries
+- [Guide 10: Allow a saved query to write data](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=10-allow-a-saved-query-to-write-data): how-to, Queries
+- [Guide 11: Browse a connection's schema before writing a query](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=11-browse-a-connections-schema): how-to, Queries
+- [Guide 12: Export a Postman collection for a set of APIs](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=12-export-a-postman-collection): how-to, Queries
+- [Guide 13: Set up your first scoped API key](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=13-set-up-a-scoped-api-key): how-to, Access
+- [Guide 14: Give an external partner access to exactly one query](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=14-give-a-partner-one-query-only): how-to, Access
+- [Guide 15: Create a role and stamp out several keys from it](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=15-create-a-role): how-to, Access
+- [Guide 16: Restrict a key to specific tables](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=16-restrict-a-key-to-tables): how-to, Access
+- [Guide 17: Rate-limit a key, or the whole server](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=17-rate-limit-a-key): how-to, Access
+- [Guide 18: Restrict a key to specific source IPs](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=18-restrict-a-key-to-ips): how-to, Access
+- [Guide 19: Give a key an expiry date](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=19-give-a-key-an-expiry-date): how-to, Access
+- [Guide 20: Read the audit log to answer "who changed this, and when"](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=20-read-the-audit-log): how-to, Access
+- [Guide 21: Verify who can reach what](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=21-verify-who-can-reach-what): how-to, Access
+- [Guide 22: Keep connection passwords out of the store](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=22-encrypt-passwords-at-rest): how-to, Access
+- [Guide 23: Put QueryAPIGate behind a reverse proxy with real TLS](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=23-put-it-behind-a-reverse-proxy): how-to, Operate
+- [Guide 24: Let an AI agent call your saved queries via MCP](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=24-let-an-agent-call-your-queries-via-mcp): how-to, Agents
+- [Guide 25: Let an agent explore your schema and run ad-hoc SQL](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=25-mcp-ad-hoc-tools): how-to, Agents
+- [Guide 26: Read structured MCP results properly](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=26-mcp-structured-results): how-to, Agents
+- [Guide 27: Check whether your MCP server is running, from the Console](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=27-check-the-mcp-server-from-the-console): how-to, Agents
+- [Guide 28: Build a client that watches your saved queries run in real time](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=28-build-a-client-that-watches-queries-run): how-to, Events & exports
+- [Guide 29: Give each user of your app their own private activity feed](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=29-per-key-live-feeds): how-to, Events & exports
+- [Guide 30: Run a scheduled export with cron, systemd or a Kubernetes CronJob](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=30-schedule-an-export): how-to, Events & exports
+- [Guide 31: Get the exact CLI command for a saved query](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=31-get-the-cli-command-for-a-query): how-to, Events & exports
+- [Guide 32: Deploy with Docker for real](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=32-deploy-with-docker): how-to, Operate
+- [Guide 33: Back up and restore the store](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=33-back-up-and-restore): how-to, Operate
+- [Guide 34: Upgrade to a new version safely](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=34-upgrade-safely): how-to, Operate
+- [Guide 35: Wire up Prometheus and Grafana](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=35-wire-up-prometheus-and-grafana): how-to, Operate
+- [Guide 36: Read the logs and trace one request end to end](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=36-trace-a-request-in-the-logs): how-to, Operate
+- [Guide 37: Diagnose and tune the connection pool](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=37-tune-the-connection-pool): how-to, Operate
+- [Guide 38: Allow a browser-based frontend to call the API directly](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=38-allow-a-browser-frontend-cors): how-to, Operate
+- [Guide 39: Read the example APIs as a template for your own](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=39-walk-through-the-example-apis): how-to, Operate
+- [Guide 40: Use the threat model to decide how to expose QueryAPIGate](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=40-read-the-threat-model): how-to, Govern
+- [Guide 41: Publish Parquet, CSV or JSON files in S3 as an API](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=41-publish-files-in-s3-as-an-api): how-to, Events & exports
+- [Guide 42: Run several instances behind a load balancer](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=42-run-several-instances): how-to, Operate
+- [Guide 43: Give your team their own admin access](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=43-give-your-team-their-own-admin-access): how-to, Govern
+- [Guide 44: Deliver a daily file to a partner's bucket](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=44-deliver-a-daily-file-to-a-partners-bucket): how-to, Events & exports
+- [Guide 45: Hide personal data from a partner or an AI agent](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=45-hide-personal-data-from-a-partner-or-an-ai-agent): how-to, Govern
+- [Guide 46: Let AI clients sign in through your identity provider](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=46-let-ai-clients-sign-in-through-your-identity-provider): how-to, Agents
+- [Guide 47: Tell AI agents what your data means, and see what they did](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=47-tell-agents-what-your-data-means-and-see-what-they-did): how-to, Agents
+- [Guide 48: Sign in to the Console through your identity provider](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=48-sign-in-to-the-console-through-your-identity-provider): how-to, Govern
+- [Guide 49: Let an AI agent write - with a person approving each write](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=49-let-an-agent-write-with-a-person-approving-each-write): how-to, Agents
+- [Guide 50: Rotate an API key without downtime](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=50-rotate-an-api-key-without-downtime): how-to, Govern
+- [Guide 51: See QueryAPIGate in your traces](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=51-see-queryapigate-in-your-traces): how-to, Operate
+- [Guide 52: Give a partner a quota and a concurrency cap](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=52-give-a-partner-a-quota-and-a-concurrency-cap): how-to, Access
+- [Guide 53: Send the audit log to your SIEM, and prove nobody edited it](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=53-send-the-audit-log-to-your-siem): how-to, Govern
+- [Guide 54: Install on Kubernetes with Helm](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=54-install-on-kubernetes-with-helm): how-to, Operate
+- [Guide 55: Promote a setup from dev to prod through a pull request](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request): how-to, Operate
+- [Guide 56: Use short-lived database credentials from Vault](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=56-use-short-lived-database-credentials-from-vault): how-to, Access
+- [Guide 57: Answer a security questionnaire about data and cryptography](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=57-answer-a-security-questionnaire-about-data-and-cryptography): how-to, Govern
+- [Guide 58: Keep the server's own secrets, and its metrics, in](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=58-keep-the-servers-own-secrets-and-metrics-in): how-to, Operate
+- [Guide 59: Verify a release before you run it](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=59-verify-a-release-before-you-run-it): how-to, Govern
+- [Guide 60: Give each team its own workspace](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=60-give-each-team-its-own-workspace): how-to, Access

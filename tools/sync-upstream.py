@@ -8,6 +8,7 @@ What it does, in order:
      section, plus each guide's "Time" and "You'll end up with" line. A guide already in guides.js keeps the
      category it was given here; a new one gets the category its upstream section maps to (SECTION_MAP).
      New top-level documents in documentation/ are added to the `docs` export, grouped by DOC_CAT (else Reference), titled from their H1.
+  4. search-index.json, llms.txt and llms-full.txt are rebuilt from the documents, guides and pages (tools/search_index.py).
   3. Rewrites the guide count wherever a page states it ("All 59 guides", "59 how-to guides", the home-page stat).
 
 Run it by hand (python3 tools/sync-upstream.py) or let .github/workflows/sync-upstream.yml run it daily.
@@ -131,9 +132,13 @@ def main():
         if write_if_changed(name, fetch(f'https://raw.githubusercontent.com/{REPO}/{BRANCH}/{name}')): changed.append(name)
     guides, index_changed, new_guides, unknown = rebuild_index()
     touched = rewrite_counts(len(guides))
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import search_index
+    n_entries, search_changed = search_index.build()
     print(f'files updated: {len(changed)}' + (' -> ' + ', '.join(changed) if changed else ''))
     print(f'guides.js: {"rewritten" if index_changed else "unchanged"} · {len(guides)} guides' + (' · new: ' + ', '.join(g["num"] + " " + g["title"] + " [" + g["cat"] + "]" for g in new_guides) if new_guides else ''))
     if touched: print('guide count rewritten in: ' + ', '.join(touched))
+    print(f'search index: {n_entries} entries' + (' · written: ' + ', '.join(search_changed) if search_changed else ' · unchanged'))
     if unknown: print('WARNING: upstream sections without a category mapping (defaulted to Operate): ' + ', '.join(sorted(unknown))); return 2
     return 0
 
