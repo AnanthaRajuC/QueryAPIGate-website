@@ -345,9 +345,10 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </header>
   <section id="architecture" style="scroll-margin-top:72px;max-width:1240px;margin:0 auto;padding:72px 24px 24px;display:grid;gap:10px">
+    <h2 style="margin:0 0 14px;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(32px,4.4vw,56px);line-height:1.04;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">One governed gate between your databases and <span style="color:oklch(0.52 0.11 170)">everything that asks them for data</span>.</h2>
     <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">How it fits together</span>
     <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">From caller to database, through one core</h2>
-    <p style="margin:0;color:#4a5652;max-width:70ch">Every front door runs the same checks, so an AI agent's call is governed exactly like an app's. The core is the product; the front doors and drivers plug into it.</p>
+    <p style="margin:0;font-size:18px;color:#4a5652;text-wrap:pretty">Every front door runs the same checks, so an AI agent's call is governed exactly like an app's. The core is the product; the front doors and drivers plug into it. Write the SQL once; QueryAPIGate publishes it as a REST endpoint, an MCP tool, a live event stream and a scheduled export, and reports every call to the systems you name.</p>
   </section>
   <section class="arch-m" style="padding:0 16px 56px">
     <div style="display:grid;gap:8px">
@@ -365,9 +366,9 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
   <section class="arch-d" style="max-width:1920px;margin:0 auto;padding:0 24px 72px">
-    <div ref="{{ wrapRef }}" style="width:100%;overflow:hidden;border-radius:14px;border:1px solid #dbe2df;background:#f3f5f4;height:{{ wrapHeight }}">
-      <div style="width:1920px;height:1080px;transform-origin:0 0;transform:{{ diagramTransform }}">
-        <dc-import name="QueryAPIGate Architecture" hint-size="1920px,1080px"></dc-import>
+    <div ref="{{ wrapRef }}" style="width:100%;overflow:hidden;border-radius:14px;background:#f3f5f4;height:{{ wrapHeight }}">
+      <div style="width:1920px;height:900px;transform-origin:0 0;transform:{{ diagramTransform }}">
+        <dc-import name="QueryAPIGate Architecture" hint-size="1920px,900px"></dc-import>
       </div>
     </div>
   </section>
@@ -991,7 +992,7 @@ class Component extends DCLogic {
       copyLang: this.copy('lang', (() => { const x = this.langs.find(l => l.id === this.state.lang) || this.langs[0]; return x.code ?? (this.langGen(x.gen) + x.usage); })()),
       copiedLang: this.state.copied === 'lang' ? 'Copied' : 'Copy',
       copyInstall: this.copy('install', inst.code(ver).replace(/^\$ /gm, '')), copiedInstall: this.state.copied === 'install' ? 'Copied' : 'Copy',
-      wrapRef: this.wrapRef, diagramTransform: `scale(${s})`, wrapHeight: Math.round(1080 * s) + 'px',
+      wrapRef: this.wrapRef, diagramTransform: `scale(${s})`, wrapHeight: Math.round(900 * s) + 'px',
       cats: this.cats.map(c => ({ label: c.label, go: () => this.setState({ cat: c.id, catAuto: false }), bg: c.id === cat ? '#10201b' : '#fff', color: c.id === cat ? '#e6efeb' : '#4a5652', border: c.id === cat ? '#10201b' : '#dbe2df' })),
       dbs, catNote: this.cats.find(c => c.id === cat).note,
       fdRef: this.fdRef, fdNext: this.fdNext,
