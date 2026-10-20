@@ -23,6 +23,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+@media (max-width:640px){.hero-badges{grid-template-columns:minmax(0,max-content) !important}}
 .hs-row{display:flex;flex-wrap:wrap;margin-top:4px;border:1px solid #dbe2df;border-radius:12px;background:#fff;overflow:hidden}
 .hs-tile{display:flex;align-items:center;gap:12px;padding:12px 20px;flex:1 1 auto;box-sizing:border-box;min-width:0;border-left:1px solid #dbe2df}
 .hs-tile:first-child{border-left:none}
@@ -97,47 +98,6 @@ a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 
 .arch-m{display:none}
 @media (max-width:700px){.arch-d{display:none}.arch-m{display:block}}
 @media (max-width:700px){.cmp-grid > div{padding:12px 14px !important;font-size:14px !important}.cmp-arrow{display:none !important}}
-
-/* integrations hub */
-.ig-grid{display:grid;grid-template-columns:minmax(0,1fr) 44px 208px 44px minmax(0,1fr);align-items:center}
-.ig-stack{display:grid;min-width:0}
-.ig-slot{position:relative;padding:8px 0}
-.ig-left .ig-slot{padding-right:26px}
-.ig-right .ig-slot{padding-left:26px}
-.ig-left .ig-slot::before,.ig-right .ig-slot::before{content:"";position:absolute;top:0;bottom:0}
-.ig-left .ig-slot::before{right:0;border-right:1.5px solid #c3cdc9}
-.ig-right .ig-slot::before{left:0;border-left:1.5px solid #c3cdc9}
-.ig-slot:first-child::before{top:50%}
-.ig-slot:last-child::before{bottom:50%}
-.ig-left .ig-slot::after,.ig-right .ig-slot::after{content:"";position:absolute;top:50%;width:26px;border-top:1.5px solid #c3cdc9}
-.ig-left .ig-slot::after{right:0}
-.ig-right .ig-slot::after{left:0}
-.ig-conn{border-top:1.5px solid #c3cdc9}
-.ig-card{background:#fff;border:1px solid #dbe2df;border-radius:12px;padding:14px 16px;display:grid;gap:10px}
-.ig-items{display:flex;flex-wrap:wrap;gap:6px 4px}
-.ig-item{position:relative;display:grid;justify-items:center;gap:6px;width:76px;text-align:center;font-size:12px;line-height:1.25;color:#4a5652}
-.ig-logo{width:44px;height:44px;border-radius:10px;border:1px solid #dbe2df;background:#fff;display:grid;place-items:center;transition:border-color .2s}
-.ig-mark{display:block;width:24px;height:24px;filter:grayscale(1);opacity:.72;transition:filter .2s,opacity .2s}
-.ig-glyph{display:block;width:22px;height:22px;background:#7c8783;transition:background .2s}
-.ig-item:hover .ig-mark{filter:none;opacity:1}
-.ig-item:hover .ig-glyph{background:oklch(0.52 0.11 170)}
-.ig-item:hover .ig-logo{border-color:#9fb3ac}
-.ig-ci{position:absolute;top:-6px;right:calc(50% - 30px);width:17px;height:17px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;box-shadow:0 0 0 2px #fff}
-.ig-more{font-size:12.5px;color:#626d69}
-.ig-hub{box-sizing:border-box;background:#10201b;color:#e6efeb;border-radius:18px;padding:26px 18px;display:grid;justify-items:center;gap:10px;text-align:center;box-shadow:0 30px 60px -30px rgba(16,32,27,0.5)}
-.ig-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-@keyframes igIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:no-preference){@supports (animation-timeline:view()){
-  .ig-card,.ig-hub{animation:igIn linear both;animation-timeline:view();animation-range:entry 0% entry 55%}
-}}
-@media (max-width:900px){
-  .ig-grid{grid-template-columns:minmax(0,1fr);gap:12px}
-  .ig-conn{display:none}
-  .ig-hub{order:-1;justify-self:center;width:100%;max-width:340px}
-  .ig-left .ig-slot,.ig-right .ig-slot{padding:0}
-  .ig-left .ig-slot::before,.ig-right .ig-slot::before,.ig-left .ig-slot::after,.ig-right .ig-slot::after{display:none}
-  .ig-stack{gap:12px}
-}
 
 /* mobile menu + code wrapping */
 .rs-burger{display:none}
@@ -301,7 +261,6 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 
   <header class="rs-2col" style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px 56px;align-items:center">
     <div style="display:grid;gap:22px;min-width:0">
-      <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Self-hosted · Python · Apache-2.0{{ latestLabel }}</span>
       <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(38px,5vw,64px);line-height:1.02;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">One governed gate between your databases and <span style="color:oklch(0.52 0.11 170)">everything that asks them for data</span>.</h1>
       <p style="margin:0;font-size:18px;color:#4a5652;max-width:58ch;text-wrap:pretty">Write the SQL once. QueryAPIGate publishes it as a REST endpoint, an MCP tool for AI agents, a live event stream and a scheduled export. Each call checks who is asking and what they may see, and leaves a record.</p>
     </div>
@@ -333,8 +292,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         </div>
         <a href="Docs.dc.html#install" style="font-size:15px;font-weight:600;color:#17201d;padding:12px 18px;border:1px solid #c3cdc9;border-radius:8px;background:#fff;text-decoration:none" style-hover="border-color:#17201d">All install options →</a>
       </div>
-      <div style="display:flex;gap:10px 20px;flex-wrap:wrap;font-size:13px;color:#4a5652">
-        <span style="display:inline-flex;align-items:center;gap:6px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(0.52 0.11 170)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 6h.01M6 18h.01"/></svg>Self-hosted: your data never leaves</span>
+      <div class="hero-badges" style="display:grid;grid-template-columns:repeat(2,max-content);gap:10px 24px;font-size:13px;color:#4a5652">
+        <span style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(0.52 0.11 170)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 6h.01M6 18h.01"/></svg>Self-hosted: your data never leaves</span>
         <span style="display:inline-flex;align-items:center;gap:6px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(0.52 0.11 170)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Signed releases with provenance and SBOM</span>
         <span style="display:inline-flex;align-items:center;gap:6px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(0.52 0.11 170)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>Open source, Apache-2.0</span>
         <span style="display:inline-flex;align-items:center;gap:6px"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="oklch(0.52 0.11 170)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>Python 3.11+, one process</span>
@@ -421,23 +380,6 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section aria-labelledby="integrations-h" style="border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df;background:#f8faf9">
-    <div style="max-width:1240px;margin:0 auto;padding:64px 24px;display:grid;gap:28px">
-      <div style="display:grid;gap:8px;justify-items:center;text-align:center">
-        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Integrations</span>
-        <h2 id="integrations-h" style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Fits the stack you already run</h2>
-        <p style="margin:0;color:#4a5652;max-width:60ch;text-wrap:pretty">Your identity provider, secrets manager, monitoring, SIEM and platform, connected through open standards: OIDC, OTLP, syslog, Prometheus and MCP.</p>
-      </div>
-      <div class="ig-grid">
-        <div class="ig-stack ig-left"><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Identity</span><div class="ig-items"><div class="ig-item" title="Keycloak: sign-in for the Console, AI clients and app users over OIDC. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/keycloak) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>Keycloak</span></div></div><span class="ig-more">and any OIDC provider or JWKS issuer</span></div></div><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Secrets</span><div class="ig-items"><div class="ig-item" title="Vault: KV secrets and short-lived database credentials per lease. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/vault) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>HashiCorp Vault</span></div><div class="ig-item" title="AWS Secrets Manager and RDS IAM tokens (experimental)."><span class="ig-logo"><span class="ig-glyph" style="-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/cloud.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/cloud.svg) center/contain no-repeat"></span></span><span>AWS</span></div></div><span class="ig-more">AWS Secrets Manager and RDS IAM tokens are experimental</span></div></div><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Observability</span><div class="ig-items"><div class="ig-item" title="Prometheus: per-key metrics at /metrics, behind a token."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/prometheus) center/contain no-repeat"></span></span><span>Prometheus</span></div><div class="ig-item" title="Grafana: a bundled dashboard."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/grafana) center/contain no-repeat"></span></span><span>Grafana</span></div><div class="ig-item" title="OpenTelemetry: tracing spans that never hold a value or a row (experimental)."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/opentelemetry) center/contain no-repeat"></span></span><span>OpenTelemetry</span></div></div><span class="ig-more">and any OTLP trace collector; tracing is experimental</span></div></div><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Audit and SIEM</span><div class="ig-items"><div class="ig-item" title="rsyslog: the audit log over RFC 5425 syslog with mutual TLS. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-glyph" style="-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/scroll-text.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/scroll-text.svg) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>rsyslog</span></div><div class="ig-item" title="syslog-ng: the audit log over RFC 5425 syslog with mutual TLS. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-glyph" style="-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/scroll-text.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/scroll-text.svg) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>syslog-ng</span></div><div class="ig-item" title="OpenTelemetry Collector: the audit log as OTLP logs. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/opentelemetry) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>OTel Collector</span></div></div><span class="ig-more">and any RFC 5425 syslog or OTLP log receiver</span></div></div></div>
-        <div class="ig-conn" aria-hidden="true"></div>
-        <div class="ig-hub"><svg aria-hidden="true" width="46" height="46" viewBox="0 0 32 32" style="display:block"><rect width="32" height="32" rx="7" fill="#16302a"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><b style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px">Query<span style="color:oklch(0.8 0.11 170)">API</span>Gate</b><span style="font-size:12.5px;color:#9fb3ac">One governed gate</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9fb3ac;line-height:1.6">REST · MCP · events<br>exports · Console</span></div>
-        <div class="ig-conn" aria-hidden="true"></div>
-        <div class="ig-stack ig-right"><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Platform</span><div class="ig-items"><div class="ig-item" title="Kubernetes: installed and upgraded under load on a kind cluster in CI. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/kubernetes) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>Kubernetes</span></div><div class="ig-item" title="Helm: the signed chart, from ghcr. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/helm) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>Helm</span></div><div class="ig-item" title="Docker: the signed image on ghcr, and Compose for several instances."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/docker) center/contain no-repeat"></span></span><span>Docker</span></div><div class="ig-item" title="Caddy: the reference load balancer for several instances."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/caddy) center/contain no-repeat"></span></span><span>Caddy</span></div></div></div></div><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">Shared state</span><div class="ig-items"><div class="ig-item" title="PostgreSQL: the shared store for several instances. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/postgresql) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>PostgreSQL</span></div><div class="ig-item" title="Redis: shared cache, rate limits, quotas and concurrency caps. Tested against the real software in CI on every change."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/redis) center/contain no-repeat"></span></span><span class="ig-ci" aria-hidden="true">✓</span><span class="ig-sr">, tested in CI</span><span>Redis</span></div></div></div></div><div class="ig-slot"><div class="ig-card"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d">AI agents</span><div class="ig-items"><div class="ig-item" title="Model Context Protocol: saved queries as tools, OAuth 2.1 sign-in."><span class="ig-logo"><span class="ig-mark" style="background:url(https://cdn.simpleicons.org/modelcontextprotocol) center/contain no-repeat"></span></span><span>MCP</span></div></div><span class="ig-more">and any MCP client</span></div></div></div>
-      </div>
-      <p style="margin:0;text-align:center;font-size:13px;color:#626d69"><span style="display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-size:9px;font-weight:700;vertical-align:-2px">✓</span> tested against the real software in CI on every change. The others are documented and run in the <a href="Guides.dc.html">guides</a>.</p>
-    </div>
-  </section>
 
   <section style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df">
     <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:36px">
@@ -971,7 +913,6 @@ class Component extends DCLogic {
       hasStars: stars !== null, stars: stars !== null ? fmt(stars) : '', starsSuffix: stars !== null ? ' · ' + fmt(stars) : '',
       issues: typeof gh?.open_issues_count === 'number' ? String(gh.open_issues_count) : '—', licence: 'Apache-2.0',
       latestTag: tag || (pyVer ? 'v' + pyVer : '—'), pypiVersion: pyVer || '—',
-      latestLabel: pyVer ? ' · v' + pyVer + ' on PyPI' : '',
     };
     const ver = pyVer || '0.34.2';
     live.pillVersion = 'v' + ver;
