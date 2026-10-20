@@ -29,6 +29,7 @@
 .req-tab{font:inherit;display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 7px;border-radius:999px;border:1px solid;cursor:pointer;font-size:13.5px;font-weight:600;transition:background 0.2s,color 0.2s,border-color 0.2s}
 .req-tab small{font-weight:400;font-size:12px}
 .req-tab .req-ico{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;flex:none;transition:background 0.2s}
+@media (max-width:700px){.req-head{min-height:62px}.req-desc{min-height:7.8em !important}.req-rows>div{grid-template-columns:96px minmax(0,1fr) !important}.req-rows>div>span:last-child{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-width:0;height:3em}.req-links{min-height:120px !important}.req-foot{min-height:82px !important}}
 @media (max-width:700px){.req-steps{display:flex !important;overflow-x:auto;gap:4px;scrollbar-width:none;padding-bottom:4px}.req-steps>li{flex:none;width:190px}.req-steps .req-line{display:none}}
 @media (max-width:640px){.hero-badges{grid-template-columns:minmax(0,max-content) !important}}
 .hs-row{display:flex;flex-wrap:wrap;margin-top:4px;border:1px solid #dbe2df;border-radius:12px;background:#fff;overflow:hidden}
@@ -361,7 +362,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
           </sc-for>
         </div>
         <div style="display:grid;gap:6px;min-width:0;flex:1 1 320px">
-          <div style="display:flex;justify-content:space-between;gap:12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#626d69;white-space:nowrap"><span>where the time goes, stage by stage</span><span>{{ totalMs }}</span></div>
+          <div style="display:flex;justify-content:space-between;gap:4px 12px;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:11px;color:#626d69"><span style="white-space:nowrap">where the time goes, stage by stage</span><span style="white-space:nowrap">{{ totalMs }}</span></div>
           <div style="display:flex;gap:3px;height:8px" aria-hidden="true">
             <sc-for list="{{ timeBar }}" as="tb" hint-placeholder-count="8"><span onClick="{{ tb.pick }}" title="{{ tb.title }}" style="flex:{{ tb.flex }};min-width:5px;border-radius:2px;background:{{ tb.bg }};cursor:pointer;transition:background 0.3s"></span></sc-for>
           </div>
@@ -380,14 +381,15 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
           </sc-for>
         </ol>
 
+        <div style="display:grid;grid-template-rows:minmax(0,1fr) auto;gap:10px;min-width:0">
         <div style="position:relative;border:1px solid {{ panelBorder }};border-radius:14px;background:radial-gradient(ellipse 70% 50% at 50% 0%, {{ panelGlow }}, transparent 70%),#fff;padding:26px 28px 24px;display:grid;grid-template-rows:auto auto auto auto minmax(0,1fr);gap:16px;min-width:0;overflow:hidden;transition:border-color 0.3s;align-content:start">
           <div style="position:absolute;left:0;right:0;top:0;height:2px;background:#e8edeb"><span style="display:block;height:100%;background:{{ barColor }};transform-origin:left;transform:{{ barTransform }};transition:{{ barTransition }}"></span></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
+          <div class="req-head" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
             <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">Stage {{ cur.num }} · {{ cur.layer }} · {{ cur.who }}</span>
             <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.04em;padding:4px 9px;border-radius:999px;background:{{ cur.statusBg }};color:{{ cur.statusColor }};border:1px solid {{ cur.statusBorder }};transition:background 0.3s,color 0.3s,border-color 0.3s">{{ cur.status }}</span>
           </div>
-          <div style="display:grid;gap:6px;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">{{ cur.title }}</h3><p style="margin:0;color:#4a5652;max-width:66ch;min-height:3.1em">{{ cur.desc }}</p></div>
-          <div style="display:grid;gap:1px;background:#dbe2df;border:1px solid #dbe2df;border-radius:10px;overflow:hidden;align-self:start;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
+          <div style="display:grid;gap:6px;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">{{ cur.title }}</h3><p class="req-desc" style="margin:0;color:#4a5652;max-width:66ch;min-height:3.1em">{{ cur.desc }}</p></div>
+          <div class="req-rows" style="display:grid;gap:1px;background:#dbe2df;border:1px solid #dbe2df;border-radius:10px;overflow:hidden;align-self:start;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
             <sc-for list="{{ cur.rows }}" as="r" hint-placeholder-count="3">
               <div class="rs-2col" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px;padding:9px 14px;background:#f8faf9;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.5"><span style="color:#626d69">{{ r.k }}</span><span style="color:#17201d;overflow-wrap:anywhere">{{ r.v }} <span style="color:{{ r.markColor }}">{{ r.mark }}</span></span></div>
             </sc-for>
@@ -396,11 +398,12 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
             <div style="display:flex;align-items:center;gap:10px;padding:6px 10px 6px 12px;border-bottom:1px solid #1b2f29"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:8px;height:8px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:8px;height:8px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:8px;height:8px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ cur.outLabelColor }}">{{ cur.outLabel }}</span></div>
             {{ outNode }}
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px 20px;flex-wrap:wrap;font-size:12.5px;color:#626d69;min-height:58px">
+          <div class="req-foot" style="display:flex;justify-content:space-between;align-items:center;gap:12px 20px;flex-wrap:wrap;font-size:12.5px;color:#626d69;min-height:34px">
             <button type="button" onClick="{{ failToggle.go }}" disabled="{{ failToggle.disabled }}" style="font:inherit;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:8px;border:1px solid {{ failToggle.border }};background:{{ failToggle.bg }};color:{{ failToggle.color }};cursor:{{ failToggle.cursor }};transition:background 0.2s,color 0.2s,border-color 0.2s">{{ failToggle.label }}</button>
-            <span style="display:flex;gap:6px 14px;flex-wrap:wrap;flex:1;min-width:0"><sc-for list="{{ cur.links }}" as="lk" hint-placeholder-count="3"><a href="{{ lk.h }}" style="color:#4a5652;font-weight:500;white-space:nowrap" style-hover="color:#17201d">{{ lk.t }} →</a></sc-for></span>
             <span style="font-family:'JetBrains Mono',monospace;white-space:nowrap">cumulative {{ cur.elapsed }}</span>
           </div>
+        </div>
+        <div class="req-links" style="display:flex;gap:6px 18px;flex-wrap:wrap;align-items:baseline;align-content:flex-start;padding:0 6px;font-size:13.5px;min-height:48px;opacity:{{ detailOpacity }};transition:opacity 0.22s"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Go deeper</span><sc-for list="{{ cur.links }}" as="lk" hint-placeholder-count="3"><a href="{{ lk.h }}" style="font-weight:500;white-space:nowrap">{{ lk.t }} →</a></sc-for></div>
         </div>
       </div>
     </div>
