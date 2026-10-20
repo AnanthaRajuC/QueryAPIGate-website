@@ -23,6 +23,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+.hs-row{display:flex;flex-wrap:wrap;margin-top:4px;border:1px solid #dbe2df;border-radius:12px;background:#fff;overflow:hidden}
+.hs-tile{display:flex;align-items:center;gap:12px;padding:12px 20px;flex:1 1 auto;box-sizing:border-box;min-width:0;border-left:1px solid #dbe2df}
+.hs-tile:first-child{border-left:none}
+.hs-ico{flex:none;width:34px;height:34px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.1);position:relative}
+.hs-ico::after{content:'';position:absolute;inset:8px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+@media (max-width:900px){.hs-tile{flex:1 1 33%;border-left:none;border-top:1px solid #dbe2df}.hs-tile:nth-child(-n+3){border-top:none}}
+@media (max-width:520px){.hs-tile{flex:1 1 50%;padding:10px 14px;border-left:none}.hs-tile:nth-child(3){border-top:1px solid #dbe2df}.hs-tile:nth-child(even){border-left:1px solid #dbe2df}}
 body{margin:0;background:#f3f5f4;color:#17201d;font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
 a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 170);text-decoration:underline}
 
@@ -292,7 +299,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </a>
   </div>
 
-  <header class="rs-2col" style="max-width:1240px;margin:0 auto;padding:56px 24px 48px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px 56px;align-items:center">
+  <header class="rs-2col" style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px 56px;align-items:center">
     <div style="display:grid;gap:22px;min-width:0">
       <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Self-hosted · Python · Apache-2.0{{ latestLabel }}</span>
       <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(38px,5vw,64px);line-height:1.02;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">One governed gate between your databases and <span style="color:oklch(0.52 0.11 170)">everything that asks them for data</span>.</h1>
@@ -334,17 +341,17 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       </div>
     </div>
     <div style="grid-column:1/-1">
-      <div style="display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:6px">
-        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">9</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">database types</span></div>
-        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">5</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">front doors</span></div>
-        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">8</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">output formats</span></div>
-        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">~50</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">client languages</span></div>
-        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">60</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">how-to guides</span></div>
-        <sc-if value="{{ hasStars }}" hint-placeholder-val="{{ false }}"><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">{{ stars }}</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em">GitHub stars</span></div></sc-if>
+      <div class="hs-row" aria-label="At a glance">
+        <div class="hs-tile"><span class="hs-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)" aria-hidden="true"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">9</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">database types</span></div></div>
+        <div class="hs-tile"><span class="hs-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/door-open.svg)" aria-hidden="true"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">5</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">front doors</span></div></div>
+        <div class="hs-tile"><span class="hs-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-output.svg)" aria-hidden="true"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">8</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">output formats</span></div></div>
+        <div class="hs-tile"><span class="hs-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/code.svg)" aria-hidden="true"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">~50</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">client languages</span></div></div>
+        <div class="hs-tile"><span class="hs-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/book-open.svg)" aria-hidden="true"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">60</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">how-to guides</span></div></div>
+        <sc-if value="{{ hasStars }}" hint-placeholder-val="{{ false }}"><div class="hs-tile"><span class="hs-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/star.svg)" aria-hidden="true"></span><div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">{{ stars }}</b><span style="font-size:12px;color:#626d69;letter-spacing:0.03em;white-space:nowrap">GitHub stars</span></div></div></sc-if>
       </div>
     </div>
   </header>
-  <section id="architecture" style="scroll-margin-top:72px;max-width:1240px;margin:0 auto;padding:72px 24px 24px;display:grid;gap:10px">
+  <section id="architecture" style="scroll-margin-top:72px;max-width:1240px;margin:0 auto;padding:36px 24px 24px;display:grid;gap:10px">
     <h2 style="margin:0 0 14px;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(32px,4.4vw,56px);line-height:1.04;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">One governed gate between your databases and <span style="color:oklch(0.52 0.11 170)">everything that asks them for data</span>.</h2>
     <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">How it fits together</span>
     <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">From caller to database, through one core</h2>
