@@ -42,6 +42,35 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+/* Features sections: one template. Header row, a framed stage with the section's demonstration, a grid of fact cards, a dotted rule. */
+.stage{border:1px solid #dbe2df;border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 30px 60px -44px rgba(16,32,27,0.3)}
+.stage-top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid #e8edeb;background:#f8faf9;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#626d69}
+.stage-top i{display:inline-block;width:7px;height:7px;border-radius:2px;background:oklch(0.52 0.11 170);margin-right:10px;vertical-align:1px}
+.f-page{gap:0 !important}
+.f-sec2{padding:64px 0 0;display:grid;gap:32px;align-content:start}
+.f-sec2:first-child{padding-top:24px}
+.f-sec2+.f-sec2{margin-top:64px;position:relative}
+.f-sec2+.f-sec2::before{content:'';position:absolute;left:0;right:0;top:0;height:1px;background:radial-gradient(circle,#b3bfba 0.4px,transparent 0.7px) 0 0/8px 1px repeat-x}
+.fs-head{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px 56px;align-items:end}
+.fs-head-l{display:grid;gap:14px;justify-items:start}
+.fs-eyerow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.fs-eyebrow{font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)}
+.fs-head h2{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(26px,2.6vw,34px);line-height:1.12;font-weight:700;letter-spacing:-0.015em;text-wrap:balance}
+.fs-head-r{display:grid;gap:12px;align-content:end;font-size:16px;line-height:1.55;color:#4a5652}
+.fs-head-r>p{margin:0;max-width:none;text-wrap:pretty}.fs-head-r>a{font-size:14px;font-weight:600}
+.fs-stage-body{padding:28px;display:grid;gap:40px;min-width:0}
+.fs-stage-body h3{font-size:20px !important}
+.fs-stage-dark{background:#10201b;color:#e6efeb}
+.fs-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.fs-facts-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.fs-card{background:#fff;border:1px solid #dbe2df;border-radius:12px;padding:20px 22px;display:grid;gap:8px;align-content:start;min-width:0}
+.fs-card h3,.fs-card h4{margin:0;font-size:16px;font-weight:600;line-height:1.3}
+.fs-card p{margin:0;font-size:14px;color:#4a5652;line-height:1.5}
+.fs-card a{font-size:13.5px;font-weight:600}
+.f-sec2 .f-gov{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) !important}
+@media (max-width:1100px){.f-sec2 .f-gov{grid-template-columns:minmax(0,1fr) !important}.f-sec2 .f-gov > div[style*="position:sticky"]{position:static !important}}
+@media (max-width:960px){.fs-head{grid-template-columns:minmax(0,1fr)}.fs-facts,.fs-facts-4{grid-template-columns:repeat(2,minmax(0,1fr))}.fs-stage-body{padding:18px;gap:28px}}
+@media (max-width:640px){.fs-facts,.fs-facts-4{grid-template-columns:minmax(0,1fr)}.f-sec2{padding-top:44px}.f-sec2+.f-sec2{margin-top:44px}.fs-stage-body{padding:14px;gap:22px}.fs-stage-body .f-badges{grid-template-columns:minmax(0,1fr) !important}}
 .rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:30;display:grid;gap:13px;transition:opacity 0.25s;}
 .rail.hide{opacity:0;pointer-events:none}
 .rail{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
@@ -87,10 +116,6 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   .f-pad{padding-left:16px !important;padding-right:16px !important}
   .f-table th:nth-child(3),.f-table td:nth-child(3){display:none}
 }
-.f-panel-dark{background:#10201b;color:#e6efeb;border-radius:16px;padding:36px}
-/* Beside the rail the panels are narrower: the Govern table and its example stack instead of sitting side by side. */
-.f-panels .f-gov{grid-template-columns:minmax(0,1fr) !important}.f-panels .f-gov > div[style*="position:sticky"]{position:static !important}
-@media (max-width:900px){.f-panel-dark{padding:20px}}
 @media (max-width:1180px){.f-sub{top:70px !important}}
 .f-bento > .f-last{grid-column:span 4}
 @media (max-width:960px){.f-bento > .f-last{grid-column:span 2 !important}}
@@ -265,37 +290,36 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     <a href="#prove" data-rail="prove"><span>Prove</span></a>
   </nav>
   <div class="f-page" style="max-width:1240px;margin:0 auto;padding:24px 24px 72px;display:grid;gap:64px">
-  <section id="connect" role="tabpanel" class="f-panel" style="scroll-margin-top:84px">
-    <div class="f-pad f-sec" style="padding:0 0 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:48px;align-items:start">
-      <div style="display:grid;gap:14px;position:sticky;top:84px">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">01 · Connect</span><a class="f-path" href="Guides.dc.html?path=start"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Start here →</a>
-        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Every major database, one interface</h2>
-        <p style="margin:0;color:#4a5652;text-wrap:pretty">Saved queries, grants, masking, limits and the audit log work the same on every connection. Tier 1 types are under the compatibility promise and tested against the real database in CI; experimental types work, with the gaps the support matrix lists.</p>
-        <a href="Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION" style="font-size:14px;font-weight:600">The support matrix →</a>
-      </div>
-      <div style="display:grid;gap:28px;min-width:0">
-        <div style="display:grid;gap:14px;padding:24px;background:#fff;border:1px solid #dbe2df;border-radius:14px">
+  <section id="connect" class="f-sec2" style="scroll-margin-top:84px">
+    <div class="fs-head">
+      <div class="fs-head-l"><div class="fs-eyerow"><span class="fs-eyebrow">01 · Connect</span><a class="f-path" href="Guides.dc.html?path=start"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Start here →</a></div><h2>Every major database, one interface</h2></div>
+      <div class="fs-head-r"><p>Saved queries, grants, masking, limits and the audit log work the same on every connection. Tier 1 types are under the compatibility promise and tested against the real database in CI; experimental types work, with the gaps the support matrix lists.</p><a href="Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION" style="font-size:14px;font-weight:600">The support matrix →</a></div>
+    </div>
+    <div class="stage fs-stage"><div class="stage-top"><span><i></i>QueryAPIGate ~ connect · the support matrix at a glance</span></div>
+      <div class="fs-stage-body">
+<div style="display:grid;gap:14px">
           <div style="display:grid;gap:8px"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Tier 1</span><div style="display:flex;flex-wrap:wrap;gap:8px"><span style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid #dbe2df;font-size:14px;font-weight:500"><span aria-hidden="true" style="width:18px;height:18px;background:url(https://cdn.simpleicons.org/postgresql) center/contain no-repeat"></span>PostgreSQL</span><span style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid #dbe2df;font-size:14px;font-weight:500"><span aria-hidden="true" style="width:18px;height:18px;background:url(https://cdn.simpleicons.org/mysql) center/contain no-repeat"></span>MySQL</span><span style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid #dbe2df;font-size:14px;font-weight:500"><span aria-hidden="true" style="width:18px;height:18px;background:url(https://cdn.simpleicons.org/sqlite) center/contain no-repeat"></span>SQLite</span><span style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid #dbe2df;font-size:14px;font-weight:500"><span aria-hidden="true" style="width:18px;height:18px;background:url(https://cdn.simpleicons.org/duckdb) center/contain no-repeat"></span>DuckDB</span><span style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid #dbe2df;font-size:14px;font-weight:500"><span aria-hidden="true" style="width:18px;height:18px;background:url(https://cdn.simpleicons.org/clickhouse) center/contain no-repeat"></span>ClickHouse</span></div></div>
           <div style="display:grid;gap:8px"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Experimental</span><div style="display:flex;flex-wrap:wrap;gap:8px"><span style="display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px solid #dbe2df;font-size:14px;font-weight:500"><span aria-hidden="true" style="width:18px;height:18px;background:url(https://cdn.simpleicons.org/mongodb) center/contain no-repeat"></span>MongoDB (find)</span><span style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid #dbe2df;font-size:14px;font-weight:500">H2</span><span style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid #dbe2df;font-size:14px;font-weight:500">Generic JDBC: Oracle, SQL Server, DB2…</span></div></div>
           <div style="display:grid;gap:8px"><span style="font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">Files, through DuckDB</span><div style="display:flex;flex-wrap:wrap;gap:8px"><span style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid #dbe2df;font-size:14px;font-weight:500">Parquet · CSV · JSON</span><span style="display:inline-flex;align-items:center;padding:8px 12px;border-radius:8px;border:1px solid #dbe2df;font-size:14px;font-weight:500">S3 · GCS · R2 · HTTPS · disk</span></div></div>
         </div>
-        <div class="f-3col" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 32px">
-          <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Pooling and time limits</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Idle connections kept per connection, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_POOL_SIZE</code>, and a query time limit enforced on every front door (on every database type but generic JDBC), lowered per key or per request with <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">?timeout</code>.</p><a href="Guide.dc.html?g=37-tune-the-connection-pool" style="font-size:13.5px;font-weight:600">Guide 37 →</a></div>
-          <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">TLS to the database</h3><p style="margin:0;font-size:14.5px;color:#4a5652">PostgreSQL's <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">sslmode</code> and MySQL's <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">ssl_*</code> settings are passed to the driver: a connection that asks for a verified certificate fails rather than connecting without one.</p></div>
-          <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">No passwords in the store</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Passwords as <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">${VAR}</code> references or encrypted at rest under a key you can rotate; or short-lived credentials from Vault or RDS IAM <span style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:3px 6px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12);color:oklch(0.6 0.13 75)">Exp</span>.</p><a href="Guide.dc.html?g=56-use-short-lived-database-credentials-from-vault" style="font-size:13.5px;font-weight:600">Guide 56 →</a></div>
-          <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Ad-hoc SQL, governed</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">POST /execute_sql</code> for keys that are allowed it: one statement, read-only unless granted, confined to <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">allowed_tables</code>, and recorded like any saved query.</p><a href="Guide.dc.html?g=16-restrict-a-key-to-tables" style="font-size:13.5px;font-weight:600">Guide 16 →</a></div>
-        </div>
       </div>
+    </div>
+    <div class="fs-facts fs-facts-4">
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">Pooling and time limits</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Idle connections kept per connection, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_POOL_SIZE</code>, and a query time limit enforced on every front door (on every database type but generic JDBC), lowered per key or per request with <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">?timeout</code>.</p><a href="Guide.dc.html?g=37-tune-the-connection-pool" style="font-size:13.5px;font-weight:600">Guide 37 →</a></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">TLS to the database</h3><p style="margin:0;font-size:14.5px;color:#4a5652">PostgreSQL's <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">sslmode</code> and MySQL's <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">ssl_*</code> settings are passed to the driver: a connection that asks for a verified certificate fails rather than connecting without one.</p></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">No passwords in the store</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Passwords as <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">${VAR}</code> references or encrypted at rest under a key you can rotate; or short-lived credentials from Vault or RDS IAM <span style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:3px 6px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12);color:oklch(0.6 0.13 75)">Exp</span>.</p><a href="Guide.dc.html?g=56-use-short-lived-database-credentials-from-vault" style="font-size:13.5px;font-weight:600">Guide 56 →</a></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">Ad-hoc SQL, governed</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">POST /execute_sql</code> for keys that are allowed it: one statement, read-only unless granted, confined to <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">allowed_tables</code>, and recorded like any saved query.</p><a href="Guide.dc.html?g=16-restrict-a-key-to-tables" style="font-size:13.5px;font-weight:600">Guide 16 →</a></div>
     </div>
   </section>
 
-  <section id="build" role="tabpanel" class="f-panel" style="scroll-margin-top:84px">
-    <div class="f-pad" style="padding:0 0 24px;display:grid;gap:64px">
-      <div style="display:grid;gap:12px;max-width:70ch">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">02 · Build</span>
-        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">From a SQL statement to a documented endpoint</h2>
-      </div>
-      <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:48px;align-items:center">
+  <section id="build" class="f-sec2" style="scroll-margin-top:84px">
+    <div class="fs-head">
+      <div class="fs-head-l"><div class="fs-eyerow"><span class="fs-eyebrow">02 · Build</span></div><h2>From a SQL statement to a documented endpoint</h2></div>
+      <div class="fs-head-r"><p>Write the SQL once. QueryAPIGate publishes it as a documented endpoint with typed parameters, versions and generated clients.</p></div>
+    </div>
+    <div class="stage fs-stage"><div class="stage-top"><span><i></i>QueryAPIGate ~ build · from a statement to an endpoint</span></div>
+      <div class="fs-stage-body">
+<div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:48px;align-items:center">
         <div style="display:grid;gap:12px"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">Saved queries as endpoints</h3><p style="margin:0;color:#4a5652">Each saved query is versioned, has typed parameters with ranges and lengths, and keeps a run history. OpenAPI and a Postman collection are generated, and <a href="https://openapi-generator.tech/docs/generators">OpenAPI Generator</a> turns the spec into a typed client in about 50 languages. Group queries into collections and grant access to the whole collection at once.</p></div>
         <div style="background:#10201b;border:none;border-radius:10px;overflow:hidden;min-width:0;box-shadow:0 20px 40px -24px rgba(16,32,27,0.5);"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #1b2f29"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">curl</span><button type="button" class="copy-btn" onClick="{{ copyCurl }}" aria-label="Copy" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedCurl }}</button></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.65;overflow-x:auto;min-width:0"><span style="color:#9fb3ac">$</span> curl 'http://127.0.0.1:5000/q/example_top_films?top_n=2&category=Comedy&format=csv' \
     -H 'X-API-Key: demo-key'
@@ -303,7 +327,7 @@ title,category,rating,rentals,rank
 Electric Signal,Comedy,PG,977,1
 Crimson Garden,Comedy,PG-13,631,2</pre></div>
       </div>
-      <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:48px;align-items:center">
+<div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:48px;align-items:center">
         <div style="display:grid;gap:12px;min-width:0"><div style="background:#10201b;border:none;border-radius:10px;overflow:hidden;min-width:0;box-shadow:0 20px 40px -24px rgba(16,32,27,0.5);"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #1b2f29"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">query_parameters.json</span><button type="button" class="copy-btn" onClick="{{ copyRules }}" aria-label="Copy" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedRules }}</button></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.65;overflow-x:auto;min-width:0"><span style="color:#9fb3ac">// query_parameters</span>
 {
   <span style="color:#a7d7c5">"rating"</span>:     {<span style="color:#a7d7c5">"type"</span>: "str", <span style="color:#a7d7c5">"enum"</span>: ["G","PG","R"], <span style="color:#a7d7c5">"default"</span>: "PG"},
@@ -324,7 +348,7 @@ Crimson Garden,Comedy,PG-13,631,2</pre></div>
         </div>
         <div style="display:grid;gap:12px"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">Typed parameters, checked before the database</h3><p style="margin:0;color:#4a5652">Each <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">:name</code> in the SQL is a bound parameter with a type, bounds, length, enum, pattern and default. A request that breaks a rule gets a 400 listing every problem and never reaches the database. <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">from_claim</code> takes a value from the caller's sign-in token instead of the request, so a user can only ever ask for their own rows.</p></div>
       </div>
-      <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:48px;align-items:center">
+<div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:48px;align-items:center">
         <div style="display:grid;gap:12px"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">Versions, drafts, publishing</h3><p style="margin:0;color:#4a5652">Every saved query has at most one published version: the one <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/q/&lt;name&gt;</code> runs and the one OpenAPI, MCP and Postman describe. Newer versions are drafts, invisible to callers until published; the admin key can test one by number. Roll back to any earlier version. Older versions stay runnable with <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">?version=</code>.</p></div>
         <div style="display:grid;gap:12px;min-width:0">
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;align-items:stretch">
@@ -335,18 +359,17 @@ Crimson Garden,Comedy,PG-13,631,2</pre></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button type="button" class="f-btn primary" onClick="{{ verPublish }}" disabled="{{ verPubOff }}">Publish v4</button><button type="button" class="f-btn" onClick="{{ verRollback }}" disabled="{{ verRollOff }}">Roll back to v3</button><button type="button" class="f-btn" onClick="{{ verReset }}" style="border-color:transparent;color:#626d69">Reset</button><span style="font-size:12.5px;color:#626d69">{{ verNote }}</span></div>
         </div>
       </div>
+      </div>
     </div>
   </section>
 
-  <section id="govern" role="tabpanel" class="f-panel f-panel-dark" style="scroll-margin-top:84px">
-    <div class="f-pad" style="padding:0 0 24px;display:grid;gap:48px">
-      <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:end">
-        <div style="display:grid;gap:12px">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">03 · Govern</span><a class="f-path dark" href="Guides.dc.html?path=partner"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Give a partner an API →</a>
-          <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Access control, per key, decided before any query runs</h2>
-        </div>
-        <p style="margin:0;color:#9fb3ac;text-wrap:pretty">A key identifies an application. Every grant below narrows what that key reaches; roles bundle a shape of grants into a reusable template. Writes are off by default.</p>
-      </div>
+  <section id="govern" class="f-sec2" style="scroll-margin-top:84px">
+    <div class="fs-head">
+      <div class="fs-head-l"><div class="fs-eyerow"><span class="fs-eyebrow">03 · Govern</span><a class="f-path" href="Guides.dc.html?path=partner"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Give a partner an API →</a></div><h2>Access control, per key, decided before any query runs</h2></div>
+      <div class="fs-head-r"><p>A key identifies an application. Every grant below narrows what that key reaches; roles bundle a shape of grants into a reusable template. Writes are off by default.</p></div>
+    </div>
+    <div class="stage fs-stage"><div class="stage-top"><span><i></i>QueryAPIGate ~ govern · every control a key carries</span></div>
+      <div class="fs-stage-body fs-stage-dark">
       <div class="f-gov" style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:16px;align-items:start">
       <div style="border:1px solid #243b34;border-radius:14px;background:#0c1915;overflow:hidden">
         <div style="overflow-x:auto">
@@ -393,25 +416,19 @@ Crimson Garden,Comedy,PG-13,631,2</pre></div>
         <div style="display:grid;gap:8px;max-width:70ch"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">Administrators and sign-in</h3><p style="margin:0;color:#9fb3ac">The people and pipelines that manage the server are named, with the narrowest role that fits, so every change in the audit log has a person behind it.</p></div>
         <p style="margin:0;font-size:14.5px;font-weight:600"><a href="Enterprise.dc.html#identity" style="color:oklch(0.8 0.11 170)">Single sign-on, the four administrator roles and the break-glass key, on the Enterprise page →</a></p>
       </div>
+    
+      </div>
     </div>
   </section>
 
-  <section id="deliver" role="tabpanel" class="f-panel" style="scroll-margin-top:84px">
-    <div class="f-pad" style="padding:0 0 24px;display:grid;gap:56px">
-      <div style="display:grid;gap:12px;max-width:70ch">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">04 · Deliver</span><a class="f-path" href="Guides.dc.html?path=data"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Ship data out →</a>
-        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Formats, channels and the Console that manages it all</h2>
-      </div>
-      <div class="f-3col" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 32px">
-        <div style="display:grid;gap:6px;padding:22px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Eight output formats</h3><p style="margin:0;font-size:14.5px;color:#4a5652">JSON, NDJSON, CSV, TSV, XML, YAML, XLSX and Parquet. Paginated for typical results; constant-memory streaming with <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">?stream=true</code> for exports too large to hold in memory.</p></div>
-        <div style="display:grid;gap:6px;padding:22px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">MCP for AI agents</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate mcp</code> exposes saved queries as tools with structured results, ad-hoc tools where allowed, and table and column descriptions. AI clients sign in with OAuth 2.1 through your identity provider, or an API key. Usage is recorded per agent, and write tools wait for a person's approval.</p></div>
-        <div style="display:grid;gap:6px;padding:22px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600;display:flex;gap:8px;align-items:center">Live events</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Server-sent events as queries run, per key if you want. <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate events</code> reads every instance's runs from the shared store, woken by a PostgreSQL notification.</p></div>
-        <div style="display:grid;gap:6px;padding:22px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Scheduled exports</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate export</code> writes a full result to a file, in-process. Atomic rename on completion, non-zero exit on failure, deliveries to S3, GCS, R2 or disk that resume where the last run stopped.</p></div>
-        <div style="display:grid;gap:6px;padding:22px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Files as tables</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Point a connection at a folder or bucket of Parquet, CSV or JSON and each file becomes a view through DuckDB, locked to the paths that connection allows.</p></div>
-        <div style="display:grid;gap:6px;padding:22px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Response cache</h3><p style="margin:0;font-size:14.5px;color:#4a5652">A per-query <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">cache_ttl</code>, in-process by default. With Redis, one cache shared by every instance, surviving restarts.</p></div>
-      </div>
-
-      <div style="display:grid;gap:24px">
+  <section id="deliver" class="f-sec2" style="scroll-margin-top:84px">
+    <div class="fs-head">
+      <div class="fs-head-l"><div class="fs-eyerow"><span class="fs-eyebrow">04 · Deliver</span><a class="f-path" href="Guides.dc.html?path=data"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Ship data out →</a></div><h2>Formats, channels and the Console that manages it all</h2></div>
+      <div class="fs-head-r"><p>Eight output formats, paged or streamed; MCP for agents, live events, scheduled exports and files as tables; and the Console that manages all of it, with everything it does also on the management API.</p></div>
+    </div>
+    <div class="stage fs-stage"><div class="stage-top"><span><i></i>QueryAPIGate ~ deliver · the Console, screen by screen</span></div>
+      <div class="fs-stage-body">
+<div style="display:grid;gap:24px">
         <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:end">
           <div style="display:grid;gap:10px"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">The Console</h3><p style="margin:0;color:#4a5652">Manage connections, saved queries, API keys and roles. Run ad-hoc SQL with a schema browser. Review the audit log and alerts, approve agents' writes, manage administrators, exports and quotas, and see who can reach what on the access map.</p></div>
           <p style="margin:0;font-size:14.5px;color:#4a5652;text-wrap:pretty">Served from <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/console</code>, nothing extra to install. Everything it does is also available on the Management API.</p>
@@ -441,42 +458,52 @@ Crimson Garden,Comedy,PG-13,631,2</pre></div>
           </div>
         </div>
       </div>
+      </div>
+    </div>
+    <div class="fs-facts">
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">Eight output formats</h3><p style="margin:0;font-size:14.5px;color:#4a5652">JSON, NDJSON, CSV, TSV, XML, YAML, XLSX and Parquet. Paginated for typical results; constant-memory streaming with <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">?stream=true</code> for exports too large to hold in memory.</p></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">MCP for AI agents</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate mcp</code> exposes saved queries as tools with structured results, ad-hoc tools where allowed, and table and column descriptions. AI clients sign in with OAuth 2.1 through your identity provider, or an API key. Usage is recorded per agent, and write tools wait for a person's approval.</p></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600;display:flex;gap:8px;align-items:center">Live events</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Server-sent events as queries run, per key if you want. <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate events</code> reads every instance's runs from the shared store, woken by a PostgreSQL notification.</p></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">Scheduled exports</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate export</code> writes a full result to a file, in-process. Atomic rename on completion, non-zero exit on failure, deliveries to S3, GCS, R2 or disk that resume where the last run stopped.</p></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">Files as tables</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Point a connection at a folder or bucket of Parquet, CSV or JSON and each file becomes a view through DuckDB, locked to the paths that connection allows.</p></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">Response cache</h3><p style="margin:0;font-size:14.5px;color:#4a5652">A per-query <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">cache_ttl</code>, in-process by default. With Redis, one cache shared by every instance, surviving restarts.</p></div>
     </div>
   </section>
 
-  <section id="developers" role="tabpanel" class="f-panel" style="scroll-margin-top:84px">
-    <div class="f-pad f-sec" style="padding:0 0 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:48px;align-items:start">
-      <div style="display:grid;gap:14px;position:sticky;top:84px">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">05 · Developers</span>
-        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Documented, predictable and scriptable</h2>
-        <p style="margin:0;color:#4a5652;text-wrap:pretty">What it is like to build against. Every error has the same shape, every response carries a request ID, and the whole setup can live in one reviewed YAML file.</p>
-        <div style="background:#10201b;border:none;border-radius:10px;overflow:hidden;min-width:0;box-shadow:0 20px 40px -24px rgba(16,32,27,0.5);"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #1b2f29"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">error.json</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.04em;padding:3px 8px;border-radius:999px;background:oklch(0.62 0.13 170 / 0.14);color:oklch(0.8 0.11 170);border:1px solid oklch(0.62 0.13 170 / 0.35);white-space:nowrap">403 forbidden</span></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65;overflow-x:auto;min-width:0"><span style="color:#f2b8a0">403</span> {
+  <section id="developers" class="f-sec2" style="scroll-margin-top:84px">
+    <div class="fs-head">
+      <div class="fs-head-l"><div class="fs-eyerow"><span class="fs-eyebrow">05 · Developers</span></div><h2>Documented, predictable and scriptable</h2></div>
+      <div class="fs-head-r"><p>What it is like to build against. Every error has the same shape, every response carries a request ID, and the whole setup can live in one reviewed YAML file.</p></div>
+    </div>
+    <div class="stage fs-stage"><div class="stage-top"><span><i></i>QueryAPIGate ~ developers · one error shape, everywhere</span></div>
+      <div class="fs-stage-body">
+<div style="background:#10201b;border:none;border-radius:10px;overflow:hidden;min-width:0;box-shadow:0 20px 40px -24px rgba(16,32,27,0.5);"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #1b2f29"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">error.json</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.04em;padding:3px 8px;border-radius:999px;background:oklch(0.62 0.13 170 / 0.14);color:oklch(0.8 0.11 170);border:1px solid oklch(0.62 0.13 170 / 0.35);white-space:nowrap">403 forbidden</span></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65;overflow-x:auto;min-width:0"><span style="color:#f2b8a0">403</span> {
   "error": "key may not run this query",
   "code": <span style="color:#a7d7c5">"forbidden"</span>,
   "request_id": "req_01J9…"
 }</pre></div>
       </div>
-      <div class="f-3col" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 32px">
-        <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Interactive docs and a catalogue</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/docs</code> lists every saved query as its own endpoint with typed parameters; <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/catalog</code> tells each caller what it can call and on what terms: cached, writable, its rate limit.</p></div>
-        <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Stable error codes</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Every error has the same shape: <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">error</code>, a <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">code</code> and a <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">request_id</code>. Codes are part of the compatibility promise: an existing one is never renamed or repurposed.</p></div>
-        <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">HTTP done properly</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">ETag</code> and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">304 Not Modified</code> on cached responses, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">If-Match</code> for safe concurrent edits, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">X-Has-More</code> and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">X-Row-Count</code> for paging, and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">?timeout</code> per request.</p></div>
-        <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Typed clients</h3><p style="margin:0;font-size:14.5px;color:#4a5652">OpenAPI 3.0, validated in CI, turned into a client in about 50 languages by OpenAPI Generator; a Postman collection per collection.</p><a href="Home.dc.html" style="font-size:13.5px;font-weight:600">See it on Home →</a></div>
-        <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Everything scriptable</h3><p style="margin:0;font-size:14.5px;color:#4a5652">The Management API, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/api/v1</code>, does everything the Console does: connections, queries, keys, roles, administrators, audit. Or keep the whole setup in one YAML file.</p><a href="Guide.dc.html?g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request" style="font-size:13.5px;font-weight:600">Guide 55 →</a></div>
-        <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Collections as a unit</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Group queries, grant them together, rename, export and import a collection between servers, and hand out its Postman collection.</p><a href="Guide.dc.html?g=07-group-queries-into-a-collection" style="font-size:13.5px;font-weight:600">Guide 7 →</a></div>
-        <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Browser front ends</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_CORS_ORIGINS</code> for the sites you control, with your users' own tokens rather than a shared key in the page.</p><a href="Guide.dc.html?g=38-allow-a-browser-frontend-cors" style="font-size:13.5px;font-weight:600">Guide 38 →</a></div>
-        <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Try it without setup</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate examples load</code>: four worked APIs on a generated database, with collections, roles and a scoped key for each.</p><a href="Guide.dc.html?g=05-try-the-built-in-example-apis" style="font-size:13.5px;font-weight:600">Guide 5 →</a></div>
-      </div>
+    </div>
+    <div class="fs-facts fs-facts-4">
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">Interactive docs and a catalogue</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/docs</code> lists every saved query as its own endpoint with typed parameters; <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/catalog</code> tells each caller what it can call and on what terms: cached, writable, its rate limit.</p></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">Stable error codes</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Every error has the same shape: <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">error</code>, a <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">code</code> and a <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">request_id</code>. Codes are part of the compatibility promise: an existing one is never renamed or repurposed.</p></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">HTTP done properly</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">ETag</code> and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">304 Not Modified</code> on cached responses, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">If-Match</code> for safe concurrent edits, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">X-Has-More</code> and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">X-Row-Count</code> for paging, and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">?timeout</code> per request.</p></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">Typed clients</h3><p style="margin:0;font-size:14.5px;color:#4a5652">OpenAPI 3.0, validated in CI, turned into a client in about 50 languages by OpenAPI Generator; a Postman collection per collection.</p><a href="Home.dc.html" style="font-size:13.5px;font-weight:600">See it on Home →</a></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">Everything scriptable</h3><p style="margin:0;font-size:14.5px;color:#4a5652">The Management API, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/api/v1</code>, does everything the Console does: connections, queries, keys, roles, administrators, audit. Or keep the whole setup in one YAML file.</p><a href="Guide.dc.html?g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request" style="font-size:13.5px;font-weight:600">Guide 55 →</a></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">Collections as a unit</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Group queries, grant them together, rename, export and import a collection between servers, and hand out its Postman collection.</p><a href="Guide.dc.html?g=07-group-queries-into-a-collection" style="font-size:13.5px;font-weight:600">Guide 7 →</a></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">Browser front ends</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_CORS_ORIGINS</code> for the sites you control, with your users' own tokens rather than a shared key in the page.</p><a href="Guide.dc.html?g=38-allow-a-browser-frontend-cors" style="font-size:13.5px;font-weight:600">Guide 38 →</a></div>
+      <div class="fs-card"><h3 style="margin:0;font-size:16px;font-weight:600">Try it without setup</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate examples load</code>: four worked APIs on a generated database, with collections, roles and a scoped key for each.</p><a href="Guide.dc.html?g=05-try-the-built-in-example-apis" style="font-size:13.5px;font-weight:600">Guide 5 →</a></div>
     </div>
   </section>
 
-  <section id="operate" role="tabpanel" class="f-panel" style="scroll-margin-top:84px">
-    <div class="f-pad" style="padding:0 0 24px;display:grid;gap:48px">
-      <div style="display:grid;gap:12px;max-width:70ch">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">06 · Operate</span><a class="f-path" href="Guides.dc.html?path=prod"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Go to production →</a>
-        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Every run recorded, every change audited</h2>
-        <p style="margin:0;color:#4a5652;text-wrap:pretty">Run history is per query and per key, with duration, rows and what was masked. The audit log records who changed what, by named administrator. Alerts are live conditions, worked out on each request and gone once the cause is.</p>
-      </div>
-      <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:18px;align-items:start">
+  <section id="operate" class="f-sec2" style="scroll-margin-top:84px">
+    <div class="fs-head">
+      <div class="fs-head-l"><div class="fs-eyerow"><span class="fs-eyebrow">06 · Operate</span><a class="f-path" href="Guides.dc.html?path=prod"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Go to production →</a></div><h2>Every run recorded, every change audited</h2></div>
+      <div class="fs-head-r"><p>Run history is per query and per key, with duration, rows and what was masked. The audit log records who changed what, by named administrator. Alerts are live conditions, worked out on each request and gone once the cause is.</p></div>
+    </div>
+    <div class="stage fs-stage"><div class="stage-top"><span><i></i>QueryAPIGate ~ operate · run history and alerts</span></div>
+      <div class="fs-stage-body">
+<div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:18px;align-items:start">
         <div style="display:grid;gap:1px;background:#dbe2df;border:1px solid #dbe2df;border-radius:14px;overflow:hidden">
           <div style="background:#fff;padding:20px 22px;display:grid;gap:4px"><h3 style="margin:0;font-size:15px;font-weight:600">Run history</h3><p style="margin:0;font-size:14px;color:#4a5652">When, which connection, which key, through which front door, how long, how many rows. Ad-hoc and MCP runs too.</p></div>
           <div style="background:#fff;padding:20px 22px;display:grid;gap:4px"><h3 style="margin:0;font-size:15px;font-weight:600">Audit log</h3><p style="margin:0;font-size:14px;color:#4a5652">Timestamp, actor, action, target and the fields that changed, each entry chained to the one before. Secrets appear as <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">"changed"</code>, never their value.</p></div>
@@ -493,33 +520,30 @@ Crimson Garden,Comedy,PG-13,631,2</pre></div>
           <p style="margin:0;font-size:13px;color:#626d69">Shown on the Console's Alerts screen, the bell in its header, and Home's System health. For paging, scrape <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/metrics</code> with Prometheus.</p>
         </div>
       </div>
-      <div style="display:grid;gap:20px">
-        <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">Operations</h3>
-        <div class="f-3col" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 32px">
-          <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h4 style="margin:0;font-size:16px;font-weight:600">Store</h4><p style="margin:0;font-size:14.5px;color:#4a5652">A SQLite file by default, or PostgreSQL for several instances. Versioned schema with upgrades tested in CI, backup and restore, passwords encrypted at rest.</p></div>
-          <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h4 style="margin:0;font-size:16px;font-weight:600">Scale out</h4><p style="margin:0;font-size:14.5px;color:#4a5652">Redis, optional: one cache, one rate-limit budget and one event stream across every instance. If Redis blinks, limits stay enforced per process.</p></div>
-          <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h4 style="margin:0;font-size:16px;font-weight:600">Observe</h4><p style="margin:0;font-size:14.5px;color:#4a5652">Structured logs with request IDs, per-key metrics, a Prometheus <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/metrics</code> endpoint behind a token, a bundled Grafana dashboard, and OpenTelemetry spans <span style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:3px 6px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12);color:oklch(0.6 0.13 75)">Exp</span> from the request to the database call, never holding a value or a row.</p></div>
-          <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h4 style="margin:0;font-size:16px;font-weight:600">Deploy</h4><p style="margin:0;font-size:14.5px;color:#4a5652">pip, the image on ghcr (with an <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">-h2</code> variant including Java), a Helm chart for one pod or several, and a multi-instance Compose setup behind Caddy. Non-root, read-only root filesystem.</p></div>
-          <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h4 style="margin:0;font-size:16px;font-weight:600">Configuration as code</h4><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">config export</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">config diff</code> and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">config apply</code>: the whole setup as one YAML file with no secret in it, reviewed in a pull request and applied all or nothing, by CI or at startup.</p></div>
-          <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h4 style="margin:0;font-size:16px;font-weight:600">Secrets</h4><p style="margin:0;font-size:14.5px;color:#4a5652">Passwords encrypted at rest under a key you can rotate, or no password at all: <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">${file:…}</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">${vault:…}</code> and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">${aws-sm:…}</code> references, short-lived credentials from Vault or RDS IAM. <span style="color:#a0661a">AWS paths experimental.</span></p></div>
-        </div>
       </div>
+    </div>
+    <div class="fs-facts">
+      <div class="fs-card"><h4 style="margin:0;font-size:16px;font-weight:600">Store</h4><p style="margin:0;font-size:14.5px;color:#4a5652">A SQLite file by default, or PostgreSQL for several instances. Versioned schema with upgrades tested in CI, backup and restore, passwords encrypted at rest.</p></div>
+      <div class="fs-card"><h4 style="margin:0;font-size:16px;font-weight:600">Scale out</h4><p style="margin:0;font-size:14.5px;color:#4a5652">Redis, optional: one cache, one rate-limit budget and one event stream across every instance. If Redis blinks, limits stay enforced per process.</p></div>
+      <div class="fs-card"><h4 style="margin:0;font-size:16px;font-weight:600">Observe</h4><p style="margin:0;font-size:14.5px;color:#4a5652">Structured logs with request IDs, per-key metrics, a Prometheus <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/metrics</code> endpoint behind a token, a bundled Grafana dashboard, and OpenTelemetry spans <span style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:3px 6px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12);color:oklch(0.6 0.13 75)">Exp</span> from the request to the database call, never holding a value or a row.</p></div>
+      <div class="fs-card"><h4 style="margin:0;font-size:16px;font-weight:600">Deploy</h4><p style="margin:0;font-size:14.5px;color:#4a5652">pip, the image on ghcr (with an <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">-h2</code> variant including Java), a Helm chart for one pod or several, and a multi-instance Compose setup behind Caddy. Non-root, read-only root filesystem.</p></div>
+      <div class="fs-card"><h4 style="margin:0;font-size:16px;font-weight:600">Configuration as code</h4><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">config export</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">config diff</code> and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">config apply</code>: the whole setup as one YAML file with no secret in it, reviewed in a pull request and applied all or nothing, by CI or at startup.</p></div>
+      <div class="fs-card"><h4 style="margin:0;font-size:16px;font-weight:600">Secrets</h4><p style="margin:0;font-size:14.5px;color:#4a5652">Passwords encrypted at rest under a key you can rotate, or no password at all: <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">${file:…}</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">${vault:…}</code> and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">${aws-sm:…}</code> references, short-lived credentials from Vault or RDS IAM. <span style="color:#a0661a">AWS paths experimental.</span></p></div>
     </div>
   </section>
 
-  <section id="prove" role="tabpanel" class="f-panel" style="scroll-margin-top:84px">
-    <div class="f-pad" style="padding:0 0 24px;display:grid;gap:40px">
-      <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:end">
-        <div style="display:grid;gap:12px">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">07 · Prove</span><a class="f-path" href="Guides.dc.html?path=prod"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Go to production →</a>
-          <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">The evidence an auditor or a security questionnaire asks for</h2>
-        </div>
-        <p style="margin:0;color:#4a5652;text-wrap:pretty">Audit, cryptography and release signing are explained on the <a href="Enterprise.dc.html">Enterprise page</a>, with a security pack to download. Data handling is in the <a href="Trust.dc.html">Trust center</a>.</p>
-      </div>
-      <div class="f-badges" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:#dbe2df;border:1px solid #dbe2df;border-radius:14px;overflow:hidden">
+  <section id="prove" class="f-sec2" style="scroll-margin-top:84px">
+    <div class="fs-head">
+      <div class="fs-head-l"><div class="fs-eyerow"><span class="fs-eyebrow">07 · Prove</span><a class="f-path" href="Guides.dc.html?path=prod"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Go to production →</a></div><h2>The evidence an auditor or a security questionnaire asks for</h2></div>
+      <div class="fs-head-r"><p>Audit, cryptography and release signing are explained on the <a href="Enterprise.dc.html">Enterprise page</a>, with a security pack to download. Data handling is in the <a href="Trust.dc.html">Trust center</a>.</p></div>
+    </div>
+    <div class="stage fs-stage"><div class="stage-top"><span><i></i>QueryAPIGate ~ prove · what a release ships with</span></div>
+      <div class="fs-stage-body">
+<div class="f-badges" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:#dbe2df">
         <div style="background:#fff;padding:26px;display:grid;gap:10px;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:0.06em;color:oklch(0.52 0.11 170);text-transform:uppercase">Audit · FIPS · cosign</span><h3 style="margin:0;font-size:17px;font-weight:600">Audit, cryptography and signed releases</h3><p style="margin:0;font-size:14.5px;color:#4a5652">The signed audit log and its copy in your SIEM, FIPS-approved cryptography, and releases you can verify before they run.</p><a href="Enterprise.dc.html#audit" style="font-size:13.5px;font-weight:600">Enterprise →</a></div>
         <div style="background:#fff;padding:26px;display:grid;gap:10px;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:0.06em;color:oklch(0.52 0.11 170);text-transform:uppercase">Data map</span><h3 style="margin:0;font-size:17px;font-weight:600">Where data goes</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Every place data is kept or sent, for how long and who reads it. Query strings kept out of the access log. <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">history forget</code> erases one person's runs on request.</p><a href="Guide.dc.html?d=DATA_PROTECTION" style="font-size:13.5px;font-weight:600">Read it →</a></div>
         <div style="background:#fff;padding:26px;display:grid;gap:10px;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:0.06em;color:oklch(0.52 0.11 170);text-transform:uppercase">Headers · SRI</span><h3 style="margin:0;font-size:17px;font-weight:600">Hardened at the edge</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Security headers on every response from all three servers, a pinned Swagger UI with Subresource Integrity, no version banner.</p><a href="Security.dc.html" style="font-size:13.5px;font-weight:600">Security →</a></div>
+      </div>
       </div>
     </div>
   </section>
