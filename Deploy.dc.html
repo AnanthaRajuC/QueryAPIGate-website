@@ -16,6 +16,24 @@
 <!-- /site-meta -->
 <script src="./support.js"></script>
 <script src="./search.js?v=2" defer></script>
+<script>
+(function () {
+  // Section rail on the left: marks the section in view; clicking scrolls without touching the hash.
+  var ids = ['top','shapes','compare','ports','benchmarks','checklist'], raf = 0;
+  function update() {
+    raf = 0;
+    var links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
+    var line = window.innerHeight * 0.35, cur = ids[0];
+    for (var i = 0; i < ids.length; i++) { var el = document.getElementById(ids[i]); if (el && el.getBoundingClientRect().top <= line) cur = ids[i]; }
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = ids[ids.length - 1];
+    for (var j = 0; j < links.length; j++) links[j].classList.toggle('on', links[j].getAttribute('data-rail') === cur);
+  }
+  function tick() { if (!raf) raf = requestAnimationFrame(update); }
+  window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
+  document.addEventListener('click', function (e) { var a = e.target.closest('.rail a[data-rail]'); if (!a) return; var el = document.getElementById(a.getAttribute('data-rail')); if (!el) return; e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
+})();
+</script>
 </head>
 <body>
 <x-dc>
@@ -24,6 +42,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+.rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:30;display:grid;gap:13px;transition:opacity 0.25s;}
+.rail.hide{opacity:0;pointer-events:none}
+.rail{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
+.rail a{display:flex;align-items:center;gap:12px;color:#9fb3ac;text-decoration:none;transition:color 0.2s}
+.rail a::before{content:'';flex:none;width:22px;height:1px;background:#c3cdc9;transition:width 0.25s,background 0.25s,height 0.25s}
+.rail a:hover{color:#17201d;text-decoration:none}
+.rail a.on{color:#17201d}.rail a.on::before{width:40px;height:2px;background:oklch(0.52 0.11 170)}
+@media (max-width:1599px){.rail span{opacity:0;visibility:hidden;transform:translateX(-6px);transition:opacity 0.2s,transform 0.2s,visibility 0.2s}.rail:hover span{opacity:1;visibility:visible;transform:none}}
+@media (max-width:1279px){.rail{display:none}}
+@media (prefers-reduced-motion:reduce){.rail a::before,.rail span{transition:none}}
 .rs-ghn svg{display:block}
 .rs-ghn-n{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1;color:#626d69;min-width:0}
 .rs-ghn-n:empty{display:none}
@@ -59,7 +87,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   .f-pad{padding-left:16px !important;padding-right:16px !important}
   .f-table th:nth-child(3),.f-table td:nth-child(3){display:none}
 }
-.f-sub{scrollbar-width:none;top:64px !important}
+.f-panel-dark{background:#10201b;color:#e6efeb;border-radius:16px;padding:36px}
+@media (max-width:900px){.f-panel-dark{padding:20px}}
 @media (max-width:1180px){.f-sub{top:70px !important}}
 .d-hdr{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end}
 @media (max-width:960px){.d-hdr{grid-template-columns:minmax(0,1fr)}}
@@ -227,7 +256,15 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       </div>
     </div>
   </nav>
-  <header class="f-pad" style="max-width:1240px;margin:0 auto;padding:96px 24px 56px;display:grid;gap:22px;justify-items:center;text-align:center">
+  <nav class="rail" aria-label="Sections">
+    <a href="#top" data-rail="top"><span>Start</span></a>
+    <a href="#shapes" data-rail="shapes"><span>Shapes</span></a>
+    <a href="#compare" data-rail="compare"><span>Side by side</span></a>
+    <a href="#ports" data-rail="ports"><span>Ports</span></a>
+    <a href="#benchmarks" data-rail="benchmarks"><span>Benchmarks</span></a>
+    <a href="#checklist" data-rail="checklist"><span>Checklist</span></a>
+  </nav>
+  <header id="top" class="f-pad" style="scroll-margin-top:72px;max-width:1240px;margin:0 auto;padding:96px 24px 56px;display:grid;gap:22px;justify-items:center;text-align:center">
     <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Deploy</span>
     <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(38px,5.2vw,68px);line-height:1;font-weight:800;letter-spacing:-0.025em;max-width:17ch;text-wrap:balance">Three reference architectures, each one tested in CI</h1>
     <p style="margin:0;font-size:19px;color:#4a5652;max-width:62ch;text-wrap:pretty">Start with one instance on SQLite. Move to several on PostgreSQL and Redis when you need availability, or install the Helm chart. Instances are interchangeable, so moving between shapes is a configuration change, not a migration project.</p>
@@ -237,13 +274,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:8px 22px;justify-content:center;font-size:13.5px;color:#626d69;margin-top:6px"><span>pip · Docker · Helm</span><span>·</span><span>Signed image and chart</span><span>·</span><span>Non-root, read-only root filesystem</span><span>·</span><span>Three real servers behind a load balancer on every push</span></div>
   </header>
-  <div class="f-sub d-sub" style="position:sticky;top:0;z-index:19;background:#10201b;border-bottom:1px solid #243b34;overflow-x:auto;margin-top:8px">
-    <div style="max-width:1240px;margin:0 auto;padding:0 24px;display:flex;gap:4px;align-items:center;justify-content:safe center;min-width:max-content">
-      <a href="#shapes"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">01</span>Shapes</a><a href="#compare"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">02</span>Side by side</a><a href="#ports"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">03</span>Ports</a><a href="#benchmarks"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">04</span>Benchmarks</a><a href="#checklist"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">05</span>Checklist</a><a href="#start"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">06</span>Start</a>
-    </div>
-  </div>
-
-  <section id="shapes" class="f-pad" style="max-width:1240px;margin:0 auto;padding:64px 24px 88px;display:grid;gap:22px;scroll-margin-top:124px">
+  <div class="f-page" style="max-width:1240px;margin:0 auto;padding:16px 24px 72px;display:grid;gap:56px">
+  <section id="shapes" role="tabpanel" class="f-panel" style="padding:0 0 24px;scroll-margin-top:84px"><div style="display:grid;gap:22px">
     <div class="d-hdr">
       <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Choose a shape</h2>
       <div style="display:grid;gap:10px">
@@ -253,7 +285,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
     <div style="border:1px solid #c3cdc9;border-radius:16px;background:#fff;overflow:hidden;box-shadow:0 40px 80px -40px rgba(16,32,27,0.35)">
       <div class="d-tabs" role="tablist" style="display:flex;gap:0;border-bottom:1px solid #dbe2df;background:#f8faf9;overflow-x:auto">
-        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+        <sc-for list="{{ shapeTabs }}" as="t" hint-placeholder-count="3">
           <button role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.go }}" style="flex:1 1 0;min-width:max-content;display:grid;gap:2px;justify-items:start;text-align:left;padding:16px 22px;border:0;border-right:1px solid #dbe2df;border-bottom:2px solid {{ t.line }};margin-bottom:-1px;background:{{ t.bg }};color:{{ t.color }};cursor:pointer;font-family:inherit"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:{{ t.eyeColor }}">{{ t.eyebrow }}</span><span style="font-size:16px;font-weight:600">{{ t.title }}</span></button>
         </sc-for>
       </div>
@@ -285,10 +317,11 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         </div>
       </div>
     </div>
+    </div>
   </section>
 
-  <section id="compare" style="background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df;scroll-margin-top:124px">
-    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:88px 24px;display:grid;gap:28px">
+  <section id="compare" role="tabpanel" class="f-panel" style="scroll-margin-top:84px">
+    <div class="f-pad" style="padding:0 0 24px;display:grid;gap:28px">
       <div class="d-hdr"><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em">Side by side</h2><p style="margin:0;color:#4a5652">The shape you pick above is highlighted. Moving between shapes is a configuration change: the row below shows exactly what each step adds.</p></div>
       <div style="overflow-x:auto;border:1px solid #dbe2df;border-radius:14px">
         <table class="d-table" style="width:100%;border-collapse:collapse;min-width:640px">
@@ -321,13 +354,13 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section id="ports" style="background:#10201b;color:#e6efeb;scroll-margin-top:124px">
-    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:88px 24px;display:grid;gap:56px">
+  <section id="ports" role="tabpanel" class="f-panel f-panel-dark" style="scroll-margin-top:84px">
+    <div class="f-pad" style="padding:0 0 24px;display:grid;gap:56px">
       <div style="display:grid;gap:24px">
         <div style="display:grid;gap:8px;max-width:70ch"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">Ports</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(24px,2.6vw,32px);line-height:1.1;font-weight:700;letter-spacing:-0.015em">Three servers, three ports</h2></div>
         <div class="f-3col" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px"><div style="border:1px solid #243b34;border-radius:14px;background:#0c1915;padding:22px;display:grid;gap:10px;align-content:start"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:36px;line-height:1;font-weight:800"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">5000</code></b><span style="font-size:14.5px;color:#e6efeb">REST API, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/q/&lt;name&gt;</code>, the Console at <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/console</code>, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/metrics</code></span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#7c8f88">QUERYAPIGATE_PORT</span></div><div style="border:1px solid #243b34;border-radius:14px;background:#0c1915;padding:22px;display:grid;gap:10px;align-content:start"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:36px;line-height:1;font-weight:800"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">5001</code></b><span style="font-size:14.5px;color:#e6efeb">The MCP server for AI agents (<code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate mcp</code>)</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#7c8f88">QUERYAPIGATE_MCP_PORT</span></div><div style="border:1px solid #243b34;border-radius:14px;background:#0c1915;padding:22px;display:grid;gap:10px;align-content:start"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:36px;line-height:1;font-weight:800"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">5002</code></b><span style="font-size:14.5px;color:#e6efeb">Live events for many clients (<code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate events</code>)</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#7c8f88">QUERYAPIGATE_EVENTS_PORT</span></div></div>
       </div>
-      <div id="benchmarks" style="display:grid;gap:24px;scroll-margin-top:124px">
+      <div id="benchmarks" style="display:grid;gap:24px;scroll-margin-top:84px">
         <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end">
           <div style="display:grid;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">Benchmarks</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em">Measured, not promised</h2></div>
           <p style="margin:0;color:#9fb3ac;text-wrap:pretty">One container runs one worker with eight threads; add containers for capacity. These are the numbers the project has measured and checked in.</p>
@@ -338,8 +371,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section id="checklist" style="background:#fff;border-bottom:1px solid #dbe2df;scroll-margin-top:124px">
-    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:88px 24px;display:grid;gap:36px">
+  <section id="checklist" role="tabpanel" class="f-panel" style="scroll-margin-top:84px">
+    <div class="f-pad" style="padding:0 0 24px;display:grid;gap:36px">
       <div class="d-hdr">
         <div style="display:grid;gap:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">Before go-live</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em">Production checklist</h2></div>
         <div style="display:grid;gap:10px">
@@ -351,34 +384,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section id="start" style="background:#10201b;color:#e6efeb;scroll-margin-top:124px">
-    <div class="f-pad f-2col" style="max-width:1240px;margin:0 auto;padding:80px 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center">
-      <div style="display:grid;gap:14px">
-        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Start with one container. Grow without a migration.</h2>
-        <p style="margin:0;color:#9fb3ac;text-wrap:pretty">The same image, the same code and the same configuration in every shape. The deployment guide covers each one end to end.</p>
-        <div style="display:flex;gap:12px;flex-wrap:wrap">
-          <a href="Guide.dc.html?d=DEPLOYMENT" style="font-size:15px;font-weight:600;background:#e6efeb;color:#10201b;padding:13px 22px;border-radius:8px;text-decoration:none" style-hover="background:#fff;color:#10201b;text-decoration:none">Deployment guide</a>
-          <a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm" style="font-size:15px;font-weight:600;color:#e6efeb;padding:13px 22px;border:1px solid #2a3d37;border-radius:8px;text-decoration:none" style-hover="border-color:#9fb3ac;color:#fff;text-decoration:none">Install with Helm</a>
-        </div>
-      </div>
-      <div style="background:#0c1915;border:1px solid #243b34;border-radius:12px;overflow:hidden;min-width:0">
-        <div style="display:flex;align-items:center;gap:6px;padding:8px 10px 8px 14px;border-bottom:1px solid #243b34;flex-wrap:wrap">
-          <span aria-hidden="true" style="display:flex;gap:5px;margin-right:6px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span>
-          <div role="tablist" aria-label="Run it with" style="display:flex;gap:4px;flex-wrap:wrap">
-            <sc-for list="{{ termTabs }}" as="t" hint-placeholder-count="3">
-              <button type="button" role="tab" aria-selected="{{ t.selected }}" onClick="{{ t.go }}" style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;padding:4px 10px;border-radius:999px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.color }};cursor:pointer;min-height:26px;transition:background 0.2s,color 0.2s,border-color 0.2s">{{ t.label }}</button>
-            </sc-for>
-          </div>
-          <button type="button" class="copy-btn" onClick="{{ copyTerm }}" aria-label="Copy commands" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedTerm }}</button>
-        </div>
-        <div style="display:grid;min-width:0">
-          <sc-for list="{{ termPanes }}" as="p" hint-placeholder-count="3">
-            <pre aria-hidden="{{ p.hidden }}" style="grid-area:1/1;visibility:{{ p.vis }};margin:0;color:#e6efeb;padding:18px 22px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere"><sc-for list="{{ p.lines }}" as="l" hint-placeholder-count="6"><span style="display:block;min-height:1.7em;color:{{ l.color }}">{{ l.t }}</span></sc-for></pre>
-          </sc-for>
-        </div>
-      </div>
-    </div>
-  </section>
+  </div>
+
   <footer class="ft" style="border-top:1px solid #dbe2df;background:#fff">
     <div style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;gap:40px">
       <div class="ft-grid">
@@ -411,14 +418,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { i: 0, term: 'docker', copied: null, pypi: null, ck: {} };
+  state = { i: 0, copied: null, pypi: null, ck: {} };
   shapes = [{"eyebrow":"Start here","title":"Single instance"},{"eyebrow":"Several instances","title":"High availability"},{"eyebrow":"Helm chart","title":"Kubernetes"}];
-  // Closing terminal. {v} is the latest version from PyPI (fallback below). Lines starting with # render muted.
-  terms = [
-    { id: 'docker', label: 'Docker', code: v => '$ docker run -p 5000:5000 -v qag:/data \\\n    -e QUERYAPIGATE_API_KEY=change-me \\\n    ghcr.io/anantharajuc/queryapigate:' + v + '\n# same image, same code, one shape or three' },
-    { id: 'helm', label: 'Helm', code: v => '$ kubectl create secret generic queryapigate --from-literal=QUERYAPIGATE_API_KEY=change-me\n$ helm install queryapigate oci://ghcr.io/anantharajuc/charts/queryapigate \\\n    --version ' + v + ' --set existingSecret=queryapigate\n# several pods: store.type=postgres, replicas=3, Redis' },
-    { id: 'verify', label: 'Verify', code: v => '$ cosign verify ghcr.io/anantharajuc/queryapigate:' + v + ' \\\n    --certificate-identity https://github.com/AnanthaRajuC/QueryAPIGate/.github/workflows/docker.yml@refs/tags/v' + v + ' \\\n    --certificate-oidc-issuer https://token.actions.githubusercontent.com\n# then pin it: --set image.digest=sha256:<digest from the output>' },
-  ];
   ckKey = 'qag-deploy-checklist';
   componentDidMount() {
     // The shape diagrams animate with SMIL, which CSS cannot switch off; pause them for reduced motion.
@@ -440,14 +441,9 @@ class Component extends DCLogic {
   }
   renderVals() {
     const i = this.state.i;
-    const v = { tabs: this.shapes.map((s, k) => ({ eyebrow: s.eyebrow, title: s.title, selected: k === i, go: () => this.setState({ i: k }), bg: k === i ? '#fff' : 'transparent', color: k === i ? '#17201d' : '#4a5652', eyeColor: k === i ? 'oklch(0.52 0.11 170)' : '#626d69', line: k === i ? 'oklch(0.52 0.11 170)' : 'transparent' })) };
+    const v = { shapeTabs: this.shapes.map((s, k) => ({ eyebrow: s.eyebrow, title: s.title, selected: k === i, go: () => this.setState({ i: k }), bg: k === i ? '#fff' : 'transparent', color: k === i ? '#17201d' : '#4a5652', eyeColor: k === i ? 'oklch(0.52 0.11 170)' : '#626d69', line: k === i ? 'oklch(0.52 0.11 170)' : 'transparent' })) };
     ['shapeA', 'shapeB', 'shapeC'].forEach((key, k) => { v[key] = { display: k === i ? 'grid' : 'none', colBg: k === i ? 'oklch(0.52 0.11 170 / 0.07)' : 'transparent', colHead: k === i ? '#17201d' : '#7c8783' }; });
     const ver = this.state.pypi?.info?.version || '0.35.1';
-    const term = this.terms.find(t => t.id === this.state.term) || this.terms[0];
-    v.termTabs = this.terms.map(t => { const on = t.id === term.id; return { label: t.label, selected: on ? 'true' : 'false', go: () => this.setState({ term: t.id }), bg: on ? '#e6efeb' : 'transparent', color: on ? '#10201b' : '#9fb3ac', border: on ? '#e6efeb' : '#2a3d37' }; });
-    v.termPanes = this.terms.map(t => { const on = t.id === term.id; return { vis: on ? 'visible' : 'hidden', hidden: on ? 'false' : 'true', lines: t.code(ver).split('\n').map(l => ({ t: l, color: /^\s*#/.test(l) ? '#9fb3ac' : '#e6efeb' })) }; });
-    v.copyTerm = this.copy('term', term.code(ver).replace(/^\$ /gm, ''));
-    v.copiedTerm = this.state.copied === 'term' ? 'Copied' : 'Copy';
     const ck = this.state.ck || {}; let done = 0; v.ck = {};
     for (let n = 1; n <= 8; n++) {
       const on = !!ck[n]; if (on) done++;

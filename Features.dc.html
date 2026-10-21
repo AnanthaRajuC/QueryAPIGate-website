@@ -16,6 +16,24 @@
 <!-- /site-meta -->
 <script src="./support.js"></script>
 <script src="./search.js?v=2" defer></script>
+<script>
+(function () {
+  // Section rail on the left: marks the section in view; clicking scrolls without touching the hash.
+  var ids = ['connect','build','govern','deliver','developers','operate','prove'], raf = 0;
+  function update() {
+    raf = 0;
+    var links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
+    var line = window.innerHeight * 0.35, cur = ids[0];
+    for (var i = 0; i < ids.length; i++) { var el = document.getElementById(ids[i]); if (el && el.getBoundingClientRect().top <= line) cur = ids[i]; }
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = ids[ids.length - 1];
+    for (var j = 0; j < links.length; j++) links[j].classList.toggle('on', links[j].getAttribute('data-rail') === cur);
+  }
+  function tick() { if (!raf) raf = requestAnimationFrame(update); }
+  window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
+  document.addEventListener('click', function (e) { var a = e.target.closest('.rail a[data-rail]'); if (!a) return; var el = document.getElementById(a.getAttribute('data-rail')); if (!el) return; e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
+})();
+</script>
 </head>
 <body>
 <x-dc>
@@ -24,6 +42,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+.rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:30;display:grid;gap:13px;transition:opacity 0.25s;}
+.rail.hide{opacity:0;pointer-events:none}
+.rail{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
+.rail a{display:flex;align-items:center;gap:12px;color:#9fb3ac;text-decoration:none;transition:color 0.2s}
+.rail a::before{content:'';flex:none;width:22px;height:1px;background:#c3cdc9;transition:width 0.25s,background 0.25s,height 0.25s}
+.rail a:hover{color:#17201d;text-decoration:none}
+.rail a.on{color:#17201d}.rail a.on::before{width:40px;height:2px;background:oklch(0.52 0.11 170)}
+@media (max-width:1599px){.rail span{opacity:0;visibility:hidden;transform:translateX(-6px);transition:opacity 0.2s,transform 0.2s,visibility 0.2s}.rail:hover span{opacity:1;visibility:visible;transform:none}}
+@media (max-width:1279px){.rail{display:none}}
+@media (prefers-reduced-motion:reduce){.rail a::before,.rail span{transition:none}}
 .rs-ghn svg{display:block}
 .rs-ghn-n{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1;color:#626d69;min-width:0}
 .rs-ghn-n:empty{display:none}
@@ -59,7 +87,10 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   .f-pad{padding-left:16px !important;padding-right:16px !important}
   .f-table th:nth-child(3),.f-table td:nth-child(3){display:none}
 }
-.f-sub{scrollbar-width:none;top:64px !important}
+.f-panel-dark{background:#10201b;color:#e6efeb;border-radius:16px;padding:36px}
+/* Beside the rail the panels are narrower: the Govern table and its example stack instead of sitting side by side. */
+.f-panels .f-gov{grid-template-columns:minmax(0,1fr) !important}.f-panels .f-gov > div[style*="position:sticky"]{position:static !important}
+@media (max-width:900px){.f-panel-dark{padding:20px}}
 @media (max-width:1180px){.f-sub{top:70px !important}}
 .f-bento > .f-last{grid-column:span 4}
 @media (max-width:960px){.f-bento > .f-last{grid-column:span 2 !important}}
@@ -224,73 +255,19 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       </div>
     </div>
   </nav>
-
-  <header class="f-pad" style="max-width:1240px;margin:0 auto;padding:96px 24px 0;display:grid;gap:22px;justify-items:center;text-align:center">
-    <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">Features · QueryAPIGate 0.34</span>
-    <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(38px,5.2vw,68px);line-height:1;font-weight:800;letter-spacing:-0.025em;max-width:18ch;text-wrap:balance">Write SQL. Configure the query. Apply access controls. Get an API.</h1>
-    <p style="margin:0;font-size:19px;color:#4a5652;max-width:60ch;text-wrap:pretty">A saved query becomes a documented, versioned endpoint with typed, injection-safe parameters and run history. No controller, repository layer, pagination, auth or serialization boilerplate to write for it.</p>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-      <a href="Docs.dc.html#install" style="font-size:15px;font-weight:600;background:#10201b;color:#e6efeb;padding:13px 22px;border-radius:8px;text-decoration:none" style-hover="background:#1b3a30;color:#fff;text-decoration:none">Install in one command</a>
-      <a href="Trust.dc.html" style="font-size:15px;font-weight:600;color:#17201d;padding:13px 22px;border:1px solid #c3cdc9;border-radius:8px;background:#fff;text-decoration:none" style-hover="border-color:#17201d;color:#17201d;text-decoration:none">Visit the Trust center</a>
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px 22px;justify-content:center;font-size:13.5px;color:#626d69;margin-top:6px">
-      <span>Self-hosted</span><span>·</span><span>Apache-2.0</span><span>·</span><span>Signed releases</span><span>·</span><span>FIPS 140 cryptography</span><span>·</span><span>62 how-to guides</span>
-    </div>
-  </header>
-
-  <div style="position:relative;margin-top:56px">
-    <div style="position:absolute;left:0;right:0;bottom:0;height:55%;background:#10201b"></div>
-    <div class="f-pad" style="position:relative;max-width:1240px;margin:0 auto;padding:0 24px">
-      <div style="border-radius:14px;border:1px solid #c3cdc9;background:#fff;overflow:hidden;box-shadow:0 40px 80px -30px rgba(16,32,27,0.55)">
-        <div style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #dbe2df;background:#f8faf9">
-          <span style="width:10px;height:10px;border-radius:50%;background:#dbe2df"></span><span style="width:10px;height:10px;border-radius:50%;background:#dbe2df"></span><span style="width:10px;height:10px;border-radius:50%;background:#dbe2df"></span>
-          <span style="margin-left:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#626d69;padding:4px 10px;border-radius:6px;background:#fff;border:1px solid #dbe2df">data.example.com/console</span>
-        </div>
-        <sc-if value="{{ heroIsDefault }}" hint-placeholder-val="{{ true }}"><img src="images/console/home.webp" alt="QueryAPIGate Console" width="2800" height="2500" style="display:block;width:100%;height:auto"></sc-if><sc-if value="{{ heroIsCustom }}" hint-placeholder-val="{{ false }}">{{ heroImg }}</sc-if>
-      </div>
-    </div>
-  </div>
-
-
-  <section style="background:#10201b;color:#e6efeb">
-    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:72px 24px 88px;display:grid;gap:36px">
-      <div style="display:grid;gap:10px;max-width:70ch">
-        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)">At a glance</span>
-        <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">One governed path from caller to database, whatever the front door</h2>
-      </div>
-      <div class="f-bento" style="display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px">
-        <div style="grid-column:span 7;border:1px solid #243b34;border-radius:14px;background:radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.52 0.11 170 / 0.16), transparent 70%),#0c1915;padding:26px;display:grid;gap:18px;align-content:start">
-          <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline"><h3 style="margin:0;font-size:17px;font-weight:600">Every request, eight checks</h3><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#7c8f88">REST · MCP · events · exports</span></div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px">
-            <span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:0s">1 identify</span><span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:1s">2 limits</span><span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:2s">3 grant</span><span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:3s">4 validate</span><span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:4s">5 guard</span><span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:5s">6 run</span><span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:6s">7 mask</span><span class="f-chk" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:7px 11px;border-radius:999px;border:1px solid #2a3d37;background:#10201b;color:#e6efeb;animation-delay:7s">8 record</span>
-          </div>
-          <div style="background:#10201b;border:1px solid #243b34;border-radius:10px;overflow:hidden;min-width:0;"><div style="display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #243b34"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">request.http</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.04em;padding:3px 8px;border-radius:999px;background:oklch(0.62 0.13 170 / 0.14);color:oklch(0.8 0.11 170);border:1px solid oklch(0.62 0.13 170 / 0.35);white-space:nowrap">200 OK · 15 ms</span></div><pre style="margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65;overflow-x:auto;min-width:0"><span style="color:oklch(0.8 0.11 170)">GET</span> /q/acme_orders?status=open
-X-API-Key: sk_…partner-acme
-
-<span style="color:#9fb3ac"># grant checked · parameters validated · email masked · run recorded</span>
-[{"id": 5, "status": "open", "email": <span style="color:oklch(0.82 0.12 80)">"a***@acme.io"</span>}]</pre></div>
-        </div>
-        <div style="grid-column:span 5;border:1px solid #243b34;border-radius:14px;background:#0c1915;padding:26px;display:grid;gap:14px;align-content:start">
-          <div style="display:grid;gap:4px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:44px;line-height:1;font-weight:800">25</b><h3 style="margin:0;font-size:15px;font-weight:500;color:#9fb3ac">alert kinds, worked out on each request</h3></div>
-          <p style="margin:0;font-size:14px;color:#9fb3ac">Run history per query and key. A tamper-evident audit log, HMAC-signed and streamed to your SIEM over mutual TLS.</p>
-          <a href="#operate" style="font-size:14px;font-weight:600;color:oklch(0.8 0.11 170)">See Operate →</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <div id="f-tabs-top" aria-hidden="true"></div>
-  <div class="f-sub" style="position:sticky;top:0;z-index:19;background:#10201b;border-bottom:1px solid #243b34;overflow-x:auto;display:{{ subDisplay }}">
-    <div role="tablist" aria-label="Feature areas" style="max-width:1240px;margin:0 auto;padding:0 24px;display:flex;gap:4px;align-items:center;justify-content:safe center;min-width:max-content">
-      <sc-for list="{{ sub }}" as="s" hint-placeholder-count="7">
-        <a href="{{ s.href }}" onClick="{{ s.pick }}" role="tab" aria-selected="{{ s.selected }}" style="display:flex;gap:8px;align-items:center;padding:14px 12px;font-size:13.5px;font-weight:500;color:{{ s.color }};border-bottom:2px solid {{ s.line }};margin-bottom:-1px;text-decoration:none;white-space:nowrap" style-hover="color:#fff;text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">{{ s.num }}</span>{{ s.label }}</a>
-      </sc-for>
-    </div>
-  </div>
-
-  <section id="connect" role="tabpanel" style="display:{{ tabs.connect.display }};scroll-margin-top:124px">
-    <div class="f-pad f-sec" style="max-width:1240px;margin:0 auto;padding:72px 24px 72px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:48px;align-items:start">
-      <div style="display:grid;gap:14px;position:sticky;top:76px">
+  <nav class="rail" aria-label="Sections">
+    <a href="#connect" data-rail="connect"><span>Connect</span></a>
+    <a href="#build" data-rail="build"><span>Build</span></a>
+    <a href="#govern" data-rail="govern"><span>Govern</span></a>
+    <a href="#deliver" data-rail="deliver"><span>Deliver</span></a>
+    <a href="#developers" data-rail="developers"><span>Developers</span></a>
+    <a href="#operate" data-rail="operate"><span>Operate</span></a>
+    <a href="#prove" data-rail="prove"><span>Prove</span></a>
+  </nav>
+  <div class="f-page" style="max-width:1240px;margin:0 auto;padding:24px 24px 72px;display:grid;gap:64px">
+  <section id="connect" role="tabpanel" class="f-panel" style="scroll-margin-top:84px">
+    <div class="f-pad f-sec" style="padding:0 0 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:48px;align-items:start">
+      <div style="display:grid;gap:14px;position:sticky;top:84px">
         <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">01 · Connect</span><a class="f-path" href="Guides.dc.html?path=start"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Start here →</a>
         <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Every major database, one interface</h2>
         <p style="margin:0;color:#4a5652;text-wrap:pretty">Saved queries, grants, masking, limits and the audit log work the same on every connection. Tier 1 types are under the compatibility promise and tested against the real database in CI; experimental types work, with the gaps the support matrix lists.</p>
@@ -310,11 +287,10 @@ X-API-Key: sk_…partner-acme
         </div>
       </div>
     </div>
-    <div class="f-pad f-tabnav" style="max-width:1240px;margin:0 auto;padding:0 24px 64px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><a href="{{ tabs.connect.prevHref }}" onClick="{{ tabs.connect.prevGo }}" style="display:{{ tabs.connect.prevDisplay }};font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">← {{ tabs.connect.prevLabel }}</a><a href="{{ tabs.connect.nextHref }}" onClick="{{ tabs.connect.nextGo }}" style="display:{{ tabs.connect.nextDisplay }};margin-left:auto;font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">{{ tabs.connect.nextLabel }} →</a></div>
   </section>
 
-  <section id="build" role="tabpanel" style="display:{{ tabs.build.display }};background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df;scroll-margin-top:124px">
-    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:72px 24px 88px;display:grid;gap:64px">
+  <section id="build" role="tabpanel" class="f-panel" style="scroll-margin-top:84px">
+    <div class="f-pad" style="padding:0 0 24px;display:grid;gap:64px">
       <div style="display:grid;gap:12px;max-width:70ch">
         <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">02 · Build</span>
         <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">From a SQL statement to a documented endpoint</h2>
@@ -360,11 +336,10 @@ Crimson Garden,Comedy,PG-13,631,2</pre></div>
         </div>
       </div>
     </div>
-    <div class="f-pad f-tabnav" style="max-width:1240px;margin:0 auto;padding:0 24px 64px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><a href="{{ tabs.build.prevHref }}" onClick="{{ tabs.build.prevGo }}" style="display:{{ tabs.build.prevDisplay }};font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">← {{ tabs.build.prevLabel }}</a><a href="{{ tabs.build.nextHref }}" onClick="{{ tabs.build.nextGo }}" style="display:{{ tabs.build.nextDisplay }};margin-left:auto;font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">{{ tabs.build.nextLabel }} →</a></div>
   </section>
 
-  <section id="govern" role="tabpanel" style="display:{{ tabs.govern.display }};background:#10201b;color:#e6efeb;scroll-margin-top:124px">
-    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:72px 24px 88px;display:grid;gap:48px">
+  <section id="govern" role="tabpanel" class="f-panel f-panel-dark" style="scroll-margin-top:84px">
+    <div class="f-pad" style="padding:0 0 24px;display:grid;gap:48px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:end">
         <div style="display:grid;gap:12px">
           <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">03 · Govern</span><a class="f-path dark" href="Guides.dc.html?path=partner"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Give a partner an API →</a>
@@ -419,11 +394,10 @@ Crimson Garden,Comedy,PG-13,631,2</pre></div>
         <p style="margin:0;font-size:14.5px;font-weight:600"><a href="Enterprise.dc.html#identity" style="color:oklch(0.8 0.11 170)">Single sign-on, the four administrator roles and the break-glass key, on the Enterprise page →</a></p>
       </div>
     </div>
-    <div class="f-pad f-tabnav" style="max-width:1240px;margin:0 auto;padding:0 24px 64px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><a href="{{ tabs.govern.prevHref }}" onClick="{{ tabs.govern.prevGo }}" style="display:{{ tabs.govern.prevDisplay }};font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">← {{ tabs.govern.prevLabel }}</a><a href="{{ tabs.govern.nextHref }}" onClick="{{ tabs.govern.nextGo }}" style="display:{{ tabs.govern.nextDisplay }};margin-left:auto;font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">{{ tabs.govern.nextLabel }} →</a></div>
   </section>
 
-  <section id="deliver" role="tabpanel" style="display:{{ tabs.deliver.display }};scroll-margin-top:124px">
-    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:72px 24px 88px;display:grid;gap:56px">
+  <section id="deliver" role="tabpanel" class="f-panel" style="scroll-margin-top:84px">
+    <div class="f-pad" style="padding:0 0 24px;display:grid;gap:56px">
       <div style="display:grid;gap:12px;max-width:70ch">
         <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">04 · Deliver</span><a class="f-path" href="Guides.dc.html?path=data"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Ship data out →</a>
         <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Formats, channels and the Console that manages it all</h2>
@@ -468,12 +442,11 @@ Crimson Garden,Comedy,PG-13,631,2</pre></div>
         </div>
       </div>
     </div>
-    <div class="f-pad f-tabnav" style="max-width:1240px;margin:0 auto;padding:0 24px 64px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><a href="{{ tabs.deliver.prevHref }}" onClick="{{ tabs.deliver.prevGo }}" style="display:{{ tabs.deliver.prevDisplay }};font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">← {{ tabs.deliver.prevLabel }}</a><a href="{{ tabs.deliver.nextHref }}" onClick="{{ tabs.deliver.nextGo }}" style="display:{{ tabs.deliver.nextDisplay }};margin-left:auto;font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">{{ tabs.deliver.nextLabel }} →</a></div>
   </section>
 
-  <section id="developers" role="tabpanel" style="display:{{ tabs.developers.display }};background:#fff;border-top:1px solid #dbe2df;border-bottom:1px solid #dbe2df;scroll-margin-top:124px">
-    <div class="f-pad f-sec" style="max-width:1240px;margin:0 auto;padding:72px 24px 88px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:48px;align-items:start">
-      <div style="display:grid;gap:14px;position:sticky;top:76px">
+  <section id="developers" role="tabpanel" class="f-panel" style="scroll-margin-top:84px">
+    <div class="f-pad f-sec" style="padding:0 0 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:48px;align-items:start">
+      <div style="display:grid;gap:14px;position:sticky;top:84px">
         <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">05 · Developers</span>
         <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Documented, predictable and scriptable</h2>
         <p style="margin:0;color:#4a5652;text-wrap:pretty">What it is like to build against. Every error has the same shape, every response carries a request ID, and the whole setup can live in one reviewed YAML file.</p>
@@ -494,11 +467,10 @@ Crimson Garden,Comedy,PG-13,631,2</pre></div>
         <div style="display:grid;gap:6px;padding:20px 0;border-top:1px solid #c3cdc9;align-content:start"><h3 style="margin:0;font-size:16px;font-weight:600">Try it without setup</h3><p style="margin:0;font-size:14.5px;color:#4a5652"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate examples load</code>: four worked APIs on a generated database, with collections, roles and a scoped key for each.</p><a href="Guide.dc.html?g=05-try-the-built-in-example-apis" style="font-size:13.5px;font-weight:600">Guide 5 →</a></div>
       </div>
     </div>
-    <div class="f-pad f-tabnav" style="max-width:1240px;margin:0 auto;padding:0 24px 64px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><a href="{{ tabs.developers.prevHref }}" onClick="{{ tabs.developers.prevGo }}" style="display:{{ tabs.developers.prevDisplay }};font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">← {{ tabs.developers.prevLabel }}</a><a href="{{ tabs.developers.nextHref }}" onClick="{{ tabs.developers.nextGo }}" style="display:{{ tabs.developers.nextDisplay }};margin-left:auto;font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">{{ tabs.developers.nextLabel }} →</a></div>
   </section>
 
-  <section id="operate" role="tabpanel" style="display:{{ tabs.operate.display }};scroll-margin-top:124px">
-    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:72px 24px 88px;display:grid;gap:48px">
+  <section id="operate" role="tabpanel" class="f-panel" style="scroll-margin-top:84px">
+    <div class="f-pad" style="padding:0 0 24px;display:grid;gap:48px">
       <div style="display:grid;gap:12px;max-width:70ch">
         <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">06 · Operate</span><a class="f-path" href="Guides.dc.html?path=prod"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Go to production →</a>
         <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Every run recorded, every change audited</h2>
@@ -533,11 +505,10 @@ Crimson Garden,Comedy,PG-13,631,2</pre></div>
         </div>
       </div>
     </div>
-    <div class="f-pad f-tabnav" style="max-width:1240px;margin:0 auto;padding:0 24px 64px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><a href="{{ tabs.operate.prevHref }}" onClick="{{ tabs.operate.prevGo }}" style="display:{{ tabs.operate.prevDisplay }};font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">← {{ tabs.operate.prevLabel }}</a><a href="{{ tabs.operate.nextHref }}" onClick="{{ tabs.operate.nextGo }}" style="display:{{ tabs.operate.nextDisplay }};margin-left:auto;font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">{{ tabs.operate.nextLabel }} →</a></div>
   </section>
 
-  <section id="prove" role="tabpanel" style="display:{{ tabs.prove.display }};background:#fff;border-top:1px solid #dbe2df;scroll-margin-top:124px">
-    <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:72px 24px 88px;display:grid;gap:40px">
+  <section id="prove" role="tabpanel" class="f-panel" style="scroll-margin-top:84px">
+    <div class="f-pad" style="padding:0 0 24px;display:grid;gap:40px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:end">
         <div style="display:grid;gap:12px">
           <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.52 0.11 170)">07 · Prove</span><a class="f-path" href="Guides.dc.html?path=prod"><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;opacity:0.8">Path</span>Go to production →</a>
@@ -551,9 +522,8 @@ Crimson Garden,Comedy,PG-13,631,2</pre></div>
         <div style="background:#fff;padding:26px;display:grid;gap:10px;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:0.06em;color:oklch(0.52 0.11 170);text-transform:uppercase">Headers · SRI</span><h3 style="margin:0;font-size:17px;font-weight:600">Hardened at the edge</h3><p style="margin:0;font-size:14.5px;color:#4a5652">Security headers on every response from all three servers, a pinned Swagger UI with Subresource Integrity, no version banner.</p><a href="Security.dc.html" style="font-size:13.5px;font-weight:600">Security →</a></div>
       </div>
     </div>
-    <div class="f-pad f-tabnav" style="max-width:1240px;margin:0 auto;padding:0 24px 64px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap"><a href="{{ tabs.prove.prevHref }}" onClick="{{ tabs.prove.prevGo }}" style="display:{{ tabs.prove.prevDisplay }};font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">← {{ tabs.prove.prevLabel }}</a><a href="{{ tabs.prove.nextHref }}" onClick="{{ tabs.prove.nextGo }}" style="display:{{ tabs.prove.nextDisplay }};margin-left:auto;font-size:14px;font-weight:600;color:inherit;padding:10px 16px;border:1px solid color-mix(in oklab, currentColor 28%, transparent);border-radius:8px;text-decoration:none" style-hover="border-color:currentColor;text-decoration:none">{{ tabs.prove.nextLabel }} →</a></div>
   </section>
-
+  </div>
 
   <footer class="ft" style="border-top:1px solid #dbe2df;background:#fff">
     <div style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;gap:40px">
@@ -587,11 +557,7 @@ Crimson Garden,Comedy,PG-13,631,2</pre></div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;heroScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;home&quot;,&quot;options&quot;:[&quot;home&quot;,&quot;designer&quot;,&quot;queries&quot;,&quot;api-keys&quot;,&quot;access-map&quot;,&quot;audit-log&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;showSubnav&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Navigation&quot;}}">
 class Component extends DCLogic {
-  state = { i: 0, tab: 'connect', tp: { rating: 'X', max_length: '900', title: '' }, gov: null, govPinned: false, pub: 3, rolled: false, copied: null };
-  sections = [
-    { id: 'connect', num: '01', label: 'Connect' }, { id: 'build', num: '02', label: 'Build' }, { id: 'govern', num: '03', label: 'Govern' },
-    { id: 'deliver', num: '04', label: 'Deliver' }, { id: 'developers', num: '05', label: 'Developers' }, { id: 'operate', num: '06', label: 'Operate' }, { id: 'prove', num: '07', label: 'Prove' },
-  ];
+  state = { i: 0, tp: { rating: 'X', max_length: '900', title: '' }, gov: null, govPinned: false, pub: 3, rolled: false, copied: null };
   slides = [
     { label: 'Home', title: 'Home.', text: 'Requests, error rate, system health and recent activity, for the administrator signed in.' },
     { label: 'API Designer', title: 'API Designer.', text: 'Ad-hoc SQL with syntax highlighting, a schema browser, results with paging, export and charts, and Save as New API.' },
@@ -605,22 +571,8 @@ class Component extends DCLogic {
   // One feature area at a time. The hash names the open tab (#govern), so links into an area keep working.
   tabFromHash() { const h = (location.hash || '').slice(1); return this.sections.some(s => s.id === h) ? h : null; }
   componentDidMount() {
-    const t = this.tabFromHash(); if (t) this.setState({ tab: t });
-    this.onHash = () => { const h = this.tabFromHash(); if (h && h !== this.state.tab) this.openTab(h); };
-    window.addEventListener('hashchange', this.onHash);
   }
-  componentWillUnmount() { window.removeEventListener('hashchange', this.onHash); clearTimeout(this.copyT); }
-  openTab(id) {
-    this.setState({ tab: id });
-    try { if (location.hash !== '#' + id) history.replaceState(null, '', '#' + id); } catch (e) {}
-    // If the reader is already past the tab bar, bring the new tab's top into view; otherwise leave the page where it is.
-    const top = document.getElementById('f-tabs-top'); if (!top) return;
-    const y = top.getBoundingClientRect().top + window.scrollY - 64;
-    if (window.scrollY > y) window.scrollTo({ top: y, behavior: 'auto' });
-    // On narrow screens the bar scrolls sideways: keep the chosen tab in view.
-    setTimeout(() => { const t = document.querySelector('.f-sub a[aria-selected="true"]'); if (t && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'center' }); }, 0);
-  }
-  pickTab(id) { return (e) => { if (e && e.preventDefault) e.preventDefault(); this.openTab(id); }; }
+  componentWillUnmount() { clearTimeout(this.copyT); }
   copy(key, text) {
     return () => {
       try { navigator.clipboard && navigator.clipboard.writeText(text); } catch (e) {}
@@ -652,16 +604,9 @@ class Component extends DCLogic {
   tpSet(k) { return (e) => this.setState({ tp: { ...this.state.tp, [k]: e.target.value } }); }
   govKeys = ['connections', 'queries', 'tables', 'mask', 'writes', 'budget', 'lifecycle', 'jwt', 'fair', 'quota', 'rotate'];
   renderVals() {
-    const i = this.state.i, n = this.slides.length, a = this.state.tab;
-    const hero = this.props.heroScreen ?? 'home';
+    const i = this.state.i, n = this.slides.length;
     return {
-      heroIsDefault: hero === 'home', heroIsCustom: hero !== 'home', heroImg: React.createElement('img', { src: 'images/console/' + hero + '.webp', alt: 'QueryAPIGate Console', width: 2800, height: 2500, style: { display: 'block', width: '100%', height: 'auto' } }),
       subDisplay: (this.props.showSubnav ?? true) ? 'block' : 'none',
-      sub: this.sections.map(s => ({ href: '#' + s.id, pick: this.pickTab(s.id), selected: a === s.id, num: s.num, label: s.label, color: a === s.id ? '#fff' : '#9fb3ac', line: a === s.id ? 'oklch(0.62 0.13 170)' : 'transparent' })),
-      tabs: Object.fromEntries(this.sections.map((s, k) => { const p = this.sections[k - 1], nx = this.sections[k + 1]; return [s.id, {
-        display: a === s.id ? 'block' : 'none',
-        prevDisplay: p ? 'inline-block' : 'none', prevHref: p ? '#' + p.id : '#', prevGo: this.pickTab(p ? p.id : s.id), prevLabel: p ? p.num + ' ' + p.label : '',
-        nextDisplay: nx ? 'inline-block' : 'none', nextHref: nx ? '#' + nx.id : '#', nextGo: this.pickTab(nx ? nx.id : s.id), nextLabel: nx ? 'Next: ' + nx.num + ' ' + nx.label : '' }]; })),
       slides: this.slides.map((s, k) => ({ label: s.label, go: () => this.go(k), selected: k === i, bg: k === i ? '#fff' : 'transparent', color: k === i ? '#17201d' : '#4a5652', border: k === i ? '#dbe2df' : 'transparent' })),
       trackTransform: 'translateX(-' + (i * 100) + '%)',
       prev: () => this.go(i - 1), next: () => this.go(i + 1),
