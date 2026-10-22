@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://anantharajuc.github.io/QueryAPIGate-website/sitemap.xml

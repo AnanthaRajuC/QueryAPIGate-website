@@ -4,6 +4,8 @@ Writes, at the site root:
   search-index.json  one entry per heading section (documents, guides) and one per site page; read by search.js
   llms.txt           a short index of every document and guide, for AI tools that read it
   llms-full.txt      every document and guide in full, one file
+  sitemap.xml        every page, use case, document and guide, for search engines
+  robots.txt         allows everything and points at the sitemap
 
 Run by tools/sync-upstream.py after each sync, or by hand: python3 tools/search_index.py
 """
@@ -130,8 +132,25 @@ def build():
              'saved SQL published as REST endpoints, MCP tools for AI agents, live events and scheduled exports, '
              'with identity, grants, parameter validation, masking and an audit record on every call. Self-hosted, Python, Apache-2.0.\n\n'
              f'Site: {SITE}\nRepository: https://github.com/AnanthaRajuC/QueryAPIGate\nEverything below in one file: {SITE}llms-full.txt\n\n')
-    write('llms.txt', intro + '## Documentation and guides\n\n' + '\n'.join(short) + '\n')
-    write('llms-full.txt', intro + '\n\n'.join(full))
+    # The glossary page's terms, as plain text, so AI tools reading these files get the vocabulary right.
+    gl, gl_md = os.path.join(ROOT, 'Glossary.dc.html'), ''
+    if os.path.exists(gl):
+        src = open(gl, encoding='utf-8').read()
+        terms = re.findall(r'<div class="gl-term" id="([^"]+)"[^>]*><dt>.*?</a>(.*?)</dt><dd><p>(.*?)</p>', src, re.S)
+        if terms:
+            gl_md = '\n## Glossary\n\n' + '\n'.join(f'- **{inline_text(n)}**: {inline_text(d)} ({SITE}Glossary.dc.html#{i})' for i, n, d in terms) + '\n'
+    write('llms.txt', intro + '## Documentation and guides\n\n' + '\n'.join(short) + '\n' + gl_md)
+    write('llms-full.txt', intro + '\n\n'.join(full) + ('\n\n# Glossary\n' + gl_md.split('## Glossary', 1)[1] if gl_md else ''))
+    # sitemap.xml and robots.txt: every page, use case, document and guide, so search engines needn't crawl to find them.
+    from urllib.parse import quote
+    urls = [n for n in sorted(os.listdir(ROOT)) if n.endswith('.dc.html') and n not in SKIP_PAGES]
+    urls += ['use-cases/' + f for f in sorted(os.listdir(os.path.join(ROOT, 'use-cases'))) if f.endswith('.dc.html')]
+    urls += ['Guide.dc.html?d=' + d['slug'] for d in docs if os.path.exists(os.path.join(ROOT, d['path']))]
+    urls += ['Guide.dc.html?g=' + g['slug'] for g in guides if os.path.exists(os.path.join(ROOT, 'how-to', g['slug'] + '.md'))]
+    loc = lambda u: html.escape(SITE + quote(u, safe='/?=&'))
+    write('sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+          + ''.join(f'  <url><loc>{loc(u)}</loc></url>\n' for u in urls) + '</urlset>\n')
+    write('robots.txt', f'User-agent: *\nAllow: /\n\nSitemap: {SITE}sitemap.xml\n')
     return len(entries), changed
 
 

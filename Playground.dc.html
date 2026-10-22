@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- site-meta -->
+<title>Playground - QueryAPIGate</title>
+<meta name="description" content="Call the QueryAPIGate example APIs from your browser: pick a saved query, a key and parameters, and see the governed response and where a refused call stops.">
+<meta name="theme-color" content="#10201b">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QueryAPIGate">
+<meta property="og:title" content="Playground - QueryAPIGate">
+<meta property="og:description" content="Call the QueryAPIGate example APIs from your browser: pick a saved query, a key and parameters, and see the governed response and where a refused call stops.">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:image" content="https://anantharajuc.github.io/QueryAPIGate-website/images/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="QueryAPIGate: one governed gate between your databases and everything that asks them for data.">
+<meta property="og:url" content="https://anantharajuc.github.io/QueryAPIGate-website/Playground.dc.html">
+<!-- /site-meta -->
+<script src="./support.js"></script>
+<script src="./theme.js?v=4"></script>
+<script src="./search.js?v=3" defer></script>
+<script>
+(function () {
+  // The example APIs, simulated: the same collections, roles, parameter rules and error codes as `queryapigate examples load`.
+  var CATS = ['Action', 'Comedy', 'Documentary', 'Drama', 'Family', 'Sci-Fi'];
+  var A = ['Electric', 'Crimson', 'Silent', 'Golden', 'Midnight', 'Paper', 'Velvet', 'Hidden', 'Northern', 'Glass', 'Iron', 'Wild'];
+  var B = ['Signal', 'Garden', 'Harbor', 'Orbit', 'Letters', 'Frontier', 'Mirror', 'Summer', 'Engine', 'Echo', 'Valley', 'Tide'];
+  var seed = 7; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  var FILMS = [];
+  for (var i = 0; i < 60; i++) FILMS.push({ film_id: i + 1, title: A[i % 12] + ' ' + B[(i * 5 + 3) % 12], category: CATS[i % 6], rating: ['G', 'PG', 'PG-13', 'R'][Math.floor(rnd() * 4)], rentals: 120 + Math.floor(rnd() * 880) });
+  var QUERIES = {
+    example_top_films: { coll: 'examples-reporting', what: 'Most-rented films, optionally in one category', params: [
+      { name: 'top_n', help: 'integer 1–50, default 10', def: '10' }, { name: 'category', help: 'optional, one of ' + CATS.join(', '), def: 'Comedy' }] },
+    example_monthly_revenue: { coll: 'examples-reporting', what: 'Rentals and revenue per month', params: [{ name: 'months', help: 'integer 1–24, default 6', def: '6' }] },
+    example_kpi_active_rentals: { coll: 'examples-dashboard', what: 'Rentals currently out (cached)', params: [] },
+    example_film_lookup: { coll: 'examples-partner', what: 'One film and how it is doing', params: [{ name: 'film_id', help: 'required, integer ≥ 1', def: '7' }] },
+    example_film_search: { coll: 'examples-partner', what: 'Find films by part of a title', params: [{ name: 'text', help: 'required, 2–30 letters and spaces', def: 'garden' }] }
+  };
+  var KEYS = [
+    { id: 'example-reporting', sub: 'Reporting role · examples-reporting · read-only · 200/hour', colls: ['examples-reporting'] },
+    { id: 'example-executive', sub: 'Executive role · reporting and dashboard collections', colls: ['examples-reporting', 'examples-dashboard'] },
+    { id: 'acme-corp', sub: 'Partner role · examples-partner only · 60/minute', colls: ['examples-partner'] },
+    { id: 'trial-partner', sub: 'Partner role, but expires_at has passed', colls: ['examples-partner'], expired: true },
+    { id: 'no key', sub: 'No X-API-Key header at all', none: true }
+  ];
+  var STAGES = ['Identify the caller', 'Apply its limits', 'Check the grant', 'Validate parameters', 'Guard the SQL', 'Run it', 'Mask and format', 'Record it'];
+  var st = { q: 'example_top_films', key: 'example-reporting', fmt: 'json', vals: {}, cache: {} };
+  function esc(t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+  function rid() { return Math.random().toString(16).slice(2, 14); }
+  function validate(q, v) {
+    var e = {}, has = function (k) { return v[k] !== undefined && String(v[k]).trim() !== ''; };
+    if (q === 'example_top_films') {
+      if (has('top_n')) { if (!/^-?\d+$/.test(v.top_n.trim())) e.top_n = 'must be an integer'; else if (+v.top_n < 1 || +v.top_n > 50) e.top_n = 'must be between 1 and 50'; }
+      if (has('category') && CATS.indexOf(v.category.trim()) < 0) e.category = 'must be one of ' + CATS.join(', ');
+    } else if (q === 'example_monthly_revenue') {
+      if (has('months')) { if (!/^-?\d+$/.test(v.months.trim())) e.months = 'must be an integer'; else if (+v.months < 1 || +v.months > 24) e.months = 'must be between 1 and 24'; }
+    } else if (q === 'example_film_lookup') {
+      if (!has('film_id')) e.film_id = 'is required'; else if (!/^-?\d+$/.test(v.film_id.trim())) e.film_id = 'must be an integer'; else if (+v.film_id < 1) e.film_id = 'must be at least 1';
+    } else if (q === 'example_film_search') {
+      if (!has('text')) e.text = 'is required'; else if (!/^[A-Za-z ]{2,30}$/.test(v.text.trim())) e.text = 'must be 2 to 30 letters and spaces';
+    }
+    return e;
+  }
+  function rows(q, v) {
+    if (q === 'example_top_films') {
+      var n = +(v.top_n && v.top_n.trim() || 10), c = (v.category || '').trim();
+      return FILMS.filter(function (f) { return !c || f.category === c; }).slice().sort(function (a, b) { return b.rentals - a.rentals; }).slice(0, n)
+        .map(function (f, i) { return { title: f.title, category: f.category, rating: f.rating, rentals: f.rentals, rank: i + 1 }; });
+    }
+    if (q === 'example_monthly_revenue') {
+      var m = +(v.months && v.months.trim() || 6), d = new Date(), out = [];
+      for (var i = 0; i < m; i++) { var t = new Date(d.getFullYear(), d.getMonth() - i, 1), r = 900 + ((i * 137) % 420); out.push({ month: t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0'), rentals: r, revenue: +(r * 3.99).toFixed(2) }); }
+      return out;
+    }
+    if (q === 'example_kpi_active_rentals') return [{ active_rentals: 183 }];
+    if (q === 'example_film_lookup') { var f = FILMS[+v.film_id - 1]; return f ? [{ film_id: f.film_id, title: f.title, category: f.category, rating: f.rating, rentals_last_30_days: Math.round(f.rentals / 12), in_stock: f.rentals % 3 !== 0 }] : []; }
+    if (q === 'example_film_search') { var t = v.text.trim().toLowerCase(); return FILMS.filter(function (f) { return f.title.toLowerCase().indexOf(t) >= 0; }).slice(0, 10).map(function (f) { return { film_id: f.film_id, title: f.title, category: f.category }; }); }
+    return [];
+  }
+  function fmtBody(r, fmt) {
+    if (!r.length) return '{"message": "No results returned"}';
+    if (fmt === 'csv') { var k = Object.keys(r[0]); return [k.join(',')].concat(r.map(function (x) { return k.map(function (c) { return x[c]; }).join(','); })).join('\n'); }
+    if (fmt === 'ndjson') return r.map(function (x) { return JSON.stringify(x); }).join('\n');
+    return '[\n' + r.map(function (x) { return '  ' + JSON.stringify(x).replace(/,"/g, ', "').replace(/":/g, '": '); }).join(',\n') + '\n]';
+  }
+  function run() {
+    var q = st.q, Q = QUERIES[q], key = KEYS.filter(function (k) { return k.id === st.key; })[0], v = st.vals[q] || {}, id = rid();
+    var qs = Q.params.map(function (p) { return v[p.name] !== undefined && String(v[p.name]).trim() !== '' ? p.name + '=' + encodeURIComponent(String(v[p.name]).trim()) : null; }).filter(Boolean);
+    if (st.fmt !== 'json') qs.push('format=' + st.fmt);
+    var url = '/q/' + q + (qs.length ? '?' + qs.join('&') : '');
+    var curl = 'curl -i \'http://127.0.0.1:5000' + url + '\'' + (key.none ? '' : ' \\\n     -H \'X-API-Key: <' + key.id + ' secret>\'');
+    var stop = -1, status, code, err, extra = '', why;
+    var errs = validate(q, v);
+    if (key.none) { stop = 0; status = '401 UNAUTHORIZED'; code = 'unauthorized'; err = 'An API key is required'; why = 'With keys configured, every request must carry one. Nothing past the first stage ran.'; }
+    else if (key.expired) { stop = 1; status = '401 UNAUTHORIZED'; code = 'unauthorized'; err = 'This API key has expired'; why = 'The key is real, but its expires_at has passed. Expiry is checked live on every request; nobody had to revoke it.'; }
+    else if (key.colls.indexOf(Q.coll) < 0) { stop = 2; status = '403 FORBIDDEN'; code = 'forbidden'; err = 'This API key may not run ' + q; why = key.id + ' reaches ' + key.colls.join(' and ') + '; ' + q + ' is in ' + Q.coll + '. The query never ran.'; }
+    else if (Object.keys(errs).length) { stop = 3; status = '400 BAD REQUEST'; var req = Object.keys(errs).some(function (k) { return errs[k] === 'is required'; }); code = req ? 'param_required' : 'param_invalid'; err = 'Invalid parameters'; extra = ',\n "errors": ' + JSON.stringify(errs).replace(/,"/g, ', "').replace(/":/g, '": '); why = 'Every problem is listed at once, and the database never saw the request.'; }
+    var stages = STAGES.map(function (s, i) { return '<div class="pg-st ' + (stop < 0 || i < stop ? 'pass' : i === stop ? 'stop' : '') + '"><b>' + String(i + 1).padStart(2, '0') + ' ' + (stop < 0 || i < stop ? '✓' : i === stop ? '✕' : '·') + '</b>' + s + '</div>'; }).join('');
+    var head, bodyTxt, cls;
+    if (stop >= 0) {
+      cls = 'pg-err'; head = 'HTTP/1.1 ' + status + '\nContent-Type: application/json\nX-Request-Id: ' + id;
+      bodyTxt = '{"error": "' + err + '", "code": "' + code + '"' + extra + ',\n "request_id": "' + id + '"}';
+    } else {
+      cls = 'pg-ok'; var r = rows(q, v), page = r.slice(0, 10), more = r.length > 10;
+      var ctype = { json: 'application/json', csv: 'text/csv; charset=utf-8', ndjson: 'application/x-ndjson' }[st.fmt];
+      head = 'HTTP/1.1 200 OK\nContent-Type: ' + ctype + '\nX-Request-Id: ' + id + '\nX-Page: 1\nX-Page-Size: 10\nX-Has-More: ' + more;
+      if (q === 'example_kpi_active_rentals') { var hit = !!st.cache[st.fmt]; st.cache[st.fmt] = true; head += '\nX-Cache: ' + (hit ? 'HIT' : 'MISS') + '\nETag: "a91f3c"'; }
+      bodyTxt = r.length ? fmtBody(page, st.fmt) : '{"message": "No results returned"}';
+      why = q === 'example_kpi_active_rentals' ? 'Send it again: the second answer comes from the cache (X-Cache: HIT) without touching the database.'
+        : more ? 'The query matched ' + r.length + ' rows; the first page of 10 came back, and X-Has-More says there is another. Add page=2 to get it.'
+        : 'Identified, within its limits, granted, parameters valid and bound, read-only SQL, recorded in run history with this request id.';
+    }
+    document.getElementById('pg-req').innerHTML = '<span class="pg-h">$</span> ' + esc(curl);
+    document.getElementById('pg-res').innerHTML = '<span class="pg-h">' + esc(head) + '</span>\n\n' + esc(bodyTxt).replace(/&quot;/g, '"').replace(/("[^"\n]*")(: )/g, '<span class="pg-s">$1</span>$2');
+    var badge = document.getElementById('pg-badge'); badge.textContent = status || '200 OK'; badge.className = cls;
+    document.getElementById('pg-trace').innerHTML = stages;
+    document.getElementById('pg-why').textContent = why;
+  }
+  function paramsHtml() {
+    var Q = QUERIES[st.q], v = st.vals[st.q] || (st.vals[st.q] = {});
+    if (!Q.params.length) return '<p class="pg-help">This query takes no parameters.</p>';
+    return Q.params.map(function (p) { if (v[p.name] === undefined) v[p.name] = p.def; return '<div class="pg-field"><label for="pg-p-' + p.name + '">' + p.name + '</label><input id="pg-p-' + p.name + '" data-p="' + p.name + '" value="' + esc(v[p.name]) + '" spellcheck="false" autocomplete="off"><span class="pg-help">' + esc(p.help) + '</span></div>'; }).join('');
+  }
+  function render() {
+    var app = document.getElementById('pg-app');
+    app.innerHTML =
+      '<div class="pg-panel">' +
+        '<div class="pg-field"><label for="pg-q">Saved query</label><select id="pg-q">' + Object.keys(QUERIES).map(function (k) { return '<option value="' + k + '"' + (k === st.q ? ' selected' : '') + '>' + k + '</option>'; }).join('') + '</select><span class="pg-help" id="pg-what"></span></div>' +
+        '<div id="pg-params" style="display:grid;gap:12px"></div>' +
+        '<div class="pg-field"><span class="pg-lab">Calling with</span><div class="pg-keys">' + KEYS.map(function (k) { return '<button type="button" class="pg-key" data-key="' + k.id + '" aria-pressed="' + (k.id === st.key) + '"><i></i><span><b>' + k.id + '</b><span>' + k.sub + '</span></span></button>'; }).join('') + '</div></div>' +
+        '<div class="pg-field"><span class="pg-lab">Format</span><div class="pg-fmt">' + ['json', 'csv', 'ndjson'].map(function (f) { return '<button type="button" data-fmt="' + f + '" aria-pressed="' + (f === st.fmt) + '">' + f + '</button>'; }).join('') + '</div></div>' +
+        '<button type="button" class="pg-send" id="pg-send">Send request</button>' +
+      '</div>' +
+      '<div class="pg-out">' +
+        '<div class="pg-term"><div class="pg-term-h">request</div><pre id="pg-req"></pre></div>' +
+        '<div class="pg-trace" id="pg-trace" aria-label="The eight stages"></div>' +
+        '<div class="pg-term"><div class="pg-term-h">response<b id="pg-badge"></b></div><pre id="pg-res" aria-live="polite"></pre></div>' +
+        '<p class="pg-why" id="pg-why"></p>' +
+      '</div>';
+    paramsUpdate(); run();
+  }
+  function paramsUpdate() { document.getElementById('pg-params').innerHTML = paramsHtml(); document.getElementById('pg-what').textContent = QUERIES[st.q].what + ' · in collection ' + QUERIES[st.q].coll; }
+  function wire() {
+    var app = document.getElementById('pg-app');
+    app.addEventListener('change', function (e) { if (e.target.id === 'pg-q') { st.q = e.target.value; paramsUpdate(); run(); } });
+    app.addEventListener('input', function (e) { var p = e.target.getAttribute('data-p'); if (p) { st.vals[st.q][p] = e.target.value; run(); } });
+    app.addEventListener('click', function (e) {
+      var k = e.target.closest('[data-key]'), f = e.target.closest('[data-fmt]');
+      if (k) { st.key = k.getAttribute('data-key'); app.querySelectorAll('[data-key]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === k)); }); run(); }
+      if (f) { st.fmt = f.getAttribute('data-fmt'); app.querySelectorAll('[data-fmt]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === f)); }); run(); }
+      if (e.target.closest('#pg-send')) run();
+    });
+  }
+  var tries = 0, t = setInterval(function () { var app = document.getElementById('pg-app'); if (app) { clearInterval(t); render(); wire(); } else if (++tries > 80) clearInterval(t); }, 100);
+})();
+</script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+.rs-ghn svg{display:block}
+.rs-ghn-n{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1;color:var(--ink-3);min-width:0}
+.rs-ghn-n:empty{display:none}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
+a{color:var(--accent-ink);text-decoration:none}a:hover{color:var(--accent-ink-2);text-decoration:underline}
+
+@media (max-width:1180px){
+  .rs-gh{display:none !important}
+  .rs-nav{gap:14px !important}
+}
+@media (max-width:1100px){
+  .rs-nav{gap:12px !important;font-size:14px !important}
+}
+@media (max-width:1024px){
+  .rs-cta{display:none !important}
+}
+@media (max-width:960px){
+  .rs-nav{flex:1 1 auto;min-width:0;flex-wrap:nowrap !important;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+  .rs-nav::-webkit-scrollbar{display:none}
+}
+@media (max-width:820px){
+  .rs-2col{grid-template-columns:minmax(0,1fr) !important}
+  .rs-2col > *{order:0 !important}
+  .rs-aside{position:static !important;max-height:none !important}
+  .rs-nav{gap:10px 16px !important;font-size:13.5px !important;flex-wrap:nowrap !important;overflow-x:auto;width:100%;scrollbar-width:none;white-space:nowrap;padding-bottom:2px}
+  .rs-nav::-webkit-scrollbar{display:none}
+  .rs-navbar{flex-wrap:wrap !important;gap:12px 20px !important;padding:12px 16px !important}
+  .rs-cta{display:none !important}
+  .rs-pad{padding-left:16px !important;padding-right:16px !important}
+  .rs-hero{padding-top:48px !important}
+  .rs-hide{display:none !important}
+}
+
+/* mobile menu + code wrapping */
+.rs-burger{display:none}
+.rs-menu-toggle{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-width:1180px){
+  .rs-burger{display:inline-grid;place-items:center;width:40px;height:40px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;margin-left:auto;flex:none}
+  .rs-burger span{display:block;width:16px;height:2px;background:var(--ink);border-radius:2px;box-shadow:0 -5px 0 var(--ink),0 5px 0 var(--ink)}
+  .rs-actions{margin-left:0 !important}
+  .rs-gh{display:inline-block !important}
+  .rs-cta{display:inline-block !important}
+  .rs-nav{display:none !important;flex-basis:100%;flex-direction:column;align-items:flex-start;gap:0 !important;font-size:16px !important;overflow:visible !important;white-space:normal !important;border-top:1px solid var(--line);padding:8px 0 4px !important;margin-top:4px}
+  .rs-nav a{display:block;width:100%;padding:11px 4px;border-bottom:1px solid var(--line-soft)}
+  .rs-nav a:last-child{border-bottom:0}
+  .rs-menu-toggle:checked ~ .rs-nav{display:flex !important}
+  .rs-menu-toggle:checked ~ .rs-burger span{background:transparent;box-shadow:none}
+  .rs-menu-toggle:checked ~ .rs-burger span::before,.rs-menu-toggle:checked ~ .rs-burger span::after{content:"";position:absolute;width:18px;height:2px;background:var(--ink);border-radius:2px}
+  .rs-menu-toggle:checked ~ .rs-burger span::before{transform:rotate(45deg)}
+  .rs-menu-toggle:checked ~ .rs-burger span::after{transform:rotate(-45deg)}
+  .rs-navbar{flex-wrap:wrap !important}
+}
+@media (max-width:820px){
+  .rs-cta{display:inline-block !important}
+  .rs-navbar{gap:12px !important}
+}
+@media (max-width:480px){
+  .rs-gh{display:none !important}
+}
+/* Use-cases dropdown in the top nav (desktop only; the burger menu keeps a plain link). */
+.rs-dd{position:relative}
+.rs-dd-panel{display:none;position:absolute;top:100%;left:-18px;padding-top:12px;z-index:30}
+.rs-dd-inner{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35);padding:18px 20px 14px;display:grid;gap:14px;width:max-content;max-width:calc(100vw - 48px)}
+.rs-dd-grid{display:grid;grid-template-columns:repeat(5,max-content);gap:18px 28px}
+.rs-dd-grid>div{display:grid;gap:7px;align-content:start}
+.rs-dd-grid small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+.rs-dd-grid a{font-size:13.5px;font-weight:500;color:var(--ink);white-space:nowrap;text-decoration:none}
+.rs-dd-grid a:hover{color:var(--accent-ink)}
+.rs-dd-all{font-size:13px;font-weight:600;border-top:1px solid var(--line-soft);padding-top:12px;text-decoration:none}
+@media (max-width:1400px){.rs-dd-grid{grid-template-columns:repeat(3,max-content)}}
+@media (max-width:1180px){.rs-dd{width:100%}.rs-dd-panel{display:none !important}}
+/* Current page in the top nav: bold, ink-dark, with an accent underline (a left bar in the burger menu). */
+.rs-nav > a[aria-current="page"],.rs-nav > .rs-dd > a[aria-current="page"]{color:var(--ink) !important;font-weight:600;text-decoration:underline;text-decoration-color:var(--accent-ink);text-decoration-thickness:2px;text-underline-offset:7px}
+.rs-nav > a[aria-current="page"]:hover,.rs-nav > .rs-dd > a[aria-current="page"]:hover{text-decoration-color:var(--accent-ink-2)}
+.rs-mega-card[aria-current="page"]{background:var(--bg);box-shadow:inset 3px 0 0 oklch(0.52 0.11 170)}
+@media (max-width:1180px){.rs-nav > a[aria-current="page"]{text-decoration:none;box-shadow:inset 3px 0 0 oklch(0.52 0.11 170);padding-left:12px !important}}
+.rs-dd-right .rs-dd-panel{left:auto;right:-18px}
+/* Dropdown triggers: a caret that turns while open; the panel stays open for a moment after the pointer leaves,
+   and the trigger's hover area reaches down to the panel so crossing the gap never closes it. */
+.rs-dd>a{display:inline-flex;align-items:center;gap:5px;padding:14px 0;margin:-14px 0}
+.rs-caret{transition:transform 0.2s;flex:none}
+.rs-dd:hover>a .rs-caret,.rs-dd:focus-within>a .rs-caret{transform:rotate(180deg)}
+.rs-dd-panel{display:block;visibility:hidden;opacity:0;transition:opacity 0.15s,visibility 0s linear 0.25s}
+.rs-dd:hover .rs-dd-panel,.rs-dd:focus-within .rs-dd-panel,.rs-dd-panel:hover{visibility:visible;opacity:1;transition-delay:0s}
+@media (max-width:1180px){.rs-caret{display:none}.rs-dd>a{padding:11px 4px;margin:0}}
+/* Use-cases mega menu: the panel spans the whole nav bar, one card per use case. */
+.rs-navbar{position:relative}
+.rs-dd.rs-mega{position:static}
+.rs-mega .rs-dd-panel{left:24px;right:24px;padding-top:0;top:calc(100% - 1px)}
+.rs-mega-inner{width:auto !important;max-width:none !important;padding:22px 24px 20px !important;gap:18px !important}
+.rs-mega-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--line-soft)}
+.rs-mega-head>div{display:grid;gap:4px}
+.rs-mega-eyebrow{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)}
+.rs-mega-head b{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.01em;color:var(--ink)}
+.rs-mega-all{font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap}
+.rs-mega-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.rs-mega-card{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start;padding:12px;border-radius:10px;text-decoration:none;color:var(--ink);transition:background 0.15s}
+.rs-mega-card:hover{background:var(--bg);text-decoration:none}
+.rs-mega-ico{width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.1);position:relative}
+.rs-mega-ico::after{content:'';position:absolute;inset:9px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.rs-mega-txt{display:grid;gap:2px;min-width:0}
+.rs-mega-txt small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)}
+.rs-mega-txt b{font-size:14px;font-weight:600}
+.rs-mega-txt>span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+@media (max-width:1400px){.rs-mega-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* Guides mega menu: reading paths on the left, documentation grouped on the right. */
+.rs-mega-body{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.3fr);gap:28px}
+.rs-mega-sub{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)}
+.rs-mega-paths{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;align-content:start}
+.rs-mega-paths .rs-mega-sub{grid-column:1/-1;margin-bottom:4px}
+.rs-mega-path{display:grid;gap:2px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink);transition:background 0.15s}
+.rs-mega-path:hover{background:var(--bg);text-decoration:none}
+.rs-mega-path small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.04em;color:var(--ink-3)}
+.rs-mega-path b{font-size:14px;font-weight:600}
+.rs-mega-path>span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+.rs-mega-paths .rs-mega-sub2{margin-top:10px;margin-bottom:2px}
+.rs-mega-arch{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px}
+.rs-mega-arch a{font-size:12px;font-weight:500;padding:4px 9px;white-space:nowrap;border:1px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;transition:background 0.15s,border-color 0.15s}
+.rs-mega-arch a:hover{border-color:#9fb3ac;background:var(--bg);text-decoration:none}
+.rs-mega-docs{display:grid;gap:12px;align-content:start;padding-left:28px;border-left:1px solid var(--line-soft)}
+.rs-mega-docgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.rs-mega-docgrid>div{display:grid;gap:6px;align-content:start}
+.rs-mega-docgrid small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+.rs-mega-docgrid a{font-size:13.5px;font-weight:500;color:var(--ink);text-decoration:none;line-height:1.35}
+.rs-mega-docgrid a:hover{color:var(--accent-ink)}
+.rs-mega-more{font-size:13px;font-weight:600;text-decoration:none;padding-top:8px;border-top:1px solid var(--line-soft)}
+.rs-mega-body-solo{grid-template-columns:minmax(0,1fr)}
+.rs-mega-body-solo .rs-mega-paths{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rs-mega-docs-solo{padding-left:0;border-left:none}
+.rs-mega-docs-solo .rs-mega-docgrid{grid-template-columns:repeat(4,minmax(0,1fr)) !important}
+.rs-mega-docs-solo .rs-mega-docgrid{gap:20px 40px}
+.rs-mega-docs-solo .rs-mega-docgrid>div{gap:2px}
+.rs-mega-docs-solo .rs-mega-docgrid small{margin:0 0 6px 10px}
+.rs-mega-docs-solo .rs-mega-docgrid a.rs-doc{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink);text-decoration:none;transition:background 0.15s}
+.rs-mega-docs-solo .rs-mega-docgrid a.rs-doc:hover{background:var(--bg);color:var(--ink)}
+.rs-doc-ico{flex:none;width:28px;height:28px;border-radius:7px;background:oklch(0.52 0.11 170 / 0.09);position:relative}
+.rs-doc-ico::after{content:'';position:absolute;inset:7px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.rs-mega-docs-solo .rs-mega-more{margin-top:4px}
+@media (max-width:1400px){.rs-mega-docgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* MCP shortcut beside the GitHub icon: a tinted pill with the plug icon. */
+.rs-mcp{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;color:var(--accent-ink-2);background:oklch(0.52 0.11 170 / 0.1);border:1px solid oklch(0.52 0.11 170 / 0.45);border-radius:999px;padding:5px 11px 5px 9px;text-decoration:none;transition:background 0.2s,border-color 0.2s,color 0.2s}
+.rs-mcp:hover{background:oklch(0.52 0.11 170 / 0.18);border-color:var(--accent-ink);color:var(--accent-ink-2);text-decoration:none}
+.rs-mcp svg{display:block}
+/* Footer */
+.ft a{text-decoration:none}.ft a:hover{text-decoration:underline}
+.ft-grid{display:grid;grid-template-columns:minmax(0,1.7fr) repeat(4,minmax(0,1fr));gap:36px 28px}
+.ft-brand{display:grid;gap:16px;align-content:start;min-width:0}
+.ft-col{display:grid;gap:10px;align-content:start}
+.ft-col a{color:var(--ink-2);font-size:14px}.ft-col a:hover{color:var(--ink)}
+.ft-h{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);margin-bottom:2px}
+.ft-chip{font-size:11.5px;font-weight:500;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.ft-btn{font-size:13.5px;font-weight:600;color:var(--ink);border:1px solid var(--line-2);border-radius:8px;padding:8px 13px;background:var(--surface)}
+.ft-btn:hover{border-color:var(--ink);text-decoration:none !important}
+.ft-btn-dark{background:#10201b;border-color:#10201b;color:#e6efeb}.ft-btn-dark:hover{background:#1b3a30;border-color:#1b3a30}
+.ft-bottom{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-3)}
+.ft-badges{display:inline-flex;align-items:center;gap:10px}.ft-badges img{display:block;height:20px}
+@media (max-width:1100px){.ft-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ft-brand{grid-column:1/-1}}
+@media (max-width:560px){.ft-grid{grid-template-columns:minmax(0,1fr)}}
+/* Evaluate menu: five cards in a row; on narrow screens the trigger hides and plain links show in the burger. */
+.rs-mega-grid5{grid-template-columns:repeat(5,minmax(0,1fr)) !important}
+.rs-sub{display:none}
+@media (max-width:1400px){.rs-mega-grid5{grid-template-columns:repeat(3,minmax(0,1fr)) !important}}
+@media (max-width:1180px){.rs-dd.rs-mega-eval{display:none !important}.rs-sub{display:block}}
+/* MCP pill: a small menu of the MCP pages. */
+.rs-dd-mcp>a.rs-mcp{padding:5px 11px 5px 9px;margin:0}
+.rs-dd-mcp .rs-dd-panel{left:-6px}
+.rs-dd-mcp-inner{display:grid;gap:4px;width:340px !important;padding:12px !important}
+.rs-dd-mcp-inner small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);padding:4px 10px 6px}
+.rs-dd-mcp-inner a{display:grid;gap:2px;padding:9px 10px;border-radius:8px;color:var(--ink);text-decoration:none;transition:background 0.15s}
+.rs-dd-mcp-inner a:hover{background:var(--bg);text-decoration:none}
+.rs-dd-mcp-inner a[aria-current="page"]{background:var(--bg);box-shadow:inset 3px 0 0 oklch(0.52 0.11 170)}
+.rs-dd-mcp-inner b{font-size:13.5px;font-weight:600}
+.rs-dd-mcp-inner span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+@media (max-width:1180px){.rs-dd-mcp .rs-dd-panel{display:none !important}.rs-dd-mcp .rs-caret{display:none}}
+
+.pg-hero{scroll-margin-top:72px;max-width:980px;margin:0 auto;padding:80px 24px 28px;display:grid;gap:16px;justify-items:center;text-align:center}
+.pg-kicker{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)}
+.pg-hero h1{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(34px,4.6vw,56px);line-height:1.04;font-weight:800;letter-spacing:-0.025em;text-wrap:balance}
+.pg-hero>p{margin:0;font-size:17px;color:var(--ink-2);max-width:66ch;text-wrap:pretty}
+.pg-main{max-width:1240px;margin:0 auto;padding:12px 24px 88px;display:grid;gap:18px}
+.pg-app{display:grid;grid-template-columns:minmax(0,0.9fr) minmax(0,1.3fr);gap:18px;align-items:start;min-height:560px}
+.pg-panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:16px}
+.pg-field{display:grid;gap:6px}
+.pg-field>label,.pg-lab{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)}
+.pg-field select,.pg-field input{font:inherit;font-size:14.5px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line-2);border-radius:8px;padding:9px 11px;width:100%;box-sizing:border-box}
+.pg-field input.bad{border-color:var(--danger-ink)}
+.pg-help{font-size:12.5px;color:var(--ink-3)}
+.pg-keys{display:grid;gap:6px}
+.pg-key{display:grid;grid-template-columns:16px minmax(0,1fr);gap:10px;align-items:start;text-align:left;font:inherit;padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);cursor:pointer;color:var(--ink)}
+.pg-key[aria-pressed=true]{border-color:var(--accent-ink);background:oklch(0.52 0.11 170 / 0.08)}
+.pg-key i{width:12px;height:12px;border-radius:50%;border:2px solid var(--line-2);margin-top:3px}.pg-key[aria-pressed=true] i{border-color:var(--accent-ink);background:var(--accent-ink);box-shadow:inset 0 0 0 2px var(--surface)}
+.pg-key b{display:block;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500}.pg-key span{font-size:12.5px;color:var(--ink-3)}
+.pg-fmt{display:flex;gap:6px}.pg-fmt button{font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);cursor:pointer}
+.pg-fmt button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+.pg-send{font:inherit;font-size:15px;font-weight:600;color:#fff;background:oklch(0.52 0.11 170);border:0;border-radius:9px;padding:11px 16px;cursor:pointer}
+.pg-send:hover{background:oklch(0.46 0.11 170)}
+.pg-out{display:grid;gap:12px;min-width:0}
+.pg-term{background:#10201b;color:#e6efeb;border-radius:12px;overflow:hidden;min-width:0}
+.pg-term-h{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #1b2f29;font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88}
+.pg-term-h b{margin-left:auto;font-weight:500;padding:2px 8px;border-radius:999px}
+.pg-term pre{margin:0;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65;white-space:pre-wrap;word-break:break-word;max-height:330px;overflow:auto}
+.pg-ok{background:oklch(0.62 0.13 170 / 0.18);color:oklch(0.8 0.11 170)}.pg-err{background:oklch(0.65 0.18 25 / 0.2);color:#f2b8b5}
+.pg-h{color:#9fb3ac}.pg-s{color:#a7d7c5}.pg-x{color:#f2b8a0}
+.pg-trace{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+.pg-st{display:grid;gap:4px;padding:9px 8px;border-radius:9px;border:1px solid var(--line);background:var(--surface);font-size:11.5px;line-height:1.3;color:var(--ink-3);min-width:0}
+.pg-st b{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:500}
+.pg-st.pass{border-color:oklch(0.52 0.11 170 / 0.45);background:oklch(0.52 0.11 170 / 0.07);color:var(--ink)}.pg-st.pass b{color:var(--accent-ink)}
+.pg-st.stop{border-color:var(--danger-ink);background:oklch(0.65 0.18 25 / 0.1);color:var(--ink)}.pg-st.stop b{color:var(--danger-ink)}
+.pg-why{font-size:14px;color:var(--ink-2);margin:0}
+.pg-note{margin:0;font-size:13.5px;color:var(--ink-3);text-wrap:pretty}
+@media (max-width:980px){.pg-app{grid-template-columns:minmax(0,1fr)}.pg-trace{grid-template-columns:repeat(4,minmax(0,1fr))}}
+</style>
+</helmet>
+<div data-screen-label="Playground" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
+  <nav style="position:sticky;top:0;z-index:20;background:var(--bg-90);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)">
+    <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
+      <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:var(--ink);text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:var(--accent-ink)">API</span>Gate</span></a>
+      <div class="rs-actions" style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <button type="button" class="rs-search" data-search aria-label="Search the documentation (Ctrl+K)" title="Search · Ctrl+K"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span>Search</span><kbd>Ctrl K</kbd></button>
+        <button type="button" class="rs-theme" data-theme-toggle aria-label="Switch between light and dark theme" title="Theme"><svg class="rs-sun" aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="rs-moon" aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>        <div class="rs-dd rs-dd-mcp"><a href="MCP.dc.html" class="rs-mcp" title="MCP server: saved queries as tools for AI agents"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a6 6 0 0 1-12 0V8z"/></svg><span class="rs-mcp-t">MCP</span><svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-dd-mcp-inner"><small>MCP · AI agents</small><a href="MCP.dc.html"><b>MCP server for AI agents</b><span>What agents get, what they never get, and how to connect a client.</span></a><a href="Agent Checklist.dc.html"><b>Against Altinity's agent-safety checklist</b><span>Nineteen recommendations, point by point: 16 covered.</span></a><a href="Guide.dc.html?d=MCP"><b>MCP reference</b><span>Tools, resources, OAuth and every setting, from the documentation.</span></a><a href="Guide.dc.html?g=24-let-an-agent-call-your-queries-via-mcp"><b>Guide 24: let an agent call your queries</b><span>The ten-minute walkthrough, run against a real server.</span></a></div></div></div>
+      </div>
+      <input type="checkbox" id="rs-menu" class="rs-menu-toggle" aria-label="Open menu">
+      <label for="rs-menu" class="rs-burger" aria-hidden="true"><span></span></label>
+      <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
+        <a href="Features.dc.html" style="color:var(--ink-2)">Features</a>
+        <div class="rs-dd rs-mega"><a href="Use Cases.dc.html" style="color:var(--ink-2)">Use cases<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Use cases</span><b>Twelve jobs people hire QueryAPIGate for</b></div><a href="Use Cases.dc.html" class="rs-mega-all">All twelve, with the shape of each call →</a></div><div class="rs-mega-grid"><a class="rs-mega-card" href="use-cases/customer-analytics.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/chart-column.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Customer analytics</b><span>Analytics in your product, one tenant at a time</span></span></a><a class="rs-mega-card" href="use-cases/internal-tools.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Internal tools</b><span>Back an internal app without a backend team</span></span></a><a class="rs-mega-card" href="use-cases/controlled-writes.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/pencil-line.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Controlled writes</b><span>Let a partner or a form write, through one approved query</span></span></a><a class="rs-mega-card" href="use-cases/partner-data-api.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Partner data API</b><span>Hand a partner one query, not your schema</span></span></a><a class="rs-mega-card" href="use-cases/scheduled-deliveries.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/calendar-clock.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Scheduled deliveries</b><span>Deliver a daily file, incrementally, to someone else&#x27;s bucket</span></span></a><a class="rs-mega-card" href="use-cases/live-dashboards.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Live dashboards</b><span>A live view of what is being queried, by whom</span></span></a><a class="rs-mega-card" href="use-cases/self-serve-data.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/library.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Self-serve data</b><span>Data for every team, without handing out the database</span></span></a><a class="rs-mega-card" href="use-cases/files-as-an-api.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/folder-open.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Files as an API</b><span>Turn a bucket of Parquet into a queryable API</span></span></a><a class="rs-mega-card" href="use-cases/legacy-databases.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Legacy databases</b><span>A governed API in front of a database you can&#x27;t change</span></span></a><a class="rs-mega-card" href="use-cases/ai-agents.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span class="rs-mega-txt"><small>AI</small><b>AI agents</b><span>Let an agent query your data, governed like an app</span></span></a><a class="rs-mega-card" href="use-cases/compliance-and-audit.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-mega-txt"><small>Security and platform</small><b>Compliance and audit</b><span>Answer the auditor from the running system</span></span></a><a class="rs-mega-card" href="use-cases/platform-teams.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-pull-request.svg)"></span><span class="rs-mega-txt"><small>Security and platform</small><b>Platform teams</b><span>Run it like the rest of your platform</span></span></a></div></div></div></div>
+        <a href="Deploy.dc.html" style="color:var(--ink-2)">Deploy</a>
+        <div class="rs-dd rs-mega rs-mega-docsmenu"><a href="Docs.dc.html" style="color:var(--ink-2)">Docs<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Documentation</span><b>Reference for every setting, endpoint and promise</b></div><a href="Docs.dc.html" class="rs-mega-all">All documentation →</a></div><div class="rs-mega-docs rs-mega-docs-solo"><div class="rs-mega-docgrid"><div><small>Run it</small><a class="rs-doc" href="Guide.dc.html?d=INSTALLATION_AND_SETUP"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/download.svg)"></span>Installation and setup</a><a class="rs-doc" href="Guide.dc.html?d=CONFIGURATION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/settings-2.svg)"></span>Configuration</a><a class="rs-doc" href="Guide.dc.html?d=DEPLOYMENT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/rocket.svg)"></span>Deployment</a><a class="rs-doc" href="Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)"></span>Database connections</a></div><div><small>Reference</small><a class="rs-doc" href="Guide.dc.html?d=API"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/braces.svg)"></span>API reference</a><a class="rs-doc" href="Guide.dc.html?d=MCP"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/plug.svg)"></span>MCP server</a><a class="rs-doc" href="Guide.dc.html?d=FEATURES"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/sparkles.svg)"></span>Features</a><a class="rs-doc" href="Guide.dc.html?d=EXAMPLES"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/flask-conical.svg)"></span>Example APIs</a><a class="rs-doc" href="Guide.dc.html?d=QUERY_METADATA_MANAGEMENT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/tags.svg)"></span>Query metadata</a><a class="rs-doc" href="Guide.dc.html?d=SCREENSHOTS"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span>A tour of the Console</a></div><div><small>Security</small><a class="rs-doc" href="Guide.dc.html?d=THREAT_MODEL"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-alert.svg)"></span>Threat model</a><a class="rs-doc" href="Standards.dc.html"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/scroll-text.svg)"></span>Standards and specifications</a><a class="rs-doc" href="Guide.dc.html?d=DATA_PROTECTION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/route.svg)"></span>Where data goes</a><a class="rs-doc" href="Guide.dc.html?d=SECURITY"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span>Security policy</a><a class="rs-doc" href="Guide.dc.html?d=ARCHITECTURE"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/network.svg)"></span>Architecture overview</a><a class="rs-doc" href="Guide.dc.html?d=QUESTIONNAIRE"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/clipboard-check.svg)"></span>Questionnaire answers</a><a class="rs-doc" href="Guide.dc.html?d=SBOM"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/package-check.svg)"></span>SBOM and verification</a></div><div><small>Project</small><a class="rs-doc" href="Guide.dc.html?d=WHY"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/lightbulb.svg)"></span>Why QueryAPIGate</a><a class="rs-doc" href="Guide.dc.html?d=TECHNOLOGY_STACK"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layers.svg)"></span>Technology stack</a><a class="rs-doc" href="Guide.dc.html?d=CONTRIBUTING"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-pull-request.svg)"></span>Contributing</a><a class="rs-doc" href="Guide.dc.html?d=CODE_OF_CONDUCT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/heart-handshake.svg)"></span>Code of conduct</a></div></div><a href="Docs.dc.html" class="rs-mega-more">Docs: how the pieces fit, and where to start →</a></div></div></div></div>
+        <div class="rs-dd rs-mega rs-mega-guides"><a href="Guides.dc.html" style="color:var(--ink-2)">Guides<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">How-to guides</span><b>62 how-to guides, each run against a real server</b></div><a href="Guides.dc.html" class="rs-mega-all">All 62 guides, with times and outcomes →</a></div><div class="rs-mega-body rs-mega-body-solo"><div class="rs-mega-paths"><span class="rs-mega-sub">Reading paths</span><a class="rs-mega-path" href="Guides.dc.html?path=start"><small>01 → 05 · 5 guides · ≈42 min</small><b>Start here</b><span>The first five, in order: a query, a database, an API key.</span></a><a class="rs-mega-path" href="Guides.dc.html?path=partner"><small>13 → 50 · 7 guides · ≈53 min</small><b>Give a partner an API</b><span>One query, hashed columns, limits, an expiry, a rotation plan.</span></a><a class="rs-mega-path" href="Guides.dc.html?path=agents"><small>24 → 49 · 5 guides · ≈85 min</small><b>Let agents in</b><span>MCP tools, what the data means, and writes a person approves.</span></a><a class="rs-mega-path" href="Guides.dc.html?path=data"><small>41 → 28 · 4 guides · ≈65 min</small><b>Ship data out</b><span>Files as an API, scheduled deliveries, a live feed of runs.</span></a><a class="rs-mega-path" href="Guides.dc.html?path=prod"><small>23 → 59 · 8 guides · ≈135 min</small><b>Go to production</b><span>The Deploy page checklist, as guides.</span></a><span class="rs-mega-sub rs-mega-sub2">By part of the architecture</span><div class="rs-mega-arch"><a href="Guides.dc.html#arch-who-calls">Who calls</a><a href="Guides.dc.html#arch-front-doors">Front doors</a><a href="Guides.dc.html#arch-core">The governed core</a><a href="Guides.dc.html#arch-asks">Asks</a><a href="Guides.dc.html#arch-your-data">Your data</a><a href="Guides.dc.html#arch-reports-to">Reports to</a></div></div></div></div></div></div>
+        <div class="rs-dd rs-mega rs-mega-eval"><a href="Trust.dc.html" style="color:var(--ink-2)">Evaluate<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Evaluate</span><b>What a security or platform review asks for</b></div><a href="Trust.dc.html" class="rs-mega-all">Start at the Trust center →</a></div><div class="rs-mega-grid rs-mega-grid5"><a class="rs-mega-card" href="Compare.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-compare.svg)"></span><span class="rs-mega-txt"><b>Compare</b><span>Against a hand-rolled API and the other ways to put a database behind an endpoint.</span></span></a><a class="rs-mega-card" href="Trust.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-mega-txt"><b>Trust center</b><span>Where data goes, what you can verify yourself, and how to report a vulnerability.</span></span></a><a class="rs-mega-card" href="Enterprise.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/building-2.svg)"></span><span class="rs-mega-txt"><b>Enterprise</b><span>Identity, audit, availability, cryptography and the downloadable security pack.</span></span></a><a class="rs-mega-card" href="Security.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg)"></span><span class="rs-mega-txt"><b>Security</b><span>What each layer defends against, and the hardening checklist before go-live.</span></span></a><a class="rs-mega-card" href="Standards.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-badge.svg)"></span><span class="rs-mega-txt"><b>Standards and specifications</b><span>The twenty-five RFCs and specifications it is built on, each with what it is used for.</span></span></a></div></div></div></div>
+        <a class="rs-sub" href="Compare.dc.html" style="color:var(--ink-2)">Compare</a><a class="rs-sub" href="Trust.dc.html" style="color:var(--ink-2)">Trust center</a><a class="rs-sub" href="Enterprise.dc.html" style="color:var(--ink-2)">Enterprise</a><a class="rs-sub" href="Security.dc.html" style="color:var(--ink-2)">Security</a><a class="rs-sub" href="Standards.dc.html" style="color:var(--ink-2)">Standards and specifications</a>
+        <a href="Blog.dc.html" style="color:var(--ink-2)">Blog</a>
+        <a href="About.dc.html" style="color:var(--ink-2)">About</a>
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-ghn" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" title="GitHub" style="color:var(--ink-2);display:inline-flex;align-items:center;gap:6px" style-hover="color:var(--ink)"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg><span class="rs-ghn-n" data-gh-stars aria-label="GitHub stars"></span></a>
+      </div>
+    </div>
+  </nav>
+  <header id="top" class="pg-hero">
+    <span class="pg-kicker">Playground</span>
+    <h1>Call the example APIs from your browser</h1>
+    <p>Pick a saved query, a key and some parameters, and see what QueryAPIGate answers and where in the eight stages a refused call stops. These are the four example APIs <code>queryapigate examples load</code> installs, with their real rules, keys and error codes, simulated here on a generated film-rental dataset.</p>
+  </header>
+  <main class="pg-main">
+    <div id="pg-app" class="pg-app"></div>
+    <p class="pg-note">Simulated in the page: nothing is sent anywhere. Status codes, error <code>code</code> values, headers and parameter rules match the product; error messages are paraphrased and the rows are illustrative. To run it for real: <code>pip install queryapigate</code>, <code>queryapigate examples load</code>, <code>queryapigate serve</code>. <a href="Guide.dc.html?g=05-try-the-built-in-example-apis">Guide 05 →</a></p>
+  </main>
+
+  <footer class="ft" style="border-top:0;background:radial-gradient(circle,var(--dots) 0.4px,transparent 0.7px) 0 0/8px 1px repeat-x var(--bg)">
+    <div style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;gap:40px">
+      <div class="ft-grid">
+        <div class="ft-brand">
+          <a href="Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:var(--ink);text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:var(--accent-ink)">API</span>Gate</span></a>
+          <p style="margin:0;font-size:14px;color:var(--ink-2);max-width:34ch;text-wrap:pretty">One governed gate between your databases and everything that asks them for data. Self-hosted: your data never leaves your infrastructure.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="ft-chip">Self-hosted</span><span class="ft-chip">Apache-2.0</span><span class="ft-chip">Signed releases + SBOM</span><span class="ft-chip">FIPS-approved crypto</span><span class="ft-chip">Python 3.11+</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            <a href="Docs.dc.html#install" class="ft-btn ft-btn-dark">Install →</a>
+            <a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases/latest" class="ft-btn">Latest release →</a>
+            <a href="Guide.dc.html?d=MCP" class="ft-btn">MCP server →</a>
+          </div>
+        </div>
+        <div class="ft-col"><span class="ft-h">Product</span><a href="Features.dc.html">Features</a><a href="Use Cases.dc.html">Use cases</a><a href="Integrations.dc.html">Integrations</a><a href="Playground.dc.html">Playground</a><a href="Deploy.dc.html">Deploy</a><a href="Compare.dc.html">Compare</a><a href="Roadmap.dc.html">Roadmap</a><a href="Changelog.dc.html">Changelog</a></div>
+        <div class="ft-col"><span class="ft-h">Resources</span><a href="Docs.dc.html">Docs</a><a href="FAQ.dc.html">FAQ</a><a href="Glossary.dc.html">Glossary</a><a href="Guides.dc.html">How-to guides</a><a href="Guide.dc.html?d=API">API reference</a><a href="Guide.dc.html?d=MCP">MCP server</a><a href="https://AnanthaRajuC.github.io/QueryAPIGate/">Full reference site</a><a href="Blog.dc.html">Blog</a></div>
+        <div class="ft-col"><span class="ft-h">Trust</span><a href="Trust.dc.html">Trust center</a><a href="Enterprise.dc.html">Enterprise</a><a href="Security.dc.html">Security</a><a href="Support.dc.html">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new">Report a vulnerability</a></div>
+        <div class="ft-col"><span class="ft-h">Project</span><a href="About.dc.html">About</a><a href="Stack.dc.html">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE">Licence (Apache-2.0)</a></div>
+      </div>
+      <div class="ft-bottom">
+        <span>© 2026 QueryAPIGate · Apache-2.0 · Experimental features are labelled in the product and the changelog.</span>
+        <span class="ft-badges">
+          <a href="https://github.com/AnanthaRajuC/QueryAPIGate/actions/workflows/ci.yml" aria-label="CI workflow status"><img src="https://github.com/AnanthaRajuC/QueryAPIGate/actions/workflows/ci.yml/badge.svg" alt="CI status" height="20"></a>
+          <a href="https://scorecard.dev/viewer/?uri=github.com/AnanthaRajuC/QueryAPIGate" aria-label="OpenSSF Scorecard"><img src="https://api.scorecard.dev/projects/github.com/AnanthaRajuC/QueryAPIGate/badge" alt="OpenSSF Scorecard score" height="20"></a>
+          <a href="https://github.com/AnanthaRajuC/QueryAPIGate" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" style="color:var(--ink-2);display:inline-flex"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg></a>
+        </span>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+</body>
+</html>
