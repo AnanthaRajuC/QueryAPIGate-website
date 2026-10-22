@@ -15,8 +15,26 @@
 <meta name="twitter:card" content="summary">
 <!-- /site-meta -->
 <script src="./support.js"></script>
-<script src="./theme.js"></script>
+<script src="./theme.js?v=2"></script>
 <script src="./search.js?v=3" defer></script>
+<script>
+(function () {
+  // Section rail on the left: marks the section in view; clicking scrolls without touching the hash.
+  var ids = ['top','g-product','g-partners','g-data','g-ai','g-security'], raf = 0;
+  function update() {
+    raf = 0;
+    var links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
+    var line = window.innerHeight * 0.35, cur = ids[0];
+    for (var i = 0; i < ids.length; i++) { var el = document.getElementById(ids[i]); if (el && el.getBoundingClientRect().top <= line) cur = ids[i]; }
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = ids[ids.length - 1];
+    for (var j = 0; j < links.length; j++) links[j].classList.toggle('on', links[j].getAttribute('data-rail') === cur);
+  }
+  function tick() { if (!raf) raf = requestAnimationFrame(update); }
+  window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
+  document.addEventListener('click', function (e) { var a = e.target.closest('.rail a[data-rail]'); if (!a) return; var el = document.getElementById(a.getAttribute('data-rail')); if (!el) return; e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
+})();
+</script>
 </head>
 <body>
 <x-dc>
@@ -25,6 +43,33 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+/* Use cases three to a row: each card stacks its flow strip vertically. */
+.u-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:stretch}
+.u-list>a{align-content:start}
+.u-list .u-strip{flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:0;padding:12px;margin:-4px 0 -4px;position:relative}
+.u-list .u-node,.u-list .u-chk{white-space:normal;overflow-wrap:anywhere}
+.u-list .u-checks{flex-direction:column;gap:6px}
+.u-list .u-link{align-self:flex-start;margin-left:14px;width:2px;height:12px;flex:none}
+.u-list .u-link::after{left:-2px;top:0;animation-name:u-travel-v}
+.u-list .u-link.l3{display:block;flex-basis:auto;height:12px;background:var(--line)}
+.u-list .u-strip-dark .u-link.l3{background:#2a3d37}
+.u-list .u-strip{padding-top:30px}
+.u-list .u-num{position:absolute;top:9px;right:12px;margin:0}
+.u-list>a>h3{font-size:clamp(19px,1.7vw,23px) !important;line-height:1.2 !important}
+.u-list>a>p{font-size:15px}
+@keyframes u-travel-v{0%{top:0;opacity:0}2%{opacity:1}16%{top:6px;opacity:1}19%,100%{top:6px;opacity:0}}
+@media (max-width:1100px){.u-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:700px){.u-list{grid-template-columns:minmax(0,1fr)}}
+.rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:30;display:grid;gap:13px;transition:opacity 0.25s;}
+.rail.hide{opacity:0;pointer-events:none}
+.rail{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
+.rail a{display:flex;align-items:center;gap:12px;color:#9fb3ac;text-decoration:none;transition:color 0.2s}
+.rail a::before{content:'';flex:none;width:22px;height:1px;background:var(--line-2);transition:width 0.25s,background 0.25s,height 0.25s}
+.rail a:hover{color:var(--ink);text-decoration:none}
+.rail a.on{color:var(--ink)}.rail a.on::before{width:40px;height:2px;background:oklch(0.52 0.11 170)}
+@media (max-width:1599px){.rail span{opacity:0;visibility:hidden;transform:translateX(-6px);transition:opacity 0.2s,transform 0.2s,visibility 0.2s}.rail:hover span{opacity:1;visibility:visible;transform:none}}
+@media (max-width:1279px){.rail{display:none}}
+@media (prefers-reduced-motion:reduce){.rail a::before,.rail span{transition:none}}
 .rs-ghn svg{display:block}
 .rs-ghn-n{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1;color:var(--ink-3);min-width:0}
 .rs-ghn-n:empty{display:none}
@@ -60,8 +105,6 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   .f-pad{padding-left:16px !important;padding-right:16px !important}
   .f-table th:nth-child(3),.f-table td:nth-child(3){display:none}
 }
-.f-sub{scrollbar-width:none;top:64px !important}
-@media (max-width:1180px){.f-sub{top:70px !important}}
 .u-case{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}
 .u-case.u-flip > .u-code{order:-1}
 /* "Shape of the call" strip: who -> door -> the checks that matter here -> data. CSS-only 6s loop; the
@@ -106,7 +149,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 @media (max-width:640px){.u-personas{grid-template-columns:minmax(0,1fr) !important}.u-personas > .u-last{grid-column:span 1}}
 .f-bento > .f-last{grid-column:span 4}
 @media (max-width:960px){.f-bento > .f-last{grid-column:span 2 !important}}
-@media (max-width:640px){.f-bento > .f-last{grid-column:span 1 !important}}.f-sub::-webkit-scrollbar{display:none}
+@media (max-width:640px){.f-bento > .f-last{grid-column:span 1 !important}}
 .f-table td,.f-table th{padding:14px 16px;text-align:left;vertical-align:top;border-top:1px solid #243b34}
 .f-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac;border-top:0;padding-top:0}
 /* Use-cases dropdown in the top nav (desktop only; the burger menu keeps a plain link). */
@@ -252,7 +295,15 @@ a > .u-strip{margin:0;order:0}
       </div>
     </div>
   </nav>
-  <header class="f-pad" style="max-width:1240px;margin:0 auto;padding:96px 24px 56px;display:grid;gap:22px;justify-items:center;text-align:center">
+  <nav class="rail" aria-label="Sections">
+    <a href="#top" data-rail="top"><span>Start</span></a>
+    <a href="#g-product" data-rail="g-product"><span>Product teams</span></a>
+    <a href="#g-partners" data-rail="g-partners"><span>Partners</span></a>
+    <a href="#g-data" data-rail="g-data"><span>Data teams</span></a>
+    <a href="#g-ai" data-rail="g-ai"><span>AI</span></a>
+    <a href="#g-security" data-rail="g-security"><span>Security</span></a>
+  </nav>
+  <header id="top" class="f-pad" style="scroll-margin-top:72px;max-width:1240px;margin:0 auto;padding:96px 24px 56px;display:grid;gap:22px;justify-items:center;text-align:center">
     <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">Use cases</span>
     <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(38px,5.2vw,68px);line-height:1;font-weight:800;letter-spacing:-0.025em;max-width:16ch;text-wrap:balance">Twelve jobs people hire QueryAPIGate for</h1>
     <p style="margin:0;font-size:19px;color:var(--ink-2);max-width:58ch;text-wrap:pretty">Each one starts the same way: a SQL query you already have, and someone outside your code who needs its result. What differs is who is asking and what they must not see. Each has its own page, with the configuration and the responses it produced.</p>
@@ -266,20 +317,13 @@ a > .u-strip{margin:0;order:0}
       <div class="u-last" style="background:var(--surface);padding:22px 20px;display:grid;gap:12px;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--accent-ink)">05</span><a href="#g-security" style="font-family:'Schibsted Grotesk',sans-serif;font-size:17px;font-weight:700;letter-spacing:-0.01em;color:var(--ink)">Security and platform</a><p style="margin:0;font-size:13.5px;color:var(--ink-2)">Evidence for auditors, and operations your platform team recognises.</p><div style="display:grid;gap:6px;padding-top:6px;border-top:1px solid var(--line-soft)"><a href="use-cases/compliance-and-audit.dc.html" style="font-size:14px;font-weight:500;color:var(--ink);display:flex;justify-content:space-between;gap:8px" style-hover="color:var(--accent-ink);text-decoration:none"><span>Compliance and audit</span><span style="color:#9fb3ac">→</span></a><a href="use-cases/platform-teams.dc.html" style="font-size:14px;font-weight:500;color:var(--ink);display:flex;justify-content:space-between;gap:8px" style-hover="color:var(--accent-ink);text-decoration:none"><span>Platform teams</span><span style="color:#9fb3ac">→</span></a></div></div>
     </div>
   </section>
-  <div class="f-sub" style="position:sticky;top:0;z-index:19;background:#10201b;border-bottom:1px solid #243b34;overflow-x:auto;margin-top:40px;display:{{ subDisplay }}">
-    <div style="max-width:1240px;margin:0 auto;padding:0 24px;display:flex;gap:4px;align-items:center;justify-content:safe center;min-width:max-content">
-      <sc-for list="{{ sub }}" as="s" hint-placeholder-count="5">
-        <a href="{{ s.href }}" style="display:flex;gap:8px;align-items:center;padding:14px 12px;font-size:13.5px;font-weight:500;color:{{ s.color }};border-bottom:2px solid {{ s.line }};margin-bottom:-1px;text-decoration:none;white-space:nowrap" style-hover="color:var(--on-ink);text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">{{ s.num }}</span>{{ s.label }}</a>
-      </sc-for>
-    </div>
-  </div>
-  <section id="g-product" style="scroll-margin-top:124px">
+  <section id="g-product" style="scroll-margin-top:84px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:40px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end">
         <div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">01 · Product teams</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Data inside your product, for your customers and your staff</h2></div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end"><a href="use-cases/customer-analytics.dc.html" style="font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)" style-hover="border-color:var(--ink);text-decoration:none">Customer analytics</a><a href="use-cases/internal-tools.dc.html" style="font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)" style-hover="border-color:var(--ink);text-decoration:none">Internal tools</a><a href="use-cases/controlled-writes.dc.html" style="font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)" style-hover="border-color:var(--ink);text-decoration:none">Controlled writes</a></div>
       </div>
-      <div style="display:grid;gap:24px">
+      <div class="u-list">
                 <a id="saas" href="use-cases/customer-analytics.dc.html" style="display:grid;gap:14px;padding:clamp(20px,2.6vw,28px);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;text-decoration:none;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25);transition:border-color 0.2s" style-hover="border-color:var(--accent-ink);text-decoration:none">
           <div class="u-strip" role="img" aria-label="A signed-in user calls GET /q/revenue_by_month; the tenant comes from the token's claim, the role from the plan claim, the cache is per caller; the query runs on ClickHouse.">
             <span class="u-node"><small>who</small>jwt:alice@acme</span>
@@ -331,13 +375,13 @@ a > .u-strip{margin:0;order:0}
       </div>
     </div>
   </section>
-  <section id="g-partners" style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);scroll-margin-top:124px">
+  <section id="g-partners" style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);scroll-margin-top:84px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:40px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end">
         <div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">02 · Partners and pipelines</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Data that leaves the building, on your terms</h2></div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end"><a href="use-cases/partner-data-api.dc.html" style="font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)" style-hover="border-color:var(--ink);text-decoration:none">Partner data API</a><a href="use-cases/scheduled-deliveries.dc.html" style="font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)" style-hover="border-color:var(--ink);text-decoration:none">Scheduled deliveries</a><a href="use-cases/live-dashboards.dc.html" style="font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)" style-hover="border-color:var(--ink);text-decoration:none">Live dashboards</a></div>
       </div>
-      <div style="display:grid;gap:24px">
+      <div class="u-list">
                 <a id="partner" href="use-cases/partner-data-api.dc.html" style="display:grid;gap:14px;padding:clamp(20px,2.6vw,28px);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;text-decoration:none;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25);transition:border-color 0.2s" style-hover="border-color:var(--accent-ink);text-decoration:none">
           <div class="u-strip" role="img" aria-label="The partner key partner-acme calls GET /q/acme_orders; the key reaches one query and no schema, emails are hashed, and it is rate-limited, IP-restricted and expiring; it gets only its own rows.">
             <span class="u-node"><small>who</small>key partner-acme</span>
@@ -367,7 +411,7 @@ a > .u-strip{margin:0;order:0}
           </div>
           <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/calendar-clock.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/calendar-clock.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">For pipelines and partners' buckets</span></div>
           <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(22px,2.4vw,30px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:var(--ink)">Deliver a daily file, incrementally, to someone else&#x27;s bucket</h3>
-          <p style="margin:0;color:var(--ink-2);text-wrap:pretty">Every night a partner needs yesterday's changes as Parquet in their S3 bucket. Writing that job means credentials, retries, a watermark and a place to see when it failed. A saved export is all of those.</p>
+          <p style="margin:0;color:var(--ink-2);text-wrap:pretty">Every night a partner needs yesterday's changes as <code class="qx">Parquet</code> in their S3 bucket. Writing that job means credentials, retries, a watermark and a place to see when it failed. A saved export is all of those.</p>
           <span style="font-size:14px;font-weight:600;color:var(--accent-ink)">Read the use case →</span>
         </a>
                 <a id="events" href="use-cases/live-dashboards.dc.html" style="display:grid;gap:14px;padding:clamp(20px,2.6vw,28px);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;text-decoration:none;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25);transition:border-color 0.2s" style-hover="border-color:var(--accent-ink);text-decoration:none">
@@ -389,13 +433,13 @@ a > .u-strip{margin:0;order:0}
       </div>
     </div>
   </section>
-  <section id="g-data" style="scroll-margin-top:124px">
+  <section id="g-data" style="scroll-margin-top:84px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:40px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end">
         <div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">03 · Data teams</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Access for everyone who needs it, without handing out the database</h2></div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end"><a href="use-cases/self-serve-data.dc.html" style="font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)" style-hover="border-color:var(--ink);text-decoration:none">Self-serve data</a><a href="use-cases/files-as-an-api.dc.html" style="font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)" style-hover="border-color:var(--ink);text-decoration:none">Files as an API</a><a href="use-cases/legacy-databases.dc.html" style="font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)" style-hover="border-color:var(--ink);text-decoration:none">Legacy databases</a></div>
       </div>
-      <div style="display:grid;gap:24px">
+      <div class="u-list">
                 <a id="selfserve" href="use-cases/self-serve-data.dc.html" style="display:grid;gap:14px;padding:clamp(20px,2.6vw,28px);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;text-decoration:none;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25);transition:border-color 0.2s" style-hover="border-color:var(--accent-ink);text-decoration:none">
           <div class="u-strip" role="img" aria-label="The finance team's key lists GET /catalog and calls /q/revenue_by_region; the role reaches only the finance collection, read-only, within a 600 per hour budget; the query is cached for 300 seconds.">
             <span class="u-node"><small>who</small>key finance-reporting</span>
@@ -425,7 +469,7 @@ a > .u-strip{margin:0;order:0}
           </div>
           <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/folder-open.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/folder-open.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">For data teams</span></div>
           <h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(22px,2.4vw,30px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:var(--ink)">Turn a bucket of Parquet into a queryable API</h3>
-          <p style="margin:0;color:var(--ink-2);text-wrap:pretty">The lake has the data; the people who need it have a browser and curl. A DuckDB connection pointed at a prefix makes each file a view, locked to the paths you list, with no copy and no warehouse.</p>
+          <p style="margin:0;color:var(--ink-2);text-wrap:pretty">The lake has the data; the people who need it have a browser and curl. A <code class="qx">DuckDB</code> connection pointed at a prefix makes each file a view, locked to the paths you list, with no copy and no warehouse.</p>
           <span style="font-size:14px;font-weight:600;color:var(--accent-ink)">Read the use case →</span>
         </a>
                 <a id="legacy" href="use-cases/legacy-databases.dc.html" style="display:grid;gap:14px;padding:clamp(20px,2.6vw,28px);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;text-decoration:none;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25);transition:border-color 0.2s" style-hover="border-color:var(--accent-ink);text-decoration:none">
@@ -447,13 +491,13 @@ a > .u-strip{margin:0;order:0}
       </div>
     </div>
   </section>
-  <section id="g-ai" style="background:#10201b;color:#e6efeb;scroll-margin-top:124px">
+  <section id="g-ai" style="background:#10201b;color:#e6efeb;scroll-margin-top:84px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:40px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end">
         <div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">04 · AI</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Agents governed exactly like applications</h2></div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end"><a href="use-cases/ai-agents.dc.html" style="font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid #2a3d37;background:#0c1915;color:#e6efeb" style-hover="border-color:#9fb3ac;text-decoration:none">AI agents</a></div>
       </div>
-      <div style="display:grid;gap:24px">
+      <div class="u-list">
                 <a id="agents" href="use-cases/ai-agents.dc.html" style="display:grid;gap:14px;padding:clamp(20px,2.6vw,28px);background:#0c1915;color:#e6efeb;border:1px solid #243b34;border-radius:16px;text-decoration:none;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25);transition:border-color 0.2s" style-hover="border-color:var(--accent-ink);text-decoration:none">
           <div class="u-strip u-strip-dark" role="img" aria-label="An agent authenticated with an API key or OAuth calls the MCP tool orders_by_customer; it gets the same grants as REST, only allowed tables, and writes wait for a person's approval; it reads the warehouse with masked columns marked.">
             <span class="u-node"><small>who</small>agent · key or OAuth 2.1</span>
@@ -473,13 +517,13 @@ a > .u-strip{margin:0;order:0}
       </div>
     </div>
   </section>
-  <section id="g-security" style="scroll-margin-top:124px">
+  <section id="g-security" style="scroll-margin-top:84px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:40px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end">
         <div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">05 · Security and platform</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Evidence for auditors, and operations your platform team recognises</h2></div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end"><a href="use-cases/compliance-and-audit.dc.html" style="font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)" style-hover="border-color:var(--ink);text-decoration:none">Compliance and audit</a><a href="use-cases/platform-teams.dc.html" style="font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2)" style-hover="border-color:var(--ink);text-decoration:none">Platform teams</a></div>
       </div>
-      <div style="display:grid;gap:24px">
+      <div class="u-list">
                 <a id="compliance" href="use-cases/compliance-and-audit.dc.html" style="display:grid;gap:14px;padding:clamp(20px,2.6vw,28px);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:16px;text-decoration:none;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25);transition:border-color 0.2s" style-hover="border-color:var(--accent-ink);text-decoration:none">
           <div class="u-strip" role="img" aria-label="An auditor runs queryapigate audit verify; the signed chain is intact, the SIEM's copy verifies on its own, and a person's history can be forgotten by hash; it reads the audit log and the syslog copy.">
             <span class="u-node"><small>who</small>the auditor</span>

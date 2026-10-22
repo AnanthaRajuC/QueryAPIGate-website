@@ -1,12 +1,11 @@
 /* Light and dark theme. Loaded synchronously in <head> on every page so the theme is set before first paint.
    The pages use the palette through CSS variables defined here; the dark values are applied when
-   <html data-theme="dark">. The choice is kept in localStorage ('qag-theme'); without one the system setting is followed. */
+   <html data-theme="dark">. The choice is kept in localStorage ('qag-theme'); without one the site is light. */
 (function () {
-  var KEY = 'qag-theme', root = document.documentElement, mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  var KEY = 'qag-theme', root = document.documentElement;
   function stored() { try { var t = localStorage.getItem(KEY); return t === 'dark' || t === 'light' ? t : null; } catch (e) { return null; } }
   function apply(t) { root.setAttribute('data-theme', t); root.style.colorScheme = t; }
-  apply(stored() || (mq && mq.matches ? 'dark' : 'light'));
-  if (mq && mq.addEventListener) mq.addEventListener('change', function (e) { if (!stored()) apply(e.matches ? 'dark' : 'light'); });
+  apply(stored() || 'light');   // light unless the reader has chosen dark with the toggle
 
   var css = [
     ':root{--bg:#f3f5f4;--bg-90:rgba(243,245,244,0.9);--surface:#fff;--surface-2:#f8faf9;--surface-3:#eef2f0;--tint:#f3f9f6;',
@@ -24,10 +23,48 @@
     '.rs-theme:hover{color:var(--ink);border-color:var(--ink)}',
     '.rs-theme svg{display:block}.rs-theme .rs-moon{display:none}',
     ':root[data-theme=dark] .rs-theme .rs-sun{display:none}:root[data-theme=dark] .rs-theme .rs-moon{display:block}',
-    '@media (max-width:640px){.rs-theme{width:30px;height:30px}.rs-actions{gap:6px !important}.rs-mcp-t,.rs-mcp .rs-caret{display:none}.rs-mcp{padding:6px 8px !important}}'
+    '@media (max-width:640px){.rs-theme{width:30px;height:30px}.rs-actions{gap:6px !important}.rs-mcp-t,.rs-mcp .rs-caret{display:none}.rs-mcp{padding:6px 8px !important}}',
+    ':where(p,li,td,dd,summary,figcaption) code:not(pre code),code.qx{font-family:\'JetBrains Mono\',monospace;font-size:0.88em;background:oklch(0.52 0.11 170 / 0.08);border:1px solid oklch(0.52 0.11 170 / 0.16);border-radius:5px;padding:0.05em 0.35em;-webkit-box-decoration-break:clone;box-decoration-break:clone}',
+    '.rs-progress{position:fixed;left:0;top:0;height:4px;width:100%;z-index:40;pointer-events:none;background:var(--accent-ink);transform-origin:0 50%;transform:scaleX(0)}',
+    '.rs-top{position:fixed;right:24px;bottom:24px;z-index:40;width:46px;height:46px;padding:0;border:0;border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer;display:grid;place-items:center;box-shadow:0 10px 28px -12px rgba(16,32,27,0.45);opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .25s,transform .25s,visibility .25s}',
+    '.rs-top.on{opacity:1;visibility:visible;transform:none}.rs-top:hover{color:var(--accent-ink)}.rs-top:focus-visible{outline:2px solid var(--accent-ink);outline-offset:3px}',
+    '.rs-top svg{grid-area:1/1;display:block}.rs-top .rs-ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}',
+    '.rs-top .rs-ring circle{fill:none;stroke-width:3}.rs-top .rs-ring .bg{stroke:var(--line)}.rs-top .rs-ring .fg{stroke:var(--accent-ink);stroke-linecap:round}',
+    '@media (max-width:640px){.rs-top{right:16px;bottom:calc(16px + env(safe-area-inset-bottom));width:42px;height:42px}}',
+    '@media (prefers-reduced-motion:reduce){.rs-top{transition:none}}'
   ].join('');
   var style = document.createElement('style'); style.id = 'qag-theme'; style.textContent = css;
   (document.head || root).appendChild(style);
+
+  // A thin bar along the top edge shows how far down the page the reader is.
+  var bar, pending = false;
+  var top, ring, C = 2 * Math.PI * 21;
+  function progress() {
+    pending = false;
+    var doc = document.documentElement, max = doc.scrollHeight - window.innerHeight;
+    var f = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+    bar.style.transform = 'scaleX(' + f + ')';
+    if (top) { ring.style.strokeDashoffset = String(C * (1 - f)); top.classList.toggle('on', window.scrollY > window.innerHeight * 0.9); }
+  }
+  function tick() { if (!pending) { pending = true; requestAnimationFrame(progress); } }
+  function mount() {
+    if (bar || !document.body) return;
+    bar = document.createElement('div'); bar.className = 'rs-progress'; bar.setAttribute('aria-hidden', 'true'); document.body.appendChild(bar);
+    // Back to top, bottom right: shown after the first screen; its ring fills as the page is read.
+    top = document.createElement('button'); top.type = 'button'; top.className = 'rs-top'; top.setAttribute('aria-label', 'Back to top'); top.title = 'Back to top';
+    top.innerHTML = '<svg class="rs-ring" viewBox="0 0 46 46" aria-hidden="true"><circle class="bg" cx="23" cy="23" r="21"/><circle class="fg" cx="23" cy="23" r="21" stroke-dasharray="' + C + '" stroke-dashoffset="' + C + '"/></svg>'
+      + '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+    ring = top.querySelector('.fg');
+    top.addEventListener('click', function () {
+      var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
+      var t = document.querySelector('a[href], button, input'); if (t && t.focus) try { t.focus({ preventScroll: true }); } catch (e) {}
+    });
+    document.body.appendChild(top);
+    window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick); progress();
+    var tries = 0, t = setInterval(function () { progress(); if (++tries > 20) clearInterval(t); }, 250);
+  }
+  if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
 
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('[data-theme-toggle]'); if (!b) return;
