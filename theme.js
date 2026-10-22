@@ -19,12 +19,15 @@
     'html{background:var(--bg)}',
     ':root[data-theme=dark] img[src*="console/"]{filter:brightness(0.9)}',
     ':root[data-theme=dark] .rs-pill{border-color:var(--line)}',
-    '.rs-theme{display:inline-grid;place-items:center;width:36px;height:36px;padding:0;border:1px solid var(--line-2);border-radius:999px;background:var(--surface);color:var(--ink-2);cursor:pointer;flex:none;transition:color .2s,border-color .2s}',
-    '.rs-theme:hover{color:var(--ink);border-color:var(--ink)}',
+    '.rs-theme{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-width:28px;height:28px;padding:0;border:0;background:none;color:var(--ink-2);cursor:pointer;flex:none;font:inherit;transition:color .2s}',
+    '.rs-theme:hover{color:var(--accent-ink)}.rs-theme:focus-visible{outline:2px solid var(--accent-ink);outline-offset:3px;border-radius:6px}.rs-theme-t{display:none}',
+    '@media (max-width:1180px){.rs-nav .rs-theme{width:100%;justify-content:flex-start;height:auto;padding:11px 4px;font-size:16px;color:var(--ink)}.rs-nav .rs-theme-t{display:inline}}',
     '.rs-theme svg{display:block}.rs-theme .rs-moon{display:none}',
     ':root[data-theme=dark] .rs-theme .rs-sun{display:none}:root[data-theme=dark] .rs-theme .rs-moon{display:block}',
-    '@media (max-width:640px){.rs-theme{width:30px;height:30px}.rs-actions{gap:6px !important}.rs-mcp-t,.rs-mcp .rs-caret{display:none}.rs-mcp{padding:6px 8px !important}}',
+    '@media (max-width:640px){.rs-actions{gap:6px !important}.rs-mcp-t,.rs-mcp .rs-caret{display:none}.rs-mcp{padding:6px 8px !important}}',
     ':where(p,li,td,dd,summary,figcaption) code:not(pre code),code.qx{font-family:\'JetBrains Mono\',monospace;font-size:0.88em;background:oklch(0.52 0.11 170 / 0.08);border:1px solid oklch(0.52 0.11 170 / 0.16);border-radius:5px;padding:0.05em 0.35em;-webkit-box-decoration-break:clone;box-decoration-break:clone}',
+    '.rs-mega-foot{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 22px;padding-top:8px;margin-top:4px;border-top:1px solid var(--line-soft)}.rs-mega-foot .rs-mega-more{border-top:0;padding-top:0;margin-top:0}.rs-mega-foot .rs-mega-more:first-child{margin-right:auto}',
+    '.rs-mega-inner .rs-mega-grid.rs-mega-grid5{grid-template-columns:repeat(3,minmax(0,1fr)) !important}',
     '.rs-progress{position:fixed;left:0;top:0;height:4px;width:100%;z-index:40;pointer-events:none;background:var(--accent-ink);transform-origin:0 50%;transform:scaleX(0)}',
     '.rs-top{position:fixed;right:24px;bottom:24px;z-index:40;width:46px;height:46px;padding:0;border:0;border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer;display:grid;place-items:center;box-shadow:0 10px 28px -12px rgba(16,32,27,0.45);opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .25s,transform .25s,visibility .25s}',
     '.rs-top.on{opacity:1;visibility:visible;transform:none}.rs-top:hover{color:var(--accent-ink)}.rs-top:focus-visible{outline:2px solid var(--accent-ink);outline-offset:3px}',
@@ -32,6 +35,13 @@
     '.rs-top .rs-ring circle{fill:none;stroke-width:3}.rs-top .rs-ring .bg{stroke:var(--line)}.rs-top .rs-ring .fg{stroke:var(--accent-ink);stroke-linecap:round}',
     '@media (max-width:640px){.rs-top{right:16px;bottom:calc(16px + env(safe-area-inset-bottom));width:42px;height:42px}}',
     '@media (prefers-reduced-motion:reduce){.rs-top{transition:none}}',
+    '.rs-pg{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2);text-decoration:none;transition:color .2s}.rs-pg:hover,.rs-pg[aria-current=page]{color:var(--accent-ink);text-decoration:none}',
+    '.rs-pg-ico{display:block;overflow:visible}.rs-pg-t{display:none}',
+    '.rs-pg-caret{animation:rs-pg-blink 1.1s steps(1) infinite}@keyframes rs-pg-blink{50%{opacity:0}}',
+    '.rs-pg-live{transform-box:fill-box;transform-origin:center;animation:rs-pg-pulse 2s ease-in-out infinite}@keyframes rs-pg-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.55}}',
+    '.rs-pg:hover .rs-pg-ico{animation:rs-pg-nudge .5s ease}@keyframes rs-pg-nudge{40%{transform:translateY(-2px)}}',
+    '@media (max-width:1180px){.rs-pg-t{display:inline}.rs-nav a.rs-pg{display:flex !important;align-items:center;gap:10px}}',
+    '@media (prefers-reduced-motion:reduce){.rs-pg-caret,.rs-pg-live,.rs-pg:hover .rs-pg-ico{animation:none}}',
     '.uc-back{display:inline-grid;place-items:center;width:24px;height:24px;margin-right:2px;color:var(--ink-2);text-decoration:none;flex:none;transition:color .2s,transform .2s}.uc-back:hover{color:var(--accent-ink);transform:translateX(-2px);text-decoration:none}.uc-back svg{display:block}'
   ].join('');
   var style = document.createElement('style'); style.id = 'qag-theme'; style.textContent = css;
@@ -66,6 +76,22 @@
     var tries = 0, t = setInterval(function () { progress(); if (++tries > 20) clearInterval(t); }, 250);
   }
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
+
+  // Pages render their content after load, so the browser's own jump to #section finds nothing and stays at the top.
+  // Once the target exists and the layout has settled, scroll to it; give up if the reader has started scrolling.
+  (function () {
+    var h = location.hash; if (!h || h.length < 2 || h.indexOf('=') >= 0) return;
+    var id; try { id = decodeURIComponent(h.slice(1)); } catch (e) { return; }
+    var tries = 0, lastH = -1, steady = 0, moved = false;
+    window.addEventListener('wheel', function () { moved = true; }, { passive: true, once: true });
+    window.addEventListener('touchmove', function () { moved = true; }, { passive: true, once: true });
+    var t = setInterval(function () {
+      var el = document.getElementById(id), H = document.documentElement.scrollHeight;
+      steady = (H === lastH) ? steady + 1 : 0; lastH = H;
+      if (moved || ++tries > 60) return clearInterval(t);
+      if (el && steady >= 2) { clearInterval(t); el.scrollIntoView({ block: 'start' }); }
+    }, 100);
+  })();
 
   document.addEventListener('click', function (e) {
     var b = e.target.closest && e.target.closest('[data-theme-toggle]'); if (!b) return;
