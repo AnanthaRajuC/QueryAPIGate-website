@@ -24,32 +24,53 @@
 <script src="./search.js?v=3" defer></script>
 <script>
 (function () {
-  // The example APIs, simulated: the same collections, roles, parameter rules and error codes as `queryapigate examples load`.
+  // The example APIs, simulated with the same collections, keys, parameter rules, error codes and wording as the
+  // Home walkthrough. One saved query, three front doors, eight stages; click a stage to see what it checked.
+  var LU = 'https://unpkg.com/lucide-static@0.460.0/icons/';
   var CATS = ['Action', 'Comedy', 'Documentary', 'Drama', 'Family', 'Sci-Fi'];
   var A = ['Electric', 'Crimson', 'Silent', 'Golden', 'Midnight', 'Paper', 'Velvet', 'Hidden', 'Northern', 'Glass', 'Iron', 'Wild'];
   var B = ['Signal', 'Garden', 'Harbor', 'Orbit', 'Letters', 'Frontier', 'Mirror', 'Summer', 'Engine', 'Echo', 'Valley', 'Tide'];
   var seed = 7; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
   var FILMS = [];
-  for (var i = 0; i < 60; i++) FILMS.push({ film_id: i + 1, title: A[i % 12] + ' ' + B[(i * 5 + 3) % 12], category: CATS[i % 6], rating: ['G', 'PG', 'PG-13', 'R'][Math.floor(rnd() * 4)], rentals: 120 + Math.floor(rnd() * 880) });
+  for (var i = 0; i < 60; i++) FILMS.push({ film_id: i + 1, title: A[i % 12] + ' ' + B[(i * 7 + Math.floor(i / 12)) % 12], category: CATS[i % 6], rating: ['G', 'PG', 'PG-13', 'R'][Math.floor(rnd() * 4)], rentals: 120 + Math.floor(rnd() * 880) });
   var QUERIES = {
-    example_top_films: { coll: 'examples-reporting', what: 'Most-rented films, optionally in one category', params: [
-      { name: 'top_n', help: 'integer 1–50, default 10', def: '10' }, { name: 'category', help: 'optional, one of ' + CATS.join(', '), def: 'Comedy' }] },
-    example_monthly_revenue: { coll: 'examples-reporting', what: 'Rentals and revenue per month', params: [{ name: 'months', help: 'integer 1–24, default 6', def: '6' }] },
-    example_kpi_active_rentals: { coll: 'examples-dashboard', what: 'Rentals currently out (cached)', params: [] },
-    example_film_lookup: { coll: 'examples-partner', what: 'One film and how it is doing', params: [{ name: 'film_id', help: 'required, integer ≥ 1', def: '7' }] },
-    example_film_search: { coll: 'examples-partner', what: 'Find films by part of a title', params: [{ name: 'text', help: 'required, 2–30 letters and spaces', def: 'garden' }] }
+    example_top_films: { coll: 'examples-reporting', what: 'Most-rented films, optionally in one category', tables: 'film, film_category, category, inventory, rental',
+      sql: 'SELECT f.title, c.name AS category, f.rating, COUNT(*) AS rentals, …\n  FROM film f JOIN … WHERE (:category IS NULL OR c.name = :category)\n  GROUP BY … ORDER BY rentals DESC LIMIT :top_n',
+      params: [{ name: 'top_n', help: 'integer 1–50, default 10', def: '5', type: 'int' }, { name: 'category', help: 'optional, one of ' + CATS.join(', '), def: 'Comedy', type: 'str' }] },
+    example_monthly_revenue: { coll: 'examples-reporting', what: 'Rentals and revenue per month', tables: 'rental, payment',
+      sql: 'SELECT strftime(\'%Y-%m\', r.rental_date) AS month, COUNT(*) AS rentals, SUM(p.amount) AS revenue\n  FROM rental r JOIN payment p … GROUP BY month ORDER BY month DESC LIMIT :months',
+      params: [{ name: 'months', help: 'integer 1–24, default 6', def: '6', type: 'int' }] },
+    example_kpi_active_rentals: { coll: 'examples-dashboard', what: 'Rentals currently out (cached)', tables: 'rental', cache: true,
+      sql: 'SELECT COUNT(*) AS active_rentals FROM rental WHERE return_date IS NULL', params: [] },
+    example_film_lookup: { coll: 'examples-partner', what: 'One film and how it is doing', tables: 'film, inventory, rental',
+      sql: 'SELECT f.film_id, f.title, … FROM film f … WHERE f.film_id = :film_id',
+      params: [{ name: 'film_id', help: 'required, integer ≥ 1', def: '7', type: 'int' }] },
+    example_film_search: { coll: 'examples-partner', what: 'Find films by part of a title', tables: 'film, film_category, category',
+      sql: 'SELECT f.film_id, f.title, c.name AS category FROM film f …\n  WHERE lower(f.title) LIKE \'%\' || lower(:text) || \'%\' LIMIT 10',
+      params: [{ name: 'text', help: 'required, 2–30 letters and spaces', def: 'garden', type: 'str' }] }
   };
   var KEYS = [
-    { id: 'example-reporting', sub: 'Reporting role · examples-reporting · read-only · 200/hour', colls: ['examples-reporting'] },
-    { id: 'example-executive', sub: 'Executive role · reporting and dashboard collections', colls: ['examples-reporting', 'examples-dashboard'] },
-    { id: 'acme-corp', sub: 'Partner role · examples-partner only · 60/minute', colls: ['examples-partner'] },
-    { id: 'trial-partner', sub: 'Partner role, but expires_at has passed', colls: ['examples-partner'], expired: true },
-    { id: 'no key', sub: 'No X-API-Key header at all', none: true }
+    { id: 'finance-team', role: 'example-reporting', sub: 'example-reporting · read-only · 200/hour', colls: ['examples-reporting'], limit: '200/hour', used: 14, expires: null, tail: 'reporting' },
+    { id: 'exec-team', role: 'example-executive', sub: 'example-executive · reporting and dashboard', colls: ['examples-reporting', 'examples-dashboard'], limit: '500/hour', used: 3, expires: null, tail: 'executive' },
+    { id: 'acme-corp', role: 'example-partner', sub: 'example-partner · examples-partner only · 60/minute', colls: ['examples-partner'], limit: '60/minute', used: 3, expires: '2026-12-31', tail: 'partner' },
+    { id: 'acme-corp (expired)', role: 'example-partner', sub: 'the same partner key, after its expires_at', colls: ['examples-partner'], limit: '60/minute', used: 0, expires: '2026-10-01', expired: true, tail: 'partner' },
+    { id: 'no key', sub: 'no X-API-Key header at all', none: true }
   ];
-  var STAGES = ['Identify the caller', 'Apply its limits', 'Check the grant', 'Validate parameters', 'Guard the SQL', 'Run it', 'Mask and format', 'Record it'];
-  var st = { q: 'example_top_films', key: 'example-reporting', fmt: 'json', vals: {}, cache: {} };
+  var STAGES = [
+    { layer: 'Identity', icon: 'key-round', title: 'Identify the caller', desc: 'The key, admin token, JWT or OAuth token is resolved to a named principal with roles and scopes.', links: [['Guide 13 · Set up a scoped API key', 'Guide.dc.html?g=13-set-up-a-scoped-api-key'], ['Reference · Authentication', 'Guide.dc.html?d=API#authentication-and-permissions']] },
+    { layer: 'Identity', icon: 'gauge', title: 'Apply its limits', desc: 'Per-key rate limit, IP allow-list, expiry, quota and concurrency cap are checked before any work is done.', links: [['Guide 17 · Rate-limit a key', 'Guide.dc.html?g=17-rate-limit-a-key'], ['Reference · Key expiry', 'Guide.dc.html?d=API#key-expiry']] },
+    { layer: 'Policy', icon: 'shield-check', title: 'Check the grant', desc: 'Is this query, on this connection, in this mode, granted to this principal? Directly or through a collection.', links: [['Guide 14 · One query for a partner', 'Guide.dc.html?g=14-give-a-partner-one-query-only'], ['Reference · Collections', 'Guide.dc.html?d=API#collections']] },
+    { layer: 'Policy', icon: 'braces', title: 'Validate parameters', desc: 'Each parameter is coerced to its declared type and checked against ranges and lengths. Values are bound, never spliced into SQL.', links: [['Guide 06 · Use bound parameters safely', 'Guide.dc.html?g=06-use-bound-parameters-safely'], ['Reference · Parameter rules', 'Guide.dc.html?d=API#parameter-rules']] },
+    { layer: 'Policy', icon: 'scan-search', title: 'Guard the SQL', desc: 'A guard classifies the statement: one statement, read-only unless writes are allowed. Tables are checked against the allow-list.', links: [['Guide 16 · Restrict a key to tables', 'Guide.dc.html?g=16-restrict-a-key-to-tables'], ['Reference · Execute SQL', 'Guide.dc.html?d=API#execute-sql']] },
+    { layer: 'Execution', icon: 'play', title: 'Run it', desc: 'A pooled connection runs the bound statement under a time limit and row limit.', links: [['Guide 37 · Tune the connection pool', 'Guide.dc.html?g=37-tune-the-connection-pool'], ['Reference · Run a saved query', 'Guide.dc.html?d=API#run-a-saved-query']] },
+    { layer: 'Execution', icon: 'eye-off', title: 'Mask and format', desc: 'Masking rules are traced to source columns through joins and aliases, then the result is serialised in the format asked for.', links: [['Guide 45 · Hide personal data', 'Guide.dc.html?g=45-hide-personal-data-from-a-partner-or-an-ai-agent'], ['Reference · Column masking', 'Guide.dc.html?d=API#column-masking']] },
+    { layer: 'Record', icon: 'scroll-text', title: 'Record it', desc: 'Run history, a metric and an event are written after the response. Changes to configuration go to the audit log.', links: [['Guide 20 · Read the audit log', 'Guide.dc.html?g=20-read-the-audit-log'], ['Reference · Run history', 'Guide.dc.html?d=API#run-history']] }
+  ];
+  var DOORS = [{ id: 'rest', label: 'REST', icon: 'globe' }, { id: 'mcp', label: 'MCP', icon: 'bot' }, { id: 'export', label: 'Export CLI', icon: 'terminal' }];
+  var st = { door: 'rest', q: 'example_top_films', key: 'finance-team', fmt: 'json', vals: {}, cache: {}, sel: null, run: 184200 };
   function esc(t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
   function rid() { return Math.random().toString(16).slice(2, 14); }
+  function J(o) { return JSON.stringify(o).replace(/,"/g, ', "').replace(/":/g, '": '); }
   function validate(q, v) {
     var e = {}, has = function (k) { return v[k] !== undefined && String(v[k]).trim() !== ''; };
     if (q === 'example_top_films') {
@@ -64,6 +85,7 @@
     }
     return e;
   }
+  function bound(Q, v) { var o = {}; Q.params.forEach(function (p) { var x = v[p.name]; if (x !== undefined && String(x).trim() !== '') o[p.name] = p.type === 'int' && /^-?\d+$/.test(String(x).trim()) ? +x : String(x).trim(); else if (p.def && p.name !== 'film_id' && p.name !== 'text') o[p.name] = null; }); return o; }
   function rows(q, v) {
     if (q === 'example_top_films') {
       var n = +(v.top_n && v.top_n.trim() || 10), c = (v.category || '').trim();
@@ -77,81 +99,161 @@
     }
     if (q === 'example_kpi_active_rentals') return [{ active_rentals: 183 }];
     if (q === 'example_film_lookup') { var f = FILMS[+v.film_id - 1]; return f ? [{ film_id: f.film_id, title: f.title, category: f.category, rating: f.rating, rentals_last_30_days: Math.round(f.rentals / 12), in_stock: f.rentals % 3 !== 0 }] : []; }
-    if (q === 'example_film_search') { var t = v.text.trim().toLowerCase(); return FILMS.filter(function (f) { return f.title.toLowerCase().indexOf(t) >= 0; }).slice(0, 10).map(function (f) { return { film_id: f.film_id, title: f.title, category: f.category }; }); }
+    if (q === 'example_film_search') { var t2 = v.text.trim().toLowerCase(); return FILMS.filter(function (f) { return f.title.toLowerCase().indexOf(t2) >= 0; }).slice(0, 10).map(function (f) { return { film_id: f.film_id, title: f.title, category: f.category }; }); }
     return [];
   }
   function fmtBody(r, fmt) {
     if (!r.length) return '{"message": "No results returned"}';
     if (fmt === 'csv') { var k = Object.keys(r[0]); return [k.join(',')].concat(r.map(function (x) { return k.map(function (c) { return x[c]; }).join(','); })).join('\n'); }
     if (fmt === 'ndjson') return r.map(function (x) { return JSON.stringify(x); }).join('\n');
-    return '[\n' + r.map(function (x) { return '  ' + JSON.stringify(x).replace(/,"/g, ', "').replace(/":/g, '": '); }).join(',\n') + '\n]';
+    return '[\n' + r.map(function (x) { return '  ' + J(x); }).join(',\n') + '\n]';
   }
-  function run() {
-    var q = st.q, Q = QUERIES[q], key = KEYS.filter(function (k) { return k.id === st.key; })[0], v = st.vals[q] || {}, id = rid();
-    var qs = Q.params.map(function (p) { return v[p.name] !== undefined && String(v[p.name]).trim() !== '' ? p.name + '=' + encodeURIComponent(String(v[p.name]).trim()) : null; }).filter(Boolean);
-    if (st.fmt !== 'json') qs.push('format=' + st.fmt);
-    var url = '/q/' + q + (qs.length ? '?' + qs.join('&') : '');
-    var curl = 'curl -i \'http://127.0.0.1:5000' + url + '\'' + (key.none ? '' : ' \\\n     -H \'X-API-Key: <' + key.id + ' secret>\'');
-    var stop = -1, status, code, err, extra = '', why;
-    var errs = validate(q, v);
-    if (key.none) { stop = 0; status = '401 UNAUTHORIZED'; code = 'unauthorized'; err = 'An API key is required'; why = 'With keys configured, every request must carry one. Nothing past the first stage ran.'; }
-    else if (key.expired) { stop = 1; status = '401 UNAUTHORIZED'; code = 'unauthorized'; err = 'This API key has expired'; why = 'The key is real, but its expires_at has passed. Expiry is checked live on every request; nobody had to revoke it.'; }
-    else if (key.colls.indexOf(Q.coll) < 0) { stop = 2; status = '403 FORBIDDEN'; code = 'forbidden'; err = 'This API key may not run ' + q; why = key.id + ' reaches ' + key.colls.join(' and ') + '; ' + q + ' is in ' + Q.coll + '. The query never ran.'; }
-    else if (Object.keys(errs).length) { stop = 3; status = '400 BAD REQUEST'; var req = Object.keys(errs).some(function (k) { return errs[k] === 'is required'; }); code = req ? 'param_required' : 'param_invalid'; err = 'Invalid parameters'; extra = ',\n "errors": ' + JSON.stringify(errs).replace(/,"/g, ', "').replace(/":/g, '": '); why = 'Every problem is listed at once, and the database never saw the request.'; }
-    var stages = STAGES.map(function (s, i) { return '<div class="pg-st ' + (stop < 0 || i < stop ? 'pass' : i === stop ? 'stop' : '') + '"><b>' + String(i + 1).padStart(2, '0') + ' ' + (stop < 0 || i < stop ? '✓' : i === stop ? '✕' : '·') + '</b>' + s + '</div>'; }).join('');
-    var head, bodyTxt, cls;
-    if (stop >= 0) {
-      cls = 'pg-err'; head = 'HTTP/1.1 ' + status + '\nContent-Type: application/json\nX-Request-Id: ' + id;
-      bodyTxt = '{"error": "' + err + '", "code": "' + code + '"' + extra + ',\n "request_id": "' + id + '"}';
-    } else {
-      cls = 'pg-ok'; var r = rows(q, v), page = r.slice(0, 10), more = r.length > 10;
-      var ctype = { json: 'application/json', csv: 'text/csv; charset=utf-8', ndjson: 'application/x-ndjson' }[st.fmt];
-      head = 'HTTP/1.1 200 OK\nContent-Type: ' + ctype + '\nX-Request-Id: ' + id + '\nX-Page: 1\nX-Page-Size: 10\nX-Has-More: ' + more;
-      if (q === 'example_kpi_active_rentals') { var hit = !!st.cache[st.fmt]; st.cache[st.fmt] = true; head += '\nX-Cache: ' + (hit ? 'HIT' : 'MISS') + '\nETag: "a91f3c"'; }
-      bodyTxt = r.length ? fmtBody(page, st.fmt) : '{"message": "No results returned"}';
-      why = q === 'example_kpi_active_rentals' ? 'Send it again: the second answer comes from the cache (X-Cache: HIT) without touching the database.'
-        : more ? 'The query matched ' + r.length + ' rows; the first page of 10 came back, and X-Has-More says there is another. Add page=2 to get it.'
-        : 'Identified, within its limits, granted, parameters valid and bound, read-only SQL, recorded in run history with this request id.';
+  function daysTo(d) { return Math.round((new Date(d + 'T23:59:59') - new Date()) / 864e5); }
+  // Work out the whole call: where it stops, what each stage saw, the request, the response and what was recorded.
+  function compute() {
+    var door = st.door, q = st.q, Q = QUERIES[q], v = st.vals[q] || {}, id = rid();
+    var K = door === 'export' ? { id: 'cli', cli: true } : KEYS.filter(function (k) { return k.id === st.key; })[0];
+    var errs = validate(q, v), b = bound(Q, v), stop = -1, fail = null;
+    if (!K.cli) {
+      if (K.none) { stop = 0; fail = { http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Missing or wrong X-API-Key', rec: 'access log · 401 · no principal · nothing else ran' }; }
+      else if (K.expired) { stop = 1; fail = { http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'API key expired on ' + K.expires, rec: 'access log · 401 · acme-corp · alert key_expired' }; }
+      else if (K.colls.indexOf(Q.coll) < 0) { stop = 2; fail = { http: '403 FORBIDDEN', code: door === 'mcp' ? 'unauthorized' : 'forbidden', msg: 'This key may not run ' + q, rec: 'access log · ' + (door === 'mcp' ? '200 tool error' : '403') + ' · ' + K.id + ' · ' + q + ' · alert for a key reaching past its grants' }; }
     }
-    document.getElementById('pg-req').innerHTML = '<span class="pg-h">$</span> ' + esc(curl);
-    document.getElementById('pg-res').innerHTML = '<span class="pg-h">' + esc(head) + '</span>\n\n' + esc(bodyTxt).replace(/&quot;/g, '"').replace(/("[^"\n]*")(: )/g, '<span class="pg-s">$1</span>$2');
-    var badge = document.getElementById('pg-badge'); badge.textContent = status || '200 OK'; badge.className = cls;
-    document.getElementById('pg-trace').innerHTML = stages;
-    document.getElementById('pg-why').textContent = why;
+    if (stop < 0 && Object.keys(errs).length) { stop = 3; var req = Object.keys(errs).some(function (k) { return errs[k] === 'is required'; }); fail = { http: '400 BAD REQUEST', code: req ? 'param_required' : 'param_invalid', msg: 'Invalid parameters', errors: errs, rec: 'run history · 400 · ' + (K.cli ? 'cli' : K.id) + ' · ' + q + ' · the database was not called' }; }
+    var r = stop < 0 ? rows(q, v) : [], ms = [0.3, 0.2, 0.2, 0.2, 1.2, stop < 0 ? +(1.4 + r.length * 0.35).toFixed(1) : 0, 0.8, 0.3];
+    if (!K.cli && !K.none) K._used = (K._used || K.used) + (stop === 0 || stop === 1 ? 0 : 1);
+    var used = K._used || K.used || 0, hit = false;
+    if (stop < 0 && Q.cache && door === 'rest') { hit = !!st.cache[q + st.fmt]; st.cache[q + st.fmt] = true; if (hit) ms[5] = 0.1; }
+    // per-stage detail
+    var S = [];
+    var who = K.cli ? 'cli' : K.none ? '—' : K.id;
+    S[0] = K.cli ? { rows: [['caller', 'the CLI, on the server', '', 'ok'], ['key', 'none needed', '· whoever can run it can already read QUERYAPIGATE_HOME', '']], out: ['# the CLI reads the store directly; runs are recorded with key_name "cli"'] }
+      : K.none ? { rows: [['credential', 'none', '', 'bad'], ['principal', '—', '', ''], ['scope', '—', '', '']], out: [] }
+      : { rows: [['credential', (door === 'mcp' ? 'X-API-Key on POST /mcp ' : 'X-API-Key ') + 'sk_…' + K.tail, '', ''], ['principal', K.id, '· role ' + K.role, 'ok'], ['scope', K.colls.map(function (c) { return 'collection ' + c; }).join(' · ') + ' · read-only', '', '']],
+          out: ['{"principal": "' + K.id + '", "kind": "api_key", "role": "' + K.role + '",', ' "collections": ' + J(K.colls) + ', "connections": []}'] };
+    S[1] = K.cli ? { rows: [['limits', 'none apply to the local operator', '', '']], out: [] }
+      : K.none ? null
+      : { rows: [['rate limit', K.limit + ' · ' + used + ' used', '', 'ok'], ['client ip', 'no allow-list on this key', '', ''], ['expires', K.expires || 'never', K.expires ? (K.expired ? '· passed' : '· ' + daysTo(K.expires) + ' days left') : '', K.expired ? 'bad' : 'ok']],
+          out: ['{"name": "' + K.id.replace(' (expired)', '') + '", "role": "' + K.role + '", "rate_limit": "' + K.limit + '", "expires_at": ' + (K.expires ? '"' + K.expires + '"' : 'null') + '}'] };
+    S[2] = { rows: [['query', q + ' v1', '· in collection ' + Q.coll, stop === 2 ? '' : 'ok'], ['connection', 'examples', '· SQLite', 'ok'], ['key reaches', K.cli ? 'everything (local operator)' : K.colls ? K.colls.join(' · ') : '—', stop === 2 ? '· not this collection' : '', stop === 2 ? 'bad' : 'ok']], out: stop === 2 ? ['# the query exists; this key cannot reach it, so nothing else runs'] : ['# granted via collection ' + Q.coll] };
+    S[3] = { rows: Q.params.length ? Q.params.map(function (p) { var e = errs[p.name], x = v[p.name]; return [p.name, x === undefined || String(x).trim() === '' ? '(default)' : String(x).trim(), e ? '· ' + e : '· ' + p.help, e ? 'bad' : 'ok']; }) : [['parameters', 'none', '', 'ok']], out: Object.keys(errs).length ? ['{"errors": ' + J(errs) + '}', '# every problem listed at once; the database never saw the request'] : ['# bound values, sent to the database separately from the SQL', J(b)] };
+    S[4] = { rows: [['statements', '1', '· one statement only', 'ok'], ['kind', 'SELECT', '· read-only', 'ok'], ['tables', Q.tables, '', '']], out: Q.sql.split('\n') };
+    S[5] = { rows: [['connection', 'examples · pooled', '', 'ok'], ['time limit', '30 s', '· server default', ''], ['rows', hit ? 'from the cache' : String(r.length), hit ? '· the database was not called' : '', 'ok']], out: [hit ? '# X-Cache: HIT, the result came from the response cache' : '# ran in ' + ms[5] + ' ms'] };
+    var fmt = door === 'mcp' ? 'structuredContent' : st.fmt;
+    S[6] = { rows: [['masked columns', 'none for this key', '', 'ok'], ['format', fmt, '', ''], ['page', door === 'export' ? 'whole result, streamed' : (r.length > 10 ? '1 of ' + Math.ceil(r.length / 10) : '1 of 1') + ' · page_size 10', '', '']], out: [] };
+    var runNo = ++st.run;
+    S[7] = stop < 0 ? { rows: [['run', '#' + runNo + ' · 200 · ' + (ms.reduce(function (a, b) { return a + b; }, 0)).toFixed(1) + ' ms', '', 'ok'], ['metric', 'requests_total{key="' + who + '"} +1', '', ''], ['event', 'query.run → /events', door === 'mcp' ? '· transport "mcp"' : door === 'export' ? '· key_name "cli"' : '', '']], out: [] } : null;
+    // request text per door
+    var argsQ = Q.params.map(function (p) { var x = v[p.name]; return x !== undefined && String(x).trim() !== '' ? [p.name, String(x).trim()] : null; }).filter(Boolean), req;
+    if (door === 'rest') {
+      var qs = argsQ.map(function (a) { return a[0] + '=' + encodeURIComponent(a[1]); }); if (st.fmt !== 'json') qs.push('format=' + st.fmt);
+      req = 'curl -i \'http://127.0.0.1:5000/q/' + q + (qs.length ? '?' + qs.join('&') : '') + '\'' + (K.none ? '' : ' \\\n     -H \'X-API-Key: <' + K.id.replace(' (expired)', '') + ' secret>\'');
+    } else if (door === 'mcp') {
+      var args = {}; argsQ.forEach(function (a) { args[a[0]] = /^-?\d+$/.test(a[1]) && Q.params.filter(function (p) { return p.name === a[0]; })[0].type === 'int' ? +a[1] : a[1]; });
+      req = 'POST http://127.0.0.1:5001/mcp' + (K.none ? '' : '\nX-API-Key: <' + K.id.replace(' (expired)', '') + ' secret>') + '\n\n{"jsonrpc": "2.0", "id": 7, "method": "tools/call",\n "params": {"name": "' + q + '", "arguments": ' + J(args) + '}}';
+    } else {
+      req = 'queryapigate export ' + q + argsQ.map(function (a) { return ' \\\n    --param ' + a[0] + '=' + a[1]; }).join('') + ' \\\n    --format ' + st.fmt + ' --out \'/exports/{name}_{date}.' + st.fmt + '\'';
+    }
+    // response per door
+    var resp, ok = stop < 0, status;
+    if (door === 'rest') {
+      if (!ok) { status = fail.http; resp = 'HTTP/1.1 ' + fail.http + '\nContent-Type: application/json\nX-Request-Id: ' + id + '\n\n{"error": "' + fail.msg + '", "code": "' + fail.code + '"' + (fail.errors ? ',\n "errors": ' + J(fail.errors) : '') + ',\n "request_id": "' + id + '"}'; }
+      else { status = '200 OK'; var ct = { json: 'application/json', csv: 'text/csv; charset=utf-8', ndjson: 'application/x-ndjson' }[st.fmt];
+        resp = 'HTTP/1.1 200 OK\nContent-Type: ' + ct + '\nX-Request-Id: ' + id + '\nX-RateLimit-Limit: ' + K.limit.split('/')[0] + '\nX-Page: 1\nX-Page-Size: 10\nX-Has-More: ' + (r.length > 10) + (Q.cache ? '\nX-Cache: ' + (hit ? 'HIT' : 'MISS') + '\nETag: "a91f3c"' : '') + '\n\n' + fmtBody(r.slice(0, 10), st.fmt); }
+    } else if (door === 'mcp') {
+      if (!ok && stop <= 1) { status = fail.http; resp = 'HTTP/1.1 ' + fail.http + '\nWWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/mcp"\n\n{"error": "' + fail.msg + '", "code": "' + fail.code + '", "request_id": "' + id + '"}\n# refused before the MCP session sees the request'; }
+      else if (!ok) { status = 'tool error'; resp = 'HTTP/1.1 200 OK\n\n{"jsonrpc": "2.0", "id": 7, "result": {"isError": true,\n "content": [{"type": "text", "text": "' + fail.msg + '"}],\n "structuredContent": {"error": "' + fail.msg + '", "code": "' + fail.code + '"' + (fail.errors ? ', "errors": ' + J(fail.errors) : '') + '}}}\n# the agent can branch on code instead of parsing the message'; }
+      else { status = '200 OK'; resp = 'HTTP/1.1 200 OK\n\n{"jsonrpc": "2.0", "id": 7, "result": {\n "content": [{"type": "text", "text": "{\\"rows\\": […], \\"truncated\\": false}"}],\n "structuredContent": {"rows": [\n' + r.slice(0, 10).map(function (x) { return '   ' + J(x); }).join(',\n') + '\n ], "truncated": false}}}'; }
+    } else {
+      if (!ok) { status = 'non-zero exit'; resp = 'error: ' + Object.keys(fail.errors).map(function (k) { return k + ' ' + fail.errors[k]; }).join('; ') + '\n# code ' + fail.code + ' · nothing was written · the command exits non-zero, so cron or a CronJob sees the failure'; }
+      else { status = 'exit 0'; var d = new Date().toISOString().slice(0, 10); resp = '# wrote /exports/' + q + '_' + d + '.' + st.fmt + ' · ' + r.length + ' rows · renamed into place when complete\n\n' + fmtBody(r, st.fmt); }
+    }
+    var rec = ok ? S[7].rows.map(function (x) { return x[0] + ' · ' + x[1] + (x[2] ? ' ' + x[2] : ''); }) : [fail.rec];
+    var why = ok ? (hit ? 'The second answer came from the response cache: X-Cache: HIT, and the database was not called.' : door === 'export' ? 'The CLI is a local operator: no key and no grant apply, because whoever can run it can already read the store. The run is still recorded.' : 'Identified, within its limits, granted, parameters valid and bound, read-only SQL, recorded in run history.')
+      : stop === 0 ? 'With keys configured, every request must carry one. Nothing past the first stage ran.'
+      : stop === 1 ? 'The key is real, but its expiry has passed. Expiry is checked live on every request; nobody had to revoke it.'
+      : stop === 2 ? K.id + ' reaches ' + K.colls.join(' and ') + '; ' + q + ' is in ' + Q.coll + '. The query never ran.' + (door === 'mcp' ? ' Over MCP it would not even appear in tools/list.' : '')
+      : 'Every problem is listed at once, and the database never saw the request.';
+    return { stop: stop, ok: ok, ms: ms, S: S, req: req, resp: resp, status: status, rec: rec, why: why };
   }
+  function markRow(x) { return '<div class="pg-kv"><span>' + esc(x[0]) + '</span><b class="' + (x[3] || '') + '">' + esc(x[1]) + (x[3] === 'ok' ? ' ✓' : x[3] === 'bad' ? ' ✕' : '') + '</b><i>' + esc(x[2] || '') + '</i></div>'; }
+  var last;
+  function draw(c) {
+    last = c;
+    var total = c.ms.reduce(function (a, b, i) { return a + (c.stop < 0 || i <= c.stop ? b : 0); }, 0), acc = 0;
+    var trace = STAGES.map(function (s, i) {
+      var state = c.stop < 0 || i < c.stop ? 'pass' : i === c.stop ? 'stop' : 'skip', w = state === 'skip' ? 0 : c.ms[i] / total * 100, left = acc / total * 100; if (state !== 'skip') acc += c.ms[i];
+      return '<button type="button" class="pg-span ' + state + (st.sel === i ? ' sel' : '') + '" data-stage="' + i + '"><span class="pg-span-n">' + String(i + 1).padStart(2, '0') + '</span><span class="pg-span-t">' + s.title + '</span><span class="pg-span-bar"><i style="left:' + left.toFixed(2) + '%;width:' + Math.max(w, state === 'skip' ? 0 : 1.2).toFixed(2) + '%"></i></span><span class="pg-span-ms">' + (state === 'skip' ? '—' : c.ms[i].toFixed(1) + ' ms') + '</span></button>';
+    }).join('');
+    document.getElementById('pg-trace').innerHTML = '<div class="pg-trace-h"><span>the call as a trace · one span per stage · click one to inspect it</span><span>' + total.toFixed(1) + ' ms</span></div>' + trace;
+    var sel = st.sel !== null ? st.sel : (c.stop >= 0 ? c.stop : 3), S = STAGES[sel], D = c.S[sel], state = c.stop < 0 || sel < c.stop ? 'pass' : sel === c.stop ? 'stop' : 'skip';
+    document.getElementById('pg-stage').innerHTML = '<div class="pg-stage-h"><i class="pg-stage-ico" style="--ico:url(' + LU + S.icon + '.svg)"></i><div><small>' + String(sel + 1).padStart(2, '0') + ' · ' + S.layer + '</small><b>' + S.title + '</b></div><span class="pg-stage-s ' + state + '">' + (state === 'pass' ? 'passed' : state === 'stop' ? 'stopped here' : 'not reached') + '</span></div><p>' + S.desc + '</p>' +
+      (state === 'skip' || !D ? '<p class="pg-dim">The call stopped before this stage, so it did not run.</p>' : '<div class="pg-kvs">' + D.rows.map(markRow).join('') + '</div>' + (D.out && D.out.length ? '<pre class="pg-out">' + esc(D.out.join('\n')) + '</pre>' : '')) +
+      '<div class="pg-links">' + S.links.map(function (l) { return '<a href="' + l[1] + '">' + l[0] + ' →</a>'; }).join('') + '</div>';
+    document.getElementById('pg-req').innerHTML = '<span class="pg-h">' + (st.door === 'export' ? '$ ' : st.door === 'rest' ? '$ ' : '') + '</span>' + esc(c.req);
+    document.getElementById('pg-req-h').textContent = st.door === 'rest' ? 'request · REST' : st.door === 'mcp' ? 'request · MCP tools/call' : 'command · export CLI';
+    document.getElementById('pg-res').innerHTML = esc(c.resp).replace(/^((?:HTTP\/1\.1|[A-Z][A-Za-z-]+:)[^\n]*)$/gm, '<span class="pg-h">$1</span>').replace(/^(#.*)$/gm, '<span class="pg-h">$1</span>').replace(/(&quot;|")([^"\n]*)(")(: )/g, '<span class="pg-s">"$2"</span>$4');
+    var badge = document.getElementById('pg-badge'); badge.textContent = c.status; badge.className = c.ok ? 'pg-ok' : 'pg-err';
+    document.getElementById('pg-rec').innerHTML = '<span class="pg-lab">recorded</span>' + c.rec.map(function (x) { return '<span class="pg-rec-i">' + esc(x) + '</span>'; }).join('');
+    document.getElementById('pg-why').textContent = c.why;
+  }
+  function run() { draw(compute()); }
   function paramsHtml() {
     var Q = QUERIES[st.q], v = st.vals[st.q] || (st.vals[st.q] = {});
     if (!Q.params.length) return '<p class="pg-help">This query takes no parameters.</p>';
     return Q.params.map(function (p) { if (v[p.name] === undefined) v[p.name] = p.def; return '<div class="pg-field"><label for="pg-p-' + p.name + '">' + p.name + '</label><input id="pg-p-' + p.name + '" data-p="' + p.name + '" value="' + esc(v[p.name]) + '" spellcheck="false" autocomplete="off"><span class="pg-help">' + esc(p.help) + '</span></div>'; }).join('');
   }
+  function sync() {
+    document.getElementById('pg-params').innerHTML = paramsHtml();
+    document.getElementById('pg-what').textContent = QUERIES[st.q].what + ' · in collection ' + QUERIES[st.q].coll;
+    var app = document.getElementById('pg-app');
+    app.querySelectorAll('[data-door]').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-door') === st.door)); });
+    app.querySelector('.pg-keys-wrap').hidden = st.door === 'export';
+    app.querySelector('.pg-cli-note').hidden = st.door !== 'export';
+    app.querySelector('.pg-fmt-wrap').hidden = st.door === 'mcp';
+  }
   function render() {
     var app = document.getElementById('pg-app');
     app.innerHTML =
-      '<div class="pg-panel">' +
-        '<div class="pg-field"><label for="pg-q">Saved query</label><select id="pg-q">' + Object.keys(QUERIES).map(function (k) { return '<option value="' + k + '"' + (k === st.q ? ' selected' : '') + '>' + k + '</option>'; }).join('') + '</select><span class="pg-help" id="pg-what"></span></div>' +
-        '<div id="pg-params" style="display:grid;gap:12px"></div>' +
-        '<div class="pg-field"><span class="pg-lab">Calling with</span><div class="pg-keys">' + KEYS.map(function (k) { return '<button type="button" class="pg-key" data-key="' + k.id + '" aria-pressed="' + (k.id === st.key) + '"><i></i><span><b>' + k.id + '</b><span>' + k.sub + '</span></span></button>'; }).join('') + '</div></div>' +
-        '<div class="pg-field"><span class="pg-lab">Format</span><div class="pg-fmt">' + ['json', 'csv', 'ndjson'].map(function (f) { return '<button type="button" data-fmt="' + f + '" aria-pressed="' + (f === st.fmt) + '">' + f + '</button>'; }).join('') + '</div></div>' +
-        '<button type="button" class="pg-send" id="pg-send">Send request</button>' +
-      '</div>' +
-      '<div class="pg-out">' +
-        '<div class="pg-term"><div class="pg-term-h">request</div><pre id="pg-req"></pre></div>' +
-        '<div class="pg-trace" id="pg-trace" aria-label="The eight stages"></div>' +
-        '<div class="pg-term"><div class="pg-term-h">response<b id="pg-badge"></b></div><pre id="pg-res" aria-live="polite"></pre></div>' +
-        '<p class="pg-why" id="pg-why"></p>' +
+      '<div class="pg-doors" role="tablist" aria-label="Front door">' + DOORS.map(function (d) { return '<button type="button" role="tab" data-door="' + d.id + '"><i class="pg-door-ico" style="--ico:url(' + LU + d.icon + '.svg)"></i>' + d.label + '</button>'; }).join('') + '<span class="pg-doors-note">the same saved query, the same eight stages, whichever door it comes through</span></div>' +
+      '<div class="pg-grid">' +
+        '<div class="pg-panel">' +
+          '<div class="pg-field"><label for="pg-q">Saved query</label><select id="pg-q">' + Object.keys(QUERIES).map(function (k) { return '<option value="' + k + '"' + (k === st.q ? ' selected' : '') + '>' + k + '</option>'; }).join('') + '</select><span class="pg-help" id="pg-what"></span></div>' +
+          '<div id="pg-params" style="display:grid;gap:12px"></div>' +
+          '<div class="pg-field pg-keys-wrap"><span class="pg-lab">Calling with</span><div class="pg-keys">' + KEYS.map(function (k) { return '<button type="button" class="pg-key" data-key="' + k.id + '" aria-pressed="' + (k.id === st.key) + '"><i></i><span><b>' + k.id + '</b><span>' + k.sub + '</span></span></button>'; }).join('') + '</div></div>' +
+          '<p class="pg-cli-note pg-help" hidden>The export CLI runs on the server as a local operator: there is no key to choose.</p>' +
+          '<div class="pg-field pg-fmt-wrap"><span class="pg-lab">Format</span><div class="pg-fmt">' + ['json', 'csv', 'ndjson'].map(function (f) { return '<button type="button" data-fmt="' + f + '" aria-pressed="' + (f === st.fmt) + '">' + f + '</button>'; }).join('') + '</div></div>' +
+          '<button type="button" class="pg-send" id="pg-send">Send again</button>' +
+          '<div class="pg-chips"><a href="Guide.dc.html?d=API#interactive-documentation">openapi.json</a><a href="Guide.dc.html?d=API#interactive-documentation">postman.json</a><a href="Guide.dc.html?d=API#client-sdks">typed client · ~50 languages</a></div>' +
+        '</div>' +
+        '<div class="pg-out-col">' +
+          '<div class="pg-term"><div class="pg-term-h"><span class=\"pg-dots\" aria-hidden=\"true\"><i style=\"background:#ff5f57\"></i><i style=\"background:#febc2e\"></i><i style=\"background:#28c840\"></i></span><span id="pg-req-h">request</span><button type=\"button\" class=\"copy-btn pg-copy\" data-copy=\"pg-req\" aria-label=\"Copy the request\"><svg aria-hidden=\"true\" width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\"/><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"/></svg><span>Copy</span></button></div><pre id="pg-req"></pre></div>' +
+          '<div class="pg-mid"><div class="pg-trace" id="pg-trace"></div>' +
+          '<div class="pg-stage" id="pg-stage" aria-live="polite"></div></div>' +
+          '<div class="pg-term"><div class="pg-term-h"><span class=\"pg-dots\" aria-hidden=\"true\"><i style=\"background:#ff5f57\"></i><i style=\"background:#febc2e\"></i><i style=\"background:#28c840\"></i></span><span>response</span><b id="pg-badge"></b><button type=\"button\" class=\"copy-btn pg-copy\" data-copy=\"pg-res\" aria-label=\"Copy the response\"><svg aria-hidden=\"true\" width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\"/><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"/></svg><span>Copy</span></button></div><pre id="pg-res"></pre></div>' +
+          '<div class="pg-rec" id="pg-rec"></div>' +
+          '<p class="pg-why" id="pg-why"></p>' +
+        '</div>' +
       '</div>';
-    paramsUpdate(); run();
+    sync(); run();
   }
-  function paramsUpdate() { document.getElementById('pg-params').innerHTML = paramsHtml(); document.getElementById('pg-what').textContent = QUERIES[st.q].what + ' · in collection ' + QUERIES[st.q].coll; }
   function wire() {
     var app = document.getElementById('pg-app');
-    app.addEventListener('change', function (e) { if (e.target.id === 'pg-q') { st.q = e.target.value; paramsUpdate(); run(); } });
-    app.addEventListener('input', function (e) { var p = e.target.getAttribute('data-p'); if (p) { st.vals[st.q][p] = e.target.value; run(); } });
+    app.addEventListener('change', function (e) { if (e.target.id === 'pg-q') { st.q = e.target.value; st.sel = null; sync(); run(); } });
+    app.addEventListener('input', function (e) { var p = e.target.getAttribute('data-p'); if (p) { st.vals[st.q][p] = e.target.value; st.sel = null; run(); } });
     app.addEventListener('click', function (e) {
-      var k = e.target.closest('[data-key]'), f = e.target.closest('[data-fmt]');
-      if (k) { st.key = k.getAttribute('data-key'); app.querySelectorAll('[data-key]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === k)); }); run(); }
+      var d = e.target.closest('[data-door]'), k = e.target.closest('[data-key]'), f = e.target.closest('[data-fmt]'), s = e.target.closest('[data-stage]');
+      if (d) { st.door = d.getAttribute('data-door'); st.sel = null; sync(); run(); }
+      if (k) { st.key = k.getAttribute('data-key'); st.sel = null; app.querySelectorAll('[data-key]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === k)); }); run(); }
       if (f) { st.fmt = f.getAttribute('data-fmt'); app.querySelectorAll('[data-fmt]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === f)); }); run(); }
+      if (s) { st.sel = +s.getAttribute('data-stage'); draw(last); }
       if (e.target.closest('#pg-send')) run();
+      var cp = e.target.closest('[data-copy]');
+      if (cp) {
+        var txt = document.getElementById(cp.getAttribute('data-copy')).textContent.replace(/^\$ /, '');
+        try { navigator.clipboard.writeText(txt); } catch (err) {}
+        var lab = cp.querySelector('span'); lab.textContent = 'Copied'; clearTimeout(cp._t); cp._t = setTimeout(function () { lab.textContent = 'Copy'; }, 1400);
+      }
     });
   }
   var tries = 0, t = setInterval(function () { var app = document.getElementById('pg-app'); if (app) { clearInterval(t); render(); wire(); } else if (++tries > 80) clearInterval(t); }, 100);
@@ -377,6 +479,66 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .pg-why{font-size:14px;color:var(--ink-2);margin:0}
 .pg-note{margin:0;font-size:13.5px;color:var(--ink-3);text-wrap:pretty}
 @media (max-width:980px){.pg-app{grid-template-columns:minmax(0,1fr)}.pg-trace{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* Playground, enriched from the Home walkthrough: front-door tabs, a span trace, a stage inspector, a record strip. */
+.pg-app{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;min-height:0}
+.pg-doors{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.pg-doors button{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:14px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line-2);border-radius:999px;padding:8px 16px;cursor:pointer}
+.pg-doors button[aria-selected=true]{background:oklch(0.52 0.11 170 / 0.1);border-color:var(--accent-ink);color:var(--ink)}
+.pg-door-ico{width:16px;height:16px;position:relative;display:inline-block}.pg-door-ico::after{content:'';position:absolute;inset:0;background:var(--accent-ink);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.pg-doors-note{font-size:13px;color:var(--ink-3);margin-left:6px}
+.pg-grid{display:grid;grid-template-columns:minmax(0,0.85fr) minmax(0,1.4fr);gap:18px;align-items:start}
+.pg-out-col{display:grid;gap:12px;min-width:0}
+.pg-chips{display:flex;flex-wrap:wrap;gap:6px}.pg-chips a{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:4px 8px;text-decoration:none}.pg-chips a:hover{color:var(--accent-ink);border-color:var(--accent-ink)}
+.pg-trace{display:grid;gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;grid-template-columns:none}
+.pg-trace-h{display:flex;justify-content:space-between;gap:12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-3);margin-bottom:6px}
+.pg-span{display:grid;grid-template-columns:26px 150px minmax(0,1fr) 64px;align-items:center;gap:10px;font:inherit;text-align:left;background:none;border:0;border-radius:6px;padding:4px 6px;cursor:pointer;color:var(--ink-2)}
+.pg-span:hover{background:var(--surface-2)}.pg-span.sel{background:oklch(0.52 0.11 170 / 0.08)}
+.pg-span-n{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-4)}.pg-span-t{font-family:'JetBrains Mono',monospace;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-span-bar{position:relative;height:8px;border-radius:4px;background:var(--surface-3)}.pg-span-bar i{position:absolute;top:0;bottom:0;border-radius:4px;background:oklch(0.52 0.11 170 / 0.55)}
+.pg-span-ms{font-family:'JetBrains Mono',monospace;font-size:11.5px;text-align:right;color:var(--ink-3)}
+.pg-span.stop .pg-span-t,.pg-span.stop .pg-span-ms{color:var(--danger-ink)}.pg-span.stop .pg-span-bar i{background:var(--danger-ink)}
+.pg-span.skip{opacity:.45}
+.pg-stage{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:10px}
+.pg-stage-h{display:flex;align-items:center;gap:12px}.pg-stage-h small{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)}.pg-stage-h b{font-size:16px}
+.pg-stage-ico{flex:none;width:34px;height:34px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.1);position:relative}.pg-stage-ico::after{content:'';position:absolute;inset:8px;background:var(--accent-ink);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.pg-stage-s{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-3)}
+.pg-stage-s.pass{color:var(--accent-ink);border-color:oklch(0.52 0.11 170 / 0.4)}.pg-stage-s.stop{color:var(--danger-ink);border-color:var(--danger-ink)}
+.pg-stage>p{margin:0;font-size:14px;color:var(--ink-2)}.pg-stage .pg-dim{color:var(--ink-3)}
+.pg-kvs{display:grid;gap:4px}
+.pg-kv{display:grid;grid-template-columns:120px auto minmax(0,1fr);gap:10px;align-items:baseline;font-size:13px;padding:5px 0;border-top:1px solid var(--line-soft)}
+.pg-kv span{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-3)}.pg-kv b{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;color:var(--ink);overflow-wrap:anywhere}
+.pg-kv b.ok{color:var(--accent-ink)}.pg-kv b.bad{color:var(--danger-ink)}.pg-kv i{font-style:normal;font-size:12.5px;color:var(--ink-3)}
+.pg-out{margin:0;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink-2)}
+.pg-links{display:flex;flex-wrap:wrap;gap:6px 16px}.pg-links a{font-size:13px;font-weight:600}
+.pg-rec{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.pg-rec .pg-lab{margin-right:4px}
+.pg-rec-i{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+@media (max-width:980px){.pg-grid{grid-template-columns:minmax(0,1fr)}.pg-span{grid-template-columns:24px minmax(0,1fr) 56px}.pg-span-bar{display:none}.pg-kv{grid-template-columns:100px minmax(0,1fr)}.pg-kv i{grid-column:2}}
+
+/* Controls as a bar across the top; the output below gets the full width. */
+.pg-grid{grid-template-columns:minmax(0,1fr) !important}
+.pg-panel{grid-template-columns:repeat(12,minmax(0,1fr));column-gap:18px;row-gap:16px;align-items:start}
+.pg-panel>.pg-field:first-child{grid-column:span 4}
+.pg-panel>#pg-params{grid-column:span 8;display:grid !important;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px !important;align-items:start}
+.pg-panel>#pg-params>.pg-help{align-self:center}
+.pg-panel>.pg-keys-wrap,.pg-panel>.pg-cli-note{grid-column:1/-1}
+.pg-keys{grid-template-columns:repeat(5,minmax(0,1fr)) !important}
+.pg-key{height:100%;box-sizing:border-box}
+.pg-panel>.pg-fmt-wrap{grid-column:span 3}
+.pg-panel>.pg-send{grid-column:span 3;align-self:end}
+.pg-panel>.pg-fmt-wrap,.pg-panel>.pg-chips{align-self:end}
+.pg-panel .pg-field{align-content:start}
+.pg-panel>.pg-chips{grid-column:span 6;justify-content:flex-end;align-self:center}
+.pg-mid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:stretch}
+.pg-mid>.pg-trace,.pg-mid>.pg-stage{align-content:start}
+@media (max-width:1100px){.pg-keys{grid-template-columns:repeat(3,minmax(0,1fr)) !important}.pg-mid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:760px){.pg-panel{grid-template-columns:minmax(0,1fr)}.pg-panel>*{grid-column:1/-1 !important}.pg-keys{grid-template-columns:minmax(0,1fr) !important}.pg-panel>.pg-chips{justify-content:flex-start}}
+
+.pg-term-h{gap:10px}.pg-term-h b{margin-left:auto}.pg-term-h b+.pg-copy{margin-left:0}
+.pg-dots{display:flex;gap:5px;flex:none}.pg-dots i{display:block;width:9px;height:9px;border-radius:50%}
+.copy-btn{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:#c5d3cd;background:#1b2f29;border:1px solid #2a3d37;border-radius:6px;padding:4px 9px;min-height:26px;cursor:pointer;transition:background 0.2s,color 0.2s}
+.copy-btn:hover{background:#24403a;color:#e6efeb}
+.pg-copy{margin-left:auto}
 </style>
 </helmet>
 <div data-screen-label="Playground" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
@@ -407,8 +569,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   </nav>
   <header id="top" class="pg-hero">
     <span class="pg-kicker">Playground</span>
-    <h1>Call the example APIs from your browser</h1>
-    <p>Pick a saved query, a key and some parameters, and see what QueryAPIGate answers and where in the eight stages a refused call stops. These are the four example APIs <code>queryapigate examples load</code> installs, with their real rules, keys and error codes, simulated here on a generated film-rental dataset.</p>
+    <h1>Save a query once. Call it three ways, here.</h1>
+    <p>Pick a front door, a saved query, a key and some parameters. See the request each door takes, the answer it gets, and what each of the eight stages checked on the way, including where a refused call stops. These are the four example APIs <code>queryapigate examples load</code> installs, with their real rules, keys and error codes, simulated here on a generated film-rental dataset.</p>
   </header>
   <main class="pg-main">
     <div id="pg-app" class="pg-app"></div>
