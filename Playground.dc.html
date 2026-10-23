@@ -67,7 +67,7 @@
     { layer: 'Record', icon: 'scroll-text', title: 'Record it', desc: 'Run history, a metric and an event are written after the response. Changes to configuration go to the audit log.', links: [['Guide 20 · Read the audit log', 'Guide.dc.html?g=20-read-the-audit-log'], ['Reference · Run history', 'Guide.dc.html?d=API#run-history']] }
   ];
   var DOORS = [{ id: 'rest', label: 'REST', who: 'a reporting key', icon: 'globe' }, { id: 'mcp', label: 'MCP', who: 'an AI agent', icon: 'bot' }, { id: 'events', label: 'Live events', who: 'a dashboard', icon: 'radio' }, { id: 'export', label: 'Export', who: 'a cron job', icon: 'calendar-clock' }, { id: 'admin', label: 'Management API', who: 'an administrator', icon: 'sliders-horizontal' }];
-  var st = { door: 'rest', q: 'example_top_films', key: 'finance-team', akey: 'alice', ttl: '300', fmt: 'json', vals: {}, cache: {}, sel: null, run: 184200 };
+  var st = { door: 'rest', q: 'example_top_films', key: 'finance-team', akey: 'alice', ttl: '300', force: null, fmt: 'json', vals: {}, cache: {}, sel: null, run: 184200 };
   function esc(t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
   function rid() { return Math.random().toString(16).slice(2, 14); }
   function J(o) { return JSON.stringify(o).replace(/,"/g, ', "').replace(/":/g, '": '); }
@@ -184,7 +184,91 @@
     return { stop: stop, ok: ok, ms: ms, S: S, req: req, resp: resp, status: status, rec: rec, why: why, links: [['Reference · Management API', 'Guide.dc.html?d=API#management-api-v1'], ['Reference · Administrators and roles', 'Guide.dc.html?d=API#administrators-and-admin-roles']] };
   }
   // Work out the whole call: where it stops, what each stage saw, the request, the response and what was recorded.
-  function compute() {
+  // "What if this stage refuses?": each door's real refusal at each stage, for the call on screen.
+  var PMSG = { top_n: 'must be between 1 and 50', category: 'must be one of ' + CATS.join(', '), months: 'must be between 1 and 24', film_id: 'must be an integer', text: 'must be 2 to 30 letters and spaces' };
+  function refusal(door, i) {
+    var q = st.q, Q = QUERIES[q], K = KEYS.filter(function (k) { return k.id === st.key; })[0] || {}, lim = K.limit || '200/hour';
+    var p0 = Q.params[0], errs = p0 ? {} : null; if (p0) errs[p0.name] = PMSG[p0.name];
+    var E = function (o) { return o; };
+    var noP = { never: 'This query takes no parameters, so there is nothing for this stage to refuse.' };
+    var T = {
+      rest: [
+        E({ kind: 'http', http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Missing or wrong X-API-Key', rec: 'access log · 401 · nothing else ran', why: 'Without a valid credential, nothing past the first stage runs.' }),
+        E({ kind: 'http', http: '429 TOO MANY REQUESTS', code: 'rate_limited', msg: 'Rate limit exceeded: ' + lim, extra: ',\n "retry_after": 840', hdr: 'Retry-After: 840', rec: 'metric requests_total{status="429"} +1', why: 'The key has used its budget. The response says how long to wait, and nothing reached the database.' }),
+        E({ kind: 'http', http: '403 FORBIDDEN', code: 'forbidden', msg: 'This key may not run ' + q, rec: 'access log · 403 · ' + q, why: 'The query exists, but this key is not granted it, directly or through a collection.' }),
+        p0 ? E({ kind: 'http', http: '400 BAD REQUEST', code: 'param_invalid', msg: 'Invalid parameters', extra: ',\n "errors": ' + J(errs), rec: 'run history · 400 · the database was not called', why: 'A value broke its rule. Every problem is listed at once, before anything reaches the database.' }) : noP,
+        E({ kind: 'http', http: '403 FORBIDDEN', code: 'read_only', msg: 'Statements that write are not allowed for this key', rec: 'run history · 403 · nothing reached the database', why: 'The guard refuses a statement that writes when the key has no write grant. The example queries only read, so for real they pass.' }),
+        E({ kind: 'http', http: '504 GATEWAY TIMEOUT', code: 'query_timeout', msg: 'Query ran past its time limit and was cancelled', rec: 'run history · 504 · cancelled on the database', why: 'The query ran past its time limit, the smallest of the key’s, the query’s and the server’s, and was cancelled on the database.' }),
+        E({ kind: 'http', http: '403 FORBIDDEN', code: 'mask_unresolvable', msg: 'A result column could not be traced to its source column; refused rather than served unmasked', rec: 'alert mask_unresolvable · nothing was sent', why: 'For a caller with masking rules, a column that cannot be traced to its source is refused, never sent unmasked.' }),
+        { never: 'Recording happens after the response is sent, so this stage never refuses a call.' }
+      ],
+      mcp: [
+        E({ kind: 'http', http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Missing or wrong X-API-Key', hdr: 'WWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/mcp"', rec: 'access log · 401 · no tool ran', why: 'A bad credential is refused at HTTP level, before the MCP session sees the request, with a pointer to where an AI client can sign in.' }),
+        E({ kind: 'tool', code: 'rate_limited', msg: 'Rate limit exceeded: ' + lim, extra: ', "retry_after": 840', rec: 'metric requests_total{status="429"} +1', why: 'Over the limit, the agent gets a tool error with retry_after, so it can wait rather than loop.' }),
+        E({ kind: 'tool', code: 'mcp_disabled', msg: q + ' is not exposed as an MCP tool', rec: 'access log · tools/call ' + q + ' · refused', why: 'This query’s mcp setting is off: it is hidden from tools/list and refused by name, while it still serves over REST.' }),
+        p0 ? E({ kind: 'tool', code: 'param_invalid', msg: 'Invalid parameters', extra: ', "errors": ' + J(errs), rec: 'run history · 400 · the database was not called', why: 'The agent gets the same field-by-field errors a REST caller would, as structured content it can act on.' }) : noP,
+        E({ kind: 'tool', code: 'read_only', msg: 'Writes are not allowed over MCP', rec: 'run history · 403 · nothing reached the database', why: 'Over MCP, ad-hoc SQL is always read-only; a write needs a tool marked for agents, and a person approving it.' }),
+        E({ kind: 'tool', code: 'query_timeout', msg: 'Query ran past its time limit and was cancelled', rec: 'run history · 504 · cancelled on the database', why: 'The query was cancelled on the database, and the agent is told so in a code it can branch on.' }),
+        E({ kind: 'tool', code: 'mask_unresolvable', msg: 'A result column could not be traced to its source column', rec: 'alert mask_unresolvable · nothing was sent', why: 'A column that cannot be traced is refused, never shown to the agent unmasked.' }),
+        { never: 'Recording happens after the response is sent, so this stage never refuses a call.' }
+      ],
+      events: [
+        E({ kind: 'http', http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Missing or wrong X-API-Key', rec: 'access log · 401 · no stream opened', why: 'A stream needs a real key, like a query does.' }),
+        E({ kind: 'http', http: '503 SERVICE UNAVAILABLE', code: 'too_many_streams', msg: 'Every live-event stream slot is taken; retry shortly', hdr: 'Retry-After: 5', rec: 'no stream opened · retry in 5 s', why: 'Every stream slot is in use. The client is told to retry shortly rather than being left hanging.' }),
+        { never: 'A stream has no grant to refuse: each key sees only its own runs, and filters can only narrow that.' },
+        E({ kind: 'http', http: '400 BAD REQUEST', code: 'invalid_filter', msg: 'status must be success or error', rec: 'access log · 400 · no stream opened', why: 'A filter that could never match, here ?status=done, is refused rather than left silently empty.' }),
+        { never: 'A stream runs no SQL, so there is nothing for the guard to refuse.' },
+        E({ kind: 'text', status: 'disconnected', text: '# the connection dropped mid-stream\n# reconnect to queryapigate events with Last-Event-ID:\n# events missed since then are sent, for up to 24 hours', rec: 'one span for the stream · the client resumes', why: 'A dropped stream is not lost: queryapigate events resends what was missed, from the id the client last saw.' }),
+        { never: 'Events carry no rows, so there is nothing to mask.' },
+        { never: 'Recording happens as each run is written, so this stage never refuses.' }
+      ],
+      export: [
+        { never: 'The CLI runs on the server as a local operator: there is no credential to refuse.' },
+        { never: 'No key, so no rate limit or quota applies to the local operator.' },
+        { never: 'Whoever can run the CLI can already read the store, so there is no grant to check.' },
+        p0 ? E({ kind: 'cli', code: 'param_invalid', msg: p0.name + ' ' + PMSG[p0.name], rec: 'run history · 400 · cli · nothing ran', why: 'A bad --param is refused before the query runs, and the command exits non-zero so cron sees the failure.' }) : noP,
+        E({ kind: 'cli', code: 'read_only', msg: 'Statements that write are not allowed', rec: 'run history · 403 · cli · nothing ran', why: 'The guard refuses a statement that writes; an export only ever reads.' }),
+        E({ kind: 'cli', code: 'connection_failed', msg: 'examples could not be reached', rec: 'run history · 502 · cli', why: 'The database could not be reached. The export stops with a non-zero exit, and no partial file is renamed into place.' }),
+        E({ kind: 'cli', code: 'mask_unresolvable', msg: 'A result column could not be traced to its source column', rec: 'run history · 403 · cli · nothing was written', why: 'A column that cannot be traced is refused, never written to the file unmasked.' }),
+        { never: 'Recording happens after the file is written, so this stage never refuses.' }
+      ],
+      admin: [
+        E({ kind: 'http', http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Missing or wrong X-API-Key', rec: 'access log · 401 · nothing changed', why: 'Only a named administrator, or the break-glass key, may call the Management API.' }),
+        E({ kind: 'http', http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Admin token expired', rec: 'access log · 401 · nothing changed', why: 'Admin tokens can carry an expiry; an expired one is refused like a missing one.' }),
+        E({ kind: 'http', http: '403 FORBIDDEN', code: 'role_forbidden', msg: 'Role auditor cannot change saved queries', extra: ',\n "capability": "queries.write", "role": "auditor"', rec: 'access log · 403 · role_forbidden · nothing changed', why: 'The administrator’s role lacks the capability; the error names the one it needed.' }),
+        E({ kind: 'http', http: '400 BAD REQUEST', code: 'unknown_field', msg: 'Unknown field: cache_tll', rec: 'access log · 400 · nothing changed', why: 'Unknown fields are refused, not ignored, so a typo never silently does nothing.' }),
+        { never: 'A settings change runs no SQL, so there is nothing for the guard to refuse.' },
+        E({ kind: 'http', http: '412 PRECONDITION FAILED', code: 'precondition_failed', msg: 'This version changed since it was read; read it again and retry', rec: 'access log · 412 · nothing changed', why: 'Someone changed this version after you read it. If-Match stops you overwriting their change.' }),
+        { never: 'The response is the stored version as JSON; this stage has nothing to refuse.' },
+        { never: 'The audit entry is written with the change, so this stage never refuses.' }
+      ]
+    };
+    return T[door][i];
+  }
+  function applyForce(c) {
+    if (st.force === null) return c;
+    var i = st.force, R = refusal(st.door, i);
+    if (!R || R.never || (c.stop >= 0 && c.stop <= i)) return c;
+    var id = rid(), c2 = {}; for (var k in c) c2[k] = c[k];
+    c2.S = c.S.slice(); c2.stop = i; c2.ok = false; c2.forced = true;
+    var base = c.S[i] || {}; c2.S[i] = { desc: base.desc, rows: [['refused', R.code || R.status, '', 'bad']].concat((base.rows || []).slice(0, 2)), out: [] };
+    if (R.kind === 'http') { c2.status = R.http; c2.resp = 'HTTP/1.1 ' + R.http + '\nContent-Type: application/json\nX-Request-Id: ' + id + (R.hdr ? '\n' + R.hdr : '') + '\n\n{"error": "' + R.msg + '", "code": "' + R.code + '"' + (R.extra || '') + ',\n "request_id": "' + id + '"}'; }
+    else if (R.kind === 'tool') { c2.status = 'tool error'; c2.resp = 'HTTP/1.1 200 OK\n\n{"jsonrpc": "2.0", "id": 7, "result": {"isError": true,\n "content": [{"type": "text", "text": "' + R.msg + '"}],\n "structuredContent": {"error": "' + R.msg + '", "code": "' + R.code + '"' + (R.extra || '') + '}}}'; }
+    else if (R.kind === 'cli') { c2.status = 'non-zero exit'; c2.resp = 'error: ' + R.msg + '\n# code ' + R.code + ' · nothing was written · the command exits non-zero, so cron or a CronJob sees the failure'; }
+    else { c2.status = R.status; c2.resp = R.text; }
+    c2.rec = [R.rec]; c2.why = R.why;
+    return c2;
+  }
+  function refuseBtn(c, sel) {
+    var R = refusal(st.door, sel);
+    if (c.forced && st.force === sel) return '<div class="pg-refuse-row"><button type="button" class="pg-refuse on" data-force="' + sel + '">← Back to the call that passed</button></div>';
+    if (c.stop >= 0 && !c.forced && c.stop === sel) return '';
+    if (c.stop >= 0 && c.stop < sel) return '<div class="pg-refuse-row"><button type="button" class="pg-refuse" disabled>What if this stage refuses?</button><span>The call already stopped at stage ' + String(c.stop + 1).padStart(2, '0') + '.</span></div>';
+    if (!R || R.never) return '<div class="pg-refuse-row"><button type="button" class="pg-refuse" disabled>This stage never refuses</button><span>' + (R ? R.never : '') + '</span></div>';
+    return '<div class="pg-refuse-row"><button type="button" class="pg-refuse" data-force="' + sel + '">What if this stage refuses?</button></div>';
+  }
+  function compute() { return applyForce(computeBase()); }
+  function computeBase() {
     if (st.door === 'events') return computeEvents();
     if (st.door === 'admin') return computeAdmin();
     var door = st.door, q = st.q, Q = QUERIES[q], v = st.vals[q] || {}, id = rid();
@@ -257,9 +341,11 @@
   function stageState(c, i, upto) { if (upto !== null && i > upto) return 'pend'; return c.stop < 0 || i < c.stop ? 'pass' : i === c.stop ? 'stop' : 'skip'; }
   function stageHtml(c, sel, upto) {
     var S = STAGES[sel], D = c.S[sel], state = stageState(c, sel, upto);
-    return '<div class="pg-stage-in"><div class="pg-stage-h"><i class="pg-stage-ico" style="--ico:url(' + LU + S.icon + '.svg)"></i><div><small>' + String(sel + 1).padStart(2, '0') + ' · ' + S.layer + '</small><b>' + S.title + '</b></div><span class="pg-stage-s ' + state + '">' + (state === 'pass' ? 'passed' : state === 'stop' ? 'stopped here' : state === 'pend' ? 'waiting' : 'not reached') + '</span></div><p>' + ((D && D.desc) || S.desc) + '</p>' +
+    // the thin progress line along the top, as on Home: it fills over the stage's time while the call plays
+    var bar = '<div class="pg-sbar" aria-hidden="true"><i style="background:' + (state === 'stop' ? 'oklch(0.62 0.2 25)' : 'var(--accent-ink)') + ';' + (upto !== null && sel === upto ? 'animation:pg-sbar ' + (STEP - 220) + 'ms linear forwards' : 'transform:scaleX(1)') + '"></i></div>';
+    return bar + '<div class="pg-stage-in"><div class="pg-stage-h"><i class="pg-stage-ico" style="--ico:url(' + LU + S.icon + '.svg)"></i><div><small>' + String(sel + 1).padStart(2, '0') + ' · ' + S.layer + '</small><b>' + S.title + '</b></div><span class="pg-stage-s ' + state + '">' + (state === 'pass' ? 'passed' : state === 'stop' ? 'stopped here' : state === 'pend' ? 'waiting' : 'not reached') + '</span></div><p>' + ((D && D.desc) || S.desc) + '</p>' +
       (state === 'pend' ? '<p class="pg-dim">The call has not reached this stage yet.</p>' : state === 'skip' || !D ? '<p class="pg-dim">The call stopped before this stage, so it did not run.</p>' : '<div class="pg-kvs">' + D.rows.map(markRow).join('') + '</div>' + (D.out && D.out.length ? '<pre class="pg-out">' + esc(D.out.join('\n')).replace(/^(#.*)$/gm, '<span class="pg-oc">$1</span>') + '</pre>' : '')) +
-      '<div class="pg-links">' + (c.links || S.links).map(function (l) { return '<a href="' + l[1] + '">' + l[0] + ' →</a>'; }).join('') + '</div></div>';
+      refuseBtn(c, sel) + '<div class="pg-links">' + (c.links || S.links).map(function (l) { return '<a href="' + l[1] + '">' + l[0] + ' →</a>'; }).join('') + '</div></div>';
   }
   function resHtml(c) { return esc(c.resp).replace(/^((?:HTTP\/1\.1|[A-Z][A-Za-z-]+:)[^\n]*)$/gm, '<span class="pg-h">$1</span>').replace(/^(#.*)$/gm, '<span class="pg-c">$1</span>').replace(/(&quot;|")([^"\n]*)(")(: )/g, '<span class="pg-s">"$2"</span>$4'); }
   function spanClass(c, i, upto) { var s = stageState(c, i, upto); return 'pg-span ' + s + (upto !== null && i === upto && s === 'pass' ? ' live' : '') + (st.sel === i ? ' sel' : ''); }
@@ -287,8 +373,9 @@
       b.className = spanClass(c, i, upto); var m = b.querySelector('.pg-span-ms'); m.textContent = stageState(c, i, upto) === 'pend' ? '…' : m.getAttribute('data-ms');
     });
     document.getElementById('pg-total').textContent = upto === null ? total.toFixed(1) + ' ms' : 'running…';
-    var sel = st.sel !== null ? st.sel : upto !== null ? upto : (c.stop >= 0 ? c.stop : 3), key = sel + '|' + stageState(c, sel, upto);
+    var sel = st.sel !== null ? st.sel : upto !== null ? upto : (c.stop >= 0 ? c.stop : 3), key = sel + '|' + stageState(c, sel, upto) + '|' + st.force + '|' + (c.forced ? 1 : 0) + '|' + c.stop;
     if (key !== shownKey) { stageEl.innerHTML = stageHtml(c, sel, upto); shownKey = key; }
+    stageEl.classList.toggle('stop', stageState(c, sel, upto) === 'stop');
     var col = document.getElementById('pg-out-col'), badge = document.getElementById('pg-badge'), res = document.getElementById('pg-res');
     if (upto !== null) { col.classList.add('pg-running'); badge.textContent = 'running…'; badge.className = 'pg-wait'; return; }
     var was = col.classList.contains('pg-running');
@@ -301,7 +388,7 @@
   }
   // Replay a call stage by stage, then show the answer. Typing updates at once; sending, or changing door, key,
   // query or format, replays. Reduced motion shows the result straight away.
-  var lastUpto = null, timer = null, STEP = 650;
+  var lastUpto = null, timer = null, STEP = 3200;   // the same pace as Home's walkthrough (stepMs)
   var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   function run(animate) {
     var c = compute(); clearTimeout(timer);
@@ -358,14 +445,15 @@
   }
   function wire() {
     var app = document.getElementById('pg-app');
-    app.addEventListener('change', function (e) { if (e.target.id === 'pg-q') { st.q = e.target.value; st.sel = null; sync(); run(true); } });
+    app.addEventListener('change', function (e) { if (e.target.id === 'pg-q') { st.q = e.target.value; st.sel = null; st.force = null; sync(); run(true); } });
     app.addEventListener('input', function (e) { var p = e.target.getAttribute('data-p'); if (p) { st.vals[st.q][p] = e.target.value; st.sel = null; run(e.target.tagName === 'SELECT'); } if (e.target.hasAttribute('data-ttl')) { st.ttl = e.target.value; st.sel = null; run(); } });
     app.addEventListener('click', function (e) {
       var d = e.target.closest('[data-door]'), k = e.target.closest('[data-key]'), f = e.target.closest('[data-fmt]'), s = e.target.closest('[data-stage]');
-      if (d) { st.door = d.getAttribute('data-door'); st.sel = null; sync(); run(true); }
-      var ad = e.target.closest('[data-admin]'); if (ad) { st.akey = ad.getAttribute('data-admin'); st.sel = null; app.querySelectorAll('[data-admin]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === ad)); }); run(true); }
-      if (k) { st.key = k.getAttribute('data-key'); st.sel = null; app.querySelectorAll('[data-key]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === k)); }); run(true); }
+      if (d) { st.door = d.getAttribute('data-door'); st.sel = null; st.force = null; sync(); run(true); }
+      var ad = e.target.closest('[data-admin]'); if (ad) { st.akey = ad.getAttribute('data-admin'); st.sel = null; st.force = null; app.querySelectorAll('[data-admin]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === ad)); }); run(true); }
+      if (k) { st.key = k.getAttribute('data-key'); st.sel = null; st.force = null; app.querySelectorAll('[data-key]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === k)); }); run(true); }
       if (f) { st.fmt = f.getAttribute('data-fmt'); app.querySelectorAll('[data-fmt]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === f)); }); run(true); }
+      var fz = e.target.closest('[data-force]'); if (fz) { var n = +fz.getAttribute('data-force'); st.force = st.force === n ? null : n; st.sel = n; run(false); return; }
       if (s) { st.sel = +s.getAttribute('data-stage'); draw(last, lastUpto); }
       if (e.target.closest('#pg-send')) { st.sel = null; run(true); }
       var cp = e.target.closest('[data-copy]');
@@ -690,6 +778,22 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .pg-door-ico i{display:block;width:13px;height:13px;background:var(--ink-2);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
 .pg-door-ico::after{content:none}
 .pg-doors button[aria-selected=true] .pg-door-ico{background:var(--accent-ink)}.pg-doors button[aria-selected=true] .pg-door-ico i{background:var(--surface)}
+
+.pg-refuse-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.pg-refuse-row span{font-size:12.5px;color:var(--ink-3)}
+.pg-refuse{font:inherit;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);cursor:pointer;transition:border-color .2s,color .2s,background .2s}
+.pg-refuse:hover:not([disabled]){border-color:var(--danger-ink);color:var(--danger-ink)}
+.pg-refuse.on{border-color:var(--danger-ink);color:var(--danger-ink);background:oklch(0.65 0.18 25 / 0.08)}
+.pg-refuse[disabled]{opacity:.55;cursor:default}
+
+.pg-stage{position:relative;overflow:hidden}
+.pg-sbar{position:absolute;left:0;right:0;top:0;height:2px;background:var(--line-soft)}
+.pg-sbar i{display:block;height:100%;transform-origin:left;transform:scaleX(0)}
+@keyframes pg-sbar{to{transform:scaleX(1)}}
+
+/* The soft glow at the top of the stage card, as on Home: green, or red with a red border where the call stops. */
+.pg-stage{background:radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.52 0.11 170 / 0.08), transparent 70%),var(--surface);transition:border-color .3s}
+.pg-stage.stop{background:radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.62 0.2 25 / 0.1), transparent 70%),var(--surface);border-color:oklch(0.62 0.2 25 / 0.5)}
 </style>
 </helmet>
 <div data-screen-label="Playground" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">

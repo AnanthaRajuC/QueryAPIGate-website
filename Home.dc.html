@@ -53,6 +53,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+/* Stage card: heading and explanation on the left, the stage's rows on the right; stacked on narrow screens. */
+@media (min-width:901px){.req-card{min-height:241px;box-sizing:border-box}}
+@media (max-width:900px){.req-card{grid-template-columns:minmax(0,1fr) !important}}
 /* The checklist pill: a short streak of light travels around its border. */
 @property --beam{syntax:'<angle>';initial-value:0deg;inherits:false}
 .pill-beam::before{content:'';position:absolute;inset:-1px;border-radius:inherit;padding:2px;pointer-events:none;
@@ -480,10 +483,6 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
           <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Save a query once. Serve it five ways.</h2>
           <p style="margin:0;color:var(--ink-2);max-width:72ch">The same saved query behind every door, and the same eight stages on every call: identity, policy, execution, record. Pick a door, follow one call through, see what each stage produces, and what the call gets back when a stage refuses.</p>
         </div>
-        <div class="rs-hide" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink-3);display:grid;gap:5px;justify-items:end;max-width:560px;min-width:0">
-          <span style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;align-items:center;padding-top:2px"><sc-for list="{{ reqChips }}" as="c" hint-placeholder-count="3"><a class="req-chip" href="{{ c.h }}">{{ c.t }}</a></sc-for><button type="button" class="copy-btn" onClick="{{ copyReq }}" title="Copy this request as a curl command for a local server with the example APIs loaded" style="margin-left:4px"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedReq }} as curl</button></span>
-          <span style="font-family:'Instrument Sans',system-ui,sans-serif;font-size:12px;color:#9fb3ac">Runs on your laptop: <a href="Guide.dc.html?g=05-try-the-built-in-example-apis" style="color:var(--ink-3)">load the example APIs</a>, then paste the curl.</span>
-        </div>
       </div>
 
       <div style="display:flex;flex-wrap:wrap;gap:14px 32px;align-items:center;justify-content:space-between">
@@ -514,21 +513,17 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         </ol>
 
         <div style="display:grid;grid-template-rows:minmax(0,1fr) auto;gap:10px;min-width:0">
-        <div style="position:relative;border:1px solid {{ panelBorder }};border-radius:14px;background:radial-gradient(ellipse 70% 50% at 50% 0%, {{ panelGlow }}, transparent 70%),var(--surface);padding:26px 28px 24px;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:16px;min-width:0;overflow:hidden;transition:border-color 0.3s;align-content:start">
+        <div class="req-card" style="position:relative;border:1px solid {{ panelBorder }};border-radius:14px;background:radial-gradient(ellipse 70% 50% at 50% 0%, {{ panelGlow }}, transparent 70%),var(--surface);padding:26px 28px 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);grid-template-rows:auto minmax(0,1fr);gap:16px 36px;min-width:0;overflow:hidden;transition:border-color 0.3s;align-content:start">
           <div style="position:absolute;left:0;right:0;top:0;height:2px;background:var(--line-soft)"><span style="display:block;height:100%;background:{{ barColor }};transform-origin:left;transform:{{ barTransform }};transition:{{ barTransition }}"></span></div>
-          <div class="req-head" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">Stage {{ cur.num }} · {{ cur.layer }} · {{ cur.who }}</span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.04em;padding:4px 9px;border-radius:999px;background:{{ cur.statusBg }};color:{{ cur.statusColor }};border:1px solid {{ cur.statusBorder }};transition:background 0.3s,color 0.3s,border-color 0.3s">{{ cur.status }}</span>
+          <div class="req-head" style="grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">Stage {{ cur.num }} · {{ cur.layer }}</span>
+            <span style="display:grid;justify-items:end;gap:6px"><span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;letter-spacing:0.04em;padding:4px 9px;border-radius:999px;background:{{ cur.statusBg }};color:{{ cur.statusColor }};border:1px solid {{ cur.statusBorder }};transition:background 0.3s,color 0.3s,border-color 0.3s">{{ cur.status }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-3);white-space:nowrap">cumulative {{ cur.elapsed }}</span></span>
           </div>
           <div style="display:grid;gap:6px;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">{{ cur.title }}</h3><p class="req-desc" style="margin:0;color:var(--ink-2);max-width:66ch;min-height:3.1em">{{ cur.desc }}</p></div>
-          <div class="req-rows" style="display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;align-self:start;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
+          <div class="req-rows" style="display:grid;align-content:start;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;align-self:start;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
             <sc-for list="{{ cur.rows }}" as="r" hint-placeholder-count="3">
               <div class="rs-2col" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px;padding:9px 14px;background:var(--surface-2);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.5"><span style="color:var(--ink-3)">{{ r.k }}</span><span style="color:var(--ink);overflow-wrap:anywhere">{{ r.v }} <span style="color:{{ r.markColor }}">{{ r.mark }}</span></span></div>
             </sc-for>
-          </div>
-          <div class="req-foot" style="display:flex;justify-content:space-between;align-items:center;gap:12px 20px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-3);min-height:34px">
-            <button type="button" onClick="{{ failToggle.go }}" disabled="{{ failToggle.disabled }}" style="font:inherit;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:8px;border:1px solid {{ failToggle.border }};background:{{ failToggle.bg }};color:{{ failToggle.color }};cursor:{{ failToggle.cursor }};transition:background 0.2s,color 0.2s,border-color 0.2s">{{ failToggle.label }}</button>
-            <span style="font-family:'JetBrains Mono',monospace;white-space:nowrap">cumulative {{ cur.elapsed }}</span>
           </div>
         </div>
         <div class="req-links" style="display:flex;gap:6px 18px;flex-wrap:wrap;align-items:baseline;align-content:flex-start;padding:0 6px;font-size:13.5px;min-height:48px;opacity:{{ detailOpacity }};transition:opacity 0.22s"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">Go deeper</span><sc-for list="{{ cur.links }}" as="lk" hint-placeholder-count="3"><a href="{{ lk.h }}" style="font-weight:500;white-space:nowrap">{{ lk.t }} →</a></sc-for></div>
