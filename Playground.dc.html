@@ -36,7 +36,7 @@
   var QUERIES = {
     example_top_films: { coll: 'examples-reporting', what: 'Most-rented films, optionally in one category', tables: 'film, film_category, category, inventory, rental',
       sql: 'SELECT f.title, c.name AS category, f.rating, COUNT(*) AS rentals, …\n  FROM film f JOIN … WHERE (:category IS NULL OR c.name = :category)\n  GROUP BY … ORDER BY rentals DESC LIMIT :top_n',
-      params: [{ name: 'top_n', help: 'integer 1–50, default 10', def: '5', type: 'int' }, { name: 'category', help: 'optional, one of ' + CATS.join(', '), def: 'Comedy', type: 'str' }] },
+      params: [{ name: 'top_n', help: 'integer 1–50, default 10', def: '5', type: 'int' }, { name: 'category', help: 'optional; Nope is not a category, so it shows the 400', def: 'Comedy', type: 'str', options: [''].concat(CATS, ['Nope']) }] },
     example_monthly_revenue: { coll: 'examples-reporting', what: 'Rentals and revenue per month', tables: 'rental, payment',
       sql: 'SELECT strftime(\'%Y-%m\', r.rental_date) AS month, COUNT(*) AS rentals, SUM(p.amount) AS revenue\n  FROM rental r JOIN payment p … GROUP BY month ORDER BY month DESC LIMIT :months',
       params: [{ name: 'months', help: 'integer 1–24, default 6', def: '6', type: 'int' }] },
@@ -66,8 +66,8 @@
     { layer: 'Execution', icon: 'eye-off', title: 'Mask and format', desc: 'Masking rules are traced to source columns through joins and aliases, then the result is serialised in the format asked for.', links: [['Guide 45 · Hide personal data', 'Guide.dc.html?g=45-hide-personal-data-from-a-partner-or-an-ai-agent'], ['Reference · Column masking', 'Guide.dc.html?d=API#column-masking']] },
     { layer: 'Record', icon: 'scroll-text', title: 'Record it', desc: 'Run history, a metric and an event are written after the response. Changes to configuration go to the audit log.', links: [['Guide 20 · Read the audit log', 'Guide.dc.html?g=20-read-the-audit-log'], ['Reference · Run history', 'Guide.dc.html?d=API#run-history']] }
   ];
-  var DOORS = [{ id: 'rest', label: 'REST', icon: 'globe' }, { id: 'mcp', label: 'MCP', icon: 'bot' }, { id: 'export', label: 'Export CLI', icon: 'terminal' }];
-  var st = { door: 'rest', q: 'example_top_films', key: 'finance-team', fmt: 'json', vals: {}, cache: {}, sel: null, run: 184200 };
+  var DOORS = [{ id: 'rest', label: 'REST', who: 'a reporting key', icon: 'globe' }, { id: 'mcp', label: 'MCP', who: 'an AI agent', icon: 'bot' }, { id: 'events', label: 'Live events', who: 'a dashboard', icon: 'radio' }, { id: 'export', label: 'Export', who: 'a cron job', icon: 'calendar-clock' }, { id: 'admin', label: 'Management API', who: 'an administrator', icon: 'sliders-horizontal' }];
+  var st = { door: 'rest', q: 'example_top_films', key: 'finance-team', akey: 'alice', ttl: '300', fmt: 'json', vals: {}, cache: {}, sel: null, run: 184200 };
   function esc(t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
   function rid() { return Math.random().toString(16).slice(2, 14); }
   function J(o) { return JSON.stringify(o).replace(/,"/g, ', "').replace(/":/g, '": '); }
@@ -109,8 +109,84 @@
     return '[\n' + r.map(function (x) { return '  ' + J(x); }).join(',\n') + '\n]';
   }
   function daysTo(d) { return Math.round((new Date(d + 'T23:59:59') - new Date()) / 864e5); }
+  var ADMINS = [
+    { id: 'alice', role: 'owner', sub: 'owner · every capability' },
+    { id: 'dev-ci', role: 'developer', sub: 'developer · saved queries and collections' },
+    { id: 'audit-bot', role: 'auditor', sub: 'auditor · read only' },
+    { id: 'finance-team', scoped: true, sub: 'a scoped API key, not an administrator' },
+    { id: 'no key', none: true, sub: 'no X-API-Key header at all' }
+  ];
+  function nowStamp() { var d = new Date(), p = function (n) { return String(n).padStart(2, '0'); }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()); }
+  // Live events: a key's stream carries only its own runs (the admin key sees every run). Filters narrow, never widen.
+  function computeEvents() {
+    var q = st.q, Q = QUERIES[q], v = st.vals[q] || {}, K = KEYS.filter(function (k) { return k.id === st.key; })[0], id = rid(), errs = validate(q, v);
+    var stop = -1, fail = null, name = K.none ? '' : K.id.replace(' (expired)', '');
+    if (K.none) { stop = 0; fail = { http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Missing or wrong X-API-Key', rec: 'access log · 401 · no stream opened' }; }
+    else if (K.expired) { stop = 1; fail = { http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'API key expired on ' + K.expires, rec: 'access log · 401 · ' + name + ' · no stream opened' }; }
+    var canRun = !K.none && !K.expired && K.colls.indexOf(Q.coll) >= 0, bad = Object.keys(errs).length > 0;
+    var r = canRun && !bad ? rows(q, v) : [], runMs = +(1.4 + r.length * 0.35 + 4.5).toFixed(1);
+    var ms = [0.3, 0.1, 0.1, 0.1, 0.0, 1.6, 0.1, 0.1], S = [];
+    S[0] = K.none ? { rows: [['credential', 'none', '', 'bad'], ['principal', '—', '', '']], out: [] }
+      : { rows: [['credential', 'X-API-Key sk_…' + K.tail, '', ''], ['principal', name, '· role ' + K.role, 'ok'], ['feed', 'its own runs only', '· the admin key sees every run', '']], out: ['# a stream is opened with the same credential a query would be'] };
+    S[1] = K.none ? null : { rows: [['connections', '1 of 10,000', '· QUERYAPIGATE_EVENTS_MAX_CONNECTIONS', 'ok'], ['expires', K.expires || 'never', K.expires ? (K.expired ? '· passed' : '· ' + daysTo(K.expires) + ' days left') : '', K.expired ? 'bad' : 'ok']], out: [] };
+    S[2] = { desc: 'A stream needs no grant of its own: each key sees only the runs made with that same key, since it was created. The admin key sees every run.', rows: [['sees', 'runs made with ' + name, '· its own activity feed', 'ok'], ['filters', 'narrow what it sees', '· never widen it', '']], out: [] };
+    S[3] = { desc: 'A stream takes filters, not parameters: type, kind, query, connection and status, one value each. A query that does not exist simply matches nothing.', rows: [['query', q, '· a filter on its own feed', 'ok'], ['other filters', 'none', '', '']], out: ['GET /events?query=' + q] };
+    S[4] = { desc: 'A stream is a subscription, not a query: there is no statement to guard. Each run it reports was guarded when it ran.', rows: [['statements', 'none', '· a stream runs no query', ''], ['carries', 'run metadata', '· never a row', 'ok']], out: [] };
+    S[5] = { desc: 'The connection is held open; an event arrives as each matching run is written, and a keepalive comment every 15 seconds keeps proxies from closing it.', rows: [['stream', 'text/event-stream', '· held open', 'ok'], ['keepalive', 'every 15 s', '', ''], ['events', canRun ? '1' : '0', canRun ? '· when ' + name + ' ran the query' : '· this key made no run of it', canRun ? 'ok' : '']], out: [] };
+    S[6] = { desc: 'An event says a run happened and how it went: names, counts, timings and status. The rows stayed with the caller who ran it, so there is nothing to mask.', rows: [['payload', 'names, counts, timings', '· never a value', 'ok'], ['masking', 'not needed', '· no rows pass', '']], out: [] };
+    S[7] = { desc: 'Tracing records one span per stream, not one per event. Each run is recorded in run history by the call that made it.', rows: [['trace', 'GET /events', '· one span per stream', 'ok'], ['history', 'written by the run itself', '', '']], out: [] };
+    var hdr = K.none ? '' : ' \\\n     -H \'X-API-Key: <' + name + ' secret>\'';
+    var qs = Q.params.map(function (p) { var x = v[p.name]; return x !== undefined && String(x).trim() !== '' ? p.name + '=' + encodeURIComponent(String(x).trim()) : null; }).filter(Boolean);
+    var req = 'curl -N \'http://127.0.0.1:5002/events?query=' + q + '\'' + hdr + '\n\n# then, in another terminal, the same key runs the query:\ncurl \'http://127.0.0.1:5000/q/' + q + (qs.length ? '?' + qs.join('&') : '') + '\'' + hdr;
+    var resp, status, ok = stop < 0, rec, why;
+    if (!ok) { status = fail.http; resp = 'HTTP/1.1 ' + fail.http + '\nContent-Type: application/json\nX-Request-Id: ' + id + '\n\n{"error": "' + fail.msg + '", "code": "' + fail.code + '", "request_id": "' + id + '"}'; rec = [fail.rec];
+      why = stop === 0 ? 'A stream needs a real key, like a query does. No stream was opened.' : 'The key is real, but its expiry has passed, so no stream is opened. An open stream for a key that expires is closed within about a minute.'; }
+    else {
+      status = '200 OK · stream'; var t = nowStamp();
+      resp = 'HTTP/1.1 200 OK\nContent-Type: text/event-stream\nCache-Control: no-store\n\n: keepalive\n\n' + (canRun
+        ? 'id: 4813\ndata: {"type": "query.run", "source": "rest", "occurred_at": "' + t + '", "kind": "saved",\n       "query": "' + q + '", "version": 1, "connection_name": "examples",\n       "entry": {"executed_at": "' + t + '", "status": "' + (bad ? 'error' : 'success') + '", "rows": ' + r.length + ', "duration_ms": ' + (bad ? 0.9 : runMs) + ',\n                 "key_name": "' + name + '", "request_id": "' + rid() + '", "transport": "rest"}}'
+        : '# no event: ' + name + '’s own call to ' + q + ' is refused at its grant, so no run happens.\n# the stream stays open, sending a keepalive every 15 seconds.');
+      rec = ['stream · open on queryapigate events', canRun ? 'event · id 4813 · query.run · ' + (bad ? 'error' : 'success') : 'no event · this key made no run of it'];
+      why = canRun ? (bad ? 'The key’s own run failed validation, and the event says so: status "error", with no rows.' : 'The stream carries only this key’s own runs. When ' + name + ' ran the query, one query.run event arrived, with counts and timings but never a row.')
+        : 'A stream opens for any valid key, but it only ever carries that key’s own runs. ' + name + ' cannot run ' + q + ', so nothing arrives: a filter narrows a feed, it never widens it.';
+    }
+    return { stop: stop, ok: ok, ms: ms, S: S, req: req, resp: resp, status: status, rec: rec, why: why, links: [['Guide 28 · A client that watches queries run', 'Guide.dc.html?g=28-build-a-client-that-watches-queries-run'], ['Reference · Live events', 'Guide.dc.html?d=API#live-events-server-sent-events']] };
+  }
+  // Management API: administrators change the saved query's settings; scoped keys are refused outright.
+  function computeAdmin() {
+    var q = st.q, A = ADMINS.filter(function (a) { return a.id === st.akey; })[0], id = rid(), ttl = String(st.ttl).trim();
+    var stop = -1, fail = null, ttlBad = !/^\d+$/.test(ttl), cred = A.none ? '' : A.scoped ? 'X-API-Key: <finance-team secret>' : 'X-API-Key: <' + A.id + ' admin token>';
+    if (A.none) { stop = 0; fail = { http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Missing or wrong X-API-Key', extra: '', rec: 'access log · 401 · nothing changed' }; }
+    else if (A.scoped) { stop = 2; fail = { http: '403 FORBIDDEN', code: 'admin_only', msg: 'Only administrators may use the Management API', extra: '', rec: 'access log · 403 · finance-team · nothing changed' }; }
+    else if (A.role === 'auditor') { stop = 2; fail = { http: '403 FORBIDDEN', code: 'role_forbidden', msg: 'Role auditor cannot change saved queries', extra: ',\n "capability": "queries.write", "role": "auditor"', rec: 'access log · 403 · audit-bot · role_forbidden · nothing changed' }; }
+    else if (ttlBad) { stop = 3; fail = { http: '400 BAD REQUEST', code: 'invalid_body', msg: 'cache_ttl must be a whole number of seconds', extra: ',\n "errors": {"cache_ttl": "must be a whole number of seconds, 0 or more"}', rec: 'access log · 400 · ' + A.id + ' · nothing changed' }; }
+    var ms = [0.3, 0.2, 0.2, 0.3, 0.0, 2.1, 0.3, 0.4], S = [];
+    S[0] = A.none ? { rows: [['credential', 'none', '', 'bad'], ['principal', '—', '', '']], out: [] }
+      : A.scoped ? { rows: [['credential', 'X-API-Key sk_…reporting', '', ''], ['principal', 'finance-team', '· a scoped API key', 'ok']], out: ['# identified, but a scoped key is an application, not an administrator'] }
+      : { desc: 'The admin token, qagadm_…, is sent as X-API-Key like any key and resolved to a named administrator with one role.', rows: [['credential', 'X-API-Key qagadm_…', '· an admin token', ''], ['administrator', A.id, '· role ' + A.role, 'ok']], out: ['# the Console makes these same calls, with the same credential'] };
+    S[1] = A.none ? null : { rows: [[A.scoped ? 'key' : 'token', 'active · not expired', '', 'ok']], out: [] };
+    S[2] = { desc: 'Each /api/v1 operation needs one capability, held by the caller’s administrator role. Any other caller, such as a scoped key, is refused outright.', rows: A.scoped ? [['caller', 'a scoped key', '· not an administrator', 'bad']] : [['capability', 'queries.write', '· needed to change a saved query', ''], ['role', A.role || '—', A.role === 'auditor' ? '· read only: does not have it' : '· has it', A.role === 'auditor' ? 'bad' : 'ok']], out: [] };
+    S[3] = { desc: 'The body is checked field by field. Unknown fields are refused, not ignored, so a typo never silently does nothing.', rows: [['cache_ttl', ttl || '(empty)', ttlBad ? '· must be a whole number of seconds, 0 or more' : '· seconds; 0 turns caching off', ttlBad ? 'bad' : 'ok'], ['other fields', 'none', '· unknown fields are refused', '']], out: ['{"cache_ttl": ' + (ttlBad ? JSON.stringify(ttl) : +ttl) + '}'] };
+    S[4] = { desc: 'A settings change runs no SQL, so there is nothing to guard. cache_ttl changes the version in place rather than creating a new one.', rows: [['statements', 'none', '· a setting change runs no query', ''], ['version', 'v1, changed in place', '· not a new version', 'ok']], out: [] };
+    S[5] = { desc: 'The change is stored in one transaction, but only if the version has not changed since it was read: a stale If-Match answers 412 precondition_failed.', rows: [['If-Match', '"v1-7c2e"', '· matches the current version', 'ok'], ['store', 'SQLite · queryapigate.db', '', ''], ['transaction', 'committed', '', 'ok']], out: [] };
+    S[6] = { desc: 'The response is the version as it now stands, with a new ETag for the next change.', rows: [['response', 'the version, as JSON', '', 'ok'], ['ETag', '"v1-91ad"', '· for the next If-Match', 'ok']], out: [] };
+    S[7] = { desc: 'Every change to configuration is in the audit log, with the administrator who made it and the fields that changed, each entry chained to the one before.', rows: [['audit', 'actor ' + A.id + ' · ' + q + ' v1', '· cache_ttl changed', 'ok'], ['chain', 'linked to the entry before', '· an edit or deletion is detectable', 'ok']], out: [] };
+    var req = 'curl -X PATCH http://127.0.0.1:5000/api/v1/queries/' + q + '/versions/1' + (cred ? ' \\\n     -H \'' + cred + '\'' : '') + ' -H \'If-Match: "v1-7c2e"\' \\\n     -H \'Content-Type: application/json\' -d \'{"cache_ttl": ' + (ttlBad ? JSON.stringify(ttl) : +ttl) + '}\'';
+    var ok = stop < 0, resp, status, rec, why;
+    if (!ok) { status = fail.http; resp = 'HTTP/1.1 ' + fail.http + '\nContent-Type: application/json\nX-Request-Id: ' + id + '\n\n{"error": "' + fail.msg + '", "code": "' + fail.code + '"' + fail.extra + ',\n "request_id": "' + id + '"}'; rec = [fail.rec];
+      why = stop === 0 ? 'Only a named administrator, or the break-glass key, may call the Management API. Nothing changed.'
+        : A.scoped ? 'A scoped key reaches the saved queries it was granted, but it can never change configuration: admin_only.'
+        : A.role === 'auditor' ? 'An auditor reads everything and changes nothing. The error names the capability it lacked, queries.write.'
+        : 'The body was refused field by field, before anything was stored.'; }
+    else { status = '200 OK'; resp = 'HTTP/1.1 200 OK\nContent-Type: application/json\nETag: "v1-91ad"\nX-Request-Id: ' + id + '\n\n{"name": "' + q + '", "version": 1, "status": "published", "cache_ttl": ' + (+ttl) + '}';
+      rec = ['audit · actor ' + A.id + ' · ' + q + ' v1 · cache_ttl → ' + (+ttl), 'chained to the entry before'];
+      why = (+ttl === 0 ? 'Caching is now off for this version.' : 'Responses from this version are now cached for ' + (+ttl) + ' seconds.') + ' The change took effect at once, without a new version, and the audit log names ' + A.id + ' as the administrator who made it.'; }
+    return { stop: stop, ok: ok, ms: ms, S: S, req: req, resp: resp, status: status, rec: rec, why: why, links: [['Reference · Management API', 'Guide.dc.html?d=API#management-api-v1'], ['Reference · Administrators and roles', 'Guide.dc.html?d=API#administrators-and-admin-roles']] };
+  }
   // Work out the whole call: where it stops, what each stage saw, the request, the response and what was recorded.
   function compute() {
+    if (st.door === 'events') return computeEvents();
+    if (st.door === 'admin') return computeAdmin();
     var door = st.door, q = st.q, Q = QUERIES[q], v = st.vals[q] || {}, id = rid();
     var K = door === 'export' ? { id: 'cli', cli: true } : KEYS.filter(function (k) { return k.id === st.key; })[0];
     var errs = validate(q, v), b = bound(Q, v), stop = -1, fail = null;
@@ -178,55 +254,98 @@
   }
   function markRow(x) { return '<div class="pg-kv"><span>' + esc(x[0]) + '</span><b class="' + (x[3] || '') + '">' + esc(x[1]) + (x[3] === 'ok' ? ' ✓' : x[3] === 'bad' ? ' ✕' : '') + '</b><i>' + esc(x[2] || '') + '</i></div>'; }
   var last;
-  function draw(c) {
-    last = c;
+  function stageState(c, i, upto) { if (upto !== null && i > upto) return 'pend'; return c.stop < 0 || i < c.stop ? 'pass' : i === c.stop ? 'stop' : 'skip'; }
+  function stageHtml(c, sel, upto) {
+    var S = STAGES[sel], D = c.S[sel], state = stageState(c, sel, upto);
+    return '<div class="pg-stage-in"><div class="pg-stage-h"><i class="pg-stage-ico" style="--ico:url(' + LU + S.icon + '.svg)"></i><div><small>' + String(sel + 1).padStart(2, '0') + ' · ' + S.layer + '</small><b>' + S.title + '</b></div><span class="pg-stage-s ' + state + '">' + (state === 'pass' ? 'passed' : state === 'stop' ? 'stopped here' : state === 'pend' ? 'waiting' : 'not reached') + '</span></div><p>' + ((D && D.desc) || S.desc) + '</p>' +
+      (state === 'pend' ? '<p class="pg-dim">The call has not reached this stage yet.</p>' : state === 'skip' || !D ? '<p class="pg-dim">The call stopped before this stage, so it did not run.</p>' : '<div class="pg-kvs">' + D.rows.map(markRow).join('') + '</div>' + (D.out && D.out.length ? '<pre class="pg-out">' + esc(D.out.join('\n')).replace(/^(#.*)$/gm, '<span class="pg-oc">$1</span>') + '</pre>' : '')) +
+      '<div class="pg-links">' + (c.links || S.links).map(function (l) { return '<a href="' + l[1] + '">' + l[0] + ' →</a>'; }).join('') + '</div></div>';
+  }
+  function resHtml(c) { return esc(c.resp).replace(/^((?:HTTP\/1\.1|[A-Z][A-Za-z-]+:)[^\n]*)$/gm, '<span class="pg-h">$1</span>').replace(/^(#.*)$/gm, '<span class="pg-c">$1</span>').replace(/(&quot;|")([^"\n]*)(")(: )/g, '<span class="pg-s">"$2"</span>$4'); }
+  function spanClass(c, i, upto) { var s = stageState(c, i, upto); return 'pg-span ' + s + (upto !== null && i === upto && s === 'pass' ? ' live' : '') + (st.sel === i ? ' sel' : ''); }
+  var built = null, shownKey = '';
+  function draw(c, upto) {
+    last = c; if (upto === undefined) upto = null; lastUpto = upto;
     var total = c.ms.reduce(function (a, b, i) { return a + (c.stop < 0 || i <= c.stop ? b : 0); }, 0), acc = 0;
-    var trace = STAGES.map(function (s, i) {
-      var state = c.stop < 0 || i < c.stop ? 'pass' : i === c.stop ? 'stop' : 'skip', w = state === 'skip' ? 0 : c.ms[i] / total * 100, left = acc / total * 100; if (state !== 'skip') acc += c.ms[i];
-      return '<button type="button" class="pg-span ' + state + (st.sel === i ? ' sel' : '') + '" data-stage="' + i + '"><span class="pg-span-n">' + String(i + 1).padStart(2, '0') + '</span><span class="pg-span-t">' + s.title + '</span><span class="pg-span-bar"><i style="left:' + left.toFixed(2) + '%;width:' + Math.max(w, state === 'skip' ? 0 : 1.2).toFixed(2) + '%"></i></span><span class="pg-span-ms">' + (state === 'skip' ? '—' : c.ms[i].toFixed(1) + ' ms') + '</span></button>';
-    }).join('');
-    document.getElementById('pg-trace').innerHTML = '<div class="pg-trace-h"><span>the call as a trace · one span per stage · click one to inspect it</span><span>' + total.toFixed(1) + ' ms</span></div>' + trace;
-    var sel = st.sel !== null ? st.sel : (c.stop >= 0 ? c.stop : 3), S = STAGES[sel], D = c.S[sel], state = c.stop < 0 || sel < c.stop ? 'pass' : sel === c.stop ? 'stop' : 'skip';
-    document.getElementById('pg-stage').innerHTML = '<div class="pg-stage-h"><i class="pg-stage-ico" style="--ico:url(' + LU + S.icon + '.svg)"></i><div><small>' + String(sel + 1).padStart(2, '0') + ' · ' + S.layer + '</small><b>' + S.title + '</b></div><span class="pg-stage-s ' + state + '">' + (state === 'pass' ? 'passed' : state === 'stop' ? 'stopped here' : 'not reached') + '</span></div><p>' + S.desc + '</p>' +
-      (state === 'skip' || !D ? '<p class="pg-dim">The call stopped before this stage, so it did not run.</p>' : '<div class="pg-kvs">' + D.rows.map(markRow).join('') + '</div>' + (D.out && D.out.length ? '<pre class="pg-out">' + esc(D.out.join('\n')) + '</pre>' : '')) +
-      '<div class="pg-links">' + S.links.map(function (l) { return '<a href="' + l[1] + '">' + l[0] + ' →</a>'; }).join('') + '</div>';
-    document.getElementById('pg-req').innerHTML = '<span class="pg-h">' + (st.door === 'export' ? '$ ' : st.door === 'rest' ? '$ ' : '') + '</span>' + esc(c.req);
-    document.getElementById('pg-req-h').textContent = st.door === 'rest' ? 'request · REST' : st.door === 'mcp' ? 'request · MCP tools/call' : 'command · export CLI';
-    document.getElementById('pg-res').innerHTML = esc(c.resp).replace(/^((?:HTTP\/1\.1|[A-Z][A-Za-z-]+:)[^\n]*)$/gm, '<span class="pg-h">$1</span>').replace(/^(#.*)$/gm, '<span class="pg-h">$1</span>').replace(/(&quot;|")([^"\n]*)(")(: )/g, '<span class="pg-s">"$2"</span>$4');
-    var badge = document.getElementById('pg-badge'); badge.textContent = c.status; badge.className = c.ok ? 'pg-ok' : 'pg-err';
+    var stageEl = document.getElementById('pg-stage');
+    if (built !== c) {
+      // a new call: lay out its spans once, so later steps only change classes and the bars can grow
+      var trace = STAGES.map(function (s, i) {
+        var st0 = stageState(c, i, null), w = st0 === 'skip' ? 0 : c.ms[i] / total * 100, left = acc / total * 100; if (st0 !== 'skip') acc += c.ms[i];
+        return '<button type="button" class="' + spanClass(c, i, upto) + '" data-stage="' + i + '"><span class="pg-span-n">' + String(i + 1).padStart(2, '0') + '</span><span class="pg-span-t">' + s.title + '</span><span class="pg-span-bar"><i style="left:' + left.toFixed(2) + '%;width:' + Math.max(w, st0 === 'skip' ? 0 : 1.2).toFixed(2) + '%"></i></span><span class="pg-span-ms" data-ms="' + (st0 === 'skip' ? '—' : c.ms[i].toFixed(1) + ' ms') + '"></span></button>';
+      }).join('');
+      document.getElementById('pg-trace').innerHTML = '<div class="pg-trace-h"><span>the call as a trace · one span per stage · click one to inspect it</span><span id="pg-total"></span></div>' + trace;
+      // reserve the inspector's tallest stage, so its height never changes while the call plays
+      stageEl.style.minHeight = ''; var max = 0;
+      for (var k = 0; k < STAGES.length; k++) { stageEl.innerHTML = stageHtml(c, k, null); max = Math.max(max, stageEl.offsetHeight); }
+      stageEl.style.minHeight = max + 'px'; shownKey = '';
+      document.getElementById('pg-req').innerHTML = '<span class="pg-h">' + (st.door === 'mcp' ? '' : '$ ') + '</span>' + esc(c.req).replace(/^(#.*)$/gm, '<span class="pg-c">$1</span>');
+      document.getElementById('pg-req-h').textContent = { rest: 'request · REST', mcp: 'request · MCP tools/call', events: 'request · live events stream', export: 'command · export CLI', admin: 'request · Management API' }[st.door];
+      built = c;
+    }
+    document.querySelectorAll('#pg-trace .pg-span').forEach(function (b, i) {
+      b.className = spanClass(c, i, upto); var m = b.querySelector('.pg-span-ms'); m.textContent = stageState(c, i, upto) === 'pend' ? '…' : m.getAttribute('data-ms');
+    });
+    document.getElementById('pg-total').textContent = upto === null ? total.toFixed(1) + ' ms' : 'running…';
+    var sel = st.sel !== null ? st.sel : upto !== null ? upto : (c.stop >= 0 ? c.stop : 3), key = sel + '|' + stageState(c, sel, upto);
+    if (key !== shownKey) { stageEl.innerHTML = stageHtml(c, sel, upto); shownKey = key; }
+    var col = document.getElementById('pg-out-col'), badge = document.getElementById('pg-badge'), res = document.getElementById('pg-res');
+    if (upto !== null) { col.classList.add('pg-running'); badge.textContent = 'running…'; badge.className = 'pg-wait'; return; }
+    var was = col.classList.contains('pg-running');
+    col.classList.remove('pg-running');
+    res.innerHTML = resHtml(c);
+    if (was) { res.classList.remove('pg-fresh'); void res.offsetWidth; res.classList.add('pg-fresh'); }
+    badge.textContent = c.status; badge.className = c.ok ? 'pg-ok' : 'pg-err';
     document.getElementById('pg-rec').innerHTML = '<span class="pg-lab">recorded</span>' + c.rec.map(function (x) { return '<span class="pg-rec-i">' + esc(x) + '</span>'; }).join('');
     document.getElementById('pg-why').textContent = c.why;
   }
-  function run() { draw(compute()); }
+  // Replay a call stage by stage, then show the answer. Typing updates at once; sending, or changing door, key,
+  // query or format, replays. Reduced motion shows the result straight away.
+  var lastUpto = null, timer = null, STEP = 650;
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function run(animate) {
+    var c = compute(); clearTimeout(timer);
+    if (!animate || still) return draw(c, null);
+    var end = c.stop >= 0 ? c.stop : STAGES.length - 1, i = 0;
+    (function step() { draw(c, i); if (i >= end) { timer = setTimeout(function () { draw(c, null); }, STEP); return; } i++; timer = setTimeout(step, STEP); })();
+  }
   function paramsHtml() {
+    if (st.door === 'admin') return '<div class="pg-field"><label for="pg-ttl">cache_ttl</label><input id="pg-ttl" data-ttl value="' + esc(st.ttl) + '" spellcheck="false" autocomplete="off"><span class="pg-help">seconds; 0 turns caching off. The Management API changes the saved query’s settings; it does not run it.</span></div>';
     var Q = QUERIES[st.q], v = st.vals[st.q] || (st.vals[st.q] = {});
     if (!Q.params.length) return '<p class="pg-help">This query takes no parameters.</p>';
-    return Q.params.map(function (p) { if (v[p.name] === undefined) v[p.name] = p.def; return '<div class="pg-field"><label for="pg-p-' + p.name + '">' + p.name + '</label><input id="pg-p-' + p.name + '" data-p="' + p.name + '" value="' + esc(v[p.name]) + '" spellcheck="false" autocomplete="off"><span class="pg-help">' + esc(p.help) + '</span></div>'; }).join('');
+    return Q.params.map(function (p) { if (v[p.name] === undefined) v[p.name] = p.def;
+      var ctl = p.options ? '<select id="pg-p-' + p.name + '" data-p="' + p.name + '">' + p.options.map(function (o) { return '<option value="' + esc(o) + '"' + (o === v[p.name] ? ' selected' : '') + '>' + (o === '' ? '(any category)' : esc(o)) + '</option>'; }).join('') + '</select>'
+        : '<input id="pg-p-' + p.name + '" data-p="' + p.name + '" value="' + esc(v[p.name]) + '" spellcheck="false" autocomplete="off">';
+      return '<div class="pg-field"><label for="pg-p-' + p.name + '">' + p.name + '</label>' + ctl + '<span class="pg-help">' + esc(p.help) + '</span></div>'; }).join('');
   }
   function sync() {
     document.getElementById('pg-params').innerHTML = paramsHtml();
     document.getElementById('pg-what').textContent = QUERIES[st.q].what + ' · in collection ' + QUERIES[st.q].coll;
     var app = document.getElementById('pg-app');
     app.querySelectorAll('[data-door]').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-door') === st.door)); });
-    app.querySelector('.pg-keys-wrap').hidden = st.door === 'export';
+    app.querySelector('.pg-keys-wrap').hidden = st.door === 'export' || st.door === 'admin';
+    app.querySelector('.pg-admins-wrap').hidden = st.door !== 'admin';
     app.querySelector('.pg-cli-note').hidden = st.door !== 'export';
-    app.querySelector('.pg-fmt-wrap').hidden = st.door === 'mcp';
+    app.querySelector('.pg-fmt-wrap').hidden = st.door !== 'rest' && st.door !== 'export';
+    var note = app.querySelector('.pg-ev-note'); note.hidden = st.door !== 'events';
   }
   function render() {
     var app = document.getElementById('pg-app');
     app.innerHTML =
-      '<div class="pg-doors" role="tablist" aria-label="Front door">' + DOORS.map(function (d) { return '<button type="button" role="tab" data-door="' + d.id + '"><i class="pg-door-ico" style="--ico:url(' + LU + d.icon + '.svg)"></i>' + d.label + '</button>'; }).join('') + '<span class="pg-doors-note">the same saved query, the same eight stages, whichever door it comes through</span></div>' +
+      '<div class="pg-doors" role="tablist" aria-label="Front door">' + DOORS.map(function (d) { return '<button type="button" role="tab" data-door="' + d.id + '"><span class="pg-door-ico"><i style="--ico:url(' + LU + d.icon + '.svg)"></i></span>' + d.label + '<small>' + d.who + '</small></button>'; }).join('') + '<span class="pg-doors-note">the same saved query, the same eight stages, whichever door it comes through</span></div>' +
       '<div class="pg-grid">' +
         '<div class="pg-panel">' +
           '<div class="pg-field"><label for="pg-q">Saved query</label><select id="pg-q">' + Object.keys(QUERIES).map(function (k) { return '<option value="' + k + '"' + (k === st.q ? ' selected' : '') + '>' + k + '</option>'; }).join('') + '</select><span class="pg-help" id="pg-what"></span></div>' +
           '<div id="pg-params" style="display:grid;gap:12px"></div>' +
           '<div class="pg-field pg-keys-wrap"><span class="pg-lab">Calling with</span><div class="pg-keys">' + KEYS.map(function (k) { return '<button type="button" class="pg-key" data-key="' + k.id + '" aria-pressed="' + (k.id === st.key) + '"><i></i><span><b>' + k.id + '</b><span>' + k.sub + '</span></span></button>'; }).join('') + '</div></div>' +
+          '<div class="pg-field pg-admins-wrap" hidden><span class="pg-lab">Calling as</span><div class="pg-keys">' + ADMINS.map(function (a) { return '<button type="button" class="pg-key" data-admin="' + a.id + '" aria-pressed="' + (a.id === st.akey) + '"><i></i><span><b>' + a.id + '</b><span>' + a.sub + '</span></span></button>'; }).join('') + '</div></div>' +
+          '<p class="pg-ev-note pg-help" hidden>The parameters above are the values the key’s own run uses. A stream takes only filters, and carries only that key’s runs.</p>' +
           '<p class="pg-cli-note pg-help" hidden>The export CLI runs on the server as a local operator: there is no key to choose.</p>' +
           '<div class="pg-field pg-fmt-wrap"><span class="pg-lab">Format</span><div class="pg-fmt">' + ['json', 'csv', 'ndjson'].map(function (f) { return '<button type="button" data-fmt="' + f + '" aria-pressed="' + (f === st.fmt) + '">' + f + '</button>'; }).join('') + '</div></div>' +
           '<button type="button" class="pg-send" id="pg-send">Send again</button>' +
           '<div class="pg-chips"><a href="Guide.dc.html?d=API#interactive-documentation">openapi.json</a><a href="Guide.dc.html?d=API#interactive-documentation">postman.json</a><a href="Guide.dc.html?d=API#client-sdks">typed client · ~50 languages</a></div>' +
         '</div>' +
-        '<div class="pg-out-col">' +
+        '<div class="pg-out-col" id="pg-out-col">' +
           '<div class="pg-term"><div class="pg-term-h"><span class=\"pg-dots\" aria-hidden=\"true\"><i style=\"background:#ff5f57\"></i><i style=\"background:#febc2e\"></i><i style=\"background:#28c840\"></i></span><span id="pg-req-h">request</span><button type=\"button\" class=\"copy-btn pg-copy\" data-copy=\"pg-req\" aria-label=\"Copy the request\"><svg aria-hidden=\"true\" width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\"/><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"/></svg><span>Copy</span></button></div><pre id="pg-req"></pre></div>' +
           '<div class="pg-mid"><div class="pg-trace" id="pg-trace"></div>' +
           '<div class="pg-stage" id="pg-stage" aria-live="polite"></div></div>' +
@@ -235,19 +354,20 @@
           '<p class="pg-why" id="pg-why"></p>' +
         '</div>' +
       '</div>';
-    sync(); run();
+    sync(); run(true);
   }
   function wire() {
     var app = document.getElementById('pg-app');
-    app.addEventListener('change', function (e) { if (e.target.id === 'pg-q') { st.q = e.target.value; st.sel = null; sync(); run(); } });
-    app.addEventListener('input', function (e) { var p = e.target.getAttribute('data-p'); if (p) { st.vals[st.q][p] = e.target.value; st.sel = null; run(); } });
+    app.addEventListener('change', function (e) { if (e.target.id === 'pg-q') { st.q = e.target.value; st.sel = null; sync(); run(true); } });
+    app.addEventListener('input', function (e) { var p = e.target.getAttribute('data-p'); if (p) { st.vals[st.q][p] = e.target.value; st.sel = null; run(e.target.tagName === 'SELECT'); } if (e.target.hasAttribute('data-ttl')) { st.ttl = e.target.value; st.sel = null; run(); } });
     app.addEventListener('click', function (e) {
       var d = e.target.closest('[data-door]'), k = e.target.closest('[data-key]'), f = e.target.closest('[data-fmt]'), s = e.target.closest('[data-stage]');
-      if (d) { st.door = d.getAttribute('data-door'); st.sel = null; sync(); run(); }
-      if (k) { st.key = k.getAttribute('data-key'); st.sel = null; app.querySelectorAll('[data-key]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === k)); }); run(); }
-      if (f) { st.fmt = f.getAttribute('data-fmt'); app.querySelectorAll('[data-fmt]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === f)); }); run(); }
-      if (s) { st.sel = +s.getAttribute('data-stage'); draw(last); }
-      if (e.target.closest('#pg-send')) run();
+      if (d) { st.door = d.getAttribute('data-door'); st.sel = null; sync(); run(true); }
+      var ad = e.target.closest('[data-admin]'); if (ad) { st.akey = ad.getAttribute('data-admin'); st.sel = null; app.querySelectorAll('[data-admin]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === ad)); }); run(true); }
+      if (k) { st.key = k.getAttribute('data-key'); st.sel = null; app.querySelectorAll('[data-key]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === k)); }); run(true); }
+      if (f) { st.fmt = f.getAttribute('data-fmt'); app.querySelectorAll('[data-fmt]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === f)); }); run(true); }
+      if (s) { st.sel = +s.getAttribute('data-stage'); draw(last, lastUpto); }
+      if (e.target.closest('#pg-send')) { st.sel = null; run(true); }
       var cp = e.target.closest('[data-copy]');
       if (cp) {
         var txt = document.getElementById(cp.getAttribute('data-copy')).textContent.replace(/^\$ /, '');
@@ -521,7 +641,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .pg-panel>.pg-field:first-child{grid-column:span 4}
 .pg-panel>#pg-params{grid-column:span 8;display:grid !important;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px !important;align-items:start}
 .pg-panel>#pg-params>.pg-help{align-self:center}
-.pg-panel>.pg-keys-wrap,.pg-panel>.pg-cli-note{grid-column:1/-1}
+.pg-panel>.pg-keys-wrap,.pg-panel>.pg-admins-wrap,.pg-panel>.pg-cli-note,.pg-panel>.pg-ev-note{grid-column:1/-1}
 .pg-keys{grid-template-columns:repeat(5,minmax(0,1fr)) !important}
 .pg-key{height:100%;box-sizing:border-box}
 .pg-panel>.pg-fmt-wrap{grid-column:span 3}
@@ -539,6 +659,37 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .copy-btn{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:#c5d3cd;background:#1b2f29;border:1px solid #2a3d37;border-radius:6px;padding:4px 9px;min-height:26px;cursor:pointer;transition:background 0.2s,color 0.2s}
 .copy-btn:hover{background:#24403a;color:#e6efeb}
 .pg-copy{margin-left:auto}
+
+.pg-app [hidden]{display:none !important}
+
+.pg-stage pre.pg-out{display:block}
+.pg-c{color:#9fb3ac;display:inline}.pg-oc{color:var(--ink-4);display:inline}
+
+/* The replay */
+.pg-span{transition:background .35s ease,opacity .35s ease}
+.pg-span-t,.pg-span-ms{transition:color .35s ease}
+.pg-span-bar i{transition:width .55s cubic-bezier(.3,.7,.3,1),background .35s ease}
+.pg-span.pend .pg-span-bar i{width:0 !important}.pg-span.pend{opacity:.45}
+.pg-span.live{background:oklch(0.52 0.11 170 / 0.1)}.pg-span.live .pg-span-t{color:var(--ink)}.pg-span.live .pg-span-bar i{background:oklch(0.52 0.11 170)}
+.pg-stage-in{display:grid;gap:10px;animation:pg-fade .35s ease}
+@keyframes pg-fade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+#pg-res{transition:opacity .35s ease;min-height:120px}
+.pg-running #pg-res{opacity:.28}
+.pg-fresh{animation:pg-fade .45s ease}
+.pg-rec,.pg-why{transition:opacity .35s ease}
+.pg-term-h b.pg-wait{background:#1b2f29;color:#9fb3ac}
+.pg-term-h b{line-height:16px;min-height:16px;display:inline-block}
+.pg-running .pg-rec,.pg-running .pg-why{opacity:0}
+@media (prefers-reduced-motion:reduce){.pg-span,.pg-span-bar i,#pg-res,.pg-rec,.pg-why{transition:none}.pg-stage-in,.pg-fresh{animation:none}}
+
+/* Front-door pills, as on Home */
+.pg-doors button{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13.5px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px 6px 7px;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.pg-doors button small{font-weight:400;font-size:12px;color:#9fb3ac}
+.pg-doors button[aria-selected=true]{background:#10201b;border-color:#10201b;color:#e6efeb}
+.pg-door-ico{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;flex:none;background:var(--surface-3);transition:background .2s}
+.pg-door-ico i{display:block;width:13px;height:13px;background:var(--ink-2);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.pg-door-ico::after{content:none}
+.pg-doors button[aria-selected=true] .pg-door-ico{background:var(--accent-ink)}.pg-doors button[aria-selected=true] .pg-door-ico i{background:var(--surface)}
 </style>
 </helmet>
 <div data-screen-label="Playground" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
@@ -569,7 +720,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   </nav>
   <header id="top" class="pg-hero">
     <span class="pg-kicker">Playground</span>
-    <h1>Save a query once. Call it three ways, here.</h1>
+    <h1>Save a query once. Try all five doors, here.</h1>
     <p>Pick a front door, a saved query, a key and some parameters. See the request each door takes, the answer it gets, and what each of the eight stages checked on the way, including where a refused call stops. These are the four example APIs <code>queryapigate examples load</code> installs, with their real rules, keys and error codes, simulated here on a generated film-rental dataset.</p>
   </header>
   <main class="pg-main">

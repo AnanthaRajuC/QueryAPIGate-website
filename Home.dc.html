@@ -81,14 +81,14 @@
 .req-in:focus{outline:2px solid oklch(0.52 0.11 170 / 0.35);outline-offset:1px}
 .req-key{font:inherit;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid;font-size:12.5px;font-weight:600;cursor:pointer;transition:background 0.2s,color 0.2s,border-color 0.2s}
 .req-key small{font-weight:400;font-size:11px}
-@media (max-width:700px){.req-trace{grid-template-columns:96px minmax(0,1fr) 52px !important}}
+@media (max-width:700px){.req-trace{font-size:10.5px}}
 .req-chip{font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 8px;border:1px solid var(--line);border-radius:6px;color:var(--ink-3);background:var(--surface);text-decoration:none;transition:border-color 0.15s,color 0.15s}
 .req-chip:hover{border-color:var(--ink);color:var(--ink);text-decoration:none}
 .req-tab{font:inherit;display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 7px;border-radius:999px;border:1px solid;cursor:pointer;font-size:13.5px;font-weight:600;transition:background 0.2s,color 0.2s,border-color 0.2s}
 .req-tab small{font-weight:400;font-size:12px}
 .req-tab .req-ico{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;flex:none;transition:background 0.2s}
 @media (max-width:700px){.req-head{min-height:84px}.req-desc{min-height:7.8em !important}.req-rows>div{grid-template-columns:96px minmax(0,1fr) !important}.req-rows>div>span:last-child{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-width:0;height:3em}.req-links{min-height:120px !important}.req-foot{min-height:82px !important}}
-@media (max-width:700px){.req-steps{display:flex !important;overflow-x:auto;gap:4px;scrollbar-width:none;padding-bottom:4px}.req-steps>li{flex:none;width:190px}.req-steps .req-line{display:none}}
+@media (max-width:700px){.req-steps{display:flex !important;overflow-x:auto;gap:4px;scrollbar-width:none;padding-bottom:4px}.req-steps>li{flex:none;width:118px}.req-steps .req-line{display:none}}
 @media (max-width:640px){.hero-badges{grid-template-columns:minmax(0,max-content) !important}}
 .hs-row{display:flex;flex-wrap:wrap;margin-top:4px;gap:4px 12px}
 .hs-tile[aria-expanded=true]{background:oklch(0.52 0.11 170 / 0.1)}.hs-tile[aria-expanded=true] b{color:var(--accent-ink)}
@@ -481,8 +481,6 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
           <p style="margin:0;color:var(--ink-2);max-width:72ch">The same saved query behind every door, and the same eight stages on every call: identity, policy, execution, record. Pick a door, follow one call through, see what each stage produces, and what the call gets back when a stage refuses.</p>
         </div>
         <div class="rs-hide" style="font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink-3);display:grid;gap:5px;justify-items:end;max-width:560px;min-width:0">
-          <sc-if value="{{ isRest }}" hint-placeholder-val="{{ true }}"><span style="display:flex;align-items:center;gap:0;flex-wrap:wrap;justify-content:flex-end"><span style="color:var(--accent-ink)">GET&nbsp;</span>/q/example_top_films?top_n=<input class="req-in" value="{{ reqTopN }}" onChange="{{ setTopN }}" aria-label="top_n" maxlength="4" style="width:3.6ch;border-color:{{ topNBorder }}">&amp;category=<select class="req-in" value="{{ reqCat }}" onChange="{{ setCat }}" aria-label="category" style="border-color:{{ catBorder }}"><option value="Action">Action</option><option value="Comedy">Comedy</option><option value="Documentary">Documentary</option><option value="Drama">Drama</option><option value="Family">Family</option><option value="Sci-Fi">Sci-Fi</option><option value="Nope">Nope</option></select></span></sc-if>
-          <sc-for list="{{ reqLines }}" as="l" hint-placeholder-count="2"><span><span style="color:var(--accent-ink)">{{ l.verb }}</span>{{ l.rest }}</span></sc-for>
           <span style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;align-items:center;padding-top:2px"><sc-for list="{{ reqChips }}" as="c" hint-placeholder-count="3"><a class="req-chip" href="{{ c.h }}">{{ c.t }}</a></sc-for><button type="button" class="copy-btn" onClick="{{ copyReq }}" title="Copy this request as a curl command for a local server with the example APIs loaded" style="margin-left:4px"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedReq }} as curl</button></span>
           <span style="font-family:'Instrument Sans',system-ui,sans-serif;font-size:12px;color:#9fb3ac">Runs on your laptop: <a href="Guide.dc.html?g=05-try-the-built-in-example-apis" style="color:var(--ink-3)">load the example APIs</a>, then paste the curl.</span>
         </div>
@@ -494,35 +492,29 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
             <button type="button" role="tab" aria-selected="{{ sc.selected }}" onClick="{{ sc.pick }}" class="req-tab" style="background:{{ sc.bg }};color:{{ sc.color }};border-color:{{ sc.border }}"><span class="req-ico" style="background:{{ sc.iconBg }}"><span style="display:block;width:13px;height:13px;background:{{ sc.iconColor }};-webkit-mask:url({{ sc.iconUrl }}) center/contain no-repeat;mask:url({{ sc.iconUrl }}) center/contain no-repeat"></span></span>{{ sc.label }}<small style="color:{{ sc.whoColor }}">{{ sc.who }}</small></button>
           </sc-for>
         </div>
-        <div class="rs-hide" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;min-height:34px;flex:1 1 320px;justify-content:flex-end">
-          <sc-if value="{{ isRest }}" hint-placeholder-val="{{ true }}"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);margin-right:4px">Calling with</span><sc-for list="{{ keyOpts }}" as="ko" hint-placeholder-count="4"><button type="button" aria-pressed="{{ ko.pressed }}" onClick="{{ ko.pick }}" class="req-key" style="background:{{ ko.bg }};color:{{ ko.color }};border-color:{{ ko.border }}">{{ ko.label }}<small style="color:{{ ko.subColor }}">{{ ko.sub }}</small></button></sc-for></sc-if>
-          <sc-if value="{{ notRest }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#9fb3ac">Pick REST to try other keys, or edit its parameters.</span></sc-if>
-        </div>
       </div>
 
-      <div class="req-trace" style="display:grid;grid-template-columns:150px minmax(0,1fr) 64px;gap:4px 10px;align-items:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-3)">
-        <span style="grid-column:1/-1;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-bottom:2px"><span>the call as a trace · one span per stage, as your tracing backend will show it</span><span>{{ totalMs }}</span></span>
-        <sc-for list="{{ trace }}" as="sp" hint-placeholder-count="8">
-          <span onClick="{{ sp.pick }}" style="cursor:pointer;color:{{ sp.labelColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ sp.label }}</span>
-          <span onClick="{{ sp.pick }}" title="{{ sp.title }}" style="position:relative;height:9px;border-radius:2px;background:var(--line-soft);cursor:pointer"><span style="position:absolute;top:0;bottom:0;left:{{ sp.left }};width:{{ sp.width }};min-width:4px;border-radius:2px;background:{{ sp.bg }};transition:background 0.3s"></span></span>
-          <span style="text-align:right;color:{{ sp.labelColor }};white-space:nowrap">{{ sp.ms }}</span>
-        </sc-for>
+      <div class="req-trace" style="display:grid;gap:7px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-3)">
+        <span style="display:flex;justify-content:space-between;gap:6px 16px;flex-wrap:wrap"><span>the call as one trace · eight spans · hover one for its stage</span><span>{{ totalMs }} · <a href="Playground.dc.html" style="color:var(--accent-ink);font-weight:500">every span, in the Playground →</a></span></span>
+        <span class="req-trace-bar" style="position:relative;display:block;height:12px;border-radius:3px;background:var(--line-soft);overflow:hidden">
+          <sc-for list="{{ trace }}" as="sp" hint-placeholder-count="8"><span onClick="{{ sp.pick }}" title="{{ sp.title }}" style="position:absolute;top:0;bottom:0;left:{{ sp.left }};width:{{ sp.width }};background:{{ sp.bg }};box-shadow:inset -2px 0 0 var(--bg);cursor:pointer;transition:background 0.3s"></span></sc-for>
+        </span>
       </div>
 
-      <div class="rs-2col" style="display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:28px;align-items:stretch">
-        <ol class="req-steps" ref="{{ stepsRef }}" style="list-style:none;margin:0;padding:0;display:grid;grid-auto-rows:minmax(0,1fr);position:relative">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:16px">
+        <ol class="req-steps" ref="{{ stepsRef }}" style="list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));position:relative">
           <sc-for list="{{ steps }}" as="st" hint-placeholder-count="8">
-            <li onClick="{{ st.pick }}" onMouseEnter="{{ st.hover }}" onMouseLeave="{{ unhover }}" class="rs-2col" style="position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);gap:14px;align-items:center;padding:9px 12px 9px 10px;border-radius:10px;cursor:pointer;background:{{ st.rowBg }};transition:background 0.35s">
-              <span class="req-line" style="position:absolute;z-index:0;left:29px;top:0;width:2px;height:50%;background:{{ st.lineTop }};transition:background 0.35s"></span>
-              <span class="req-line" style="position:absolute;z-index:0;left:29px;bottom:0;width:2px;height:50%;background:{{ st.lineBottom }};transition:background 0.35s"></span>
+            <li onClick="{{ st.pick }}" onMouseEnter="{{ st.hover }}" onMouseLeave="{{ unhover }}" style="position:relative;display:grid;justify-items:center;align-content:start;text-align:center;gap:9px;padding:10px 6px 12px;border-radius:10px;cursor:pointer;background:{{ st.rowBg }};transition:background 0.35s">
+              <span class="req-line" style="position:absolute;z-index:0;left:0;right:50%;top:29px;height:2px;background:{{ st.lineTop }};transition:background 0.35s"></span>
+              <span class="req-line" style="position:absolute;z-index:0;left:50%;right:0;top:29px;height:2px;background:{{ st.lineBottom }};transition:background 0.35s"></span>
               <span style="position:relative;z-index:1;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:{{ st.nodeBg }};border:1px solid {{ st.nodeBorder }};box-shadow:{{ st.nodeGlow }};transition:background 0.35s,border-color 0.35s,box-shadow 0.35s"><span style="display:block;width:18px;height:18px;background:{{ st.iconColor }};-webkit-mask:url({{ st.iconUrl }}) center/contain no-repeat;mask:url({{ st.iconUrl }}) center/contain no-repeat;transition:background 0.35s"></span></span>
-              <span style="display:grid;gap:1px;min-width:0"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ st.numColor }};transition:color 0.35s">{{ st.num }} · {{ st.ms }}</span><b style="font-size:14.5px;font-weight:600;color:{{ st.titleColor }};transition:color 0.35s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ st.title }}</b></span>
+              <span style="display:grid;gap:2px;min-width:0;justify-items:center"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ st.numColor }};transition:color 0.35s">{{ st.num }} · {{ st.ms }}</span><b style="font-size:13.5px;line-height:1.25;font-weight:600;color:{{ st.titleColor }};transition:color 0.35s;text-wrap:balance">{{ st.title }}</b></span>
             </li>
           </sc-for>
         </ol>
 
         <div style="display:grid;grid-template-rows:minmax(0,1fr) auto;gap:10px;min-width:0">
-        <div style="position:relative;border:1px solid {{ panelBorder }};border-radius:14px;background:radial-gradient(ellipse 70% 50% at 50% 0%, {{ panelGlow }}, transparent 70%),var(--surface);padding:26px 28px 24px;display:grid;grid-template-rows:auto auto auto auto minmax(0,1fr);gap:16px;min-width:0;overflow:hidden;transition:border-color 0.3s;align-content:start">
+        <div style="position:relative;border:1px solid {{ panelBorder }};border-radius:14px;background:radial-gradient(ellipse 70% 50% at 50% 0%, {{ panelGlow }}, transparent 70%),var(--surface);padding:26px 28px 24px;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:16px;min-width:0;overflow:hidden;transition:border-color 0.3s;align-content:start">
           <div style="position:absolute;left:0;right:0;top:0;height:2px;background:var(--line-soft)"><span style="display:block;height:100%;background:{{ barColor }};transform-origin:left;transform:{{ barTransform }};transition:{{ barTransition }}"></span></div>
           <div class="req-head" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s">
             <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">Stage {{ cur.num }} · {{ cur.layer }} · {{ cur.who }}</span>
@@ -533,10 +525,6 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
             <sc-for list="{{ cur.rows }}" as="r" hint-placeholder-count="3">
               <div class="rs-2col" style="display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px;padding:9px 14px;background:var(--surface-2);font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.5"><span style="color:var(--ink-3)">{{ r.k }}</span><span style="color:var(--ink);overflow-wrap:anywhere">{{ r.v }} <span style="color:{{ r.markColor }}">{{ r.mark }}</span></span></div>
             </sc-for>
-          </div>
-          <div style="border:1px solid {{ cur.outBorder }};border-radius:10px;overflow:hidden;background:#0a1512;align-self:start;min-width:0;opacity:{{ detailOpacity }};transform:{{ detailShift }};transition:opacity 0.22s,transform 0.22s,border-color 0.3s">
-            <div style="display:flex;align-items:center;gap:10px;padding:0 10px 0 12px;min-height:36px;border-bottom:1px solid #1b2f29"><span aria-hidden="true" style="display:flex;gap:5px;flex:none"><i style="width:8px;height:8px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:8px;height:8px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:8px;height:8px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ cur.outLabelColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">{{ cur.outLabel }}</span><sc-if value="{{ cur.hasAlt }}" hint-placeholder-val="{{ false }}"><button type="button" class="copy-btn" onClick="{{ altToggle }}" style="margin-left:auto;flex:none;white-space:nowrap">{{ altLabel }}</button></sc-if></div>
-            {{ outNode }}
           </div>
           <div class="req-foot" style="display:flex;justify-content:space-between;align-items:center;gap:12px 20px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-3);min-height:34px">
             <button type="button" onClick="{{ failToggle.go }}" disabled="{{ failToggle.disabled }}" style="font:inherit;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:8px;border:1px solid {{ failToggle.border }};background:{{ failToggle.bg }};color:{{ failToggle.color }};cursor:{{ failToggle.cursor }};transition:background 0.2s,color 0.2s,border-color 0.2s">{{ failToggle.label }}</button>
