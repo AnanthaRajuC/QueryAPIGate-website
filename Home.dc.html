@@ -53,6 +53,20 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+/* Front doors: a banner inviting the reader to the Playground. */
+.pg-banner{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center;max-width:470px;padding:16px 18px;border-radius:14px;background:#10201b;color:#e6efeb;text-decoration:none;position:relative;overflow:hidden;box-shadow:0 18px 40px -26px rgba(16,32,27,0.6);transition:transform .2s,box-shadow .2s}
+.pg-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 90% at 0% 0%,oklch(0.62 0.13 170 / 0.28),transparent 70%);pointer-events:none}
+.pg-banner:hover{transform:translateY(-2px);box-shadow:0 24px 48px -26px rgba(16,32,27,0.7);text-decoration:none}
+.pg-banner-ico{position:relative;width:44px;height:44px;border-radius:11px;display:grid;place-items:center;background:oklch(0.62 0.13 170 / 0.18);color:oklch(0.8 0.11 170)}
+.pg-banner-caret{animation:pg-banner-blink 1.1s steps(1) infinite}@keyframes pg-banner-blink{50%{opacity:0}}
+.pg-banner-txt{position:relative;display:grid;gap:3px;min-width:0}
+.pg-banner-txt small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)}
+.pg-banner-txt b{font-size:15.5px;font-weight:600;color:#e6efeb}
+.pg-banner-txt>span{font-size:13px;line-height:1.45;color:#9fb3ac}
+.pg-banner-go{position:relative;white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;color:#10201b;background:#e6efeb;border-radius:999px;padding:7px 12px}
+.pg-banner-go span{display:inline-block;transition:transform .2s}.pg-banner:hover .pg-banner-go span{transform:translateX(3px)}
+@media (max-width:640px){.pg-banner{grid-template-columns:auto minmax(0,1fr)}.pg-banner-go{grid-column:1/-1;justify-self:start}}
+@media (prefers-reduced-motion:reduce){.pg-banner,.pg-banner-go span{transition:none}.pg-banner-caret{animation:none}}
 /* Stage card: heading and explanation on the left, the stage's rows on the right; stacked on narrow screens. */
 @media (min-width:901px){.req-card{min-height:241px;box-sizing:border-box}}
 @media (max-width:900px){.req-card{grid-template-columns:minmax(0,1fr) !important}}
@@ -483,6 +497,11 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
           <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Save a query once. Serve it five ways.</h2>
           <p style="margin:0;color:var(--ink-2);max-width:72ch">The same saved query behind every door, and the same eight stages on every call: identity, policy, execution, record. Pick a door, follow one call through, see what each stage produces, and what the call gets back when a stage refuses.</p>
         </div>
+        <a href="Playground.dc.html" class="pg-banner">
+          <span class="pg-banner-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="3"/><path d="M6.5 10l3 2.5-3 2.5"/><rect class="pg-banner-caret" x="11.5" y="14" width="5" height="1.6" rx="0.8" fill="currentColor" stroke="none"/></svg></span>
+          <span class="pg-banner-txt"><small>Playground</small><b>Try every door in your browser</b><span>Pick a key, change a parameter, make any stage refuse. Nothing to install.</span></span>
+          <span class="pg-banner-go">Open it <span aria-hidden="true">→</span></span>
+        </a>
       </div>
 
       <div style="display:flex;flex-wrap:wrap;gap:14px 32px;align-items:center;justify-content:space-between">

@@ -259,13 +259,14 @@
     c2.rec = [R.rec]; c2.why = R.why;
     return c2;
   }
+  // the refusal button sits in the card header, after the stage name; when it cannot be used, a short note says why
   function refuseBtn(c, sel) {
     var R = refusal(st.door, sel);
-    if (c.forced && st.force === sel) return '<div class="pg-refuse-row"><button type="button" class="pg-refuse on" data-force="' + sel + '">← Back to the call that passed</button></div>';
-    if (c.stop >= 0 && !c.forced && c.stop === sel) return '';
-    if (c.stop >= 0 && c.stop < sel) return '<div class="pg-refuse-row"><button type="button" class="pg-refuse" disabled>What if this stage refuses?</button><span>The call already stopped at stage ' + String(c.stop + 1).padStart(2, '0') + '.</span></div>';
-    if (!R || R.never) return '<div class="pg-refuse-row"><button type="button" class="pg-refuse" disabled>This stage never refuses</button><span>' + (R ? R.never : '') + '</span></div>';
-    return '<div class="pg-refuse-row"><button type="button" class="pg-refuse" data-force="' + sel + '">What if this stage refuses?</button></div>';
+    if (c.forced && st.force === sel) return { b: '<button type="button" class="pg-refuse on" data-force="' + sel + '">← Back to the call that passed</button>', n: '' };
+    if (c.stop >= 0 && !c.forced && c.stop === sel) return { b: '', n: '' };
+    if (c.stop >= 0 && c.stop < sel) return { b: '<button type="button" class="pg-refuse" disabled>What if this stage refuses?</button>', n: 'The call already stopped at stage ' + String(c.stop + 1).padStart(2, '0') + '.' };
+    if (!R || R.never) return { b: '<button type="button" class="pg-refuse" disabled>This stage never refuses</button>', n: R ? R.never : '' };
+    return { b: '<button type="button" class="pg-refuse" data-force="' + sel + '">What if this stage refuses?</button>', n: '' };
   }
   function compute() { return applyForce(computeBase()); }
   function computeBase() {
@@ -340,16 +341,17 @@
   var last;
   function stageState(c, i, upto) { if (upto !== null && i > upto) return 'pend'; return c.stop < 0 || i < c.stop ? 'pass' : i === c.stop ? 'stop' : 'skip'; }
   function stageHtml(c, sel, upto) {
-    var S = STAGES[sel], D = c.S[sel], state = stageState(c, sel, upto);
+    var S = STAGES[sel], D = c.S[sel], state = stageState(c, sel, upto), rb = refuseBtn(c, sel);
     // the thin progress line along the top, as on Home: it fills over the stage's time while the call plays
     var bar = '<div class="pg-sbar" aria-hidden="true"><i style="background:' + (state === 'stop' ? 'oklch(0.62 0.2 25)' : 'var(--accent-ink)') + ';' + (upto !== null && sel === upto ? 'animation:pg-sbar ' + (STEP - 220) + 'ms linear forwards' : 'transform:scaleX(1)') + '"></i></div>';
-    return bar + '<div class="pg-stage-in"><div class="pg-stage-h"><i class="pg-stage-ico" style="--ico:url(' + LU + S.icon + '.svg)"></i><div><small>' + String(sel + 1).padStart(2, '0') + ' · ' + S.layer + '</small><b>' + S.title + '</b></div><span class="pg-stage-s ' + state + '">' + (state === 'pass' ? 'passed' : state === 'stop' ? 'stopped here' : state === 'pend' ? 'waiting' : 'not reached') + '</span></div><p>' + ((D && D.desc) || S.desc) + '</p>' +
+    return bar + '<div class="pg-stage-in"><div class="pg-stage-h"><i class="pg-stage-ico" style="--ico:url(' + LU + S.icon + '.svg)"></i><div><small>' + String(sel + 1).padStart(2, '0') + ' · ' + S.layer + '</small><b>' + S.title + '</b></div><span class="pg-stage-act">' + rb.b + '<span class="pg-stage-s ' + state + '">' + (state === 'pass' ? 'passed' : state === 'stop' ? 'stopped here' : state === 'pend' ? 'waiting' : 'not reached') + '</span></span></div><p>' + ((D && D.desc) || S.desc) + '</p>' + (rb.n ? '<p class="pg-dim pg-refuse-note">' + rb.n + '</p>' : '') +
       (state === 'pend' ? '<p class="pg-dim">The call has not reached this stage yet.</p>' : state === 'skip' || !D ? '<p class="pg-dim">The call stopped before this stage, so it did not run.</p>' : '<div class="pg-kvs">' + D.rows.map(markRow).join('') + '</div>' + (D.out && D.out.length ? '<pre class="pg-out">' + esc(D.out.join('\n')).replace(/^(#.*)$/gm, '<span class="pg-oc">$1</span>') + '</pre>' : '')) +
-      refuseBtn(c, sel) + '<div class="pg-links">' + (c.links || S.links).map(function (l) { return '<a href="' + l[1] + '">' + l[0] + ' →</a>'; }).join('') + '</div></div>';
+      '<div class="pg-links">' + (c.links || S.links).map(function (l) { return '<a href="' + l[1] + '">' + l[0] + ' →</a>'; }).join('') + '</div></div>';
   }
   function resHtml(c) { return esc(c.resp).replace(/^((?:HTTP\/1\.1|[A-Z][A-Za-z-]+:)[^\n]*)$/gm, '<span class="pg-h">$1</span>').replace(/^(#.*)$/gm, '<span class="pg-c">$1</span>').replace(/(&quot;|")([^"\n]*)(")(: )/g, '<span class="pg-s">"$2"</span>$4'); }
   function spanClass(c, i, upto) { var s = stageState(c, i, upto); return 'pg-span ' + s + (upto !== null && i === upto && s === 'pass' ? ' live' : '') + (st.sel === i ? ' sel' : ''); }
   var built = null, shownKey = '';
+  function pulseRefuse() { var b = document.querySelector('#pg-stage .pg-refuse:not([disabled]):not(.on)'); if (b) { b.classList.remove('pg-pulse'); void b.offsetWidth; b.classList.add('pg-pulse'); } }
   function draw(c, upto) {
     last = c; if (upto === undefined) upto = null; lastUpto = upto;
     var total = c.ms.reduce(function (a, b, i) { return a + (c.stop < 0 || i <= c.stop ? b : 0); }, 0), acc = 0;
@@ -358,7 +360,7 @@
       // a new call: lay out its spans once, so later steps only change classes and the bars can grow
       var trace = STAGES.map(function (s, i) {
         var st0 = stageState(c, i, null), w = st0 === 'skip' ? 0 : c.ms[i] / total * 100, left = acc / total * 100; if (st0 !== 'skip') acc += c.ms[i];
-        return '<button type="button" class="' + spanClass(c, i, upto) + '" data-stage="' + i + '"><span class="pg-span-n">' + String(i + 1).padStart(2, '0') + '</span><span class="pg-span-t">' + s.title + '</span><span class="pg-span-bar"><i style="left:' + left.toFixed(2) + '%;width:' + Math.max(w, st0 === 'skip' ? 0 : 1.2).toFixed(2) + '%"></i></span><span class="pg-span-ms" data-ms="' + (st0 === 'skip' ? '—' : c.ms[i].toFixed(1) + ' ms') + '"></span></button>';
+        return '<button type="button" class="' + spanClass(c, i, upto) + '" data-stage="' + i + '"><span class="pg-span-n">' + String(i + 1).padStart(2, '0') + '</span><span class="pg-span-i" aria-hidden="true"><i style="--ico:url(' + LU + s.icon + '.svg)"></i></span><span class="pg-span-t">' + s.title + '</span><span class="pg-span-bar"><i style="left:' + left.toFixed(2) + '%;width:' + Math.max(w, st0 === 'skip' ? 0 : 1.2).toFixed(2) + '%"></i></span><span class="pg-span-ms" data-ms="' + (st0 === 'skip' ? '—' : c.ms[i].toFixed(1) + ' ms') + '"></span></button>';
       }).join('');
       document.getElementById('pg-trace').innerHTML = '<div class="pg-trace-h"><span>the call as a trace · one span per stage · click one to inspect it</span><span id="pg-total"></span></div>' + trace;
       // reserve the inspector's tallest stage, so its height never changes while the call plays
@@ -374,11 +376,15 @@
     });
     document.getElementById('pg-total').textContent = upto === null ? total.toFixed(1) + ' ms' : 'running…';
     var sel = st.sel !== null ? st.sel : upto !== null ? upto : (c.stop >= 0 ? c.stop : 3), key = sel + '|' + stageState(c, sel, upto) + '|' + st.force + '|' + (c.forced ? 1 : 0) + '|' + c.stop;
-    if (key !== shownKey) { stageEl.innerHTML = stageHtml(c, sel, upto); shownKey = key; }
+    var fresh = key !== shownKey;
+    if (fresh) { stageEl.innerHTML = stageHtml(c, sel, upto); shownKey = key; }
     stageEl.classList.toggle('stop', stageState(c, sel, upto) === 'stop');
+    // when a stage's card appears, and again when a call's answer is in, the refusal button pulses gently a few times
+    if (fresh) pulseRefuse();
     var col = document.getElementById('pg-out-col'), badge = document.getElementById('pg-badge'), res = document.getElementById('pg-res');
     if (upto !== null) { col.classList.add('pg-running'); badge.textContent = 'running…'; badge.className = 'pg-wait'; return; }
     var was = col.classList.contains('pg-running');
+    if (was) pulseRefuse();
     col.classList.remove('pg-running');
     res.innerHTML = resHtml(c);
     if (was) { res.classList.remove('pg-fresh'); void res.offsetWidth; res.classList.add('pg-fresh'); }
@@ -794,6 +800,44 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 /* The soft glow at the top of the stage card, as on Home: green, or red with a red border where the call stops. */
 .pg-stage{background:radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.52 0.11 170 / 0.08), transparent 70%),var(--surface);transition:border-color .3s}
 .pg-stage.stop{background:radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.62 0.2 25 / 0.1), transparent 70%),var(--surface);border-color:oklch(0.62 0.2 25 / 0.5)}
+
+/* A stage icon before each span's name, as on Home's stage nodes */
+.pg-span{grid-template-columns:26px 24px 160px minmax(0,1fr) 64px !important}
+.pg-span-i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line-2);box-sizing:border-box;transition:background .35s,border-color .35s}
+.pg-span-i i{display:block;width:11px;height:11px;background:var(--ink-3);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat;transition:background .35s}
+.pg-span.pass .pg-span-i{background:#dcefe8;border-color:var(--accent-ink)}.pg-span.pass .pg-span-i i{background:var(--accent-ink)}
+.pg-span.live .pg-span-i,.pg-span.sel.pass .pg-span-i{background:var(--accent-ink)}.pg-span.live .pg-span-i i,.pg-span.sel.pass .pg-span-i i{background:var(--surface)}
+.pg-span.stop .pg-span-i{background:oklch(0.62 0.2 25);border-color:oklch(0.62 0.2 25)}.pg-span.stop .pg-span-i i{background:#fff}
+:root[data-theme=dark] .pg-span.pass .pg-span-i{background:oklch(0.52 0.11 170 / 0.2)}
+@media (max-width:980px){.pg-span{grid-template-columns:24px 24px minmax(0,1fr) 56px !important}}
+
+/* The vertical line joining the stage icons, as on Home: green up to where the call has reached, grey beyond. */
+.pg-span{position:relative}
+.pg-span-i{position:relative;z-index:1}
+.pg-span::before,.pg-span::after{content:'';position:absolute;left:52px;width:2px;background:var(--line-2);z-index:0;transition:background .35s}
+.pg-span::before{top:-2px;height:calc(50% - 9px)}
+.pg-span::after{top:calc(50% + 11px);bottom:-1px}
+.pg-trace button.pg-span:first-of-type::before,.pg-trace button.pg-span:last-of-type::after{display:none}
+.pg-span.pass::before,.pg-span.stop::before{background:var(--accent-ink)}
+.pg-span.pass:not(.live)::after{background:var(--accent-ink)}
+@media (max-width:980px){.pg-span::before,.pg-span::after{left:50px}}
+
+/* Guide and reference links pinned to the bottom of the stage card */
+.pg-mid>.pg-stage{align-content:stretch !important}
+.pg-stage-in{display:flex !important;flex-direction:column;gap:10px;min-height:100%}
+.pg-stage-in>.pg-links{margin-top:auto;padding-top:12px}
+
+.pg-stage-h{flex-wrap:wrap}
+.pg-stage-h .pg-refuse{padding:5px 10px;font-size:12px}
+.pg-refuse-note{margin:0;font-size:12.5px}
+
+.pg-refuse.pg-pulse{animation:pg-pulse 1.6s ease-out 0.3s 3}
+@keyframes pg-pulse{0%{box-shadow:0 0 0 0 oklch(0.62 0.2 25 / 0.45)}70%{box-shadow:0 0 0 9px oklch(0.62 0.2 25 / 0)}100%{box-shadow:0 0 0 0 oklch(0.62 0.2 25 / 0)}}
+@media (prefers-reduced-motion:reduce){.pg-refuse.pg-pulse{animation:none}}
+
+/* the refusal button and the status pill travel together, on the right of the header */
+.pg-stage-act{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.pg-stage-act .pg-stage-s{margin-left:0}
 </style>
 </helmet>
 <div data-screen-label="Playground" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
