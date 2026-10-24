@@ -21,7 +21,7 @@
 <!-- /site-meta -->
 <script src="./support.js"></script>
 <script src="./theme.js?v=10"></script>
-<script src="./search.js?v=4" defer></script>
+<script src="./search.js?v=5" defer></script>
 </head>
 <body>
 <x-dc>
@@ -30,6 +30,83 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+/* About page */
+.ab-eyebrow{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)}
+.ab-wrap{max-width:1240px;margin:0 auto;padding-left:24px;padding-right:24px}
+.ab-sec-head{display:grid;gap:10px}.ab-sec-head h2,.ab-lic h2{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:32px;font-weight:700;letter-spacing:-0.015em}
+.ab-ico,.ab-fi{display:block;position:relative;flex:none;width:40px;height:40px;border-radius:10px;background:oklch(0.52 0.11 170 / 0.1)}
+.ab-ico::after,.ab-fi::after{content:'';position:absolute;inset:10px;background:var(--accent-ink);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.ab-fi{width:30px;height:30px;border-radius:8px}.ab-fi::after{inset:7px}
+.ab-hero{max-width:1240px;margin:0 auto;padding:88px 24px 48px;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:56px;align-items:center;position:relative}
+.ab-hero::before{content:'';position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse 40% 60% at 85% 40%,oklch(0.62 0.13 170 / 0.12),transparent 70%),radial-gradient(circle,var(--dots) 0.6px,transparent 1px) 0 0/18px 18px;-webkit-mask:linear-gradient(transparent,#000 20%,#000 70%,transparent);mask:linear-gradient(transparent,#000 20%,#000 70%,transparent);opacity:0.9;pointer-events:none}
+.ab-hero-txt{display:grid;gap:18px}
+.ab-hero h1{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(36px,4.8vw,58px);line-height:1.03;font-weight:800;letter-spacing:-0.025em;text-wrap:balance}
+.ab-hero-txt p{margin:0;font-size:18px;line-height:1.6;color:var(--ink-2);max-width:60ch;text-wrap:pretty}
+.ab-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.45);overflow:hidden}
+.ab-author{display:flex;align-items:center;gap:14px;padding:20px 22px;border-bottom:1px solid var(--line-soft);color:var(--ink);transition:background .2s}
+.ab-author:hover{background:var(--surface-2);text-decoration:none}
+.ab-author img{width:56px;height:56px;border-radius:50%;flex:none;background:var(--surface-3);box-shadow:0 0 0 3px var(--surface),0 0 0 4px oklch(0.52 0.11 170 / 0.5)}
+.ab-author>span{display:grid;gap:1px}.ab-author small{font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-3)}
+.ab-author b{font-family:'Schibsted Grotesk',sans-serif;font-size:19px;font-weight:700}.ab-author>span>span{font-size:13px;color:var(--accent-ink)}
+.ab-facts{margin:0;display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft)}
+.ab-fact{display:grid;grid-template-columns:30px minmax(0,1fr);grid-template-rows:auto auto;column-gap:12px;row-gap:2px;align-items:center;padding:16px 22px;background:var(--surface)}
+.ab-fact .ab-fi{grid-row:1/3}.ab-fact dt{font-size:12px;color:var(--ink-3)}.ab-fact dd{margin:0;font-weight:600;font-size:14.5px;overflow-wrap:anywhere}
+.ab-fact dd a{color:var(--ink)}.ab-fact dd a:hover{color:var(--accent-ink)}
+.ab-fact-wide{grid-column:1/-1}
+.ab-live{display:inline-block;width:7px;height:7px;border-radius:50%;background:oklch(0.65 0.15 150);margin-right:7px;vertical-align:1px;box-shadow:0 0 0 0 oklch(0.65 0.15 150 / 0.5);animation:ab-live 2.4s ease-out infinite}
+@keyframes ab-live{0%{box-shadow:0 0 0 0 oklch(0.65 0.15 150 / 0.5)}70%,100%{box-shadow:0 0 0 7px oklch(0.65 0.15 150 / 0)}}
+.ab-stats{max-width:1240px;margin:0 auto 72px;padding:0 24px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
+.ab-stats>div{display:grid;gap:4px;align-content:start;padding:6px 24px;border-left:1px solid var(--line)}.ab-stats>div:first-child{border-left:0;padding-left:0}
+.ab-stats b{font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3vw,40px);font-weight:800;letter-spacing:-0.02em;line-height:1.05}
+.ab-stats .ab-sl{font-size:14px;color:var(--ink-2)}
+.ab-band{background:var(--surface-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:80px 0}
+.ab-band .ab-wrap{display:grid;gap:36px}
+.ab-principles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.ab-principles{grid-auto-rows:auto}
+.ab-pr{display:grid;grid-row:span 2;grid-template-rows:subgrid;row-gap:0;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.45);overflow:hidden;transition:transform .2s,box-shadow .2s}
+.ab-pr:hover{transform:translateY(-2px);box-shadow:0 34px 64px -38px rgba(16,32,27,0.55)}
+.ab-pr-h{display:flex;align-items:center;gap:14px;padding:20px 22px;border-bottom:1px solid var(--line-soft)}
+.ab-pr-h>span:last-child{display:grid;gap:2px;min-width:0}
+.ab-pr h3{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:18px;font-weight:700;line-height:1.25;text-wrap:balance}.ab-pr p{margin:0;padding:18px 22px 22px;font-size:14.5px;line-height:1.6;color:var(--ink-2)}
+.ab-road-sec{padding-top:88px;padding-bottom:24px;display:grid;gap:40px}
+.ab-road{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:20px;position:relative}
+.ab-road::before{content:'';position:absolute;left:7px;right:0;top:7px;height:2px;background:linear-gradient(90deg,var(--accent-ink) 0,var(--accent-ink) 86%,transparent 86%,transparent 100%),var(--line);background-repeat:no-repeat}
+.ab-road li{position:relative;display:grid;gap:8px;align-content:start;padding-top:30px}
+.ab-dot{position:absolute;left:0;top:0;width:12px;height:12px;border-radius:50%;background:var(--bg);border:2px solid var(--accent-ink)}
+.ab-road li.next .ab-dot{border-style:dashed;border-color:var(--ink-4)}
+.ab-when{font-size:12.5px;color:var(--ink-3)}.ab-when b{font-family:'JetBrains Mono',monospace;font-weight:500;color:var(--accent-ink)}
+.ab-road li.next .ab-when b{color:var(--ink-3)}
+.ab-road h3{margin:0;font-size:15.5px;font-weight:600;line-height:1.3}.ab-road h3 a{color:var(--ink)}.ab-road h3 a:hover{color:var(--accent-ink)}
+.ab-road p{margin:0;font-size:13.5px;line-height:1.55;color:var(--ink-2)}
+.ab-lic{padding-top:72px;padding-bottom:72px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:56px;align-items:start}
+.ab-licbar{display:grid;grid-template-columns:1.2fr 2.6fr 2fr;margin-top:10px;border-radius:10px;overflow:hidden;border:1px solid var(--line);font-size:12px}
+.ab-licbar span{display:grid;gap:2px;padding:10px 12px;white-space:nowrap;min-width:0;color:var(--ink-2);font-family:'JetBrains Mono',monospace}
+.ab-licbar b{font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:600;color:var(--ink)}
+.ab-licbar .mit{background:var(--surface-3)}.ab-licbar .fsl{background:var(--surface-2);border-left:1px solid var(--line)}
+.ab-licbar .apache{background:oklch(0.52 0.11 170 / 0.14);border-left:1px solid var(--line)}.ab-licbar .apache b{color:var(--accent-ink)}
+.ab-lic-list{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:15px}
+.ab-lic-list>div{background:var(--surface);padding:18px 22px;display:grid;gap:3px}.ab-lic-list b{font-weight:600}.ab-lic-list>div>span{color:var(--ink-2)}
+.ab-explore-sec{padding-bottom:64px;display:grid;gap:28px}
+.ab-explore{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.ab-ex{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:14px;align-items:center;padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);transition:border-color .2s,transform .2s}
+.ab-ex:hover{border-color:var(--accent-ink);transform:translateY(-2px);text-decoration:none}
+.ab-ex>span:nth-child(2){display:grid;gap:2px}.ab-ex b{font-size:15px;font-weight:600}.ab-ex>span>span{font-size:13px;color:var(--ink-2);line-height:1.4}
+.ab-ex i{font-style:normal;color:var(--ink-3);transition:transform .2s,color .2s}.ab-ex:hover i{transform:translateX(3px);color:var(--accent-ink)}
+.ab-contrib{background:#10201b;color:#e6efeb;border-radius:18px;padding:48px;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:32px;align-items:center;position:relative;overflow:hidden}
+.ab-contrib::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 50% 90% at 0% 0%,oklch(0.62 0.13 170 / 0.25),transparent 70%);pointer-events:none}
+.ab-contrib>*{position:relative}.ab-contrib h2{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em}
+.ab-contrib p{margin:0;color:#9fb3ac;max-width:60ch}
+.ab-gh{display:flex;flex-wrap:wrap;gap:8px}.ab-gh .ab-pill{font-family:'JetBrains Mono',monospace;font-size:12px;color:#c5d3cd;background:#1b2f29;border:1px solid #2a3d37;border-radius:999px;padding:4px 10px}
+.ab-contrib-go{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
+.ab-btn{font-size:15px;font-weight:600;background:#e6efeb;color:#10201b;padding:12px 18px;border-radius:8px;transition:background .2s}.ab-btn:hover{background:#fff;color:#10201b;text-decoration:none}
+.ab-btn-o{background:transparent;color:#e6efeb;border:1px solid #2a3d37}.ab-btn-o:hover{background:#1b2f29;color:#e6efeb}
+@media (max-width:1100px){.ab-principles{grid-template-columns:repeat(2,minmax(0,1fr))}.ab-explore{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ab-road{grid-template-columns:minmax(0,1fr);gap:22px;padding-left:28px}.ab-road::before{left:5px;right:auto;top:6px;bottom:6px;width:2px;height:auto;background:linear-gradient(180deg,var(--accent-ink) 0,var(--accent-ink) 88%,var(--line) 88%)}
+  .ab-road li{padding-top:0}.ab-dot{left:-28px;top:3px}}
+@media (max-width:900px){.ab-hero{grid-template-columns:minmax(0,1fr);gap:36px}.ab-lic{grid-template-columns:minmax(0,1fr);gap:28px}.ab-contrib{grid-template-columns:minmax(0,1fr);padding:32px 24px}.ab-contrib-go{justify-content:flex-start}
+  .ab-stats{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:24px}.ab-stats>div:nth-child(3){border-left:0;padding-left:0}}
+@media (max-width:640px){.ab-principles,.ab-explore{grid-template-columns:minmax(0,1fr)}.ab-facts{grid-template-columns:minmax(0,1fr)}.ab-hero{padding:56px 16px 36px}.ab-wrap,.ab-stats{padding-left:16px;padding-right:16px}.ab-band{padding:56px 0}.ab-stats>div{padding:4px 14px}}
+@media (prefers-reduced-motion:reduce){.ab-live{animation:none}.ab-pr,.ab-ex,.ab-ex i{transition:none}.ab-pr:hover,.ab-ex:hover{transform:none}}
 .rs-ghn svg{display:block}
 .rs-ghn-n{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1;color:var(--ink-3);min-width:0}
 .rs-ghn-n:empty{display:none}
@@ -234,47 +311,91 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </nav>
 
-  <header class="rs-2col" style="max-width:1240px;margin:0 auto;padding:88px 24px 56px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:48px;align-items:end">
-    <div style="display:grid;gap:16px">
-      <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">About</span>
-      <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(34px,4.5vw,54px);line-height:1.04;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">A data API should be as careful as the DBA who wrote the grants.</h1>
-      <p style="margin:0;font-size:17px;color:var(--ink-2);max-width:60ch;text-wrap:pretty">QueryAPIGate began as SQL2API: a way to turn a SQL query into an endpoint without writing the same controller for the fortieth time. It grew into a governance layer because every team that exposed data also needed to say who could ask, what they could see, and prove it afterwards. Then AI agents arrived with the same questions.</p>
+  <header class="ab-hero">
+    <div class="ab-hero-txt">
+      <span class="ab-eyebrow">About</span>
+      <h1>A data API should be as careful as the DBA who wrote the grants.</h1>
+      <p>QueryAPIGate began as SQL2API: a way to turn a SQL query into an endpoint without writing the same controller for the fortieth time. It grew into a governance layer because every team that exposed data also needed to say who could ask, what they could see, and prove it afterwards. Then AI agents arrived with the same questions.</p>
     </div>
-    <dl style="margin:0;display:grid;grid-template-columns:1fr 1fr;gap:18px 24px">
-      <div style="display:grid;gap:4px"><dt style="font-size:12px;color:var(--ink-3);letter-spacing:0.03em">Author</dt><dd style="margin:0;font-weight:600">Anantha Raju C</dd></div>
-      <div style="display:grid;gap:4px"><dt style="font-size:12px;color:var(--ink-3);letter-spacing:0.03em">Licence</dt><dd style="margin:0;font-weight:600">Apache-2.0</dd></div>
-      <div style="display:grid;gap:4px"><dt style="font-size:12px;color:var(--ink-3);letter-spacing:0.03em">Current release</dt><dd style="margin:0;font-weight:600">0.34, October 2026</dd></div>
-      <div style="display:grid;gap:4px"><dt style="font-size:12px;color:var(--ink-3);letter-spacing:0.03em">Runtime</dt><dd style="margin:0;font-weight:600">Python 3.11 to 3.14</dd></div>
-      <div style="display:grid;gap:4px"><dt style="font-size:12px;color:var(--ink-3);letter-spacing:0.03em">Status</dt><dd style="margin:0;font-weight:600">Beta, versioned schema, compatibility promise for stable features</dd></div>
-      <div style="display:grid;gap:4px"><dt style="font-size:12px;color:var(--ink-3);letter-spacing:0.03em">Contact</dt><dd style="margin:0;font-weight:600"><a href="mailto:arcswdev@gmail.com">arcswdev@gmail.com</a></dd></div>
-    </dl>
+    <div class="ab-card">
+      <a class="ab-author" href="https://github.com/AnanthaRajuC" target="_blank" rel="noopener noreferrer">
+        <img src="https://github.com/AnanthaRajuC.png?size=112" width="56" height="56" alt="" loading="lazy">
+        <span><small>Author and maintainer</small><b>Anantha Raju C</b><span>@AnanthaRajuC on GitHub ↗</span></span>
+      </a>
+      <dl class="ab-facts">
+        <div class="ab-fact"><span class="ab-fi" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/tag.svg)" aria-hidden="true"></span><dt>Current release</dt><dd><a href="{{ relHref }}"><i class="ab-live" aria-hidden="true"></i>{{ relText }}</a></dd></div>
+        <div class="ab-fact"><span class="ab-fi" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/scale.svg)" aria-hidden="true"></span><dt>Licence</dt><dd>Apache-2.0</dd></div>
+        <div class="ab-fact"><span class="ab-fi" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/code-xml.svg)" aria-hidden="true"></span><dt>Runtime</dt><dd>Python 3.11 to 3.14</dd></div>
+        <div class="ab-fact"><span class="ab-fi" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/mail.svg)" aria-hidden="true"></span><dt>Contact</dt><dd><a href="mailto:arcswdev@gmail.com">arcswdev@gmail.com</a></dd></div>
+        <div class="ab-fact ab-fact-wide"><span class="ab-fi" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/flag.svg)" aria-hidden="true"></span><dt>Status</dt><dd>Beta, versioned schema, compatibility promise for stable features</dd></div>
+      </dl>
+    </div>
   </header>
 
-  <section style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
-    <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:32px">
-      <h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">How it is built</h2>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:28px">
-        <div style="display:grid;gap:8px;align-content:start"><h3 style="margin:0;font-size:17px;font-weight:600">Read-only until told otherwise</h3><p style="margin:0;font-size:14.5px;color:var(--ink-2)">Writes are opt-in per connection or key, narrowed to specific operations, and for agents gated by a person. The default is the safe one.</p></div>
-        <div style="display:grid;gap:8px;align-content:start"><h3 style="margin:0;font-size:17px;font-weight:600">Stable means stable</h3><p style="margin:0;font-size:14.5px;color:var(--ink-2)">Features under the compatibility promise do not break in a minor release. Experimental ones are labelled in the product and the changelog, and may change.</p></div>
-        <div style="display:grid;gap:8px;align-content:start"><h3 style="margin:0;font-size:17px;font-weight:600">Tested against the real thing</h3><p style="margin:0;font-size:14.5px;color:var(--ink-2)">CI runs against real <code class="qx">PostgreSQL</code>, <code class="qx">MySQL</code>, <code class="qx">ClickHouse</code>, S3 and Keycloak, upgrades from the previous release, and checks the oldest supported dependencies.</p></div>
-        <div style="display:grid;gap:8px;align-content:start"><h3 style="margin:0;font-size:17px;font-weight:600">Decisions written down</h3><p style="margin:0;font-size:14.5px;color:var(--ink-2)">Architecture decision records, a threat model, a prioritised backlog and 62 how-to guides live in the repository next to the code. The components are on <a href="Stack.dc.html">Built with</a>.</p></div>
+  <section class="ab-stats" aria-label="The project in numbers">
+    <div><b>{{ since }}</b><span class="ab-sl">first commit</span></div>
+    <div><b>{{ rel }}</b><span class="ab-sl">latest release</span></div>
+    <div><b>62</b><span class="ab-sl">how-to guides, each run against a real server</span></div>
+    <div><b>{{ stars }}</b><span class="ab-sl">stars on GitHub</span></div>
+  </section>
+
+  <section class="ab-band">
+    <div class="ab-wrap">
+      <div class="ab-sec-head"><span class="ab-eyebrow">Principles</span><h2>How it is built</h2></div>
+      <div class="ab-principles">
+        <div class="ab-pr"><div class="ab-pr-h"><span class="ab-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg)" aria-hidden="true"></span><span><h3>Read-only until told otherwise</h3></span></div><p>Writes are opt-in per connection or key, narrowed to specific operations, and for agents gated by a person. The default is the safe one.</p></div>
+        <div class="ab-pr"><div class="ab-pr-h"><span class="ab-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)" aria-hidden="true"></span><span><h3>Stable means stable</h3></span></div><p>Features under the compatibility promise do not break in a minor release. Experimental ones are labelled in the product and the changelog, and may change.</p></div>
+        <div class="ab-pr"><div class="ab-pr-h"><span class="ab-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/flask-conical.svg)" aria-hidden="true"></span><span><h3>Tested against the real thing</h3></span></div><p>CI runs against real <code class="qx">PostgreSQL</code>, <code class="qx">MySQL</code>, <code class="qx">ClickHouse</code>, S3 and Keycloak, upgrades from the previous release, and checks the oldest supported dependencies. Every system it connects to, and how each is tested, is on <a href="Integrations.dc.html">Integrations</a>.</p></div>
+        <div class="ab-pr"><div class="ab-pr-h"><span class="ab-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/notebook-pen.svg)" aria-hidden="true"></span><span><h3>Decisions written down</h3></span></div><p>Architecture decision records, a threat model, a prioritised backlog and 62 how-to guides live in the repository next to the code. The components are on <a href="Stack.dc.html">Built with</a>.</p></div>
       </div>
     </div>
   </section>
 
-  <section class="rs-2col" style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:48px;align-items:start">
-    <div style="display:grid;gap:12px"><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">The licence</h2><p style="margin:0;color:var(--ink-2)">Open source under Apache-2.0, since 0.39. The code is unchanged; only the licence is.</p></div>
-    <div style="display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:15px">
-      <div style="background:var(--surface);padding:18px 22px;display:grid;gap:2px"><b style="font-weight:600">Use, modify and redistribute</b><span style="color:var(--ink-2)">For any purpose, commercial or not, including offering it as a service. A <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">NOTICE</code> file carries the copyright notice.</span></div>
-      <div style="background:var(--surface);padding:18px 22px;display:grid;gap:2px"><b style="font-weight:600">Signed releases, same code</b><span style="color:var(--ink-2)">The relicensing changed the licence and its metadata only: the LICENSE and NOTICE files, the package's licence expression, the image label and the README.</span></div>
-      <div style="background:var(--surface);padding:18px 22px;display:grid;gap:2px"><b style="font-weight:600">Earlier versions</b><span style="color:var(--ink-2)">0.7.0 through 0.38.0 were released under FSL-1.1-MIT, and versions up to 0.6.1 under MIT. A copy already obtained keeps the licence it came with.</span></div>
+  <section class="ab-wrap ab-road-sec">
+    <div class="ab-sec-head"><span class="ab-eyebrow">The road so far</span><h2>From a query helper to a governed gate</h2></div>
+    <ol class="ab-road">
+      <li class=""><span class="ab-dot" aria-hidden="true"></span><span class="ab-when"><b>0.1</b> · March 2024</span><h3>First commit, as SQL2API</h3><p>A SQL query becomes an endpoint, without writing the controller. Released under MIT up to 0.6.1.</p></li>
+      <li class=""><span class="ab-dot" aria-hidden="true"></span><span class="ab-when"><b>0.7</b></span><h3>Source-available</h3><p>Releases from 0.7.0 move to FSL-1.1-MIT.</p></li>
+      <li class=""><span class="ab-dot" aria-hidden="true"></span><span class="ab-when"><b>0.21</b> · October 2026</span><h3><a href="Guide.dc.html?p=agents-can-write-now">Agents can write, a person approves</a></h3><p>MCP write tools queue in the Console for an administrator to approve or reject.</p></li>
+      <li class=""><span class="ab-dot" aria-hidden="true"></span><span class="ab-when"><b>0.23 – 0.29</b> · October 2026</span><h3><a href="Roadmap.dc.html">Seen, fair and sealed</a></h3><p>Tracing, per-key limits and quotas, a tamper-evident audit log, a Helm chart, configuration as code.</p></li>
+      <li class=""><span class="ab-dot" aria-hidden="true"></span><span class="ab-when"><b>0.30 – 0.34</b> · October 2026</span><h3><a href="Changelog.dc.html">Ready to freeze</a></h3><p>Eight features graduate, releases are signed from 0.31, live events are stable from 0.34.</p></li>
+      <li class=""><span class="ab-dot" aria-hidden="true"></span><span class="ab-when"><b>0.39</b> · October 2026</span><h3><a href="#licence">Open source under Apache-2.0</a></h3><p>The code is unchanged; only the licence is.</p></li>
+      <li class="next"><span class="ab-dot" aria-hidden="true"></span><span class="ab-when"><b>1.0</b> · Next</span><h3><a href="Roadmap.dc.html">A frozen surface</a></h3><p>The compatibility promise without the beta label.</p></li>
+    </ol>
+  </section>
+
+  <section id="licence" class="ab-wrap ab-lic">
+    <div style="display:grid;gap:14px;align-content:start">
+      <span class="ab-eyebrow">Licence</span>
+      <h2>The licence</h2>
+      <p style="margin:0;color:var(--ink-2)">Open source under Apache-2.0, since 0.39. The code is unchanged; only the licence is.</p>
+      <div class="ab-licbar" role="img" aria-label="Licences by version: MIT up to 0.6.1, FSL-1.1-MIT from 0.7.0 to 0.38.0, Apache-2.0 from 0.39">
+        <span class="mit"><b>MIT</b>0.1 – 0.6.1</span><span class="fsl"><b>FSL-1.1-MIT</b>0.7 – 0.38</span><span class="apache"><b>Apache-2.0</b>0.39 →</span>
+      </div>
+    </div>
+    <div class="ab-lic-list">
+      <div><b>Use, modify and redistribute</b><span>For any purpose, commercial or not, including offering it as a service. A <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">NOTICE</code> file carries the copyright notice.</span></div>
+      <div><b>Signed releases, same code</b><span>The relicensing changed the licence and its metadata only: the LICENSE and NOTICE files, the package's licence expression, the image label and the README.</span></div>
+      <div><b>Earlier versions</b><span>0.7.0 through 0.38.0 were released under FSL-1.1-MIT, and versions up to 0.6.1 under MIT. A copy already obtained keeps the licence it came with.</span></div>
     </div>
   </section>
 
-  <section style="max-width:1240px;margin:0 auto;padding:0 24px 88px">
-    <div class="rs-2col" style="background:#10201b;color:#e6efeb;border-radius:16px;padding:48px;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:32px;align-items:center">
-      <div style="display:grid;gap:12px"><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">Contribute</h2><p style="margin:0;color:#9fb3ac;max-width:60ch">Issues, discussions and pull requests are on GitHub. The contributing guide covers the test suite, ruff, mypy and how integration tests against real databases are switched on.</p></div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end"><a href="https://github.com/AnanthaRajuC/QueryAPIGate" style="font-size:15px;font-weight:600;background:#e6efeb;color:#10201b;padding:12px 18px;border-radius:8px;text-decoration:none" style-hover="background:var(--surface)">GitHub</a><a href="Guide.dc.html?d=CONTRIBUTING" style="font-size:15px;font-weight:600;color:#e6efeb;padding:12px 18px;border:1px solid #2a3d37;border-radius:8px;text-decoration:none" style-hover="border-color:#9fb3ac">Contributing guide</a></div>
+  <section class="ab-wrap ab-explore-sec">
+    <div class="ab-sec-head"><span class="ab-eyebrow">Explore</span><h2>Where to go next</h2></div>
+    <div class="ab-explore">
+      <a href="Playground.dc.html" class="ab-ex"><span class="ab-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/terminal.svg)" aria-hidden="true"></span><span><b>Playground</b><span>Call the example APIs in your browser, and make any stage refuse.</span></span><i aria-hidden="true">→</i></a>
+      <a href="Integrations.dc.html" class="ab-ex"><span class="ab-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/plug.svg)" aria-hidden="true"></span><span><b>Integrations</b><span>Every database, identity provider and AI client it works with.</span></span><i aria-hidden="true">→</i></a>
+      <a href="Stack.dc.html" class="ab-ex"><span class="ab-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layers.svg)" aria-hidden="true"></span><span><b>Built with</b><span>The tech stack, layer by layer.</span></span><i aria-hidden="true">→</i></a>
+      <a href="Roadmap.dc.html" class="ab-ex"><span class="ab-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/map.svg)" aria-hidden="true"></span><span><b>Roadmap</b><span>Shipping toward 1.0, one release at a time.</span></span><i aria-hidden="true">→</i></a>
+      <a href="Blog.dc.html" class="ab-ex"><span class="ab-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/newspaper.svg)" aria-hidden="true"></span><span><b>Blog</b><span>Release notes, design notes and performance reports.</span></span><i aria-hidden="true">→</i></a>
+      <a href="Trust.dc.html" class="ab-ex"><span class="ab-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield.svg)" aria-hidden="true"></span><span><b>Trust center</b><span>Security, data protection and how releases are signed.</span></span><i aria-hidden="true">→</i></a>
+    </div>
+  </section>
+
+  <section class="ab-wrap" style="padding-bottom:88px">
+    <div class="ab-contrib">
+      <div style="display:grid;gap:12px"><h2>Contribute</h2><p>Issues, discussions and pull requests are on GitHub. The contributing guide covers the test suite, ruff, mypy and how integration tests against real databases are switched on.</p><span class="ab-gh" style="display:{{ ghShow }}"><span class="ab-pill">{{ issues }} open issues</span><span class="ab-pill">{{ forks }} forks</span></span></div>
+      <div class="ab-contrib-go"><a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="ab-btn">GitHub</a><a href="Guide.dc.html?d=CONTRIBUTING" class="ab-btn ab-btn-o">Contributing guide</a></div>
     </div>
   </section>
 
@@ -308,5 +429,26 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   </footer>
 </div>
 </x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  // The current release, read from GitHub; the fallback is the newest release when this page was last edited.
+  state = { tag: '0.41', date: '2026-10-20', href: 'https://github.com/AnanthaRajuC/QueryAPIGate/releases/tag/v0.41.0', repo: null };
+  componentDidMount() {
+    fetch('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate/releases/latest').then(r => r.ok ? r.json() : null).then(r => {
+      if (r && r.tag_name && r.published_at) this.setState({ tag: r.tag_name.replace(/^v/, '').replace(/\.0$/, ''), date: r.published_at, href: r.html_url });
+    }).catch(() => {});
+    // stars, forks and open issues, shown only once GitHub answers
+    fetch('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate').then(r => r.ok ? r.json() : null).then(repo => repo && this.setState({ repo })).catch(() => {});
+  }
+  renderVals() {
+    const M = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const d = new Date(this.state.date);
+    const r = this.state.repo;
+    return { relText: this.state.tag + ', ' + M[d.getUTCMonth()] + ' ' + d.getUTCFullYear(), relHref: this.state.href, rel: this.state.tag,
+      since: 'Mar 2024', stars: r ? String(r.stargazers_count) : '—', ghShow: r ? 'flex' : 'none',
+      issues: r ? String(r.open_issues_count) : '', forks: r ? String(r.forks_count) : '' };
+  }
+}
+</script>
 </body>
 </html>

@@ -9,7 +9,7 @@
   })();
   var SUGGESTED = [
     ['Quick start', 'Docs.dc.html#quickstart'], ['Install', 'Docs.dc.html#install'], ['MCP server for AI agents', 'Guide.dc.html?d=MCP'],
-    ['API reference', 'Guide.dc.html?d=API'], ['60 how-to guides', 'Guides.dc.html'], ['Threat model', 'Guide.dc.html?d=THREAT_MODEL'],
+    ['API reference', 'Guide.dc.html?d=API'], ['62 how-to guides', 'Guides.dc.html'], ['Threat model', 'Guide.dc.html?d=THREAT_MODEL'],
   ];
   var KIND = { doc: 'Documentation', guide: 'Guides', post: 'Blog', page: 'Pages' };
   var index = null, loading = null, overlay = null, input = null, list = null, status = null, sel = 0, hits = [], lastQ = '';
