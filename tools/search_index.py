@@ -4,7 +4,8 @@ Writes, at the site root:
   search-index.json  one entry per heading section (documents, guides) and one per site page; read by search.js
   llms.txt           a short index of every document and guide, for AI tools that read it
   llms-full.txt      every document and guide in full, one file
-  sitemap.xml        every page, use case, document and guide, for search engines
+  sitemap.xml        every page, use case, document, guide and blog post, for search engines
+  feed.xml           an Atom feed of the blog posts in guides.js, newest first
   robots.txt         allows everything and points at the sitemap
 
 Run by tools/sync-upstream.py after each sync, or by hand: python3 tools/search_index.py
@@ -102,7 +103,7 @@ def page_entries():
 
 def build():
     gjs = open(os.path.join(ROOT, 'guides.js'), encoding='utf-8').read()
-    guides, docs = load_js_export(gjs, 'guides'), load_js_export(gjs, 'docs')
+    guides, docs, posts = load_js_export(gjs, 'guides'), load_js_export(gjs, 'docs'), load_js_export(gjs, 'posts')
     entries, full, short = [], [], []
     for d in docs:
         p = os.path.join(ROOT, d['path'])
@@ -120,6 +121,14 @@ def build():
         entries += md_entries('guide', g['title'], url, 'Guide ' + g['num'] + ' · ' + g['cat'], md)
         short.append(f"- [Guide {g['num']}: {g['title']}]({SITE}{url}): how-to, {g['cat']}")
         full.append(f"# Guide {g['num']}: {g['title']}\nSource: {SITE}{url}\n\n{md.strip()}\n")
+    for b in posts:
+        p = os.path.join(ROOT, 'blog', b['slug'] + '.md')
+        if b.get('href') or not os.path.exists(p): continue
+        md = open(p, encoding='utf-8').read()
+        url = 'Guide.dc.html?p=' + b['slug']
+        entries += md_entries('post', b['title'], url, 'Blog · ' + b['cat'], md)
+        short.append(f"- [{b['title']}]({SITE}{url}): blog, {b['cat']}, {b['date']}")
+        full.append(f"# {b['title']}\nSource: {SITE}{url}\n\n{md.strip()}\n")
     entries += page_entries()
     changed = []
     def write(rel, data):
@@ -139,7 +148,7 @@ def build():
         terms = re.findall(r'<div class="gl-term" id="([^"]+)"[^>]*><dt>.*?</a>(.*?)</dt><dd><p>(.*?)</p>', src, re.S)
         if terms:
             gl_md = '\n## Glossary\n\n' + '\n'.join(f'- **{inline_text(n)}**: {inline_text(d)} ({SITE}Glossary.dc.html#{i})' for i, n, d in terms) + '\n'
-    write('llms.txt', intro + '## Documentation and guides\n\n' + '\n'.join(short) + '\n' + gl_md)
+    write('llms.txt', intro + '## Documentation, guides and blog posts\n\n' + '\n'.join(short) + '\n' + gl_md)
     write('llms-full.txt', intro + '\n\n'.join(full) + ('\n\n# Glossary\n' + gl_md.split('## Glossary', 1)[1] if gl_md else ''))
     # sitemap.xml and robots.txt: every page, use case, document and guide, so search engines needn't crawl to find them.
     from urllib.parse import quote
@@ -147,9 +156,24 @@ def build():
     urls += ['use-cases/' + f for f in sorted(os.listdir(os.path.join(ROOT, 'use-cases'))) if f.endswith('.dc.html')]
     urls += ['Guide.dc.html?d=' + d['slug'] for d in docs if os.path.exists(os.path.join(ROOT, d['path']))]
     urls += ['Guide.dc.html?g=' + g['slug'] for g in guides if os.path.exists(os.path.join(ROOT, 'how-to', g['slug'] + '.md'))]
+    live = [b for b in posts if not b.get('href') and os.path.exists(os.path.join(ROOT, 'blog', b['slug'] + '.md'))]
+    urls += ['Guide.dc.html?p=' + b['slug'] for b in live]
     loc = lambda u: html.escape(SITE + quote(u, safe='/?=&'))
     write('sitemap.xml', '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
           + ''.join(f'  <url><loc>{loc(u)}</loc></url>\n' for u in urls) + '</urlset>\n')
+    # feed.xml: the blog as Atom, so readers can follow new posts. A post's date is its update time, at noon UTC.
+    stamp = lambda d: (d + '-01' if len(d) == 7 else d) + 'T12:00:00Z'
+    items = [b for b in posts if b.get('href') or b in live]
+    ent = ''.join(
+        f'  <entry>\n    <title>{html.escape(b["title"])}</title>\n'
+        f'    <link href="{loc(b.get("href") or "Guide.dc.html?p=" + b["slug"])}"/>\n'
+        f'    <id>{loc("Guide.dc.html?p=" + b["slug"])}</id>\n    <updated>{stamp(b["date"])}</updated>\n'
+        f'    <category term="{html.escape(b["cat"])}"/>\n    <summary>{html.escape(b.get("summary", ""))}</summary>\n  </entry>\n' for b in items)
+    write('feed.xml', '<?xml version="1.0" encoding="utf-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom">\n'
+          f'  <title>QueryAPIGate blog</title>\n  <subtitle>Release notes, design notes and performance reports.</subtitle>\n'
+          f'  <link href="{SITE}Blog.dc.html"/>\n  <link rel="self" href="{SITE}feed.xml"/>\n  <id>{SITE}Blog.dc.html</id>\n'
+          f'  <updated>{max((stamp(b["date"]) for b in items), default="2026-01-01T12:00:00Z")}</updated>\n  <author><name>QueryAPIGate</name></author>\n'
+          + ent + '</feed>\n')
     write('robots.txt', f'User-agent: *\nAllow: /\n\nSitemap: {SITE}sitemap.xml\n')
     return len(entries), changed
 

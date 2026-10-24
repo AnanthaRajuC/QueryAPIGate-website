@@ -5,13 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- site-meta -->
 <title>Blog - QueryAPIGate</title>
-<meta name="description" content="Release notes and design notes from QueryAPIGate.">
+<meta name="description" content="Release notes, design notes and performance reports from QueryAPIGate.">
 <meta name="theme-color" content="#10201b">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="QueryAPIGate">
 <meta property="og:title" content="Blog - QueryAPIGate">
-<meta property="og:description" content="Release notes and design notes from QueryAPIGate.">
+<meta property="og:description" content="Release notes, design notes and performance reports from QueryAPIGate.">
+<link rel="alternate" type="application/atom+xml" title="QueryAPIGate blog" href="feed.xml">
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:image" content="https://anantharajuc.github.io/QueryAPIGate-website/images/og-card.png">
 <meta property="og:image:width" content="1200">
@@ -21,7 +22,7 @@
 <!-- /site-meta -->
 <script src="./support.js"></script>
 <script src="./theme.js?v=10"></script>
-<script src="./search.js?v=3" defer></script>
+<script src="./search.js?v=4" defer></script>
 </head>
 <body>
 <x-dc>
@@ -30,6 +31,49 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
+/* Blog index: a featured post, category filters and a grid of cards, all built from the posts list in guides.js. */
+.bl-head{max-width:1240px;margin:0 auto;padding:80px 24px 36px;display:flex;flex-wrap:wrap;gap:20px 40px;align-items:flex-end;justify-content:space-between}
+.bl-eyebrow{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)}
+.bl-head h1{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(34px,4.5vw,54px);line-height:1.04;font-weight:800;letter-spacing:-0.02em;text-wrap:balance}
+.bl-head p{margin:0;font-size:17px;color:var(--ink-2);max-width:60ch}
+.bl-feed{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:var(--ink);background:var(--surface);border:1px solid var(--line-2);border-radius:999px;padding:8px 14px;white-space:nowrap;transition:border-color .2s,color .2s}
+.bl-feed:hover{border-color:var(--accent-ink);color:var(--accent-ink);text-decoration:none}.bl-feed svg{display:block;color:var(--accent-ink)}
+.bl-main{max-width:1240px;margin:0 auto;padding:0 24px 96px;display:grid;gap:22px}
+.bl-filters{display:flex;flex-wrap:wrap;gap:8px}
+.bl-chip{font:inherit;font-family:'Instrument Sans',system-ui,sans-serif;font-size:13.5px;font-weight:500;display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.bl-chip:hover{border-color:var(--line-2);color:var(--ink)}
+.bl-chip i{width:8px;height:8px;border-radius:50%;flex:none}
+.bl-chip .bl-n{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-4)}
+.bl-chip[aria-pressed="true"]{background:#10201b;border-color:#10201b;color:#e6efeb}.bl-chip[aria-pressed="true"] .bl-n{color:#9fb3ac}
+:root[data-theme=dark] .bl-chip[aria-pressed="true"]{background:#e6efeb;border-color:#e6efeb;color:#10201b}:root[data-theme=dark] .bl-chip[aria-pressed="true"] .bl-n{color:#4a5652}
+.bl-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)}
+.bl-cat{display:inline-flex;align-items:center;gap:7px;color:var(--ink)}.bl-cat i{width:8px;height:8px;border-radius:50%}
+.bl-ver{font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:0;text-transform:none;font-size:12px;padding:2px 8px;border-radius:999px;background:oklch(0.52 0.11 170 / 0.1);color:var(--accent-ink)}
+.bl-go{font-weight:600;color:var(--accent-ink);white-space:nowrap}.bl-go b{display:inline-block;font-weight:600;transition:transform .2s}
+/* Featured post: the dark panel the Home page uses for the Playground banner, with the post's sections beside it. */
+.bl-feat{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:28px 48px;padding:36px 40px;border-radius:18px;background:#10201b;color:#e6efeb;position:relative;overflow:hidden;box-shadow:0 30px 60px -36px rgba(16,32,27,0.7);transition:transform .2s,box-shadow .2s}
+.bl-feat::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 55% 80% at 0% 0%,oklch(0.62 0.13 170 / 0.26),transparent 70%);pointer-events:none}
+.bl-feat:hover{transform:translateY(-2px);box-shadow:0 36px 70px -36px rgba(16,32,27,0.8);text-decoration:none}.bl-feat:hover .bl-go b,.bl-card:hover .bl-go b{transform:translateX(3px)}
+.bl-feat-txt{position:relative;display:grid;gap:14px;align-content:start}
+.bl-feat .bl-meta{color:#9fb3ac}.bl-feat .bl-cat{color:#e6efeb}.bl-feat .bl-ver{background:oklch(0.62 0.13 170 / 0.2);color:oklch(0.82 0.1 170)}
+.bl-feat h2{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(26px,3vw,36px);line-height:1.1;font-weight:800;letter-spacing:-0.02em;text-wrap:balance;color:#fff}
+.bl-feat p{margin:0;font-size:16.5px;line-height:1.6;color:#b4c2bc;max-width:72ch;text-wrap:pretty}
+.bl-feat-foot{max-width:72ch;display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center;justify-content:space-between;margin-top:6px;font-size:13.5px;color:#9fb3ac}
+.bl-feat .bl-go{color:#10201b;background:#e6efeb;border-radius:999px;padding:8px 14px;font-size:13.5px}
+.bl-feat-side{position:relative;align-self:stretch;display:grid;gap:12px;align-content:start;padding:4px 0 4px 32px;border-left:1px solid #24403a}
+.bl-feat-side small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)}
+.bl-feat-side ol{margin:0;padding:0;list-style:none;counter-reset:s;display:grid;gap:10px}
+.bl-feat-side li{counter-increment:s;display:grid;grid-template-columns:26px minmax(0,1fr);font-size:14.5px;line-height:1.4;color:#d5e0db}
+.bl-feat-side li::before{content:counter(s,decimal-leading-zero);font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88;padding-top:3px}
+.bl-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.bl-card{display:grid;grid-template-rows:auto auto 1fr auto;gap:12px;padding:26px 28px 24px;border-radius:14px;background:var(--surface);border:1px solid var(--line);color:var(--ink);transition:border-color .2s,transform .2s,box-shadow .2s}
+.bl-card:hover{border-color:var(--line-2);transform:translateY(-2px);box-shadow:0 24px 44px -32px rgba(16,32,27,0.45);text-decoration:none}
+.bl-card h2{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1.2;font-weight:700;letter-spacing:-0.01em;text-wrap:balance}
+.bl-card p{margin:0;color:var(--ink-2);font-size:15px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.bl-card-foot{display:flex;justify-content:space-between;gap:12px;align-items:center;padding-top:14px;border-top:1px solid var(--line-soft);font-size:13px;color:var(--ink-3)}
+@media (max-width:900px){.bl-feat{grid-template-columns:minmax(0,1fr) !important;padding:28px 24px}.bl-feat-side{padding:18px 0 0;border-left:0;border-top:1px solid #24403a}.bl-grid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:820px){.bl-head{padding:48px 16px 28px}.bl-main{padding:0 16px 72px}.bl-card{padding:22px 20px 20px}}
+@media (prefers-reduced-motion:reduce){.bl-feat,.bl-card,.bl-go b{transition:none}.bl-feat:hover,.bl-card:hover{transform:none}}
 .rs-ghn svg{display:block}
 .rs-ghn-n{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1;color:var(--ink-3);min-width:0}
 .rs-ghn-n:empty{display:none}
@@ -234,34 +278,50 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </nav>
 
-  <header style="max-width:1240px;margin:0 auto;padding:80px 24px 40px;display:grid;gap:14px">
-    <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">Blog</span>
-    <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(34px,4.5vw,54px);line-height:1.04;font-weight:800;letter-spacing:-0.02em">Release notes and design notes</h1>
-    <p style="margin:0;font-size:17px;color:var(--ink-2);max-width:60ch">What shipped, why it was built that way, and what it changes for you. The full record is the <a href="Changelog.dc.html">changelog</a>.</p>
+  <header class="bl-head">
+    <div style="display:grid;gap:14px">
+      <span class="bl-eyebrow">Blog</span>
+      <h1>Release notes and design notes</h1>
+      <p>What shipped, why it was built that way, how it performs, and what it changes for you. The full record is the <a href="Changelog.dc.html">changelog</a>.</p>
+    </div>
+    <a class="bl-feed" href="feed.xml" title="Subscribe with any feed reader"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>Subscribe via RSS</a>
   </header>
 
-  <section style="max-width:1240px;margin:0 auto;padding:16px 24px 88px;display:grid;gap:1px;background:var(--line);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
-    <article class="rs-2col" style="background:var(--bg);padding:36px 0;display:grid;grid-template-columns:200px minmax(0,1fr);gap:32px;align-items:start">
-      <div style="display:grid;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-ink)">0.22 – 0.34</span><time style="font-size:13px;color:var(--ink-3)">October 2026</time><span style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-top:6px">Release roundup</span></div>
-      <div style="display:grid;gap:12px"><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Thirteen releases on the way to 1.0</h2><p style="margin:0;color:var(--ink-2);max-width:70ch">Tracing, security headers, per-key limits and quotas, a tamper-evident audit log streamed to your SIEM and a Helm chart. Configuration as code, secrets managers and short-lived credentials, FIPS-approved cryptography. Eight features graduated in 0.30, releases are signed from 0.31, and live events, on their own event log, are stable from 0.34 along with secrets from files and Vault. 0.34.1 and 0.34.2 are security fixes for <code class="qx">MongoDB</code> connections: upgrade if you use one.</p><a href="Changelog.dc.html" style="font-weight:600">Read the changelog →</a></div>
-    </article>
-    <article class="rs-2col" style="background:var(--bg);padding:36px 0;display:grid;grid-template-columns:200px minmax(0,1fr);gap:32px;align-items:start">
-      <div style="display:grid;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-ink)">0.21</span><time style="font-size:13px;color:var(--ink-3)">October 2026</time><span style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-top:6px">Release</span></div>
-      <div style="display:grid;gap:12px"><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Agents can write now. A person approves each write.</h2><p style="margin:0;color:var(--ink-2);max-width:70ch">MCP write tools stop being a flat no. An agent proposes a write; it queues in the Console with the exact statement, the key that asked, and the connection it would touch. An administrator approves or rejects it, and both decisions land in the audit log. Per-agent usage is recorded alongside. Experimental, labelled as such in the product.</p><a href="Guide.dc.html?p=agents-can-write-now" style="font-weight:600">Read the post →</a></div>
-    </article>
-    <article class="rs-2col" style="background:var(--bg);padding:36px 0;display:grid;grid-template-columns:200px minmax(0,1fr);gap:32px;align-items:start">
-      <div style="display:grid;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-ink)">Design note</span><span style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-top:6px">Architecture</span></div>
-      <div style="display:grid;gap:12px"><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">Why every front door runs the same eight steps</h2><p style="margin:0;color:var(--ink-2);max-width:70ch">REST, MCP, server-sent events and the export CLI all call one engine. Identity, limits, grant, parameters, SQL guard, execution, masking, record: the order is fixed, and a step that fails stops the call with a typed error code. The point is that an AI agent cannot be governed less than an app just because it arrived through a different protocol.</p><a href="Guide.dc.html?p=why-every-front-door-runs-the-same-eight-steps" style="font-weight:600">Read the post →</a></div>
-    </article>
-    <article class="rs-2col" style="background:var(--bg);padding:36px 0;display:grid;grid-template-columns:200px minmax(0,1fr);gap:32px;align-items:start">
-      <div style="display:grid;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-ink)">Design note</span><span style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-top:6px">Operations</span></div>
-      <div style="display:grid;gap:12px"><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">One worker, many threads, and what Redis is actually for</h2><p style="margin:0;color:var(--ink-2);max-width:70ch"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/metrics</code> is per process, so gunicorn runs one worker and scales with threads; capacity comes from more instances. <code class="qx">Redis</code> then does three things: one response cache warmed by any instance, one rate-limit budget instead of one each, and one event stream. If <code class="qx">Redis</code> blinks, a cached response is a miss and limits are counted per process for a few seconds. Never lifted, never turned into refusals.</p><a href="Guide.dc.html?p=one-worker-many-threads" style="font-weight:600">Read the post →</a></div>
-    </article>
-    <article class="rs-2col" style="background:var(--bg);padding:36px 0;display:grid;grid-template-columns:200px minmax(0,1fr);gap:32px;align-items:start">
-      <div style="display:grid;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent-ink)">Migration</span><span style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-top:6px">Project</span></div>
-      <div style="display:grid;gap:12px"><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em;text-wrap:balance">SQL2API is now QueryAPIGate</h2><p style="margin:0;color:var(--ink-2);max-width:70ch">The same project, renamed because <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">sql2api</code> was shared by a dozen unrelated projects. It is a clean break: package, command, import, environment variables, metrics prefix and Docker image all change. A server that still finds any <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">SQL2API_*</code> variable refuses to start and lists what to rename, rather than silently running without an API key.</p><a href="Guide.dc.html?p=sql2api-is-now-queryapigate" style="font-weight:600">Read the post →</a></div>
-    </article>
-  </section>
+  <main class="bl-main">
+    <div class="bl-filters" role="toolbar" aria-label="Filter posts by category">
+      <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+        <button type="button" class="bl-chip" aria-pressed="{{ c.pressed }}" onClick="{{ c.go }}"><i style="background:{{ c.color }};display:{{ c.dot }}"></i>{{ c.label }}<span class="bl-n">{{ c.count }}</span></button>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ featured }}" hint-placeholder-val="{{ false }}">
+      <a class="bl-feat" href="{{ featured.href }}" style="grid-template-columns:{{ featured.cols }}">
+        <div class="bl-feat-txt">
+          <span class="bl-meta"><span class="bl-cat"><i style="background:{{ featured.color }}"></i>{{ featured.cat }}</span><span style="display:{{ featured.topicShow }}">{{ featured.topic }}</span><span class="bl-ver" style="display:{{ featured.verShow }}">{{ featured.version }}</span></span>
+          <h2>{{ featured.title }}</h2>
+          <p>{{ featured.summary }}</p>
+          <span class="bl-feat-foot"><span>{{ featured.when }}</span><span class="bl-go">{{ featured.cta }} <b aria-hidden="true">→</b></span></span>
+        </div>
+        <div class="bl-feat-side" style="display:{{ featured.sideShow }}">
+          <small>Inside this post</small>
+          <ol>
+            <sc-for list="{{ featured.heads }}" as="h" hint-placeholder-count="4"><li>{{ h }}</li></sc-for>
+          </ol>
+        </div>
+      </a>
+    </sc-if>
+
+    <div class="bl-grid">
+      <sc-for list="{{ posts }}" as="p" hint-placeholder-count="4">
+        <a class="bl-card" href="{{ p.href }}">
+          <span class="bl-meta"><span class="bl-cat"><i style="background:{{ p.color }}"></i>{{ p.cat }}</span><span style="display:{{ p.topicShow }}">{{ p.topic }}</span><span class="bl-ver" style="display:{{ p.verShow }}">{{ p.version }}</span></span>
+          <h2>{{ p.title }}</h2>
+          <p>{{ p.summary }}</p>
+          <span class="bl-card-foot"><span>{{ p.when }}</span><span class="bl-go">{{ p.cta }} <b aria-hidden="true">→</b></span></span>
+        </a>
+      </sc-for>
+    </div>
+  </main>
 
   <footer class="ft" style="border-top:0;background:radial-gradient(circle,var(--dots) 0.4px,transparent 0.7px) 0 0/8px 1px repeat-x var(--bg)">
     <div style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;gap:40px">
@@ -293,5 +353,55 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   </footer>
 </div>
 </x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { posts: [], cat: 'All', info: {} };
+  // Filters appear in this order, each only once a post has that category; a category not listed here comes after them.
+  order = ['Performance', 'Release', 'Design note', 'Migration'];
+  colors = { Performance: 'oklch(0.72 0.15 65)', Release: 'oklch(0.62 0.12 170)', 'Design note': 'oklch(0.62 0.13 255)', Migration: 'oklch(0.62 0.14 320)' };
+  componentDidMount() {
+    try { const c = new URLSearchParams(location.search).get('cat'); if (c) this.setState({ cat: c }); } catch (e) {}
+    import('./guides.js').then(m => {
+      this.setState({ posts: m.posts || [] });
+      // each post's length and sections, for its reading time and the featured card's outline
+      (m.posts || []).filter(p => !p.href).forEach(p => fetch('blog/' + p.slug + '.md').then(r => r.ok ? r.text() : '').then(md => {
+        if (!md) return;
+        const words = md.replace(/```[\s\S]*?```/g, ' ').split(/\s+/).filter(Boolean).length;
+        const heads = (md.match(/^##\s+.+$/gm) || []).map(h => h.replace(/^##\s+/, '').replace(/[`*_]/g, '').trim());
+        this.setState(s => ({ info: { ...s.info, [p.slug]: { min: Math.max(1, Math.round(words / 220)), heads } } }));
+      }).catch(() => {}));
+    });
+  }
+  when(p) {
+    const M = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const d = (p.date || '').split('-').map(Number);
+    const date = d[2] ? d[2] + ' ' + M[d[1] - 1].slice(0, 3) + ' ' + d[0] : d[1] ? M[d[1] - 1] + ' ' + d[0] : '';
+    const i = this.state.info[p.slug];
+    return date + (i ? ' · ' + i.min + ' min read' : '');
+  }
+  card(p) {
+    const i = this.state.info[p.slug];
+    return { title: p.title, summary: p.summary || '', cat: p.cat, topic: p.topic || '', topicShow: p.topic ? 'inline' : 'none', version: p.version || '', verShow: p.version ? 'inline-block' : 'none',
+      color: this.colors[p.cat] || 'var(--ink-4)', when: this.when(p), href: p.href || 'Guide.dc.html?p=' + p.slug,
+      cta: p.cta || 'Read the post', heads: i ? i.heads.slice(0, 5) : [], sideShow: i && i.heads.length ? 'grid' : 'none',
+      cols: i && i.heads.length ? 'minmax(0,1.6fr) minmax(0,1fr)' : 'minmax(0,1fr)' };
+  }
+  renderVals() {
+    const { posts, cat } = this.state;
+    const present = [...new Set(posts.map(p => p.cat))];
+    const cats = ['All'].concat(this.order.filter(c => present.includes(c)), present.filter(c => !this.order.includes(c)));
+    const active = cats.includes(cat) ? cat : 'All';
+    const shown = posts.filter(p => active === 'All' || p.cat === active);
+    const feat = active === 'All' ? (posts.find(p => p.featured) || posts[0]) : null;
+    return {
+      cats: cats.map(c => ({ label: c, count: String(c === 'All' ? posts.length : posts.filter(p => p.cat === c).length), pressed: String(c === active),
+        color: this.colors[c] || 'var(--ink-4)', dot: c === 'All' ? 'none' : 'block',
+        go: () => { this.setState({ cat: c }); try { history.replaceState(null, '', c === 'All' ? location.pathname : '?cat=' + encodeURIComponent(c)); } catch (e) {} } })),
+      featured: feat ? this.card(feat) : null,
+      posts: shown.filter(p => p !== feat).map(p => this.card(p)),
+    };
+  }
+}
+</script>
 </body>
 </html>

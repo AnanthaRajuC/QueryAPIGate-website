@@ -16123,6 +16123,140 @@ For a *live* feed rather than history, the **Home** screen's requests panel upda
 - [Send the audit log to your SIEM](53-send-the-audit-log-to-your-siem.md) - ship the record off the box.
 
 
+# Agents can write now. A person approves each write.
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=agents-can-write-now
+
+# Agents can write now. A person approves each write.
+
+QueryAPIGate 0.21 lets an AI agent write through a saved query, under rules its author set and with a person in the loop. It is experimental, and labelled as such in the product and the changelog.
+
+## What changed
+
+Until 0.21 the MCP server only ever read. Saved queries that write were not listed as tools, and since 0.20.1 a call naming one is refused before it runs. That rule still holds for every query not explicitly opened to agents.
+
+A saved query's author can now mark it `agent_writes`. It must be a single INSERT, UPDATE or DELETE; DDL is never allowed. Marked that way, it becomes a write tool for callers whose grant allows the write.
+
+Two modes:
+
+- **`"approval"`** – the agent's first call does not run anything. It creates a write request with the exact SQL and the exact arguments. An administrator with the `writes.approve` capability sees it on the Console's new **Approvals** screen (or at `/api/v1/write-requests`), approves or rejects it, and the agent's second call runs it once, with exactly the approved arguments. Change an argument and the approval no longer matches.
+- **`"insert"`** – an INSERT runs at once, with an idempotency key, for the cases where opening a ticket by itself is the point.
+
+## The guard rails
+
+Every agent write runs in a transaction and is rolled back if it touches more rows than the query's `max_affected_rows`. The credential that asked can never approve its own request (`own_write`). An agent cannot pile up more than 100 waiting writes. The audit log records the argument names and a hash, never the values. Whatever a write returns through `RETURNING` is masked like any read.
+
+A `writes_awaiting_approval` alert and the Agents screen's write counts keep the queue visible.
+
+## Why a person, not a policy
+
+A policy can say which rows an agent may change. It cannot say whether this particular change, right now, is the one you meant. For writes that matter, the approval step gives you that, with the SQL and arguments in front of you, and leaves both decisions in the audit log.
+
+Supported on PostgreSQL, MySQL, SQLite and DuckDB. [Guide 49](Guide.dc.html?g=49-let-an-agent-write-with-a-person-approving-each-write) walks through it end to end.
+
+
+# Why every front door runs the same eight steps
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=why-every-front-door-runs-the-same-eight-steps
+
+# Why every front door runs the same eight steps
+
+QueryAPIGate has five ways in: REST endpoints, the MCP server, server-sent events, the export CLI and the Management API. Behind all of them is one engine, and one fixed sequence.
+
+## The sequence
+
+1. **Identify the caller.** API key, admin token, JWT or OAuth token, resolved to a named principal.
+2. **Apply its limits.** Rate limit, IP allow-list, expiry.
+3. **Check the grant.** This query, on this connection, in this mode.
+4. **Validate parameters.** Types, ranges, lengths. Values are bound, never spliced.
+5. **Guard the SQL.** Single statement, tables inside the allow-list, writes only where permitted.
+6. **Run it.** A pooled connection, a time limit, a row limit, a transaction for writes.
+7. **Mask and format.** Masking traced to source columns, then the format asked for.
+8. **Record it.** Run history, metrics, an event; the audit log for configuration changes.
+
+A step that fails stops the call with a typed error code, the same code whichever door the call came through.
+
+## Why it is one path
+
+The temptation with a new transport is to bolt on what it needs and move on. The MCP server, when it arrived, could have had its own authentication and its own idea of limits. Backlog item 61 moved rate limits, metrics and authentication out of REST's Flask hooks and into the core precisely so that could not happen.
+
+The consequence is simple to state: an AI agent cannot be governed less than an application because it arrived through a different protocol. The same grant, the same limits, the same masking rules, the same log.
+
+## What it buys you
+
+- A security fix lands once. 0.20.1 and 0.22.1 each closed a gap in one place.
+- The access map is truthful. "Who can reach what" has one answer, not one per transport.
+- New front doors are cheap. Exports to object storage and incremental deliveries reused everything from step 1 to step 8.
+
+The [architecture diagram](Home.dc.html) on the home page is this sequence drawn out, with the front doors on the left and the databases on the right.
+
+
+# One worker, many threads, and what Redis is actually for
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-worker-many-threads
+
+# One worker, many threads, and what Redis is actually for
+
+Two deployment questions come up more than any others: why does the recommended gunicorn command run a single worker, and do I need Redis?
+
+## One worker
+
+`/metrics` is per process. Prometheus scrapes one process and sees that process's counters. With four gunicorn workers behind one port, each scrape lands on a random one and the numbers jump around.
+
+So the recommended shape is one worker with several threads:
+
+```bash
+gunicorn --workers 1 --worker-class gthread --threads 8 --timeout 120 "queryapigate.app:create_app()"
+```
+
+Queries spend most of their time waiting on the database, so threads do well here. When one process is not enough, run more instances, each with its own port and its own `/metrics`, behind a reverse proxy. Prometheus scrapes them all and the bundled Grafana dashboard sums across instances.
+
+## What Redis does
+
+Nothing, until you have more than one instance. Then it does three things:
+
+- **One response cache.** A saved query with `cache_ttl` is warmed by whichever instance answered first and served from cache by all of them. Without Redis each process has its own cache.
+- **One rate-limit budget.** A key limited to 60 requests a minute gets 60 across the fleet, counted as an atomic token bucket on Redis's clock, not 60 per instance.
+- **One event stream.** `queryapigate events` reads every instance's runs.
+
+## If Redis blinks
+
+A cached response is a miss. Limits are counted per process for a few seconds, then Redis is tried again. Limits are never lifted, and never turned into refusals. The fallback is counted in `queryapigate_rate_limit_fallbacks_total` and raises the `rate_limits_not_shared` alert so you know it happened.
+
+## The reference deployments
+
+`deploy/scale-out/` runs three instances, PostgreSQL, Redis, the events server and Caddy with Compose. `deploy/kubernetes/` is the same with probes, a PodDisruptionBudget and zero-downtime rolling updates. Both run end to end in CI, including failover and a rolling update under traffic. [Guide 42](Guide.dc.html?g=42-run-several-instances) walks through both.
+
+
+# SQL2API is now QueryAPIGate
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=sql2api-is-now-queryapigate
+
+# SQL2API is now QueryAPIGate
+
+Same project, new name. The old one was shared by a dozen unrelated projects on PyPI, GitHub and Docker Hub, and the collisions were starting to cost people time.
+
+## What changes
+
+It is a clean break, on purpose. Package, command, Python import, environment variables, metrics prefix and Docker image all change:
+
+| Before | After |
+|---|---|
+| `pip install sql2api` | `pip install queryapigate` |
+| `sql2api serve` | `queryapigate serve` |
+| `SQL2API_API_KEY` | `QUERYAPIGATE_API_KEY` |
+| `sql2api_requests_total` | `queryapigate_requests_total` |
+| `ghcr.io/anantharajuc/sql2api` | `ghcr.io/anantharajuc/queryapigate` |
+
+The store format, saved queries, keys, roles and the audit log carry over unchanged.
+
+## What does not silently happen
+
+A server that still finds any `SQL2API_*` variable in its environment refuses to start and lists what to rename. The alternative would have been to run without an API key and hope someone noticed. Refusing is the safer failure.
+
+## Why the break is clean
+
+A compatibility shim that accepted both names would have doubled every place a name appears, and meant carrying the old one into 1.0's compatibility promise. One rename, done once, with a startup check that catches what was missed.
+
+The step-by-step upgrade is in [Installation and setup](Guide.dc.html?d=INSTALLATION_AND_SETUP#upgrading-from-sql2api).
+
+
 # Glossary
 
 

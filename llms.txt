@@ -6,7 +6,7 @@ Site: https://anantharajuc.github.io/QueryAPIGate-website/
 Repository: https://github.com/AnanthaRajuC/QueryAPIGate
 Everything below in one file: https://anantharajuc.github.io/QueryAPIGate-website/llms-full.txt
 
-## Documentation and guides
+## Documentation, guides and blog posts
 
 - [Installation and setup](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=INSTALLATION_AND_SETUP): documentation, Run it
 - [Configuration](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=CONFIGURATION): documentation, Run it
@@ -90,6 +90,10 @@ Everything below in one file: https://anantharajuc.github.io/QueryAPIGate-websit
 - [Guide 60: Give each team its own workspace](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=60-give-each-team-its-own-workspace): how-to, Access
 - [Guide 61: Connect to Trino](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=61-connect-to-trino): how-to, Start
 - [Guide 62: See what's being used, from the Console](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=62-see-whats-being-used-from-the-console): how-to, Operate
+- [Agents can write now. A person approves each write.](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=agents-can-write-now): blog, Release, 2026-10-11
+- [Why every front door runs the same eight steps](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=why-every-front-door-runs-the-same-eight-steps): blog, Design note, 2026-10-11
+- [One worker, many threads, and what Redis is actually for](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-worker-many-threads): blog, Design note, 2026-10-11
+- [SQL2API is now QueryAPIGate](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=sql2api-is-now-queryapigate): blog, Migration, 2026-10-11
 
 ## Glossary
 

@@ -11,7 +11,7 @@
     ['Quick start', 'Docs.dc.html#quickstart'], ['Install', 'Docs.dc.html#install'], ['MCP server for AI agents', 'Guide.dc.html?d=MCP'],
     ['API reference', 'Guide.dc.html?d=API'], ['60 how-to guides', 'Guides.dc.html'], ['Threat model', 'Guide.dc.html?d=THREAT_MODEL'],
   ];
-  var KIND = { doc: 'Documentation', guide: 'Guides', page: 'Pages' };
+  var KIND = { doc: 'Documentation', guide: 'Guides', post: 'Blog', page: 'Pages' };
   var index = null, loading = null, overlay = null, input = null, list = null, status = null, sel = 0, hits = [], lastQ = '';
 
   var css = [
@@ -52,6 +52,7 @@
   var ICONS = {
     doc: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>',
     guide: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>',
+    post: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8M15 18h-5M10 6h8v4h-8z"/></svg>',
     page: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18M9 21V9"/></svg>',
     go: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>',
   };
@@ -118,7 +119,7 @@
         '<span class="qs-count"><i></i><b data-count>…</b></span><kbd data-close>esc</kbd></div>' +
         '<div class="qs-tabs"><span class="qs-tab on">Search</span></div>' +
         '<div class="qs-list" role="listbox"></div>' +
-        '<div class="qs-foot"><span><kbd>↵</kbd> open</span><span><kbd>↑↓</kbd> navigate</span><span><kbd>esc</kbd> close</span><span style="margin-left:auto">documents, how-to guides and pages, updated daily</span></div>' +
+        '<div class="qs-foot"><span><kbd>↵</kbd> open</span><span><kbd>↑↓</kbd> navigate</span><span><kbd>esc</kbd> close</span><span style="margin-left:auto">documents, guides, blog posts and pages, updated daily</span></div>' +
       '</div>';
     document.body.appendChild(overlay);
     input = overlay.querySelector('input'); list = overlay.querySelector('.qs-list'); status = overlay.querySelector('[data-count]');

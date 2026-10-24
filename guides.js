@@ -685,29 +685,54 @@ export const docs = [
  }
 ];
 
+/* Blog posts, newest first: the Blog page, each post's page, the search index, the sitemap and feed.xml all read this list.
+   To publish: add blog/<slug>.md and an entry here, then run python3 tools/search_index.py.
+   date: "YYYY-MM-DD" (or "YYYY-MM"). cat: Performance, Release, Design note or Migration; a new one gets a filter of its own.
+   topic and version are optional labels. summary is the card text. featured: true puts a post in the large card at the top
+   (otherwise the newest is). href sends the card somewhere other than blog/<slug>.md, such as the changelog. */
 export const posts = [
+ {
+  "slug": "thirteen-releases-to-1-0",
+  "title": "Thirteen releases on the way to 1.0",
+  "date": "2026-10",
+  "cat": "Release",
+  "topic": "Release roundup",
+  "version": "0.22 – 0.34",
+  "href": "Changelog.dc.html",
+  "cta": "Read the changelog",
+  "summary": "Tracing, security headers, per-key limits and quotas, a tamper-evident audit log streamed to your SIEM and a Helm chart. Configuration as code, secrets managers and short-lived credentials, FIPS-approved cryptography. Eight features graduated in 0.30, releases are signed from 0.31, and live events are stable from 0.34. 0.34.1 and 0.34.2 are security fixes for MongoDB connections: upgrade if you use one."
+ },
  {
   "slug": "agents-can-write-now",
   "title": "Agents can write now. A person approves each write.",
-  "date": "11 October 2026",
-  "cat": "Release"
+  "date": "2026-10-11",
+  "cat": "Release",
+  "topic": "Agents",
+  "version": "0.21",
+  "summary": "MCP write tools stop being a flat no. An agent proposes a write; it queues in the Console with the exact statement, the key that asked, and the connection it would touch. An administrator approves or rejects it, and both decisions land in the audit log."
  },
  {
   "slug": "why-every-front-door-runs-the-same-eight-steps",
   "title": "Why every front door runs the same eight steps",
-  "date": "11 October 2026",
-  "cat": "Design note"
+  "date": "2026-10-11",
+  "cat": "Design note",
+  "topic": "Architecture",
+  "summary": "REST, MCP, server-sent events and the export CLI all call one engine. Identity, limits, grant, parameters, SQL guard, execution, masking, record: the order is fixed, and a step that fails stops the call with a typed error code."
  },
  {
   "slug": "one-worker-many-threads",
   "title": "One worker, many threads, and what Redis is actually for",
-  "date": "11 October 2026",
-  "cat": "Design note"
+  "date": "2026-10-11",
+  "cat": "Design note",
+  "topic": "Operations",
+  "summary": "/metrics is per process, so gunicorn runs one worker and scales with threads; capacity comes from more instances. Redis then gives you one response cache, one rate-limit budget and one event stream, and if it blinks, limits are never lifted."
  },
  {
   "slug": "sql2api-is-now-queryapigate",
   "title": "SQL2API is now QueryAPIGate",
-  "date": "11 October 2026",
-  "cat": "Migration"
+  "date": "2026-10-11",
+  "cat": "Migration",
+  "topic": "Project",
+  "summary": "The same project, renamed because sql2api was shared by a dozen unrelated projects. A clean break: package, command, environment variables, metrics prefix and Docker image all change, and a server that still finds a SQL2API_* variable refuses to start."
  }
 ];

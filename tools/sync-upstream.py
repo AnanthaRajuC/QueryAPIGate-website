@@ -82,6 +82,8 @@ def rebuild_index():
     gjs = os.path.join(ROOT, 'guides.js'); src = open(gjs, encoding='utf-8').read()
     def export(name): return json.loads(re.search(r'export const %s = (\[.*?\n\]);' % name, src, re.S).group(1))
     old_guides, docs, posts = export('guides'), export('docs'), export('posts')
+    note = re.search(r'\n(/\*[^\n]*Blog posts.*?\*/\n)export const posts', src, re.S)   # the how-to-publish note above posts is kept
+    posts_note = note.group(1) if note else ''
     known = {g['slug']: g for g in old_guides}
     index = open(os.path.join(ROOT, 'how-to', 'how-to.md'), encoding='utf-8').read()
     guides, section, unknown_sections = [], None, set()
@@ -108,7 +110,7 @@ def rebuild_index():
     docs.sort(key=lambda d: (DOC_GROUP_ORDER.index(d['cat']) if d['cat'] in DOC_GROUP_ORDER else 99, list(DOC_CAT).index(d['slug']) if d['slug'] in DOC_CAT else 99))
     new = ('export const guides = ' + json.dumps(guides, indent=1, ensure_ascii=False) + ';\n\n'
            'export const docs = ' + json.dumps(docs, indent=1, ensure_ascii=False) + ';\n\n'
-           'export const posts = ' + json.dumps(posts, indent=1, ensure_ascii=False) + ';\n')
+           + posts_note + 'export const posts = ' + json.dumps(posts, indent=1, ensure_ascii=False) + ';\n')
     changed = new != src
     if changed: open(gjs, 'w', encoding='utf-8').write(new)
     return guides, changed, [g for g in guides if g['slug'] not in known], unknown_sections

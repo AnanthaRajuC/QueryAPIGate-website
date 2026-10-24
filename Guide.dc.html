@@ -20,7 +20,7 @@
 <!-- /site-meta -->
 <script src="./support.js"></script>
 <script src="./theme.js?v=10"></script>
-<script src="./search.js?v=3" defer></script>
+<script src="./search.js?v=4" defer></script>
 </head>
 <body>
 <x-dc>
@@ -225,7 +225,49 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .g-toc a.on{color:var(--ink);font-weight:600;border-left-color:var(--accent-ink)}
 #guide-body h2,#guide-body h3{scroll-margin-top:92px}
 @media (max-width:1100px){.g-layout{grid-template-columns:230px minmax(0,1fr) !important;gap:48px !important}.g-toc{display:none !important}}
-@media (max-width:820px){.g-layout{padding-left:20px !important;padding-right:20px !important}}
+@media (max-width:820px){.g-layout{grid-template-columns:minmax(0,1fr) !important;gap:32px !important;padding-left:20px !important;padding-right:20px !important}}
+:root[data-theme=dark] #guide-body p,:root[data-theme=dark] #guide-body ul,:root[data-theme=dark] #guide-body ol{color:#c9d5d0}
+/* Blog posts: the guide layout (posts on the left, "On this page" on the right) with a larger header carrying the post's summary. */
+.g-layout[data-kind=p] #guide-body{font-size:17px;line-height:1.7}
+.g-layout[data-kind=p] #guide-body h2{font-size:27px;margin-top:52px}
+.bp-head{display:grid;gap:16px;padding-bottom:28px;border-bottom:1px solid var(--line)}
+.bp-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)}
+.bp-cat{display:inline-flex;align-items:center;gap:7px;color:var(--ink)}.bp-cat i{width:8px;height:8px;border-radius:50%}
+.bp-ver{font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:0;text-transform:none;padding:2px 8px;border-radius:999px;background:oklch(0.52 0.11 170 / 0.1);color:var(--accent-ink)}
+.bp-head h1{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(32px,4.4vw,50px);line-height:1.06;font-weight:800;letter-spacing:-0.025em;text-wrap:balance}
+.bp-dek{margin:0;font-size:19px;line-height:1.55;color:var(--ink-2);text-wrap:pretty}
+.bp-by{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;font-size:14px;color:var(--ink-3)}
+.bp-share{font:inherit;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;margin-left:auto;padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);cursor:pointer;transition:border-color .2s,color .2s}
+.bp-share:hover{border-color:var(--accent-ink);color:var(--accent-ink)}.bp-share svg{display:block}
+/* Markdown extras for any page; written for performance reports. */
+/* > [!NOTE] / [!TIP] / [!IMPORTANT] / [!WARNING] / [!CAUTION]: a callout with a title. */
+#guide-body .md-callout{--c:var(--accent-ink);border-left:3px solid var(--c);background:color-mix(in oklch,var(--c) 7%,var(--surface));border-radius:0 10px 10px 0;padding:14px 18px;color:var(--ink-2)}
+#guide-body .md-callout>p:last-child{margin-bottom:0}
+#guide-body .md-callout-t{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--c);margin-bottom:6px}
+#guide-body .md-callout.tip{--c:oklch(0.58 0.13 150)}#guide-body .md-callout.important{--c:oklch(0.58 0.15 290)}
+#guide-body .md-callout.warning{--c:var(--warn-ink)}#guide-body .md-callout.caution{--c:var(--danger-ink)}
+/* Numbers in tables line up: a column of numbers is right-aligned in tabular figures. */
+#guide-body td,#guide-body th{font-variant-numeric:tabular-nums}
+#guide-body .md-table .num{text-align:right;white-space:nowrap}
+#guide-body tbody tr:hover td{background:var(--surface-2)}
+/* An image alone in a paragraph is a figure; its title (or alt text) is the caption. */
+#guide-body figure{margin:8px 0 24px;display:grid;gap:10px}#guide-body figure img{display:block;width:100%;height:auto;background:var(--surface)}
+#guide-body figcaption{font-size:13.5px;color:var(--ink-3);text-align:center;text-wrap:balance}
+/* ```stats: "value | label | note" per line, as a row of headline numbers. */
+#guide-body .md-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;margin:10px 0 24px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+#guide-body .md-stat{display:grid;gap:4px;align-content:start;padding:16px 18px;background:var(--surface)}
+#guide-body .md-stat b{font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:800;letter-spacing:-0.02em;line-height:1.05;color:var(--ink)}
+#guide-body .md-stat span{font-size:13.5px;font-weight:600;color:var(--ink)}#guide-body .md-stat small{font-size:12.5px;color:var(--ink-3);line-height:1.4}
+/* ```bars: "label | value unit" per line, a horizontal bar chart; "title: ..." gives it a caption, a trailing " *" highlights a bar. */
+#guide-body .md-bars{margin:10px 0 24px;padding:18px 20px;border:1px solid var(--line);border-radius:12px;background:var(--surface);display:grid;gap:10px}
+#guide-body .md-bars-t{font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:2px}
+#guide-body .md-bar{display:grid;grid-template-columns:minmax(90px,30%) minmax(0,1fr);gap:14px;align-items:center;font-size:14px}
+#guide-body .md-bar-l{color:var(--ink-2);overflow-wrap:anywhere}
+#guide-body .md-bar-track{display:flex;align-items:center;gap:10px;min-width:0}
+#guide-body .md-bar-fill{height:14px;border-radius:0 4px 4px 0;background:var(--line-2);min-width:2px;flex:none}
+#guide-body .md-bar.hi .md-bar-fill{background:var(--accent-ink)}#guide-body .md-bar.hi .md-bar-l{color:var(--ink);font-weight:600}
+#guide-body .md-bar-v{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+@media (max-width:560px){#guide-body .md-bar{grid-template-columns:minmax(0,1fr);gap:4px}}
 /* Evaluate menu: five cards in a row; on narrow screens the trigger hides and plain links show in the burger. */
 .rs-mega-grid5{grid-template-columns:repeat(5,minmax(0,1fr)) !important}
 .rs-sub{display:none}
@@ -271,7 +313,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </nav>
 
-  <div id="top" class="rs-2col g-layout" style="max-width:1600px;margin:0 auto;padding:56px 32px 88px;display:grid;grid-template-columns:250px minmax(0,1fr) 230px;gap:56px;align-items:start">
+  <div id="top" class="rs-2col g-layout" data-kind="{{ kind }}" style="max-width:1600px;margin:0 auto;padding:56px 32px 88px;display:grid;grid-template-columns:250px minmax(0,1fr) 230px;gap:56px;align-items:start">
     <aside class="rs-aside" style="position:sticky;top:84px;display:grid;gap:4px;font-size:13.5px;max-height:calc(100vh - 110px);overflow:auto">
       <a href="{{ backHref }}" style="color:var(--ink-2);padding:4px 0 12px;font-weight:500">{{ backLabel }}</a>
       <sc-for list="{{ railGroups }}" as="rg" hint-placeholder-count="1">
@@ -283,16 +325,26 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </aside>
 
     <article style="display:grid;gap:24px;min-width:0">
+      <sc-if value="{{ post }}" hint-placeholder-val="{{ false }}">
+        <header class="bp-head">
+          <span class="bp-meta"><span class="bp-cat"><i style="background:{{ post.color }}"></i>{{ post.cat }}</span><span style="display:{{ post.topicShow }}">{{ post.topic }}</span><span class="bp-ver" style="display:{{ post.verShow }}">{{ post.version }}</span></span>
+          <h1>{{ title }}</h1>
+          <p class="bp-dek" style="display:{{ post.dekShow }}">{{ post.summary }}</p>
+          <div class="bp-by"><span>{{ post.when }}</span><button type="button" class="bp-share" onClick="{{ post.share }}"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>{{ post.shareLabel }}</button></div>
+        </header>
+      </sc-if>
+      <sc-if value="{{ notPost }}" hint-placeholder-val="{{ true }}">
       <header style="display:grid;gap:12px;padding-bottom:24px;border-bottom:1px solid var(--line)">
-        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">{{ kindLabel }} · {{ catLabel }}</span>
-        <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(30px,3.8vw,44px);line-height:1.08;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">{{ title }}</h1>
-        <sc-if value="{{ showRepo }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13.5px;color:var(--ink-3)"><a href="{{ ghHref }}" style="color:var(--ink-2)">View on GitHub ↗</a><a href="{{ editHref }}" style="color:var(--ink-2)">Suggest an edit ↗</a></div></sc-if>
-      </header>
+          <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">{{ kindLabel }} · {{ catLabel }}</span>
+          <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(30px,3.8vw,44px);line-height:1.08;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">{{ title }}</h1>
+          <sc-if value="{{ showRepo }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13.5px;color:var(--ink-3)"><a href="{{ ghHref }}" style="color:var(--ink-2)">View on GitHub ↗</a><a href="{{ editHref }}" style="color:var(--ink-2)">Suggest an edit ↗</a></div></sc-if>
+        </header>
+      </sc-if>
       <sc-if value="{{ error }}" hint-placeholder-val="{{ false }}"><p style="margin:0;color:var(--ink-2)">{{ error }}</p></sc-if>
       <div id="guide-body" ref="{{ bodyRef }}" style="min-height:200px;min-width:0;max-width:100%;overflow-wrap:anywhere"></div>
       <nav style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:28px;border-top:1px solid var(--line)">
-        <sc-if value="{{ prev }}" hint-placeholder-val="{{ false }}"><a href="{{ prev.href }}" style="display:grid;gap:4px;padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--ink)" style-hover="border-color:var(--accent-ink);text-decoration:none"><span style="font-size:12px;color:var(--ink-3)">← Previous</span><b style="font-weight:600">{{ prev.title }}</b></a></sc-if>
-        <sc-if value="{{ next }}" hint-placeholder-val="{{ false }}"><a href="{{ next.href }}" style="display:grid;gap:4px;padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--ink);text-align:right;grid-column:2" style-hover="border-color:var(--accent-ink);text-decoration:none"><span style="font-size:12px;color:var(--ink-3)">Next →</span><b style="font-weight:600">{{ next.title }}</b></a></sc-if>
+        <sc-if value="{{ prev }}" hint-placeholder-val="{{ false }}"><a href="{{ prev.href }}" style="display:grid;gap:4px;padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--ink)" style-hover="border-color:var(--accent-ink);text-decoration:none"><span style="font-size:12px;color:var(--ink-3)">{{ prevLabel }}</span><b style="font-weight:600">{{ prev.title }}</b></a></sc-if>
+        <sc-if value="{{ next }}" hint-placeholder-val="{{ false }}"><a href="{{ next.href }}" style="display:grid;gap:4px;padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--ink);text-align:right;grid-column:2" style-hover="border-color:var(--accent-ink);text-decoration:none"><span style="font-size:12px;color:var(--ink-3)">{{ nextLabel }}</span><b style="font-weight:600">{{ next.title }}</b></a></sc-if>
       </nav>
     </article>
 
@@ -346,6 +398,9 @@ class Component extends DCLogic {
       if (q.get('d')) { kind = 'd'; slug = q.get('d'); } else if (q.get('p')) { kind = 'p'; slug = q.get('p'); }
       if (!slug) slug = this.guides[0].slug;
       this.kind = kind;
+      // a post belongs to the Blog in the nav, not to Guides
+      if (kind === 'p') document.querySelectorAll('.rs-nav a[aria-current="page"]').forEach(a => { a.removeAttribute('aria-current'); a.style.color = 'var(--ink-2)'; });
+      if (kind === 'p') document.querySelectorAll('.rs-nav > a[href="Blog.dc.html"]').forEach(a => { a.setAttribute('aria-current', 'page'); a.style.color = 'var(--ink)'; });
       const path = kind === 'd' ? (this.docs.find(d => d.slug === slug) || {}).path : kind === 'p' ? 'blog/' + slug + '.md' : 'how-to/' + slug + '.md';
       this.setState({ slug });
       fetch(path).then(r => r.ok ? r.text() : Promise.reject(new Error(r.status))).then(md => this.setState({ md })).catch(() => this.setState({ error: 'This guide could not be loaded. It is on GitHub.' }));
@@ -361,7 +416,7 @@ class Component extends DCLogic {
     const t = g.title + ' - QueryAPIGate';
     if (document.title !== t) document.title = t;
     const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute('content', (kind === 'd' ? 'QueryAPIGate documentation: ' : kind === 'p' ? 'QueryAPIGate blog: ' : 'QueryAPIGate how-to guide: ') + g.title);
+    if (desc) desc.setAttribute('content', kind === 'p' && g.summary ? g.summary : (kind === 'd' ? 'QueryAPIGate documentation: ' : kind === 'p' ? 'QueryAPIGate blog: ' : 'QueryAPIGate how-to guide: ') + g.title);
   }
   renderMd() {
     const el = this.bodyRef.current;
@@ -369,6 +424,7 @@ class Component extends DCLogic {
     const html = window.marked.parse(this.state.md, { gfm: true, breaks: false });
     el.innerHTML = html;
     el.querySelectorAll('table').forEach(t => { const w = document.createElement('div'); w.className = 'md-table'; t.parentNode.insertBefore(w, t); w.appendChild(t); });
+    this.mdExtras(el);
     // every code block becomes a terminal window with a language label and a Copy button
     const ICON = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
     el.querySelectorAll('pre').forEach(pre => {
@@ -407,6 +463,51 @@ class Component extends DCLogic {
     el.querySelectorAll('h2, h3').forEach(h => { if (!h.id) h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); });
     this.buildToc(el);
   }
+  // Extras for reports: callouts, right-aligned number columns, captioned figures, ```stats and ```bars blocks.
+  mdExtras(el) {
+    const esc = t => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const KINDS = { NOTE: 'Note', TIP: 'Tip', IMPORTANT: 'Important', WARNING: 'Warning', CAUTION: 'Caution' };
+    el.querySelectorAll('blockquote').forEach(q => {
+      const p = q.firstElementChild; const m = p && p.tagName === 'P' && p.innerHTML.match(/^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*(<br>)?\s*/i);
+      if (!m) return;
+      const k = m[1].toUpperCase(); p.innerHTML = p.innerHTML.slice(m[0].length); if (!p.textContent.trim()) p.remove();
+      q.className = 'md-callout ' + k.toLowerCase(); q.insertAdjacentHTML('afterbegin', '<div class="md-callout-t">' + KINDS[k] + '</div>');
+    });
+    const NUM = /^[~≈<>≤≥±+\-−]?\s*[$€£]?\d[\d,.\s]*(\.\d+)?\s*(%|×|x|[a-zA-Zµ/]{1,7})?$/;
+    el.querySelectorAll('.md-table table').forEach(t => {
+      const rows = [...t.querySelectorAll('tbody tr')]; if (!rows.length) return;
+      const n = Math.max(...rows.map(r => r.cells.length));
+      for (let c = 1; c < n; c++) {
+        const cells = rows.map(r => r.cells[c]).filter(Boolean); const vals = cells.map(x => x.textContent.trim()).filter(v => v && v !== '—' && v !== '-');
+        if (!vals.length || !vals.every(v => NUM.test(v))) continue;
+        cells.forEach(x => x.classList.add('num')); const h = t.tHead && t.tHead.rows[0] && t.tHead.rows[0].cells[c]; if (h) h.classList.add('num');
+      }
+    });
+    el.querySelectorAll('p > img:only-child').forEach(img => {
+      const p = img.parentElement; if (p.textContent.trim()) return;
+      const cap = img.getAttribute('title') || img.getAttribute('alt') || '';
+      const f = document.createElement('figure'); p.replaceWith(f); f.appendChild(img); img.loading = 'lazy';
+      if (cap) { const c = document.createElement('figcaption'); c.textContent = cap; f.appendChild(c); }
+    });
+    el.querySelectorAll('pre > code.language-stats').forEach(code => {
+      const box = document.createElement('div'); box.className = 'md-stats';
+      code.textContent.split('\n').map(l => l.trim()).filter(Boolean).forEach(l => {
+        const [v, label, note] = l.split('|').map(x => (x || '').trim());
+        box.insertAdjacentHTML('beforeend', '<div class="md-stat"><b>' + esc(v) + '</b>' + (label ? '<span>' + esc(label) + '</span>' : '') + (note ? '<small>' + esc(note) + '</small>' : '') + '</div>');
+      });
+      code.parentElement.replaceWith(box);
+    });
+    el.querySelectorAll('pre > code.language-bars').forEach(code => {
+      const box = document.createElement('figure'); box.className = 'md-bars'; let title = '';
+      const rows = code.textContent.split('\n').map(l => l.trim()).filter(Boolean).filter(l => { const m = l.match(/^title:\s*(.+)$/i); if (m) { title = m[1]; return false; } return true; })
+        .map(l => { const hi = / \*$/.test(l); const [label, val] = l.replace(/ \*$/, '').split('|').map(x => (x || '').trim()); return { label, val, hi, n: parseFloat((val || '').replace(/,/g, '')) || 0 }; });
+      const max = Math.max(...rows.map(r => r.n), 0) || 1;
+      box.innerHTML = (title ? '<figcaption class="md-bars-t">' + esc(title) + '</figcaption>' : '') + rows.map(r =>
+        '<div class="md-bar' + (r.hi ? ' hi' : '') + '"><span class="md-bar-l">' + esc(r.label) + '</span><span class="md-bar-track"><span class="md-bar-fill" style="width:calc((100% - 90px) * ' + (r.n / max).toFixed(4) + ')"></span><span class="md-bar-v">' + esc(r.val || '') + '</span></span></div>').join('');
+      box.setAttribute('role', 'img'); box.setAttribute('aria-label', (title ? title + ': ' : '') + rows.map(r => r.label + ' ' + r.val).join(', '));
+      code.parentElement.replaceWith(box);
+    });
+  }
   // "On this page": one link per h2 and h3; the one whose section is in view is marked as you scroll.
   buildToc(el) {
     const toc = this.tocRef.current; if (!toc) return;
@@ -429,12 +530,26 @@ class Component extends DCLogic {
     const gs = (kind === 'd' ? this.docs : kind === 'p' ? this.posts : this.guides) || [];
     const i = gs.findIndex(g => g.slug === this.state.slug);
     const g = gs[i];
-    const href = s => 'Guide.dc.html?' + kind + '=' + s.slug;
+    const href = s => s.href || 'Guide.dc.html?' + kind + '=' + s.slug;
     const sib = g ? (kind === 'p' ? gs : gs.filter(x => x.cat === g.cat)) : [];
     const repoPath = g ? (kind === 'd' ? g.path : kind === 'p' ? null : 'how-to/' + g.slug + '.md') : null;
     const backHref = kind === 'd' ? 'Docs.dc.html' : kind === 'p' ? 'Blog.dc.html' : 'Guides.dc.html';
     const backLabel = kind === 'd' ? '← Docs' : kind === 'p' ? '← Blog' : '← All guides';
+    // A post's header: category, labels, summary, date and reading time (from the markdown once it has loaded).
+    const PC = { Performance: 'oklch(0.72 0.15 65)', Release: 'oklch(0.62 0.12 170)', 'Design note': 'oklch(0.62 0.13 255)', Migration: 'oklch(0.62 0.14 320)' };
+    const MON = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    let post = null;
+    if (kind === 'p' && g) {
+      const d = (g.date || '').split('-').map(Number);
+      const date = d[2] ? d[2] + ' ' + MON[d[1] - 1] + ' ' + d[0] : d[1] ? MON[d[1] - 1] + ' ' + d[0] : '';
+      const words = this.state.md ? this.state.md.replace(/```[\s\S]*?```/g, ' ').split(/\s+/).filter(Boolean).length : 0;
+      post = { cat: g.cat, topic: g.topic || '', topicShow: g.topic ? 'inline' : 'none', version: g.version || '', verShow: g.version ? 'inline-block' : 'none', color: PC[g.cat] || 'var(--ink-4)',
+        summary: g.summary || '', dekShow: g.summary ? 'block' : 'none', when: date + (words ? ' · ' + Math.max(1, Math.round(words / 220)) + ' min read' : ''),
+        shareLabel: this.state.copied ? 'Link copied' : 'Copy link',
+        share: () => { try { navigator.clipboard.writeText(location.origin + location.pathname + '?p=' + g.slug); } catch (e) {} this.setState({ copied: true }); clearTimeout(this.copyT); this.copyT = setTimeout(() => this.setState({ copied: false }), 1600); } };
+    }
     return {
+      kind, post, notPost: kind !== 'p', prevLabel: kind === 'p' ? '← Newer post' : '← Previous', nextLabel: kind === 'p' ? 'Older post →' : 'Next →',
       bodyRef: this.bodyRef, tocRef: this.tocRef, tocDisplay: this.state.tocCount ? 'grid' : 'none', error: this.state.error, backHref, backLabel,
       kindLabel: kind === 'd' ? 'Documentation' : kind === 'p' ? (g ? g.date : 'Blog') : 'Guide ' + (g ? g.num : ''),
       showRepo: !!repoPath,
@@ -442,7 +557,7 @@ class Component extends DCLogic {
       ghHref: g && g.repoUrl ? g.repoUrl : repoPath ? 'https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/' + repoPath : '#',
       editHref: g && g.repoUrl ? g.repoUrl.replace('/blob/', '/edit/') : repoPath ? 'https://github.com/AnanthaRajuC/QueryAPIGate/edit/main/' + repoPath : '#',
       // Left rail: guides show the current category; documents show every group, so the rail reads as the documentation's table of contents.
-      railGroups: (kind === 'd' ? ['Run it', 'Reference', 'Security', 'Project'].map(c => ({ label: c, items: gs.filter(x => x.cat === c) })).filter(x => x.items.length) : [{ label: g ? g.cat : '', items: sib }])
+      railGroups: (kind === 'd' ? ['Run it', 'Reference', 'Security', 'Project'].map(c => ({ label: c, items: gs.filter(x => x.cat === c) })).filter(x => x.items.length) : [{ label: kind === 'p' ? 'All posts' : g ? g.cat : '', items: sib }])
         .map((grp, k) => ({ label: grp.label, pad: k ? '14px' : '0', items: grp.items.map(s => ({ num: s.num || '', cols: s.num ? '26px minmax(0,1fr)' : '0 minmax(0,1fr)', title: s.title, href: href(s), color: s.slug === this.state.slug ? 'var(--ink)' : 'var(--ink-2)', weight: s.slug === this.state.slug ? 600 : 400 })) })),
       prev: i > 0 ? { title: gs[i - 1].title, href: href(gs[i - 1]) } : null,
       next: i >= 0 && i < gs.length - 1 ? { title: gs[i + 1].title, href: href(gs[i + 1]) } : null,
