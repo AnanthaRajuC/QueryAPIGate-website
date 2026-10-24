@@ -621,6 +621,24 @@ export const docs = [
   "cat": "Reference"
  },
  {
+  "slug": "PERFORMANCE",
+  "path": "documentation/PERFORMANCE.md",
+  "title": "Performance",
+  "cat": "Reference"
+ },
+ {
+  "slug": "PERFORMANCE_V2",
+  "path": "documentation/PERFORMANCE_V2.md",
+  "title": "Performance, v2: an OLTP benchmark on PostgreSQL",
+  "cat": "Reference"
+ },
+ {
+  "slug": "PERFORMANCE_V3",
+  "path": "documentation/PERFORMANCE_V3.md",
+  "title": "Performance, v3: an OLTP benchmark on PostgreSQL",
+  "cat": "Reference"
+ },
+ {
   "slug": "THREAT_MODEL",
   "path": "documentation/THREAT_MODEL.md",
   "title": "Threat model",

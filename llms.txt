@@ -18,6 +18,9 @@ Everything below in one file: https://anantharajuc.github.io/QueryAPIGate-websit
 - [Example APIs](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=EXAMPLES): documentation, Reference
 - [Query metadata](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=QUERY_METADATA_MANAGEMENT): documentation, Reference
 - [A tour of the Console](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=SCREENSHOTS): documentation, Reference
+- [Performance](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE): documentation, Reference
+- [Performance, v2: an OLTP benchmark on PostgreSQL](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V2): documentation, Reference
+- [Performance, v3: an OLTP benchmark on PostgreSQL](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V3): documentation, Reference
 - [Threat model](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=THREAT_MODEL): documentation, Security
 - [Where data goes](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=DATA_PROTECTION): documentation, Security
 - [Security policy](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=SECURITY): documentation, Security
