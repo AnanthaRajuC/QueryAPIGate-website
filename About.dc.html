@@ -22,6 +22,29 @@
 <script src="./support.js"></script>
 <script src="./theme.js?v=10"></script>
 <script src="./search.js?v=5" defer></script>
+<script>
+(function () {
+  // Section rail on the left: marks the section in view; clicking scrolls without touching the hash.
+  var ids = ['principles','road','licence','explore','contribute'], raf = 0;
+  function dark(el) { var c = getComputedStyle(el).backgroundColor.match(/\d+/g); return c && c.length >= 3 && (c.length < 4 || +c[3] > 0) && (+c[0] + +c[1] + +c[2]) < 150; }
+  function update() {
+    raf = 0;
+    var rail = document.querySelector('.rail'), links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
+    var line = window.innerHeight * 0.35, cur = ids[0];
+    for (var i = 0; i < ids.length; i++) { var el = document.getElementById(ids[i]); if (el && el.getBoundingClientRect().top <= line) cur = ids[i]; }
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = ids[ids.length - 1];
+    for (var j = 0; j < links.length; j++) links[j].classList.toggle('on', links[j].getAttribute('data-rail') === cur);
+    // light colours while the rail sits over a dark section
+    var r = rail.getBoundingClientRect(), mid = r.top + r.height / 2, onDark = false;
+    document.querySelectorAll('section, footer').forEach(function (sec) { var b = sec.getBoundingClientRect(); if (b.top <= mid && b.bottom >= mid && dark(sec)) onDark = true; });
+    rail.classList.toggle('dark', onDark);
+  }
+  function tick() { if (!raf) raf = requestAnimationFrame(update); }
+  window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
+  document.addEventListener('click', function (e) { var a = e.target.closest('.rail a[data-rail]'); if (!a) return; var el = document.getElementById(a.getAttribute('data-rail')); if (!el) return; e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
+})();
+</script>
 </head>
 <body>
 <x-dc>
@@ -59,6 +82,7 @@
 .ab-stats>div{display:grid;gap:4px;align-content:start;padding:6px 24px;border-left:1px solid var(--line)}.ab-stats>div:first-child{border-left:0;padding-left:0}
 .ab-stats b{font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3vw,40px);font-weight:800;letter-spacing:-0.02em;line-height:1.05}
 .ab-stats .ab-sl{font-size:14px;color:var(--ink-2)}
+.ab-band,.ab-road-sec,.ab-lic,.ab-explore-sec,#contribute{scroll-margin-top:56px}.ab-explore-sec{scroll-margin-top:136px}
 .ab-band{background:var(--surface-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:80px 0}
 .ab-band .ab-wrap{display:grid;gap:36px}
 .ab-principles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
@@ -281,6 +305,16 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .rs-dd-mcp-inner b{font-size:13.5px;font-weight:600}
 .rs-dd-mcp-inner span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
 @media (max-width:1180px){.rs-dd-mcp .rs-dd-panel{display:none !important}.rs-dd-mcp .rs-caret{display:none}}
+/* Section rail on the left, as on Features; over the dark sections it switches to light colours. */
+.rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:30;display:grid;gap:10px;transition:opacity 0.25s;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
+.rail a{display:flex;align-items:center;gap:12px;color:#9fb3ac;text-decoration:none;transition:color 0.2s}
+.rail a::before{content:'';flex:none;width:22px;height:1px;background:var(--line-2);transition:width 0.25s,background 0.25s,height 0.25s}
+.rail a:hover{color:var(--ink);text-decoration:none}
+.rail a.on{color:var(--ink)}.rail a.on::before{width:40px;height:2px;background:oklch(0.52 0.11 170)}
+.rail.dark a{color:#7c8f88}.rail.dark a::before{background:#34413d}.rail.dark a:hover,.rail.dark a.on{color:#e6efeb}.rail.dark a.on::before{background:oklch(0.62 0.13 170)}
+@media (max-width:1599px){.rail span{opacity:0;visibility:hidden;transform:translateX(-6px);transition:opacity 0.2s,transform 0.2s,visibility 0.2s}.rail:hover span{opacity:1;visibility:visible;transform:none}}
+@media (max-width:1279px){.rail{display:none}}
+@media (prefers-reduced-motion:reduce){.rail a::before,.rail span{transition:none}}
 </style>
 </helmet>
 <div data-screen-label="About" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
@@ -339,7 +373,15 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     <div><b>{{ stars }}</b><span class="ab-sl">stars on GitHub</span></div>
   </section>
 
-  <section class="ab-band">
+  <nav class="rail" aria-label="Sections">
+    <a href="#principles" data-rail="principles"><span>Principles</span></a>
+    <a href="#road" data-rail="road"><span>The road so far</span></a>
+    <a href="#licence" data-rail="licence"><span>Licence</span></a>
+    <a href="#explore" data-rail="explore"><span>Explore</span></a>
+    <a href="#contribute" data-rail="contribute"><span>Contribute</span></a>
+  </nav>
+
+  <section class="ab-band" id="principles">
     <div class="ab-wrap">
       <div class="ab-sec-head"><span class="ab-eyebrow">Principles</span><h2>How it is built</h2></div>
       <div class="ab-principles">
@@ -351,7 +393,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section class="ab-wrap ab-road-sec">
+  <section class="ab-wrap ab-road-sec" id="road">
     <div class="ab-sec-head"><span class="ab-eyebrow">The road so far</span><h2>From a query helper to a governed gate</h2></div>
     <ol class="ab-road">
       <li class=""><span class="ab-dot" aria-hidden="true"></span><span class="ab-when"><b>0.1</b> · March 2024</span><h3>First commit, as SQL2API</h3><p>A SQL query becomes an endpoint, without writing the controller. Released under MIT up to 0.6.1.</p></li>
@@ -380,7 +422,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section class="ab-wrap ab-explore-sec">
+  <section class="ab-wrap ab-explore-sec" id="explore">
     <div class="ab-sec-head"><span class="ab-eyebrow">Explore</span><h2>Where to go next</h2></div>
     <div class="ab-explore">
       <a href="Playground.dc.html" class="ab-ex"><span class="ab-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/terminal.svg)" aria-hidden="true"></span><span><b>Playground</b><span>Call the example APIs in your browser, and make any stage refuse.</span></span><i aria-hidden="true">→</i></a>
@@ -392,7 +434,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section class="ab-wrap" style="padding-bottom:88px">
+  <section class="ab-wrap" id="contribute" style="padding-bottom:88px">
     <div class="ab-contrib">
       <div style="display:grid;gap:12px"><h2>Contribute</h2><p>Issues, discussions and pull requests are on GitHub. The contributing guide covers the test suite, ruff, mypy and how integration tests against real databases are switched on.</p><span class="ab-gh" style="display:{{ ghShow }}"><span class="ab-pill">{{ issues }} open issues</span><span class="ab-pill">{{ forks }} forks</span></span></div>
       <div class="ab-contrib-go"><a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="ab-btn">GitHub</a><a href="Guide.dc.html?d=CONTRIBUTING" class="ab-btn ab-btn-o">Contributing guide</a></div>
