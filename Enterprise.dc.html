@@ -22,6 +22,29 @@
 <script src="./support.js"></script>
 <script src="./theme.js?v=10"></script>
 <script src="./search.js?v=5" defer></script>
+<script>
+(function () {
+  // Section rail on the left: marks the section in view; clicking scrolls without touching the hash.
+  var ids = ['identity','audit','availability','crypto','pack','responsibility'], raf = 0;
+  function dark(el) { var c = getComputedStyle(el).backgroundColor.match(/\d+/g); return c && c.length >= 3 && (c.length < 4 || +c[3] > 0) && (+c[0] + +c[1] + +c[2]) < 150; }
+  function update() {
+    raf = 0;
+    var rail = document.querySelector('.rail'), links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
+    var line = window.innerHeight * 0.35, cur = ids[0];
+    for (var i = 0; i < ids.length; i++) { var el = document.getElementById(ids[i]); if (el && el.getBoundingClientRect().top <= line) cur = ids[i]; }
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = ids[ids.length - 1];
+    for (var j = 0; j < links.length; j++) links[j].classList.toggle('on', links[j].getAttribute('data-rail') === cur);
+    // light colours while the rail sits over a dark section
+    var r = rail.getBoundingClientRect(), mid = r.top + r.height / 2, onDark = false;
+    document.querySelectorAll('section, footer').forEach(function (sec) { var b = sec.getBoundingClientRect(); if (b.top <= mid && b.bottom >= mid && dark(sec)) onDark = true; });
+    rail.classList.toggle('dark', onDark);
+  }
+  function tick() { if (!raf) raf = requestAnimationFrame(update); }
+  window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
+  document.addEventListener('click', function (e) { var a = e.target.closest('.rail a[data-rail]'); if (!a) return; var el = document.getElementById(a.getAttribute('data-rail')); if (!el) return; e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
+})();
+</script>
 </head>
 <body>
 <x-dc>
@@ -65,8 +88,16 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   .f-pad{padding-left:16px !important;padding-right:16px !important}
   .f-table th:nth-child(3),.f-table td:nth-child(3){display:none}
 }
-.f-sub{scrollbar-width:none;top:64px !important}
-@media (max-width:1180px){.f-sub{top:70px !important}}
+/* Section rail on the left, as on Features; over the dark sections it switches to light colours. */
+.rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:30;display:grid;gap:10px;transition:opacity 0.25s;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
+.rail a{display:flex;align-items:center;gap:12px;color:#9fb3ac;text-decoration:none;transition:color 0.2s}
+.rail a::before{content:'';flex:none;width:22px;height:1px;background:var(--line-2);transition:width 0.25s,background 0.25s,height 0.25s}
+.rail a:hover{color:var(--ink);text-decoration:none}
+.rail a.on{color:var(--ink)}.rail a.on::before{width:40px;height:2px;background:oklch(0.52 0.11 170)}
+.rail.dark a{color:#7c8f88}.rail.dark a::before{background:#34413d}.rail.dark a:hover,.rail.dark a.on{color:#e6efeb}.rail.dark a.on::before{background:oklch(0.62 0.13 170)}
+@media (max-width:1599px){.rail span{opacity:0;visibility:hidden;transform:translateX(-6px);transition:opacity 0.2s,transform 0.2s,visibility 0.2s}.rail:hover span{opacity:1;visibility:visible;transform:none}}
+@media (max-width:1279px){.rail{display:none}}
+@media (prefers-reduced-motion:reduce){.rail a::before,.rail span{transition:none}}
 .t-table td,.t-table th{padding:14px 16px;text-align:left;vertical-align:top;border-top:1px solid #243b34;font-size:14px}
 .t-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac;border-top:0;padding-top:0}
 .t-docs td{padding:16px 18px;vertical-align:top;border-top:1px solid var(--line);font-size:14.5px}
@@ -81,7 +112,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 @media (max-width:640px){.u-personas{grid-template-columns:minmax(0,1fr) !important}.u-personas > .u-last{grid-column:span 1}}
 .f-bento > .f-last{grid-column:span 4}
 @media (max-width:960px){.f-bento > .f-last{grid-column:span 2 !important}}
-@media (max-width:640px){.f-bento > .f-last{grid-column:span 1 !important}}.f-sub::-webkit-scrollbar{display:none}
+@media (max-width:640px){.f-bento > .f-last{grid-column:span 1 !important}}
 .f-table td,.f-table th{padding:14px 16px;text-align:left;vertical-align:top;border-top:1px solid #243b34}
 .f-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac;border-top:0;padding-top:0}
 .e-roles td,.e-roles th{padding:12px 16px;text-align:left;vertical-align:top;border-top:1px solid var(--line);font-size:14px}
@@ -249,15 +280,18 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     <div class="f-3col" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden"><div style="background:var(--surface);padding:24px;display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 14px;align-content:start"><span style="margin-top:2px;width:20px;height:20px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:11px;font-weight:700;display:grid;place-items:center">✓</span><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:18px;line-height:1.2;font-weight:700">Self-hosted</b><span style="grid-column:2;font-size:14px;color:var(--ink-2)">Runs in your network. No telemetry, no licence server, nothing sent to the project.</span></div><div style="background:var(--surface);padding:24px;display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 14px;align-content:start"><span style="margin-top:2px;width:20px;height:20px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:11px;font-weight:700;display:grid;place-items:center">✓</span><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:18px;line-height:1.2;font-weight:700">Your identity provider</b><span style="grid-column:2;font-size:14px;color:var(--ink-2)">Console sign-in through OIDC, with roles from your groups.</span></div><div style="background:var(--surface);padding:24px;display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 14px;align-content:start"><span style="margin-top:2px;width:20px;height:20px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:11px;font-weight:700;display:grid;place-items:center">✓</span><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:18px;line-height:1.2;font-weight:700">A signed audit trail</b><span style="grid-column:2;font-size:14px;color:var(--ink-2)">Tamper-evident, verifiable, streamed to your SIEM.</span></div><div style="background:var(--surface);padding:24px;display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 14px;align-content:start"><span style="margin-top:2px;width:20px;height:20px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:11px;font-weight:700;display:grid;place-items:center">✓</span><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:18px;line-height:1.2;font-weight:700">No single instance to lose</b><span style="grid-column:2;font-size:14px;color:var(--ink-2)">Several interchangeable instances on PostgreSQL and Redis.</span></div><div style="background:var(--surface);padding:24px;display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 14px;align-content:start"><span style="margin-top:2px;width:20px;height:20px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:11px;font-weight:700;display:grid;place-items:center">✓</span><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:18px;line-height:1.2;font-weight:700">FIPS-approved cryptography</b><span style="grid-column:2;font-size:14px;color:var(--ink-2)">Every algorithm approved; validated on a FIPS-mode OpenSSL.</span></div><div style="background:var(--surface);padding:24px;display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 14px;align-content:start"><span style="margin-top:2px;width:20px;height:20px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:11px;font-weight:700;display:grid;place-items:center">✓</span><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:18px;line-height:1.2;font-weight:700">Signed releases</b><span style="grid-column:2;font-size:14px;color:var(--ink-2)">Image and chart signed, with an SBOM and provenance, since 0.31.</span></div></div>
   </section>
 
-  <div class="f-sub" style="position:sticky;top:0;z-index:19;background:#10201b;border-bottom:1px solid #243b34;overflow-x:auto;margin-top:64px;display:{{ subDisplay }}">
-    <div style="max-width:1240px;margin:0 auto;padding:0 24px;display:flex;gap:4px;align-items:center;justify-content:safe center;min-width:max-content">
-      <sc-for list="{{ sub }}" as="s" hint-placeholder-count="6">
-        <a href="{{ s.href }}" style="display:flex;gap:8px;align-items:center;padding:14px 12px;font-size:13.5px;font-weight:500;color:{{ s.color }};border-bottom:2px solid {{ s.line }};margin-bottom:-1px;text-decoration:none;white-space:nowrap" style-hover="color:var(--on-ink);text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">{{ s.num }}</span>{{ s.label }}</a>
-      </sc-for>
-    </div>
+  <nav class="rail" aria-label="Sections">
+    <a href="#identity" data-rail="identity"><span>Identity</span></a>
+    <a href="#audit" data-rail="audit"><span>Audit</span></a>
+    <a href="#availability" data-rail="availability"><span>Availability</span></a>
+    <a href="#crypto" data-rail="crypto"><span>Cryptography</span></a>
+    <a href="#pack" data-rail="pack"><span>Security pack</span></a>
+    <a href="#responsibility" data-rail="responsibility"><span>Responsibility</span></a>
+  </nav>
+
   </div>
 
-  <section id="identity" style="scroll-margin-top:124px">
+  <section id="identity" style="scroll-margin-top:80px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:40px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end"><div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">01 · Identity and access</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Your identity provider decides who administers it</h2></div><p style="margin:0;color:var(--ink-2);text-wrap:pretty">People sign in through your SSO and get a role from your groups. Services, partners and AI agents each get exactly the queries they need, and no more.</p></div>
       <div class="f-3col" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 32px"><div style="display:grid;gap:8px;padding:22px 0;border-top:1px solid var(--line-2);align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">Single sign-on</span><h3 style="margin:0;font-size:17px;font-weight:600">Console sign-in through OIDC</h3><p style="margin:0;font-size:14.5px;color:var(--ink-2)">Authorization code flow with PKCE, as a confidential client: the browser never holds a token. People are bound by the provider's <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">sub</code>, and their role comes from their groups at every sign-in. <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">QUERYAPIGATE_SSO_ONLY</code> removes personal tokens so nobody routes around your MFA.</p><div style="display:flex;gap:8px 16px;flex-wrap:wrap;font-size:13.5px;font-weight:600"><a href="Guide.dc.html?g=48-sign-in-to-the-console-through-your-identity-provider">Guide 48 →</a></div></div><div style="display:grid;gap:8px;padding:22px 0;border-top:1px solid var(--line-2);align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">Break-glass</span><h3 style="margin:0;font-size:17px;font-weight:600">A way in when the provider is down</h3><p style="margin:0;font-size:14.5px;color:var(--ink-2)">The shared admin key stays an owner for emergencies. Once a named owner exists, every use of it is logged, audited as <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">break_glass_used</code> and alerted. The last active owner can't be locked out by accident.</p><div style="display:flex;gap:8px 16px;flex-wrap:wrap;font-size:13.5px;font-weight:600"><a href="Guide.dc.html?d=THREAT_MODEL#administration-named-administrators-and-roles">Threat model →</a></div></div><div style="display:grid;gap:8px;padding:22px 0;border-top:1px solid var(--line-2);align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">Leavers</span><h3 style="margin:0;font-size:17px;font-weight:600">Off in your IdP, off here</h3><p style="margin:0;font-size:14.5px;color:var(--ink-2)">Someone removed from your groups loses their role at the next sign-in; a session already open lasts until it expires (8 hours by default). Deactivating them in QueryAPIGate ends it at once.</p><div style="display:flex;gap:8px 16px;flex-wrap:wrap;font-size:13.5px;font-weight:600"><a href="Guide.dc.html?g=43-give-your-team-their-own-admin-access">Named administrators →</a></div></div></div>
@@ -268,7 +302,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       <div class="f-3col" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 32px"><div style="display:grid;gap:8px;padding:22px 0;border-top:1px solid var(--line-2);align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">Partners and services</span><h3 style="margin:0;font-size:17px;font-weight:600">Scoped keys, least privilege by default</h3><p style="margin:0;font-size:14.5px;color:var(--ink-2)">Grants per saved query, collection or connection; read-only unless writes are granted; table allow-lists; IP allow-lists; expiry; rotation without downtime; rate limits, quotas and concurrency caps per key.</p><div style="display:flex;gap:8px 16px;flex-wrap:wrap;font-size:13.5px;font-weight:600"><a href="Guide.dc.html?g=13-set-up-a-scoped-api-key">Scoped key →</a><a href="Guide.dc.html?g=50-rotate-an-api-key-without-downtime">Rotate →</a><a href="Guide.dc.html?g=52-give-a-partner-a-quota-and-a-concurrency-cap">Quotas →</a></div></div><div style="display:grid;gap:8px;padding:22px 0;border-top:1px solid var(--line-2);align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">Your applications' users</span><h3 style="margin:0;font-size:17px;font-weight:600">Tokens from your identity provider</h3><p style="margin:0;font-size:14.5px;color:var(--ink-2)">Signed-in users call with a JWT checked against your JWKS. A parameter can be bound from a claim, so a user's <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">tenant_id</code> or email comes from the token, not the request.</p><div style="display:flex;gap:8px 16px;flex-wrap:wrap;font-size:13.5px;font-weight:600"><a href="Use Cases.dc.html">Use cases →</a></div></div><div style="display:grid;gap:8px;padding:22px 0;border-top:1px solid var(--line-2);align-content:start"><span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">AI agents</span><h3 style="margin:0;font-size:17px;font-weight:600">Governed like any other caller</h3><p style="margin:0;font-size:14.5px;color:var(--ink-2)">MCP clients sign in through OAuth 2.1 or use a scoped key, and see only the saved queries they are granted. A write proposed by an agent waits for a person to approve it, and both are audited.</p><div style="display:flex;gap:8px 16px;flex-wrap:wrap;font-size:13.5px;font-weight:600"><a href="Guide.dc.html?g=46-let-ai-clients-sign-in-through-your-identity-provider">Guide 46 →</a><a href="Guide.dc.html?g=49-let-an-agent-write-with-a-person-approving-each-write">Guide 49 →</a></div></div></div>
     </div>
   </section>
-  <section id="audit" style="background:#10201b;color:#e6efeb;scroll-margin-top:124px">
+  <section id="audit" style="background:#10201b;color:#e6efeb;scroll-margin-top:80px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:40px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end"><div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">02 · Audit and monitoring</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Who changed what, in a record your SIEM already holds</h2></div><p style="margin:0;color:#9fb3ac;text-wrap:pretty">Every configuration change is in a hash-chained audit log, signed with a key kept outside the store and streamed to your SIEM, so a later rewrite contradicts a copy someone else holds.</p></div>
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:start">
@@ -286,7 +320,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       </div>
     </div>
   </section>
-  <section id="availability" style="scroll-margin-top:124px">
+  <section id="availability" style="scroll-margin-top:80px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:40px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end"><div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">03 · Availability and recovery</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Grow from one container to several without a migration</h2></div><p style="margin:0;color:var(--ink-2);text-wrap:pretty">On a <code class="qx">PostgreSQL</code> store with <code class="qx">Redis</code>, everything an instance owns is shared, so instances are interchangeable and any of them can serve any request.</p></div>
       <div style="border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden"><table class="e-split" style="width:100%;border-collapse:collapse"><thead><tr><th></th><th>One instance</th><th>Several instances</th></tr></thead><tbody><tr><td style="font-weight:600;color:var(--ink)">Store</td><td style="color:var(--ink-2)"><code class="qx">SQLite</code> on a volume, or <code class="qx">PostgreSQL</code></td><td style="color:var(--ink-2)"><b style="color:var(--ink);font-weight:600"><code class="qx">PostgreSQL</code></b></td></tr><tr><td style="font-weight:600;color:var(--ink)"><code class="qx">Redis</code></td><td style="color:var(--ink-2)">Optional: a cache that survives restarts</td><td style="color:var(--ink-2)"><b style="color:var(--ink);font-weight:600">Required</b>: rate limits, quotas and the response cache, shared</td></tr><tr><td style="font-weight:600;color:var(--ink)">Live events</td><td style="color:var(--ink-2)"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">GET /events</code> on the instance</td><td style="color:var(--ink-2)"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate events</code>, routed by the proxy</td></tr><tr><td style="font-weight:600;color:var(--ink)">When an instance fails</td><td style="color:var(--ink-2)">Restart on failure</td><td style="color:var(--ink-2)">The load balancer skips it; the others serve every request</td></tr><tr><td style="font-weight:600;color:var(--ink)">On Kubernetes</td><td style="color:var(--ink-2)">One pod; upgrades replace it, a few seconds down</td><td style="color:var(--ink-2)">Rolling, one pod at a time, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">maxUnavailable: 0</code>, a PodDisruptionBudget</td></tr></tbody></table></div>
@@ -307,7 +341,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       </div>
     </div>
   </section>
-  <section id="crypto" style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);scroll-margin-top:124px">
+  <section id="crypto" style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);scroll-margin-top:80px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:40px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end"><div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">04 · Cryptography and supply chain</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Approved algorithms, and releases you can verify before they run</h2></div><p style="margin:0;color:var(--ink-2);text-wrap:pretty">Every algorithm is FIPS-approved, and a test fails if the code gains one that isn't. Every release since 0.31 is signed, with an SBOM and provenance you can check by digest.</p></div>
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:start">
@@ -333,7 +367,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       </div>
     </div>
   </section>
-  <section id="pack" style="scroll-margin-top:124px">
+  <section id="pack" style="scroll-margin-top:80px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:36px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end"><div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">05 · Security pack</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Everything a vendor-risk review asks for, in one download</h2></div><p style="margin:0;color:var(--ink-2);text-wrap:pretty">Seven documents for QueryAPIGate 0.34.2, as one PDF to attach to your review or as Markdown to diff against the next release. Each can also be read here.</p></div>
       <div style="display:flex;gap:12px;flex-wrap:wrap">
@@ -344,7 +378,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       <p style="margin:0;font-size:14px;color:var(--ink-3)">The pack is built from the documentation in the repository at 0.34.2. The SBOM itself is read from the image you run, by digest, rather than copied into the pack.</p>
     </div>
   </section>
-  <section id="responsibility" style="background:var(--surface);border-top:1px solid var(--line);scroll-margin-top:124px">
+  <section id="responsibility" style="background:var(--surface);border-top:1px solid var(--line);scroll-margin-top:80px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:36px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end"><div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">06 · Shared responsibility</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">What it does, what stays yours, and what we don't claim</h2></div><p style="margin:0;color:var(--ink-2);text-wrap:pretty">Software you run inherits your controls. This is the split a reviewer will ask about, stated plainly.</p></div>
       <div style="border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden"><table class="e-split" style="width:100%;border-collapse:collapse"><thead><tr><th>QueryAPIGate provides</th><th>You provide</th></tr></thead><tbody><tr><td style="color:var(--ink)">Runs inside your network, sends nothing to the project</td><td style="color:var(--ink-2)">The network it runs in, and what may reach it</td></tr><tr><td style="color:var(--ink)">Authentication, grants, roles, masking, limits, the audit log</td><td style="color:var(--ink-2)">TLS termination at your reverse proxy or ingress</td></tr><tr><td style="color:var(--ink)">SSO through your identity provider</td><td style="color:var(--ink-2)">MFA and group membership in the identity provider</td></tr><tr><td style="color:var(--ink)">Read-only by default; a SQL guard on every statement</td><td style="color:var(--ink-2)">Least-privileged database accounts behind each connection</td></tr><tr><td style="color:var(--ink)">Online backups and automatic store upgrades</td><td style="color:var(--ink-2)">Backup schedules, off-site copies and restore drills</td></tr><tr><td style="color:var(--ink)">Secrets from files and Vault; encryption of stored passwords</td><td style="color:var(--ink-2)">Your secrets manager, and the keys kept out of backups</td></tr><tr><td style="color:var(--ink)">Security fixes against the latest release</td><td style="color:var(--ink-2)">Pinning a version, watching Security entries, upgrading</td></tr></tbody></table></div>
@@ -397,22 +431,13 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   </footer>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"showSubnav":{"editor":"boolean","default":true,"tsType":"boolean","section":"Navigation"}}'>
+<script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { active: '', copied: null, pypi: null };
-  sections = [{ id: 'identity', num: '01', label: 'Identity and access' }, { id: 'audit', num: '02', label: 'Audit' }, { id: 'availability', num: '03', label: 'Availability' }, { id: 'crypto', num: '04', label: 'Cryptography' }, { id: 'pack', num: '05', label: 'Security pack' }, { id: 'responsibility', num: '06', label: 'Responsibility' }];
+  state = { copied: null, pypi: null };
   componentDidMount() {
     fetch('https://pypi.org/pypi/queryapigate/json').then(r => r.ok ? r.json() : null).then(pypi => pypi && this.setState({ pypi })).catch(() => {});
-    if (!('IntersectionObserver' in window)) return;
-    this.vis = {};
-    this.obs = new IntersectionObserver((entries) => {
-      entries.forEach(e => { this.vis[e.target.id] = e.isIntersecting; });
-      const id = this.sections.map(s => s.id).find(k => this.vis[k]) || '';
-      if (id !== this.state.active) this.setState({ active: id });
-    }, { rootMargin: '-25% 0px -60% 0px' });
-    this.sections.forEach(s => { const el = document.getElementById(s.id); if (el) this.obs.observe(el); });
   }
-  componentWillUnmount() { if (this.obs) this.obs.disconnect(); clearTimeout(this.copyT); }
+  componentWillUnmount() { clearTimeout(this.copyT); }
   copy(key, text) {
     return () => {
       try { navigator.clipboard && navigator.clipboard.writeText(text); } catch (e) {}
@@ -422,14 +447,11 @@ class Component extends DCLogic {
   // Plain-text versions of the three terminals, for the Copy buttons; {v} is the latest version from PyPI.
   snippets = { Audit: 'queryapigate audit verify\n\nqueryapigate audit verify --file siem-export.log', Backup: 'queryapigate backup /data/backup.db --force\n\npg_dump --format=custom --schema=public --no-owner --no-privileges \\\n    --file="queryapigate-$(date +%F).dump" "$QUERYAPIGATE_DATABASE_URL"', Verify: 'cosign verify ghcr.io/anantharajuc/queryapigate:{v} \\\n    --certificate-identity https://github.com/AnanthaRajuC/QueryAPIGate/.github/workflows/docker.yml@refs/tags/v{v} \\\n    --certificate-oidc-issuer https://token.actions.githubusercontent.com\n\ndocker buildx imagetools inspect ghcr.io/anantharajuc/queryapigate:{v} --format \'{{json .SBOM}}\'' };
   renderVals() {
-    const a = this.state.active;
     const ver = this.state.pypi?.info?.version || '0.37.0';
     const v = { entVer: ver };
     Object.keys(this.snippets).forEach(k => { v['copy' + k] = this.copy(k, this.snippets[k].replace(/\{v\}/g, ver)); v['copied' + k] = this.state.copied === k ? 'Copied' : 'Copy'; });
     return {
       ...v,
-      subDisplay: (this.props.showSubnav ?? true) ? 'block' : 'none',
-      sub: this.sections.map(s => ({ href: '#' + s.id, num: s.num, label: s.label, color: a === s.id ? 'var(--surface)' : '#9fb3ac', line: a === s.id ? 'oklch(0.62 0.13 170)' : 'transparent' })),
     };
   }
 }

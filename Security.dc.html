@@ -22,6 +22,29 @@
 <script src="./support.js"></script>
 <script src="./theme.js?v=10"></script>
 <script src="./search.js?v=5" defer></script>
+<script>
+(function () {
+  // Section rail on the left: marks the section in view; clicking scrolls without touching the hash.
+  var ids = ['layers','hardening','proof'], raf = 0;
+  function dark(el) { var c = getComputedStyle(el).backgroundColor.match(/\d+/g); return c && c.length >= 3 && (c.length < 4 || +c[3] > 0) && (+c[0] + +c[1] + +c[2]) < 150; }
+  function update() {
+    raf = 0;
+    var rail = document.querySelector('.rail'), links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
+    var line = window.innerHeight * 0.35, cur = ids[0];
+    for (var i = 0; i < ids.length; i++) { var el = document.getElementById(ids[i]); if (el && el.getBoundingClientRect().top <= line) cur = ids[i]; }
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = ids[ids.length - 1];
+    for (var j = 0; j < links.length; j++) links[j].classList.toggle('on', links[j].getAttribute('data-rail') === cur);
+    // light colours while the rail sits over a dark section
+    var r = rail.getBoundingClientRect(), mid = r.top + r.height / 2, onDark = false;
+    document.querySelectorAll('section, footer').forEach(function (sec) { var b = sec.getBoundingClientRect(); if (b.top <= mid && b.bottom >= mid && dark(sec)) onDark = true; });
+    rail.classList.toggle('dark', onDark);
+  }
+  function tick() { if (!raf) raf = requestAnimationFrame(update); }
+  window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
+  document.addEventListener('click', function (e) { var a = e.target.closest('.rail a[data-rail]'); if (!a) return; var el = document.getElementById(a.getAttribute('data-rail')); if (!el) return; e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
+})();
+</script>
 </head>
 <body>
 <x-dc>
@@ -220,6 +243,16 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .rs-dd-mcp-inner b{font-size:13.5px;font-weight:600}
 .rs-dd-mcp-inner span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
 @media (max-width:1180px){.rs-dd-mcp .rs-dd-panel{display:none !important}.rs-dd-mcp .rs-caret{display:none}}
+/* Section rail on the left, as on Features; over the dark sections it switches to light colours. */
+.rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:30;display:grid;gap:10px;transition:opacity 0.25s;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
+.rail a{display:flex;align-items:center;gap:12px;color:#9fb3ac;text-decoration:none;transition:color 0.2s}
+.rail a::before{content:'';flex:none;width:22px;height:1px;background:var(--line-2);transition:width 0.25s,background 0.25s,height 0.25s}
+.rail a:hover{color:var(--ink);text-decoration:none}
+.rail a.on{color:var(--ink)}.rail a.on::before{width:40px;height:2px;background:oklch(0.52 0.11 170)}
+.rail.dark a{color:#7c8f88}.rail.dark a::before{background:#34413d}.rail.dark a:hover,.rail.dark a.on{color:#e6efeb}.rail.dark a.on::before{background:oklch(0.62 0.13 170)}
+@media (max-width:1599px){.rail span{opacity:0;visibility:hidden;transform:translateX(-6px);transition:opacity 0.2s,transform 0.2s,visibility 0.2s}.rail:hover span{opacity:1;visibility:visible;transform:none}}
+@media (max-width:1279px){.rail{display:none}}
+@media (prefers-reduced-motion:reduce){.rail a::before,.rail span{transition:none}}
 </style>
 </helmet>
 <div data-screen-label="Security" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
@@ -259,7 +292,13 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </header>
 
-  <section style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
+  <nav class="rail" aria-label="Sections">
+    <a href="#layers" data-rail="layers"><span>Defence in depth</span></a>
+    <a href="#hardening" data-rail="hardening"><span>Hardening checklist</span></a>
+    <a href="#proof" data-rail="proof"><span>Testing and proof</span></a>
+  </nav>
+
+  <section id="layers" style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px;scroll-margin-top:80px">
     <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
       <div style="display:grid;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">Defence in depth</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">What each layer defends against</h2></div>
       <p style="margin:0;color:var(--ink-2);max-width:52ch;text-wrap:pretty">Six layers, each stopping a different mistake or attack. The panels replay what each one refuses, and what it lets through.</p>
@@ -292,7 +331,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <section id="hardening" style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);scroll-margin-top:80px">
     <div style="max-width:1240px;margin:0 auto;padding:72px 24px;display:grid;gap:28px">
       <div class="rs-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
         <div style="display:grid;gap:10px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">Before go-live</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:700;letter-spacing:-0.01em">Hardening checklist</h2></div>
@@ -370,7 +409,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section style="max-width:1240px;margin:0 auto;padding:72px 24px 88px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px">
+  <section id="proof" style="max-width:1240px;margin:0 auto;padding:72px 24px 88px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;scroll-margin-top:80px">
     <div style="display:grid;gap:8px;align-content:start"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:18px;font-weight:700">Tested against real systems</h3><p style="margin:0;font-size:15px;color:var(--ink-2)">CI runs against real <code class="qx">PostgreSQL</code>, <code class="qx">MySQL</code>, <code class="qx">ClickHouse</code>, S3 and Keycloak, upgrades from the previous release, and tests the oldest supported dependencies too.</p></div>
     <div style="display:grid;gap:8px;align-content:start"><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:18px;font-weight:700">Proof you can check</h3><p style="margin:0;font-size:15px;color:var(--ink-2)">The signed audit log, FIPS-approved cryptography, signed releases and how to report a vulnerability are on the <a href="Enterprise.dc.html">Enterprise page</a>.</p></div>
   </section>

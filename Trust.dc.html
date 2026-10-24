@@ -22,6 +22,29 @@
 <script src="./support.js"></script>
 <script src="./theme.js?v=10"></script>
 <script src="./search.js?v=5" defer></script>
+<script>
+(function () {
+  // Section rail on the left: marks the section in view; clicking scrolls without touching the hash.
+  var ids = ['data','controls','documents'], raf = 0;
+  function dark(el) { var c = getComputedStyle(el).backgroundColor.match(/\d+/g); return c && c.length >= 3 && (c.length < 4 || +c[3] > 0) && (+c[0] + +c[1] + +c[2]) < 150; }
+  function update() {
+    raf = 0;
+    var rail = document.querySelector('.rail'), links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
+    var line = window.innerHeight * 0.35, cur = ids[0];
+    for (var i = 0; i < ids.length; i++) { var el = document.getElementById(ids[i]); if (el && el.getBoundingClientRect().top <= line) cur = ids[i]; }
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = ids[ids.length - 1];
+    for (var j = 0; j < links.length; j++) links[j].classList.toggle('on', links[j].getAttribute('data-rail') === cur);
+    // light colours while the rail sits over a dark section
+    var r = rail.getBoundingClientRect(), mid = r.top + r.height / 2, onDark = false;
+    document.querySelectorAll('section, footer').forEach(function (sec) { var b = sec.getBoundingClientRect(); if (b.top <= mid && b.bottom >= mid && dark(sec)) onDark = true; });
+    rail.classList.toggle('dark', onDark);
+  }
+  function tick() { if (!raf) raf = requestAnimationFrame(update); }
+  window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
+  document.addEventListener('click', function (e) { var a = e.target.closest('.rail a[data-rail]'); if (!a) return; var el = document.getElementById(a.getAttribute('data-rail')); if (!el) return; e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
+})();
+</script>
 </head>
 <body>
 <x-dc>
@@ -65,8 +88,16 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   .f-pad{padding-left:16px !important;padding-right:16px !important}
   .f-table th:nth-child(3),.f-table td:nth-child(3){display:none}
 }
-.f-sub{scrollbar-width:none;top:64px !important}
-@media (max-width:1180px){.f-sub{top:70px !important}}
+/* Section rail on the left, as on Features; over the dark sections it switches to light colours. */
+.rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:30;display:grid;gap:10px;transition:opacity 0.25s;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
+.rail a{display:flex;align-items:center;gap:12px;color:#9fb3ac;text-decoration:none;transition:color 0.2s}
+.rail a::before{content:'';flex:none;width:22px;height:1px;background:var(--line-2);transition:width 0.25s,background 0.25s,height 0.25s}
+.rail a:hover{color:var(--ink);text-decoration:none}
+.rail a.on{color:var(--ink)}.rail a.on::before{width:40px;height:2px;background:oklch(0.52 0.11 170)}
+.rail.dark a{color:#7c8f88}.rail.dark a::before{background:#34413d}.rail.dark a:hover,.rail.dark a.on{color:#e6efeb}.rail.dark a.on::before{background:oklch(0.62 0.13 170)}
+@media (max-width:1599px){.rail span{opacity:0;visibility:hidden;transform:translateX(-6px);transition:opacity 0.2s,transform 0.2s,visibility 0.2s}.rail:hover span{opacity:1;visibility:visible;transform:none}}
+@media (max-width:1279px){.rail{display:none}}
+@media (prefers-reduced-motion:reduce){.rail a::before,.rail span{transition:none}}
 .t-table td,.t-table th{padding:14px 16px;text-align:left;vertical-align:top;border-top:1px solid #243b34;font-size:14px}
 .t-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac;border-top:0;padding-top:0}
 .t-docs td{padding:16px 18px;vertical-align:top;border-top:1px solid var(--line);font-size:14.5px}
@@ -81,7 +112,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 @media (max-width:640px){.u-personas{grid-template-columns:minmax(0,1fr) !important}.u-personas > .u-last{grid-column:span 1}}
 .f-bento > .f-last{grid-column:span 4}
 @media (max-width:960px){.f-bento > .f-last{grid-column:span 2 !important}}
-@media (max-width:640px){.f-bento > .f-last{grid-column:span 1 !important}}.f-sub::-webkit-scrollbar{display:none}
+@media (max-width:640px){.f-bento > .f-last{grid-column:span 1 !important}}
 .f-table td,.f-table th{padding:14px 16px;text-align:left;vertical-align:top;border-top:1px solid #243b34}
 .f-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac;border-top:0;padding-top:0}
 /* Trust page: proof lines, badge strip, data-flow diagram and audit-chain demo. CSS-only loops; base = intact state. */
@@ -300,15 +331,15 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     <div class="f-3col" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden"><div style="background:var(--surface);padding:24px;display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 14px;align-content:start"><span style="margin-top:2px;width:20px;height:20px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:11px;font-weight:700;display:grid;place-items:center">✓</span><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:18px;line-height:1.2;font-weight:700">Self-hosted</b><span style="grid-column:2;font-size:14px;color:var(--ink-2)">Runs in your network. No telemetry, no licence server, nothing sent to the project.</span><span class="t-check"><small>Check</small><span>every outbound path is in the <a href="Guide.dc.html?d=DATA_PROTECTION">Where data goes</a> table; a test fails if the code gains one it doesn't list</span></span></div><div style="background:var(--surface);padding:24px;display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 14px;align-content:start"><span style="margin-top:2px;width:20px;height:20px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:11px;font-weight:700;display:grid;place-items:center">✓</span><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:18px;line-height:1.2;font-weight:700">FIPS 140-approved</b><span style="grid-column:2;font-size:14px;color:var(--ink-2)">Every algorithm, enforced by a test; the suite also runs under OpenSSL's FIPS provider.</span><span class="t-check"><small>Check</small><span>a test rejects any non-approved algorithm; CI runs the suite on UBI 9 with FIPS mode on (<code>FIPS: True</code>). <a href="Guide.dc.html?g=57-answer-a-security-questionnaire-about-data-and-cryptography">Guide 57 →</a></span></span></div><div style="background:var(--surface);padding:24px;display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 14px;align-content:start"><span style="margin-top:2px;width:20px;height:20px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:11px;font-weight:700;display:grid;place-items:center">✓</span><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:18px;line-height:1.2;font-weight:700">Signed releases</b><span style="grid-column:2;font-size:14px;color:var(--ink-2)">Image and Helm chart signed with cosign, with SLSA provenance and an SPDX SBOM.</span><span class="t-check"><small>Check</small><span><code>cosign verify ghcr.io/anantharajuc/queryapigate:&lt;tag&gt;</code> <a href="Guide.dc.html?g=59-verify-a-release-before-you-run-it">Guide 59 →</a></span></span></div><div style="background:var(--surface);padding:24px;display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 14px;align-content:start"><span style="margin-top:2px;width:20px;height:20px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:11px;font-weight:700;display:grid;place-items:center">✓</span><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:18px;line-height:1.2;font-weight:700">Tamper-evident audit</b><span style="grid-column:2;font-size:14px;color:var(--ink-2)">Each administrative change chained and HMAC-signed, verifiable in one command.</span><span class="t-check"><small>Check</small><span><code>queryapigate audit verify</code> → <code>Intact: entries 1 to 214</code> <a href="Guide.dc.html?g=20-read-the-audit-log">Guide 20 →</a></span></span></div><div style="background:var(--surface);padding:24px;display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 14px;align-content:start"><span style="margin-top:2px;width:20px;height:20px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:11px;font-weight:700;display:grid;place-items:center">✓</span><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:18px;line-height:1.2;font-weight:700">Reviewed before stable</b><span style="grid-column:2;font-size:14px;color:var(--ink-2)">Features that guard access or data graduate only after a security review.</span><span class="t-check"><small>Check</small><span>ADR 17 records the rule and each graduation. <a href="https://github.com/AnanthaRajuC/QueryAPIGate/tree/main/documentation/adr">The ADRs →</a></span></span></div><div style="background:var(--surface);padding:24px;display:grid;grid-template-columns:22px minmax(0,1fr);gap:4px 14px;align-content:start"><span style="margin-top:2px;width:20px;height:20px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:11px;font-weight:700;display:grid;place-items:center">✓</span><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:18px;line-height:1.2;font-weight:700">Private disclosure</b><span style="grid-column:2;font-size:14px;color:var(--ink-2)">Vulnerabilities reported privately through GitHub, never in public issues.</span><span class="t-check"><small>Check</small><span>SECURITY.md: private form or email, acknowledgement within a few days. <a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/SECURITY.md">The policy →</a></span></span></div></div>
   </section>
 
-  <div class="f-sub" style="position:sticky;top:0;z-index:19;background:#10201b;border-bottom:1px solid #243b34;overflow-x:auto;margin-top:64px;display:{{ subDisplay }}">
-    <div style="max-width:1240px;margin:0 auto;padding:0 24px;display:flex;gap:4px;align-items:center;justify-content:safe center;min-width:max-content">
-      <sc-for list="{{ sub }}" as="s" hint-placeholder-count="6">
-        <a href="{{ s.href }}" style="display:flex;gap:8px;align-items:center;padding:14px 12px;font-size:13.5px;font-weight:500;color:{{ s.color }};border-bottom:2px solid {{ s.line }};margin-bottom:-1px;text-decoration:none;white-space:nowrap" style-hover="color:var(--on-ink);text-decoration:none"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">{{ s.num }}</span>{{ s.label }}</a>
-      </sc-for>
-    </div>
+  <nav class="rail" aria-label="Sections">
+    <a href="#data" data-rail="data"><span>Your data</span></a>
+    <a href="#controls" data-rail="controls"><span>Controls</span></a>
+    <a href="#documents" data-rail="documents"><span>Documents</span></a>
+  </nav>
+
   </div>
 
-  <section id="data" style="scroll-margin-top:124px">
+  <section id="data" style="scroll-margin-top:80px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:40px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end"><div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">01 · Your data</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Rows pass through. Nothing is kept unless you ask.</h2></div><p style="margin:0;color:var(--ink-2);text-wrap:pretty">What QueryAPIGate keeps, where it sends anything, and how to remove one person's trace.</p></div>
       <div role="img" aria-label="Rows pass from your databases through QueryAPIGate to the caller, masked and not kept. Eight outbound paths go to infrastructure you name: the log, traces, metrics, audit copies, live events, AI agents, exports and secret providers." style="border:1px solid var(--line);border-radius:14px;background:var(--surface-2);padding:22px;display:grid;gap:18px">
@@ -337,7 +368,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section id="controls" style="background:#10201b;color:#e6efeb;scroll-margin-top:124px">
+  <section id="controls" style="background:#10201b;color:#e6efeb;scroll-margin-top:80px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:36px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end"><div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">02 · Controls</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Access, audit, cryptography and releases, on the Enterprise page</h2></div><p style="margin:0;color:#9fb3ac;text-wrap:pretty">Each control is explained once, on the <a style="color:oklch(0.8 0.11 170)" href="Enterprise.dc.html">Enterprise page</a>, with the guide or test that backs it.</p></div>
       <div class="t-audit" role="img" aria-label="The audit chain: five entries, each signed over itself and the previous one. queryapigate audit verify reports them intact; when entry 3 is edited, verification reports the break at entry 3 and raises the audit_chain_broken alert.">
@@ -361,7 +392,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section id="documents" style="scroll-margin-top:124px">
+  <section id="documents" style="scroll-margin-top:80px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:36px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end"><div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">03 · Documents</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Documents for your review</h2></div><p style="margin:0;color:var(--ink-2);text-wrap:pretty">The architecture overview, questionnaire answers, threat model, where data goes and the security policy are in the <a href="Enterprise.dc.html#pack">security pack</a>. These sit alongside it, in the repository next to the code they describe.</p></div>
       <div style="border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden"><table class="t-docs" style="width:100%;border-collapse:collapse">
@@ -412,29 +443,5 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   </footer>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"showSubnav":{"editor":"boolean","default":true,"tsType":"boolean","section":"Navigation"}}'>
-class Component extends DCLogic {
-  state = { active: '' };
-  sections = [{ id: 'data', num: '01', label: 'Your data' }, { id: 'controls', num: '02', label: 'Controls' }, { id: 'documents', num: '03', label: 'Documents' }];
-  componentDidMount() {
-    if (!('IntersectionObserver' in window)) return;
-    this.vis = {};
-    this.obs = new IntersectionObserver((entries) => {
-      entries.forEach(e => { this.vis[e.target.id] = e.isIntersecting; });
-      const id = this.sections.map(s => s.id).find(k => this.vis[k]) || '';
-      if (id !== this.state.active) this.setState({ active: id });
-    }, { rootMargin: '-25% 0px -60% 0px' });
-    this.sections.forEach(s => { const el = document.getElementById(s.id); if (el) this.obs.observe(el); });
-  }
-  componentWillUnmount() { if (this.obs) this.obs.disconnect(); }
-  renderVals() {
-    const a = this.state.active;
-    return {
-      subDisplay: (this.props.showSubnav ?? true) ? 'block' : 'none',
-      sub: this.sections.map(s => ({ href: '#' + s.id, num: s.num, label: s.label, color: a === s.id ? 'var(--surface)' : '#9fb3ac', line: a === s.id ? 'oklch(0.62 0.13 170)' : 'transparent' })),
-    };
-  }
-}
-</script>
 </body>
 </html>

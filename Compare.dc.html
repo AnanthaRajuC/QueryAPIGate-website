@@ -22,6 +22,29 @@
 <script src="./support.js"></script>
 <script src="./theme.js?v=10"></script>
 <script src="./search.js?v=5" defer></script>
+<script>
+(function () {
+  // Section rail on the left: marks the section in view; clicking scrolls without touching the hash.
+  var ids = ['queries','dimensions','which','alongside'], raf = 0;
+  function dark(el) { var c = getComputedStyle(el).backgroundColor.match(/\d+/g); return c && c.length >= 3 && (c.length < 4 || +c[3] > 0) && (+c[0] + +c[1] + +c[2]) < 150; }
+  function update() {
+    raf = 0;
+    var rail = document.querySelector('.rail'), links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
+    var line = window.innerHeight * 0.35, cur = ids[0];
+    for (var i = 0; i < ids.length; i++) { var el = document.getElementById(ids[i]); if (el && el.getBoundingClientRect().top <= line) cur = ids[i]; }
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = ids[ids.length - 1];
+    for (var j = 0; j < links.length; j++) links[j].classList.toggle('on', links[j].getAttribute('data-rail') === cur);
+    // light colours while the rail sits over a dark section
+    var r = rail.getBoundingClientRect(), mid = r.top + r.height / 2, onDark = false;
+    document.querySelectorAll('section, footer').forEach(function (sec) { var b = sec.getBoundingClientRect(); if (b.top <= mid && b.bottom >= mid && dark(sec)) onDark = true; });
+    rail.classList.toggle('dark', onDark);
+  }
+  function tick() { if (!raf) raf = requestAnimationFrame(update); }
+  window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
+  document.addEventListener('click', function (e) { var a = e.target.closest('.rail a[data-rail]'); if (!a) return; var el = document.getElementById(a.getAttribute('data-rail')); if (!el) return; e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
+})();
+</script>
 </head>
 <body>
 <x-dc>
@@ -204,6 +227,16 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .rs-dd-mcp-inner b{font-size:13.5px;font-weight:600}
 .rs-dd-mcp-inner span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
 @media (max-width:1180px){.rs-dd-mcp .rs-dd-panel{display:none !important}.rs-dd-mcp .rs-caret{display:none}}
+/* Section rail on the left, as on Features; over the dark sections it switches to light colours. */
+.rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:30;display:grid;gap:10px;transition:opacity 0.25s;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
+.rail a{display:flex;align-items:center;gap:12px;color:#9fb3ac;text-decoration:none;transition:color 0.2s}
+.rail a::before{content:'';flex:none;width:22px;height:1px;background:var(--line-2);transition:width 0.25s,background 0.25s,height 0.25s}
+.rail a:hover{color:var(--ink);text-decoration:none}
+.rail a.on{color:var(--ink)}.rail a.on::before{width:40px;height:2px;background:oklch(0.52 0.11 170)}
+.rail.dark a{color:#7c8f88}.rail.dark a::before{background:#34413d}.rail.dark a:hover,.rail.dark a.on{color:#e6efeb}.rail.dark a.on::before{background:oklch(0.62 0.13 170)}
+@media (max-width:1599px){.rail span{opacity:0;visibility:hidden;transform:translateX(-6px);transition:opacity 0.2s,transform 0.2s,visibility 0.2s}.rail:hover span{opacity:1;visibility:visible;transform:none}}
+@media (max-width:1279px){.rail{display:none}}
+@media (prefers-reduced-motion:reduce){.rail a::before,.rail span{transition:none}}
 </style>
 </helmet>
 <div data-screen-label="Compare" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
@@ -239,14 +272,21 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     <p style="margin:0;font-size:19px;color:var(--ink-2);max-width:60ch;text-wrap:pretty">The tools below are good at what they do. This page is about the shape of the problem each one solves, so you can pick the right one quickly.</p>
   </header>
 
-  <section class="f-pad" style="max-width:1240px;margin:0 auto;padding:0 24px 72px">
+    <nav class="rail" aria-label="Sections">
+    <a href="#queries" data-rail="queries"><span>Queries, not tables</span></a>
+    <a href="#dimensions" data-rail="dimensions"><span>Eight dimensions</span></a>
+    <a href="#which" data-rail="which"><span>Which one</span></a>
+    <a href="#alongside" data-rail="alongside"><span>Alongside</span></a>
+  </nav>
+
+  <section id="queries" class="f-pad" style="scroll-margin-top:80px;max-width:1240px;margin:0 auto;padding:0 24px 72px">
     <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:32px;padding:clamp(24px,3vw,40px);border-radius:16px;background:#10201b;color:#e6efeb;box-shadow:0 40px 80px -40px rgba(16,32,27,0.5)">
       <div style="display:grid;gap:10px;align-content:start"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:oklch(0.8 0.11 170)">The one-line difference</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(24px,2.8vw,34px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Others expose tables. QueryAPIGate exposes queries you wrote.</h2></div>
       <p style="margin:0;font-size:17px;line-height:1.6;color:var(--line-2);text-wrap:pretty">Most data-API tools expose <em>tables</em> and let the caller compose the query. QueryAPIGate exposes <em>queries you wrote</em>, and governs who may call each one, what rows and columns they get back, and leaves a record. It is for the moment you want to hand data to a partner, a pipeline or an AI agent without handing them your schema.</p>
     </div>
   </section>
 
-  <section style="background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <section id="dimensions" style="scroll-margin-top:80px;background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;gap:28px">
       <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end">
         <div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">Side by side</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Eight dimensions, five tools</h2></div>
@@ -260,7 +300,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section>
+  <section id="which" style="scroll-margin-top:80px">
     <div class="f-pad" style="max-width:1240px;margin:0 auto;padding:88px 24px;display:grid;gap:36px">
       <div style="display:grid;gap:10px;max-width:70ch"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">Decision</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Which one, in one glance</h2></div>
       <div class="c-pick" style="display:grid;gap:16px">
@@ -270,7 +310,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
-  <section style="background:var(--surface);border-top:1px solid var(--line)">
+  <section id="alongside" style="scroll-margin-top:80px;background:var(--surface);border-top:1px solid var(--line)">
     <div class="f-pad f-2col" style="max-width:1240px;margin:0 auto;padding:80px 24px 88px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:40px;align-items:start">
       <div style="display:grid;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)">In practice</span><h2 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance">Alongside, not instead</h2></div>
       <div style="display:grid;gap:20px"><p style="margin:0;font-size:17px;line-height:1.6;color:var(--ink-2);text-wrap:pretty">QueryAPIGate sits in front of databases you already run. Teams use it next to PostgREST (internal app traffic there, partner and agent traffic here), behind an existing API gateway for TLS and routing, and under Airflow or cron for scheduled deliveries. The Management API means it can be configured from the same place as the rest of your infrastructure.</p>
