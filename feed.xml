@@ -5,8 +5,16 @@
   <link href="https://anantharajuc.github.io/QueryAPIGate-website/Blog.dc.html"/>
   <link rel="self" href="https://anantharajuc.github.io/QueryAPIGate-website/feed.xml"/>
   <id>https://anantharajuc.github.io/QueryAPIGate-website/Blog.dc.html</id>
-  <updated>2026-10-11T12:00:00Z</updated>
+  <updated>2026-10-24T12:00:00Z</updated>
   <author><name>QueryAPIGate</name></author>
+  <entry>
+    <title>What a governed call costs</title>
+    <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=what-a-governed-call-costs"/>
+    <id>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=what-a-governed-call-costs</id>
+    <updated>2026-10-24T12:00:00Z</updated>
+    <category term="Benchmark"/>
+    <summary>QueryAPIGate 0.42 on PostgreSQL, measured properly: masking and table allow-lists now cost about 7%, one worker serves 730-875 calls a second, and most of what&#x27;s left is round trips. The full method, every result with its range, where the time goes, a sizing rule, and what our first two attempts got wrong.</summary>
+  </entry>
   <entry>
     <title>Thirteen releases on the way to 1.0</title>
     <link href="https://anantharajuc.github.io/QueryAPIGate-website/Changelog.dc.html"/>

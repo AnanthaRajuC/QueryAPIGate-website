@@ -705,10 +705,18 @@ export const docs = [
 
 /* Blog posts, newest first: the Blog page, each post's page, the search index, the sitemap and feed.xml all read this list.
    To publish: add blog/<slug>.md and an entry here, then run python3 tools/search_index.py.
-   date: "YYYY-MM-DD" (or "YYYY-MM"). cat: Performance, Release, Design note or Migration; a new one gets a filter of its own.
+   date: "YYYY-MM-DD" (or "YYYY-MM"). cat: Benchmark, Performance, Release, Design note or Migration; a new one gets a filter of its own.
    topic and version are optional labels. summary is the card text. featured: true puts a post in the large card at the top
    (otherwise the newest is). href sends the card somewhere other than blog/<slug>.md, such as the changelog. */
 export const posts = [
+ {
+  "slug": "what-a-governed-call-costs",
+  "title": "What a governed call costs",
+  "date": "2026-10-24",
+  "cat": "Benchmark",
+  "topic": "Operations",
+  "summary": "QueryAPIGate 0.42 on PostgreSQL, measured properly: masking and table allow-lists now cost about 7%, one worker serves 730-875 calls a second, and most of what's left is round trips. The full method, every result with its range, where the time goes, a sizing rule, and what our first two attempts got wrong."
+ },
  {
   "slug": "thirteen-releases-to-1-0",
   "title": "Thirteen releases on the way to 1.0",
