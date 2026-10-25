@@ -4432,800 +4432,6 @@ SQL editor, the demo video and the architecture.
 </table>
 
 
-# Performance
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE
-
-# Performance
-
-> **For PostgreSQL, read [Performance, v3](PERFORMANCE_V3.md) instead.** It's a more careful run: pinned cores,
-> 5 interleaved rounds per comparison with their ranges, open-loop load, a simulated network, a measured round-trip
-> count, and a profile. It also corrects two figures on this page. A call's statements on the store went from 7 to 3, not "about 5.5 to about 2.6". And the
-> PostgreSQL throughput here is about half what that machine gives in a steady state.
-
-**The short answer:** QueryAPIGate adds a millisecond or two to a request, and almost none of that is the governance.
-In front of PostgreSQL, one container in its default configuration serves about 300-400 requests a second, reads or
-writes, with a key's masking and table allow-list on or off. Throughput grows with the number of containers. The
-database is rarely the limit: in these tests PostgreSQL used about a core or less per container.
-
-This page is what we measured, where the time goes, and how to measure it on your own hardware. Every number comes
-from one laptop, so read them as a guide to proportions, not a promise. The same laptop measured about half these
-numbers earlier on the same day, even on `/health`, which does no work. Compare numbers within a table, not across
-tables or with your own machine.
-
-## How it was measured
-
-- **The machine:** a 20-thread Intel i7-12700H laptop with 32 GB of memory. The load generator, QueryAPIGate and the
-  database all ran on it, so there's no network hop, and the load generator takes CPU from the server.
-- **The server:** QueryAPIGate as the Docker image runs it: gunicorn, **one worker with eight threads**
-  (`--worker-class gthread`), the access log on. For [Scaling out](#scaling-out-in-front-of-postgresql), 2, 4 and 8
-  workers.
-- **The load:** [oha](https://github.com/hatoo/oha), a 3-second warm-up, then 10 seconds per run. For PostgreSQL,
-  each request asks for a random row, so nothing is answered from a cache the test made warm.
-- **Two setups:**
-    - the bundled [example APIs](EXAMPLES.md) on SQLite, to show the gateway's own cost on a database that answers
-      in microseconds;
-    - an OLTP database on PostgreSQL 16 - pgbench's 10-million-row bank schema, with QueryAPIGate's own store in the
-      same PostgreSQL, as a production deployment would have it.
-
-Measured 2026-10-23 on `main` after 0.41.0, with the changes this page describes.
-
-## The example APIs on SQLite
-
-- **Two queries:**
-    - a **primary-key lookup** (`SELECT film_id, title FROM film WHERE film_id = :film_id`), so the gateway's own cost
-      shows;
-    - `example_film_lookup`, a **join and aggregate** over the rentals table, as a realistic query.
-- **Two kinds of key:**
-    - **plain** - a scoped key with no masking and no table allow-list;
-    - **governed** - the same key with `allowed_tables` and a masking rule that hashes `title` on every row.
-
-Requests a second, and latency in milliseconds:
-
-| Call | Concurrency | req/s | p50 | p99 |
-|---|---|---|---|---|
-| `/health` - the floor | 1 | 1,583 | 0.6 | 1.3 |
-| Primary-key lookup, plain key | 1 | 839 | 1.2 | 1.9 |
-| Primary-key lookup, **governed key** | 1 | 778 | 1.2 | 2.4 |
-| Join query, plain key | 1 | 526 | 1.9 | 2.9 |
-| Join query, **governed key** | 1 | 510 | 1.9 | 3.1 |
-| Join query, governed key | 8 | 583 | 12.6 | 26.7 |
-| Join query, governed key | 32 | 505 | 61.8 | 92.5 |
-
-A governed call costs about the same as a plain one. Masking and the table check are worked out once per statement
-and reused, so on a repeated call they add almost nothing.
-
-Throughput stays flat as concurrency rises; latency is what grows. One worker process runs Python code on one core
-at a time, so extra concurrent callers wait their turn: 32 callers sharing about 500 requests a second each wait
-about 60 ms. That's why you scale by adding processes rather than threads (see [Scaling](#scaling)).
-
-## An OLTP database on PostgreSQL
-
-### The database
-
-pgbench's TPC-B-like schema at scale 100 (`pgbench -i -s 100`): 1.5 GB, in a `postgres:16` container started with
-`-c shared_buffers=2GB -c max_connections=300` - the whole database fits in memory, so this measures the gateway,
-not the disk.
-
-| Table | Rows | Columns | Key |
-|---|---|---|---|
-| `pgbench_accounts` | 10,000,000 | `aid integer`, `bid integer`, `abalance integer`, `filler character(84)` | primary key `aid` |
-| `pgbench_branches` | 100 | `bid integer`, `bbalance integer`, `filler character(88)` | primary key `bid` |
-| `pgbench_tellers` | 1,000 | `tid integer`, `bid integer`, `tbalance integer`, `filler character(84)` | primary key `tid` |
-| `pgbench_history` | 0 at the start | `tid`, `bid`, `aid`, `delta integer`, `mtime timestamp`, `filler character(22)` | none |
-
-QueryAPIGate's own store - keys, saved queries, connections, run history - was a second database, `qagstore`, in the
-same PostgreSQL (`QUERYAPIGATE_DATABASE_URL`).
-
-### The calls
-
-Three saved queries, run through `/q/<name>` with a random id on every request:
-
-| Saved query | SQL | Called as |
-|---|---|---|
-| `account` - a **lookup** | `SELECT aid, bid, abalance FROM pgbench_accounts WHERE aid = :aid` | `/q/account?aid=` 1 to 9,999,999 |
-| `account_page` - a **100-row page** with a join | `SELECT a.aid, a.abalance, b.bid, b.bbalance FROM pgbench_accounts a JOIN pgbench_branches b ON b.bid = a.bid WHERE a.aid BETWEEN :start AND :start + 99 ORDER BY a.aid` | `/q/account_page?start=` 1 to 999,999`&page_size=100` |
-| `deposit` - a **write** | `UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid` | `/q/deposit?aid=` 1 to 9,999,999`&delta=` 1 to 9 |
-
-And three keys:
-
-- **plain** - granted `account` and `account_page`, nothing else;
-- **governed** - the same, plus `allowed_tables` (`pgbench_accounts`, `pgbench_branches`) and a masking rule that
-  hashes `*.abalance`;
-- **writer** - granted `deposit`, with `allow_writes` and `allowed_write_ops: ["update"]`, on a server started with
-  `QUERYAPIGATE_ALLOW_WRITES=1`.
-
-Every request in every run below returned 200, and the writes landed.
-
-### The database on its own
-
-pgbench against the same container, for scale:
-
-| Workload | Clients | Transactions a second | Average latency |
-|---|---|---|---|
-| Primary-key read (`pgbench -S`) | 1 | 11,821 | 0.085 ms |
-| Primary-key read (`pgbench -S`) | 32 | 221,481 | 0.144 ms |
-| TPC-B transaction - three updates, a select and an insert | 32 | 20,869 | 1.5 ms |
-
-A lookup costs PostgreSQL under a tenth of a millisecond. Whatever a call through the gateway takes beyond that is the
-gateway.
-
-### Through the gateway: one container
-
-One worker, eight threads, 32 concurrent callers; requests a second. *Before* is the request path before the changes
-to the store reads and the pool below. *Now* is this version's, at its defaults. *Now, with the metadata cache* adds `QUERYAPIGATE_METADATA_CACHE_TTL=5` (see
-[The metadata cache](#the-metadata-cache)).
-
-| Call | Before | Now | Now, with the metadata cache |
-|---|---|---|---|
-| Lookup, plain key | 326 | 368 | 430 |
-| Lookup, governed key | 343 | 338 | 392 |
-| 100-row page | 306 | 318 | 346 |
-| Write | 326 | 368 | 420 |
-
-The lookup row is the median of three rounds, run interleaved; the others are one run each. Runs varied by up to about
-10% between rounds, so a smaller difference than that, such as the governed lookup's, isn't one.
-
-Latency for one caller at a time, the lookup with a plain key, median of three rounds:
-
-| | req/s | p50 |
-|---|---|---|
-| Before | 414 | 1.9 ms |
-| Now | 440 | 1.8 ms |
-| Now, with the metadata cache | 692 | 1.2 ms |
-
-### Scaling out in front of PostgreSQL
-
-Requests a second with 64 concurrent callers, by the number of gunicorn workers - each one a process like a
-container's:
-
-| Workers | Before: lookups / writes | Now: lookups / writes | Now, with the metadata cache: lookups / writes |
-|---|---|---|---|
-| 1 | 339 / 380 | 419 / 410 | 473 / 464 |
-| 2 | 1,094 / 921 | 933 / 928 | 1,144 / 1,157 |
-| 4 | 1,336 / 1,308 | 1,444 / 1,447 | 1,876 / 1,830 |
-| 8 | 1,926 / 1,763 | 2,093 / 2,078 | 2,732 / 2,650 |
-
-- **Processes add throughput.** Eight of them served five to six times what one did, on the same database.
-- **One process with 64 callers does worse than its share.** The callers queue for its eight threads, which is why the
-  step from one worker to two is more than double. Don't size capacity from one overloaded process.
-- **The metadata cache matters more as you scale out.** With 8 workers, it's 30% more requests a second, and the
-  store's PostgreSQL has far less to do.
-- **These are workers on one 20-thread laptop**, sharing it with the database and the load generator. Containers on
-  their own hosts would scale more cleanly.
-
-## Where the time goes
-
-On SQLite, each part of a call, measured on its own:
-
-| Part of a call | Primary-key lookup | Join query |
-|---|---|---|
-| The database query itself | 0.009 ms | 0.26 ms |
-| The read-only SQL check | 0.01 ms | 0.03 ms |
-| The table check (`allowed_tables`), first call for a statement | 0.3 ms | 1.5 ms |
-| Masking's trace of the result columns, first call for a statement | 6.9 ms | 28.9 ms |
-
-The first call for a statement pays for the table check and the masking trace; after that, both are reused. The
-table check depends only on the query text, so it can't go stale. The masking trace depends on the connection's
-schema too, so it is kept only as long as QueryAPIGate keeps that schema - 60 seconds - and is worked out again after
-that, or straight away when the connection is changed.
-
-The rest is the gateway itself, the same for every query: authentication, limits, the record of the run, the HTTP
-response. Against a database that takes 50 ms to answer, it hardly matters; against one that answers in 0.01 ms, it's
-nearly the whole call. Serialization is small at typical page sizes - about 0.1 ms here.
-
-Part of that fixed cost is QueryAPIGate's own store. Every call reads the key its secret belongs to, the saved query
-and the connection, and adds a run to the history. Transactions on the store, per call, counted in PostgreSQL's
-`pg_stat_database` over 200 lookups:
-
-| | Store transactions per call |
-|---|---|
-| Before | about 5.5 - the saved query was read three times |
-| Now | about 2.6 - one read each for the key, the query and the connection; history in batches |
-| Now, with the metadata cache | about 0 - only the batched history writes, about one a second |
-
-The data database saw about one transaction per call throughout: the query itself.
-
-## What governance costs
-
-Column masking has to know which source column each result column comes from, so it traces the query through its
-aliases, joins, subqueries and unions - a few milliseconds of SQL analysis. The table check parses the query to find
-the tables it reads. Before the caches, both ran on every call, and a governed key was 4-8 times slower than a plain
-one.
-
-Caching doesn't change what is masked or what is refused. A query that can't be traced or checked is refused every
-time, the same as before. Both caches have a fixed size, so a key sending many different ad-hoc queries can't make
-them grow without bound.
-
-## The metadata cache
-
-`QUERYAPIGATE_METADATA_CACHE_TTL` (seconds, off by default) keeps the rows a call reads from the store - the API key,
-the saved query, the connection - in memory for that long, instead of reading them again on every call. In the
-tests above, it took the store out of a call's path: 10-20% more throughput for a container, and a third off the
-latency of a single call (1.8 ms to 1.2 ms).
-
-What it caches is the rows, never a decision: whether a key is active, expired, used from an allowed address or still
-inside a rotation's grace period is checked on every call, against the cached row. What it can delay is a change:
-
-- **A change made through the same server** - the Console, the Management API - is seen at once: every change to the
-  store clears this server's cache.
-- **A change made anywhere else** - another instance, another gunicorn worker, the `queryapigate` CLI, an edit straight
-  to the database - is seen up to one TTL later. A key revoked on one instance keeps working on the others for that
-  long.
-
-So it is a trade: a few seconds of delay for a revocation that reaches other instances, for fewer reads on the store.
-Leave it off if a revoked key must stop working everywhere at once; with one instance, a TTL of a few seconds changes
-nothing anyone would notice.
-
-## Scaling
-
-- **More containers, not more threads.** Each container is one Python process. Run several behind a load balancer
-  on a shared PostgreSQL store and Redis, and throughput grows with the number of containers - see [Scaling
-  out](DEPLOYMENT.md#scaling-out) and [Run several instances behind a load
-  balancer](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/42-run-several-instances.md).
-- **Why one worker per container.** `/metrics` is counted per process (and, without Redis, so are rate limits), so
-  with several workers in one container a scraper would read one worker's numbers at random. One worker per
-  container keeps every count complete.
-- **The eight threads are for waiting.** They let one container keep serving while some calls wait on a slow
-  database or a long-lived `/events` connection. They don't add CPU: in an earlier, slower run on the same laptop, one
-  worker served 119, 169 and 164 requests a second with 1, 2 and 8 threads.
-- **The database can take it.** In that earlier run, at 8 processes and 1,700 requests a second, PostgreSQL used about
-  four cores - mostly for QueryAPIGate's own store, not the queries. The metadata cache takes most of that away.
-
-## Making it faster
-
-- **Cache what you can.** A saved query with a [`cache_ttl`](API.md#response-caching) is answered without the
-  database for repeat calls.
-- **Turn on the [metadata cache](#the-metadata-cache)** if a few seconds' delay for a change made on another
-  instance is acceptable.
-- **Tune the connection pool** for the number of callers -
-  [Diagnose and tune the connection pool](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/37-tune-the-connection-pool.md).
-  The default of 8 idle connections matches the Docker image's 8 threads. Below that, a busy server closes
-  connections only to open new ones for the next calls.
-- **Stream large results** with `?stream=true` instead of paging through them - see
-  [Streaming exports](API.md#streaming-exports).
-- **Look at the database first.** On anything bigger than a primary-key lookup, the query plan and indexes usually
-  matter more than anything in the gateway.
-
-## What wasn't measured
-
-MySQL and ClickHouse as the data source; a database across a network, with the round trip that comes with it; large
-result sets; the MCP server; and several containers behind a load balancer - the scaling numbers are several workers
-on one machine. Measure on your own hardware before you plan capacity from these numbers.
-
-## Measure it yourself
-
-### On the example APIs
-
-Start a server the way the Docker image does, on the example APIs:
-
-```bash
-pip install "queryapigate[server,flow]"   # flow: the SQL analysis masking uses
-mkdir -p /tmp/qag-bench
-QUERYAPIGATE_HOME=/tmp/qag-bench QUERYAPIGATE_API_KEY=bench-admin QUERYAPIGATE_LOAD_EXAMPLES=1 \
-  gunicorn --bind 127.0.0.1:5090 --workers 1 --worker-class gthread --threads 8 \
-  --access-logfile /tmp/qag-bench/access.log -c python:queryapigate.gunicorn_conf 'queryapigate.app:create_app()'
-```
-
-Create a governed key, then put load on a query with it:
-
-```bash
-curl -s -X POST http://127.0.0.1:5090/api/v1/api-keys -H 'X-API-Key: bench-admin' -H 'Content-Type: application/json' \
-  -d '{"name": "bench-governed", "queries": ["example_film_lookup"], "connections": [],
-       "allowed_tables": ["film", "rental"], "mask": [{"column": "*.title", "action": "hash"}]}'
-# copy the "secret" from the response
-
-docker run --rm --network host ghcr.io/hatoo/oha -z 10s -c 8 -H 'X-API-Key: <the secret>' \
-  'http://127.0.0.1:5090/q/example_film_lookup?film_id=7'
-```
-
-Run a few seconds first as a warm-up - the first calls for each statement pay for the table check and the masking
-trace - then measure for at least 10 seconds: once with `-c 1` for latency on an idle server, then at higher
-concurrency for throughput. Point it at your own queries and database for numbers you can plan from.
-
-### On PostgreSQL
-
-A PostgreSQL with pgbench's schema, and a second database for QueryAPIGate's store:
-
-```bash
-docker run -d --name qag-bench-pg -e POSTGRES_PASSWORD=pw -p 55433:5432 postgres:16 \
-  -c shared_buffers=2GB -c max_connections=300
-docker exec qag-bench-pg psql -U postgres -c 'CREATE DATABASE bench' -c 'CREATE DATABASE qagstore'
-docker exec qag-bench-pg pgbench -U postgres -i -s 100 bench     # 10 million accounts, about 1.5 GB
-docker exec qag-bench-pg pgbench -U postgres -S -c 32 -j 8 -T 10 bench   # the database on its own
-```
-
-QueryAPIGate on that store - `psycopg2` is in the `postgres` extra:
-
-```bash
-pip install "queryapigate[server,postgres]"
-mkdir -p /tmp/qag-oltp
-QUERYAPIGATE_HOME=/tmp/qag-oltp QUERYAPIGATE_API_KEY=bench-admin \
-  QUERYAPIGATE_DATABASE_URL=postgresql://postgres:pw@127.0.0.1:55433/qagstore \
-  gunicorn --bind 127.0.0.1:5091 --workers 1 --worker-class gthread --threads 8 \
-  -c python:queryapigate.gunicorn_conf 'queryapigate.app:create_app()'
-```
-
-A connection, the lookup as a saved query, and a key for it:
-
-```bash
-A='X-API-Key: bench-admin'; J='Content-Type: application/json'; U=http://127.0.0.1:5091
-curl -s -X POST $U/api/v1/connections -H "$A" -H "$J" -d '{"name": "oltp", "db": "postgres", "host": "127.0.0.1",
-  "port": 55433, "database": "bench", "user": "postgres", "password": "pw", "active": true}'
-curl -s -X POST $U/api/v1/queries -H "$A" -H "$J" -d '{"name": "account", "connection_name": "oltp",
-  "sql": "SELECT aid, bid, abalance FROM pgbench_accounts WHERE aid = :aid",
-  "parameters": {"aid": {"type": "int", "required": true}}, "description": "One account", "publish": true}'
-curl -s -X POST $U/api/v1/api-keys -H "$A" -H "$J" -d '{"name": "bench", "queries": ["account"], "connections": []}'
-# copy the "secret" from the response
-```
-
-Then the load, with a random account on every request:
-
-```bash
-docker run --rm --network host ghcr.io/hatoo/oha -z 10s -c 32 -H 'X-API-Key: <the secret>' \
-  --rand-regex-url 'http://127.0.0.1:5091/q/account\?aid=[1-9][0-9]{0,6}'
-```
-
-Restart gunicorn with `QUERYAPIGATE_METADATA_CACHE_TTL=5` to see the metadata cache, or with `--workers 4` to see a
-second process's worth. When you're done, `docker rm -fv qag-bench-pg` removes the container and its data.
-
-
-# Performance, v2: an OLTP benchmark on PostgreSQL
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V2
-
-# Performance, v2: an OLTP benchmark on PostgreSQL
-
-> **Superseded by [Performance, v3](PERFORMANCE_V3.md).** v3 reruns this page's 3-round blocks with 5 rounds,
-> calibrates the round-trip count, adds sizing, and fixes the overstatements a review of this page found. The
-> numbers below aren't wrong, but v3's are the ones to use.
-
-**The short answer.** With one gunicorn worker (as in the Docker image) in front of PostgreSQL, a saved query by
-primary key at 32 concurrent callers:
-
-| | v0.41.0 | `main` (unreleased 0.42) | `main` with the metadata cache |
-|---|---|---|---|
-| Requests a second | 682 | 743 | 875 |
-| One caller at a time, p50 | 1.43 ms | 1.38 ms | 1.05 ms |
-| With a governed key (masking and a table allow-list) | 171 | 693 | 802 |
-
-- **The governance features cost about 7% now.** A key with masking and a table allow-list is about 4× faster than
-  in v0.41.0.
-- **One process serves 740-875 requests a second.** Latency holds until the load reaches about 75% of that.
-- **More processes add throughput.** Eight workers reached 2,200-2,700 requests a second on four physical cores.
-- **PostgreSQL is never the limit here.** At most it used 2 of the 4 hardware threads it had.
-- **The remaining cost of a call** is about 1 ms of Python (logging alone takes a fifth of it), plus 4 round trips
-  to the data database for every query. Over a real network, those round trips dominate.
-
-Every number below is the median of 3-5 interleaved rounds with its min-max range. A difference counts as real only
-when the two ranges don't overlap. This page replaces the PostgreSQL parts of [PERFORMANCE.md](PERFORMANCE.md), whose
-method two reviews found too weak for its comparisons. [What changed from v1](#what-changed-from-v1) lists what
-was fixed, and what v1 got wrong.
-
-## Contents
-
-- [Method](#method)
-- [Results](#results)
-- [Where the time goes](#where-the-time-goes)
-- [What to do with this](#what-to-do-with-this)
-- [What changed from v1](#what-changed-from-v1)
-- [Limits](#limits)
-- [Run it yourself](#run-it-yourself)
-
-## Method
-
-### The machine, and how it was kept steady
-
-One laptop: an Intel i7-12700H with 6 performance cores (CPUs 0-11, two threads each) and 8 efficiency cores (CPUs
-12-19), 32 GB of memory, Ubuntu with kernel 6.8. In v1, the same code measured 2× apart on different runs. Most of
-that was the laptop: on battery, on a power-saving profile, and with nothing pinned, so the scheduler could move
-any part onto a slow efficiency core at any moment. This run:
-
-- **On AC power, power profile `performance`,** CPU energy preference `performance`. Turbo stayed on, since turning
-  it off needs root.
-- **Each part on its own cores,** so they don't take CPU from each other:
-
-  | Part | CPUs | How |
-  |---|---|---|
-  | QueryAPIGate (gunicorn) | 0-7: four performance cores, both threads of each | `taskset -c 0-7` |
-  | PostgreSQL | 8-11: two performance cores | `docker run --cpuset-cpus 8-11` |
-  | Load generator (oha) and pgbench | 12-19: the efficiency cores | `docker run --cpuset-cpus 12-19` |
-
-- **No proxy in the path.** The gateway reached PostgreSQL at the container's own address, not through Docker's
-  published port, whose userland proxy is another unpinned process copying every byte.
-- **A floor before and after every block:** 10 s of `/health` on one worker, the same work every time, so a machine
-  that changed speed shows up. Across the 2 h 25 min of the run it stayed between 1,934 and 2,296 requests a second,
-  -13% to +3% of its median. The low end came in the last blocks (network, mixed, threads), which compare only
-  within themselves. The CPU package ran at
-  65-100 °C, and the busiest gateway core's clock was sampled every 2 s of every run (2.4-4.4 GHz). Both are recorded
-  per run.
-
-Software: Python 3.12.3, gunicorn 26.2.0, Flask 3.1.1, psycopg2 2.9.10, sqlglot 25.34.1, PostgreSQL 16.15
-(`postgres:16`), oha 1.16.0 pinned by digest
-(`ghcr.io/hatoo/oha@sha256:3ec3dbf549ea197793482d47a6324797411406bbf438c2fe8b91f244ec641a2f`).
-
-### The builds
-
-| Label | What | Commit |
-|---|---|---|
-| **v0.41.0** | the 0.41.0 release | `f61d4ed` |
-| **main** | `main` after the performance work in #88, unreleased - what 0.42 will ship | `c9b15c2` |
-| **main+cache** | the same, with `QUERYAPIGATE_METADATA_CACHE_TTL=5` | `c9b15c2` |
-
-Each is exported from git (`git archive`) and run as the Docker image runs it: gunicorn with the `gthread` worker,
-8 threads, the access log on, everything else at its default (so v0.41.0 has a pool of 5, `main` a pool of 8).
-
-### The database
-
-pgbench's TPC-B-like schema at scale 100 (`pgbench -i -s 100`), 1.5 GB, fully in memory
-(`shared_buffers=2GB`, `max_connections=300`, `synchronous_commit=on`):
-
-| Table | Rows | Columns | Key |
-|---|---|---|---|
-| `pgbench_accounts` | 10,000,000 | `aid integer`, `bid integer`, `abalance integer`, `filler character(84)` | primary key `aid` |
-| `pgbench_branches` | 100 | `bid integer`, `bbalance integer`, `filler character(88)` | primary key `bid` |
-| `pgbench_tellers` | 1,000 | `tid integer`, `bid integer`, `tbalance integer`, `filler character(84)` | primary key `tid` |
-| `pgbench_history` | 0 | `tid`, `bid`, `aid`, `delta integer`, `mtime timestamp`, `filler character(22)` | none |
-
-QueryAPIGate's own store - keys, saved queries, connections, run history - is a second database, `qagstore`, in the
-same PostgreSQL, as `QUERYAPIGATE_DATABASE_URL`.
-
-### The calls and the keys
-
-Three saved queries on one connection, `oltp`, called with a random id on every request:
-
-| Saved query | SQL | Called as |
-|---|---|---|
-| `account` - a **lookup** | `SELECT aid, bid, abalance FROM pgbench_accounts WHERE aid = :aid` | `/q/account?aid=` 1 to 9,999,999 |
-| `account_page` - a **100-row page** | `SELECT a.aid, a.abalance, b.bid, b.bbalance FROM pgbench_accounts a JOIN pgbench_branches b ON b.bid = a.bid WHERE a.aid BETWEEN :start AND :start + 99 ORDER BY a.aid` | `/q/account_page?start=` 1 to 999,999`&page_size=100` |
-| `deposit` - a **write** | `UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid` | `/q/deposit?aid=` 1 to 9,999,999`&delta=` 1 to 9 |
-
-| Key | Grants |
-|---|---|
-| **plain** | `{"queries": ["account", "account_page"], "connections": []}` |
-| **governed** | the same, plus `"allowed_tables": ["pgbench_accounts", "pgbench_branches"]` and `"mask": [{"column": "*.abalance", "action": "hash"}]` |
-| **writer** | `{"queries": ["deposit"], "connections": [], "allow_writes": true, "allowed_write_ops": ["update"]}`, on a server with `QUERYAPIGATE_ALLOW_WRITES=1` |
-
-[`benchmarks/oltp.py`](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/benchmarks/oltp.py) creates all of
-them through the Management API. Every one of the run's 5.8 million requests returned 200.
-
-### The load
-
-- **Closed loop**, for throughput: `oha -c N` keeps N callers, each sending its next request when the last one
-  answers. Each run is 30 s, after a 5 s warm-up at 8 callers that also fills the pool and the governance caches.
-- **Open loop**, for latency against load: `oha -q R --latency-correction` sends R requests a second whatever
-  happens, and measures each from when it should have been sent. That avoids coordinated omission, where a closed
-  loop under-reports latency at saturation because a slow answer delays the next request. Rates of 25%, 50%, 75%,
-  90%, 100% and 110% of the build's closed-loop capacity, 20 s each, 128 connections available.
-- **Interleaved.** Within a block, every round runs every build (or setting) once, in an order rotated each round -
-  A B C, then B C A, then C A B - so none always runs first, warmest or coolest.
-
-### What is recorded for each run
-
-- Requests a second, the success rate and every status code; p50, p90, p99 and p99.9 latency (oha's own
-  percentiles).
-- **CPU, in cores:** the gateway's from `/proc` (master and workers), PostgreSQL's from its container's cgroup
-  (`cpu.stat`), each divided by the run's wall time.
-- **Transactions per request** on the store and on the data database, from `pg_stat_database`. These are exact for
-  30 s runs; for exact *statement* counts, `log_statement = 'all'` was turned on for a few hundred requests (see
-  [Round trips](#round-trips-per-call)).
-- The busiest gateway core's clock and the CPU package temperature.
-
-All of it is in
-[`benchmarks/results/oltp-postgres-2026-10-23/`](https://github.com/AnanthaRajuC/QueryAPIGate/tree/main/benchmarks/results/oltp-postgres-2026-10-23):
-`results.jsonl` (one line per run), `results.md` (every table, generated by `benchmarks/oltp_report.py`), the
-per-second latency of the cold-path runs, and the py-spy profiles.
-
-## Results
-
-### The database on its own
-
-pgbench from the load generator's cores, 5 rounds of 10 s:
-
-| Workload | Clients | Transactions a second | Average latency |
-|---|---|---|---|
-| Primary-key read (`pgbench -S`) | 1 | 38,289 (37,465-39,586) | 0.026 ms |
-| Primary-key read (`pgbench -S`) | 32 | 112,321 (96,140-123,670) | 0.285 ms |
-| TPC-B: three updates, a select, an insert | 32 | 12,970 (12,617-15,293) | 2.5 ms |
-
-A lookup costs PostgreSQL 0.03 ms on two cores. Everything a call through QueryAPIGate takes beyond that is the
-gateway and its round trips.
-
-### One process, 32 callers
-
-5 rounds of 30 s per cell. **Cached** is `main` with the metadata cache on.
-
-| Call | | v0.41.0 | main | Cached |
-|---|---|---|---|---|
-| Lookup, plain key | req/s | 682 (679-686) | 743 (736-746) | 875 (869-876) |
-| | p99 | 55.8 ms | 54.1 ms | 45.1 ms |
-| Lookup, governed key | req/s | 171 (171-172) | 693 (691-694) | 802 (800-806) |
-| | p99 | 223 ms | 57.1 ms | 49.9 ms |
-| 100-row page | req/s | 596 (595-598) | 639 (638-642) | 738 (737-740) |
-| | p99 | 64.8 ms | 61.4 ms | 52.7 ms |
-| Write | req/s | 682 (679-683) | 738 (733-743) | 875 (872-881) |
-| | p99 | 56.9 ms | 53.9 ms | 45.9 ms |
-
-All the ranges are clear of each other:
-
-- **main against v0.41.0:** +7 to 9% for plain keys, from reading the store less (below); +304% for a governed
-  key, from the masking and table-check caches.
-- **Cached against main:** +16 to 19%, on every call.
-- **The gateway used 1.2 cores for one worker:** one for Python, the rest for the threads' I/O. PostgreSQL used
-  0.2-0.4.
-
-### One caller at a time
-
-The latency of a single call, 5 rounds of 30 s:
-
-| Call | | v0.41.0 | main | Cached |
-|---|---|---|---|---|
-| Lookup, plain key | p50 | 1.43 ms (1.43-1.44) | 1.38 ms (1.35-1.42) | 1.05 ms (1.04-1.06) |
-| | p99 / p99.9 | 2.1 / 3.0 ms | 2.2 / 3.1 ms | 1.7 / 2.4 ms |
-| Lookup, governed key | p50 | 6.00 ms (5.79-6.06) | 1.48 ms (1.46-1.51) | 1.20 ms (1.16-1.20) |
-| | p99 / p99.9 | 7.6 / 13.6 ms | 2.4 / 3.3 ms | 1.9 / 2.5 ms |
-
-For one plain caller, main and v0.41.0 overlap: three fewer store reads don't show at this speed. The cache's
--24% does. A governed call went from 6 ms to 1.5.
-
-### Latency against offered load
-
-The lookup, open loop, latency-corrected, 3 rounds of 20 s per rate. Capacity is each build's closed-loop rate above
-(743 and 875 requests a second):
-
-| Offered | main: p50 / p99 / p99.9 | Cached: p50 / p99 / p99.9 |
-|---|---|---|
-| 25% of capacity | 2.0 / 2.9 / 12.0 ms | 1.5 / 2.3 / 7.8 ms |
-| 50% | 1.6 / 2.7 / 6.1 ms | 1.2 / 2.0 / 8.7 ms |
-| 75% | 1.5 / 3.5 / 13.6 ms | 1.2 / 3.4 / 14.0 ms |
-| 90% | 1.6 / 7.9 / 15.6 ms | 1.2 / 12.2 / 19.4 ms |
-| 100% | 1.7 / 18.4 / 25.3 ms | 1.7 / 15.0 / 23.3 ms |
-| 110% | 411 / 1,379 / 1,396 ms - served 765 of 816 | 347 / 1,047 / 1,062 ms - served 917 of 962 |
-
-- **p50 stays flat** right up to capacity. **p99 holds under 4 ms to 75%,** then climbs: 2× at 90%, 5× at 100%.
-- **Past capacity, a queue builds.** Latency goes to seconds within the 20 s run, and only the capacity's worth of
-  requests is served.
-- **For capacity planning,** that means about 75% of the closed-loop number: about 550 requests a second per worker
-  without the cache, 650 with it, for p99 under 4 ms.
-- The lightest loads show a higher p99.9 than 50%: at a trickle, an idle core clocks down between requests.
-
-### Scale-out
-
-Workers in one gunicorn (each a process, as each container would be), 64 callers, 3 rounds of 30 s:
-
-| Workers | Lookups req/s: main / Cached | Writes req/s: main / Cached | p99 lookups: main / Cached | Gateway cores | PostgreSQL cores: main / Cached |
-|---|---|---|---|---|---|
-| 1 | 747 / 878 | 742 / 873 | 99 / 86 ms | 1.2 | 0.29 / 0.17 |
-| 2 | 1,214 / 1,472 | 1,202 / 1,448 | 69 / 62 ms | 2.4 | 0.56 / 0.31 |
-| 4 | 1,742 / 2,156 | 1,734 / 2,114 | 67 / 61 ms | 4.6 | 1.04 / 0.59 |
-| 8 | 2,241 / 2,741 | 2,200 / 2,617 | 148 / 105 ms | 7.2 | 1.64 / 0.88 |
-
-The cache's lead is clear at every size: +17% to +24%.
-
-- **Throughput grows with processes, but not linearly here,** and the table shows why: requests a second per
-  gateway core fall from 623 at 1 worker to 310 at 8. All 8 workers share CPUs 0-7, which are only four physical
-  cores. From 4 workers on, each pair shares a core's two hyperthreads, and a hyperthread is worth far less than a
-  core. Containers on their own cores, or their own hosts, would scale better than this. This run can't show by how
-  much.
-- **The cache halves PostgreSQL's work.** At 8 workers it used 1.64 cores without the cache and 0.88 with it - most
-  of PostgreSQL's load was QueryAPIGate's own store, not the queries.
-- **p99 at 8 workers** rises because 8 processes, 64 callers, and the gateway's own threads all contend for 8 hardware
-  threads.
-
-### Threads per worker
-
-One worker, the lookup, 32 callers, threads interleaved, 3 rounds:
-
-| Threads | req/s | p99 | Gateway cores |
-|---|---|---|---|
-| 1 | 778 (777-828) | 52.5 ms | 0.88 |
-| 2 | 832 (831-902) | 49.1 ms | 1.12 |
-| 4 | 763 (760-763) | 53.3 ms | 1.18 |
-| 8 | 723 (722-725) | 56.4 ms | 1.20 |
-
-A second thread helps a little: it runs Python while the first waits on the database. **Beyond two, throughput
-falls.** Eight threads, the Docker image's setting, are 13% slower than two on this workload, because they compete
-for Python's global interpreter lock - and, the profile shows, for the logging module's lock. Threads aren't for
-CPU. They are for calls that wait: slow queries, `?stream=true` exports, and `/events` connections that stay open.
-v1 said "they don't add CPU" and cited +42% from 1 to 2 threads. That figure came from the unstable laptop; this one
-doesn't.
-
-### The cold path: every 60 seconds
-
-150 s of the lookup at 8 callers, each request's duration taken from gunicorn's access log (`%(D)s`):
-
-| Key | Requests | p50 | p99 | p99.9 | p99.99 | Slowest |
-|---|---|---|---|---|---|---|
-| governed | 106,741 | 9.25 ms | 14.66 ms | 19.2 ms | 73.7 ms | 146.9 ms |
-| plain | 115,314 | 8.58 ms | 13.57 ms | 16.9 ms | 20.9 ms | 26.0 ms |
-
-- **The governed key's slow seconds come every 60 s:** t=1 (147 ms), t=61 (76 ms) and t=121 (74 ms). In a typical
-  second, the slowest request takes 17 ms. Those are the moments QueryAPIGate re-reads the connection's schema and
-  re-traces the statement for masking, which it does every 60 seconds.
-- **Some callers pay for it:** the few that arrive while it happens wait about 60 ms more. It shows at p99.99, not
-  at p99.9.
-- **The plain key** has no table check or masking to redo, and no such spikes.
-
-### The access log
-
-`main`, the lookup, 32 callers, gunicorn's access log on and off, interleaved, 5 rounds:
-
-| Access log | req/s | p50 | p99 |
-|---|---|---|---|
-| on (the Docker image's default) | 736 (735-739) | 43.0 ms | 54.4 ms |
-| off | 785 (782-792) | 40.2 ms | 51.7 ms |
-
-**The access log costs 7%.** QueryAPIGate also logs two lines of its own for each request, at INFO, which can't be
-turned off. The profile below puts all logging at a fifth of the gateway's CPU.
-
-### A database across a network
-
-netem on the database container delays everything PostgreSQL sends by 0.5 ms, which is a same-zone cloud round trip
-(`tc qdisc add dev eth0 root netem delay 0.5ms`, ping 0.04 → 0.56 ms). The lookup, 3 rounds of 30 s:
-
-| | v0.41.0 | main | Cached |
-|---|---|---|---|
-| One caller: req/s | 132 (132-134) | 161 (159-162) | 270 (268-270) |
-| One caller: p50 | 7.63 ms | 6.24 ms | 3.69 ms |
-| 32 callers: req/s | 677 (672-752) | 741 (735-750) | 860 (857-870) |
-
-- **One caller pays for every round trip.** At 0.5 ms each, a call went from 1.4 to 6.2 ms on `main`. Fewer store
-  reads made `main` 22% faster than v0.41.0. The cache made it 67% faster again, and halved single-call latency to
-  3.7 ms.
-- **With 32 callers, round trips overlap,** and the CPU is the limit again: the same order as without a delay.
-  v0.41.0's range overlaps `main`'s here, because one of its rounds ran fast.
-- This is a simulation: one-way delay, no packet loss or jitter. Read it as how many round trips a call makes, not
-  as a cloud measurement.
-
-### Mixed reads and writes, and hot rows
-
-`main`, 3 rounds of 30 s:
-
-| Workload | req/s | p50 | p99 |
-|---|---|---|---|
-| Reads (24 callers) and writes (8 callers) at once | 547 + 181 = 728 | 43.3 / 43.6 ms | 54.8 / 54.9 ms |
-| Writes on 10 million accounts (32 callers) | 734 (729-734) | 43.1 ms | 55.0 ms |
-| Writes on 99 hot accounts (32 callers) | 735 (731-740) | 43.0 ms | 54.7 ms |
-
-- **Mixing reads and writes changes nothing:** they share the process's capacity in proportion.
-- **Writes on 99 hot rows cost the same as on 10 million.** One worker sends at most 8 at once, so PostgreSQL's row
-  locks never queue long enough to show. With many workers, or a slow transaction, they would.
-
-## Where the time goes
-
-### Round trips per call
-
-Counted exactly: `log_statement = 'all'` on each database, then 100 calls after a warm-up.
-
-| Statements per call | v0.41.0 | main | Cached |
-|---|---|---|---|
-| Store, plain key or writer | 7: 5 reads, 2 inserts | 3: the key, the query, the connection | 0.1: history, in batches |
-| Store, governed key | 8 | 4 | 1 - the masking hash key |
-| Data database, any call | 4: `BEGIN READ ONLY`, `SET LOCAL statement_timeout`, the query, `ROLLBACK` | 4 | 4 |
-
-- **History and events** are written in batches of up to 500 by a background thread, about once a second. That's
-  about 0.01 statements per call in `main`, against one insert per row in v0.41.0.
-- **The governed key reads the masking hash key on every call,** even with the cache on.
-- **A query takes four round trips** to the data database: a transaction, its time limit, the statement, and the
-  rollback (or commit, for a write). That's what the network test above measures.
-
-### The CPU
-
-py-spy at 200 samples a second across the worker's threads, during 30 s of the lookup at 32 callers. Each sample is
-counted under the innermost frame that falls in one of these categories:
-
-| Where the samples fall | main | Cached |
-|---|---|---|
-| Store layer: queries, decoding rows, checks | 28.2% | 13.4% |
-| Logging: the access log and QueryAPIGate's own lines | 18.4% | 20.4% |
-| gunicorn, sockets, HTTP | 16.8% | 21.0% |
-| Data query: the driver and the pool | 12.3% | 15.4% |
-| Flask and Werkzeug | 9.9% | 11.9% |
-| QueryAPIGate's request handling | 4.6% | 5.6% |
-| History writer thread | 3.0% | 3.7% |
-| Authentication, limits, quotas, metrics | 2.5% | 2.8% |
-| SQL checks, parameters, masking | 1.7% | 1.9% |
-| JSON | 1.3% | 2.6% |
-| Other | 1.3% | 1.3% |
-
-The busiest single frames say more:
-
-- **`logging` lock acquisition: 8-10%.** Eight threads write log lines through one handler, and wait on its lock -
-  the same contention that makes more threads slower.
-- **`store.refuse_store_access`: 7-10%.** A safety check that a connection doesn't point at QueryAPIGate's own
-  SQLite file. It resolves file paths (`os.path.realpath`, several system calls) on every call - even for a
-  PostgreSQL connection, which has no file to point at. With the cache on, it is the largest single cost in the store
-  layer.
-- **The store's `execute`: 17% in main, gone with the cache** - the three reads.
-- **gunicorn's per-request worker heartbeat (`workertmp.notify`): 3%.**
-
-## What to do with this
-
-**For running QueryAPIGate:**
-
-- **Plan on about 550 requests a second per worker for fast OLTP queries,** or 650 with the metadata cache. That's
-  75% of capacity, where p99 stays under 4 ms. Then measure your own queries, which will usually cost more than
-  these.
-- **Turn on `QUERYAPIGATE_METADATA_CACHE_TTL`** if a few seconds' delay is acceptable for a change made on another
-  instance to reach this one. In return, a worker serves 16-24% more, PostgreSQL does half the work, and across a
-  network a single call takes 40% less time. Its trade-off is in [PERFORMANCE.md](PERFORMANCE.md#the-metadata-cache).
-- **For fast queries, try `--threads 2` to `4`.** Keep 8 if calls wait on slow queries, exports or `/events`.
-- **Turn off gunicorn's access log** if a proxy in front already logs requests: +7%.
-- **Scale with processes on their own cores.** Hyperthreads gave about half a core each here.
-
-**For QueryAPIGate itself** - findings worth an issue each, in the order I'd take them:
-
-1. **Fewer round trips per query.** Set `default_transaction_read_only` and `statement_timeout` once per pooled
-   session, or send `BEGIN` and `SET LOCAL` in one round trip with the query. That's 4 round trips down to 1 or 2,
-   and over a network, the largest remaining part of a call.
-2. **Skip `refuse_store_access`'s path checks for server databases.** Only SQLite, DuckDB and H2 open a file. That
-   would save 7-10% of CPU on every PostgreSQL, MySQL, ClickHouse and Trino call.
-3. **Cache the masking hash key.** It's read on every governed call and almost never changes.
-4. **Make logging cheaper:** a setting to skip the per-request INFO lines, or a queue handler so threads don't
-   wait on one lock. That's up to a fifth of the CPU.
-5. **Refresh the schema and masking trace in the background**, before they expire, so no caller waits 60-140 ms
-   every minute.
-
-## What changed from v1
-
-What the reviews raised, and what this run did about it:
-
-| Raised | Done |
-|---|---|
-| A laptop whose speed changes 2× | AC power, the `performance` profile, every part pinned to its own cores, a `/health` floor around every block (-13% to +3% over 2.5 hours), clock and temperature per run |
-| Single runs compared against each other | 3-5 interleaved, rotated rounds per cell; median and min-max; a difference counts only when the ranges don't overlap |
-| Closed-loop load only, which hides latency at saturation | Open-loop runs at fixed rates, latency-corrected, from 25% to 110% of capacity |
-| 10 s runs that never cross the 60 s expiry, and no p99.9 | 30 s runs with p99.9; 150 s runs timed per request, which show the 60 s spikes |
-| No network hop | A 0.5 ms simulated round trip |
-| The threads claim contradicted its own data | Measured, interleaved: two threads are best here, eight are 13% slower |
-| The 2-worker row looked like a regression | It was one noisy run. Interleaved, every row is clear |
-| Throughput only in the scaling table | Latency, gateway and database CPU, and throughput per core |
-| No profile of the time left | py-spy, broken down by category and by frame |
-| Access log cost unknown | 7% |
-| Only the lookup was reproducible | All three queries and keys are spelled out above, and the harness creates them |
-| "`main` after 0.41.0" isn't a version | Commits, versions and the oha image digest are recorded with the results |
-
-**Two things v1 got wrong:**
-
-- **The store transactions per call.** v1 said about 5.5 before its changes and 2.6 after. Counted exactly, it's 7
-  statements before (5 reads and 2 inserts) and 3 after. PostgreSQL holds back an idle session's statistics for up
-  to 10 seconds, and v1 read them about 2 seconds after its run ended.
-- **Its PostgreSQL throughput figures were about half these.** That's the laptop's power state, not the code. The
-  same build served 368 requests a second for v1 and 743 here.
-
-## Limits
-
-- **One machine.** The gateway, the database and the load generator share it, on separate cores but one memory bus
-  and one cooling system. Four physical cores for the gateway limit what scale-out can show.
-- **No TLS, no load balancer or proxy, no Redis**, and so no shared rate limits. Each would add to the cost of a
-  call.
-- **The network is simulated**, one way, without jitter or loss.
-- **Uniform random keys.** Real traffic is skewed. Hot rows were tested for writes, but not as a skewed read
-  pattern, which would matter to a cache in front of the database.
-- **Small results only:** one row, or a page of 100. Large results, `?stream=true`, the MCP server, and other
-  databases weren't measured.
-- **p99.99 and the slowest requests** come only from the 150 s runs. Elsewhere, 30 s runs give about 20,000 samples,
-  enough for p99.9.
-- **py-spy counts samples of threads it considers active,** and a thread waiting for the interpreter lock can count.
-  The shares say where time is spent, not exactly how much each part would save.
-
-## Run it yourself
-
-Needs Docker, `taskset`, and QueryAPIGate's server, PostgreSQL and masking dependencies in the Python that runs the
-script. py-spy is optional, for the profile:
-
-```bash
-pip install -e ".[server,postgres,flow]" py-spy
-python benchmarks/oltp.py --out /tmp/qag-oltp setup all teardown     # about 2.5 hours
-python benchmarks/oltp_report.py /tmp/qag-oltp/results.jsonl         # writes results.md beside it
-```
-
-- **Cores and refs:** `--gateway-cpus`, `--db-cpus` and `--load-cpus` take `taskset`-style lists; check your own
-  machine's layout with `lscpu -e`. `--base` and `--head` choose the two git refs (v0.41.0 and `origin/main` by
-  default).
-- **Fewer blocks:** name them instead of `all`, e.g. `setup env b1 b2 teardown`. `--smoke` runs every block for 2 s
-  to check the setup in about 10 minutes.
-- **What it leaves behind:** `teardown` removes the database container and its data volume, about 2 GB.
-
-
 # Performance, v3: an OLTP benchmark on PostgreSQL
 Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V3
 
@@ -5795,6 +5001,800 @@ python benchmarks/oltp_report.py /tmp/qag-oltp/results.jsonl         # writes re
 - **Plug in first.** Check `powerprofilesctl get` and the AC state; the `/health` floors will show it if you
   forgot.
 - **What it leaves behind:** `teardown` removes the database container and its data volume, about 2 GB.
+
+
+# Performance, v2: an OLTP benchmark on PostgreSQL
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V2
+
+# Performance, v2: an OLTP benchmark on PostgreSQL
+
+> **Superseded by [Performance, v3](PERFORMANCE_V3.md).** v3 reruns this page's 3-round blocks with 5 rounds,
+> calibrates the round-trip count, adds sizing, and fixes the overstatements a review of this page found. The
+> numbers below aren't wrong, but v3's are the ones to use.
+
+**The short answer.** With one gunicorn worker (as in the Docker image) in front of PostgreSQL, a saved query by
+primary key at 32 concurrent callers:
+
+| | v0.41.0 | `main` (unreleased 0.42) | `main` with the metadata cache |
+|---|---|---|---|
+| Requests a second | 682 | 743 | 875 |
+| One caller at a time, p50 | 1.43 ms | 1.38 ms | 1.05 ms |
+| With a governed key (masking and a table allow-list) | 171 | 693 | 802 |
+
+- **The governance features cost about 7% now.** A key with masking and a table allow-list is about 4× faster than
+  in v0.41.0.
+- **One process serves 740-875 requests a second.** Latency holds until the load reaches about 75% of that.
+- **More processes add throughput.** Eight workers reached 2,200-2,700 requests a second on four physical cores.
+- **PostgreSQL is never the limit here.** At most it used 2 of the 4 hardware threads it had.
+- **The remaining cost of a call** is about 1 ms of Python (logging alone takes a fifth of it), plus 4 round trips
+  to the data database for every query. Over a real network, those round trips dominate.
+
+Every number below is the median of 3-5 interleaved rounds with its min-max range. A difference counts as real only
+when the two ranges don't overlap. This page replaces the PostgreSQL parts of [PERFORMANCE.md](PERFORMANCE.md), whose
+method two reviews found too weak for its comparisons. [What changed from v1](#what-changed-from-v1) lists what
+was fixed, and what v1 got wrong.
+
+## Contents
+
+- [Method](#method)
+- [Results](#results)
+- [Where the time goes](#where-the-time-goes)
+- [What to do with this](#what-to-do-with-this)
+- [What changed from v1](#what-changed-from-v1)
+- [Limits](#limits)
+- [Run it yourself](#run-it-yourself)
+
+## Method
+
+### The machine, and how it was kept steady
+
+One laptop: an Intel i7-12700H with 6 performance cores (CPUs 0-11, two threads each) and 8 efficiency cores (CPUs
+12-19), 32 GB of memory, Ubuntu with kernel 6.8. In v1, the same code measured 2× apart on different runs. Most of
+that was the laptop: on battery, on a power-saving profile, and with nothing pinned, so the scheduler could move
+any part onto a slow efficiency core at any moment. This run:
+
+- **On AC power, power profile `performance`,** CPU energy preference `performance`. Turbo stayed on, since turning
+  it off needs root.
+- **Each part on its own cores,** so they don't take CPU from each other:
+
+  | Part | CPUs | How |
+  |---|---|---|
+  | QueryAPIGate (gunicorn) | 0-7: four performance cores, both threads of each | `taskset -c 0-7` |
+  | PostgreSQL | 8-11: two performance cores | `docker run --cpuset-cpus 8-11` |
+  | Load generator (oha) and pgbench | 12-19: the efficiency cores | `docker run --cpuset-cpus 12-19` |
+
+- **No proxy in the path.** The gateway reached PostgreSQL at the container's own address, not through Docker's
+  published port, whose userland proxy is another unpinned process copying every byte.
+- **A floor before and after every block:** 10 s of `/health` on one worker, the same work every time, so a machine
+  that changed speed shows up. Across the 2 h 25 min of the run it stayed between 1,934 and 2,296 requests a second,
+  -13% to +3% of its median. The low end came in the last blocks (network, mixed, threads), which compare only
+  within themselves. The CPU package ran at
+  65-100 °C, and the busiest gateway core's clock was sampled every 2 s of every run (2.4-4.4 GHz). Both are recorded
+  per run.
+
+Software: Python 3.12.3, gunicorn 26.2.0, Flask 3.1.1, psycopg2 2.9.10, sqlglot 25.34.1, PostgreSQL 16.15
+(`postgres:16`), oha 1.16.0 pinned by digest
+(`ghcr.io/hatoo/oha@sha256:3ec3dbf549ea197793482d47a6324797411406bbf438c2fe8b91f244ec641a2f`).
+
+### The builds
+
+| Label | What | Commit |
+|---|---|---|
+| **v0.41.0** | the 0.41.0 release | `f61d4ed` |
+| **main** | `main` after the performance work in #88, unreleased - what 0.42 will ship | `c9b15c2` |
+| **main+cache** | the same, with `QUERYAPIGATE_METADATA_CACHE_TTL=5` | `c9b15c2` |
+
+Each is exported from git (`git archive`) and run as the Docker image runs it: gunicorn with the `gthread` worker,
+8 threads, the access log on, everything else at its default (so v0.41.0 has a pool of 5, `main` a pool of 8).
+
+### The database
+
+pgbench's TPC-B-like schema at scale 100 (`pgbench -i -s 100`), 1.5 GB, fully in memory
+(`shared_buffers=2GB`, `max_connections=300`, `synchronous_commit=on`):
+
+| Table | Rows | Columns | Key |
+|---|---|---|---|
+| `pgbench_accounts` | 10,000,000 | `aid integer`, `bid integer`, `abalance integer`, `filler character(84)` | primary key `aid` |
+| `pgbench_branches` | 100 | `bid integer`, `bbalance integer`, `filler character(88)` | primary key `bid` |
+| `pgbench_tellers` | 1,000 | `tid integer`, `bid integer`, `tbalance integer`, `filler character(84)` | primary key `tid` |
+| `pgbench_history` | 0 | `tid`, `bid`, `aid`, `delta integer`, `mtime timestamp`, `filler character(22)` | none |
+
+QueryAPIGate's own store - keys, saved queries, connections, run history - is a second database, `qagstore`, in the
+same PostgreSQL, as `QUERYAPIGATE_DATABASE_URL`.
+
+### The calls and the keys
+
+Three saved queries on one connection, `oltp`, called with a random id on every request:
+
+| Saved query | SQL | Called as |
+|---|---|---|
+| `account` - a **lookup** | `SELECT aid, bid, abalance FROM pgbench_accounts WHERE aid = :aid` | `/q/account?aid=` 1 to 9,999,999 |
+| `account_page` - a **100-row page** | `SELECT a.aid, a.abalance, b.bid, b.bbalance FROM pgbench_accounts a JOIN pgbench_branches b ON b.bid = a.bid WHERE a.aid BETWEEN :start AND :start + 99 ORDER BY a.aid` | `/q/account_page?start=` 1 to 999,999`&page_size=100` |
+| `deposit` - a **write** | `UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid` | `/q/deposit?aid=` 1 to 9,999,999`&delta=` 1 to 9 |
+
+| Key | Grants |
+|---|---|
+| **plain** | `{"queries": ["account", "account_page"], "connections": []}` |
+| **governed** | the same, plus `"allowed_tables": ["pgbench_accounts", "pgbench_branches"]` and `"mask": [{"column": "*.abalance", "action": "hash"}]` |
+| **writer** | `{"queries": ["deposit"], "connections": [], "allow_writes": true, "allowed_write_ops": ["update"]}`, on a server with `QUERYAPIGATE_ALLOW_WRITES=1` |
+
+[`benchmarks/oltp.py`](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/benchmarks/oltp.py) creates all of
+them through the Management API. Every one of the run's 5.8 million requests returned 200.
+
+### The load
+
+- **Closed loop**, for throughput: `oha -c N` keeps N callers, each sending its next request when the last one
+  answers. Each run is 30 s, after a 5 s warm-up at 8 callers that also fills the pool and the governance caches.
+- **Open loop**, for latency against load: `oha -q R --latency-correction` sends R requests a second whatever
+  happens, and measures each from when it should have been sent. That avoids coordinated omission, where a closed
+  loop under-reports latency at saturation because a slow answer delays the next request. Rates of 25%, 50%, 75%,
+  90%, 100% and 110% of the build's closed-loop capacity, 20 s each, 128 connections available.
+- **Interleaved.** Within a block, every round runs every build (or setting) once, in an order rotated each round -
+  A B C, then B C A, then C A B - so none always runs first, warmest or coolest.
+
+### What is recorded for each run
+
+- Requests a second, the success rate and every status code; p50, p90, p99 and p99.9 latency (oha's own
+  percentiles).
+- **CPU, in cores:** the gateway's from `/proc` (master and workers), PostgreSQL's from its container's cgroup
+  (`cpu.stat`), each divided by the run's wall time.
+- **Transactions per request** on the store and on the data database, from `pg_stat_database`. These are exact for
+  30 s runs; for exact *statement* counts, `log_statement = 'all'` was turned on for a few hundred requests (see
+  [Round trips](#round-trips-per-call)).
+- The busiest gateway core's clock and the CPU package temperature.
+
+All of it is in
+[`benchmarks/results/oltp-postgres-2026-10-23/`](https://github.com/AnanthaRajuC/QueryAPIGate/tree/main/benchmarks/results/oltp-postgres-2026-10-23):
+`results.jsonl` (one line per run), `results.md` (every table, generated by `benchmarks/oltp_report.py`), the
+per-second latency of the cold-path runs, and the py-spy profiles.
+
+## Results
+
+### The database on its own
+
+pgbench from the load generator's cores, 5 rounds of 10 s:
+
+| Workload | Clients | Transactions a second | Average latency |
+|---|---|---|---|
+| Primary-key read (`pgbench -S`) | 1 | 38,289 (37,465-39,586) | 0.026 ms |
+| Primary-key read (`pgbench -S`) | 32 | 112,321 (96,140-123,670) | 0.285 ms |
+| TPC-B: three updates, a select, an insert | 32 | 12,970 (12,617-15,293) | 2.5 ms |
+
+A lookup costs PostgreSQL 0.03 ms on two cores. Everything a call through QueryAPIGate takes beyond that is the
+gateway and its round trips.
+
+### One process, 32 callers
+
+5 rounds of 30 s per cell. **Cached** is `main` with the metadata cache on.
+
+| Call | | v0.41.0 | main | Cached |
+|---|---|---|---|---|
+| Lookup, plain key | req/s | 682 (679-686) | 743 (736-746) | 875 (869-876) |
+| | p99 | 55.8 ms | 54.1 ms | 45.1 ms |
+| Lookup, governed key | req/s | 171 (171-172) | 693 (691-694) | 802 (800-806) |
+| | p99 | 223 ms | 57.1 ms | 49.9 ms |
+| 100-row page | req/s | 596 (595-598) | 639 (638-642) | 738 (737-740) |
+| | p99 | 64.8 ms | 61.4 ms | 52.7 ms |
+| Write | req/s | 682 (679-683) | 738 (733-743) | 875 (872-881) |
+| | p99 | 56.9 ms | 53.9 ms | 45.9 ms |
+
+All the ranges are clear of each other:
+
+- **main against v0.41.0:** +7 to 9% for plain keys, from reading the store less (below); +304% for a governed
+  key, from the masking and table-check caches.
+- **Cached against main:** +16 to 19%, on every call.
+- **The gateway used 1.2 cores for one worker:** one for Python, the rest for the threads' I/O. PostgreSQL used
+  0.2-0.4.
+
+### One caller at a time
+
+The latency of a single call, 5 rounds of 30 s:
+
+| Call | | v0.41.0 | main | Cached |
+|---|---|---|---|---|
+| Lookup, plain key | p50 | 1.43 ms (1.43-1.44) | 1.38 ms (1.35-1.42) | 1.05 ms (1.04-1.06) |
+| | p99 / p99.9 | 2.1 / 3.0 ms | 2.2 / 3.1 ms | 1.7 / 2.4 ms |
+| Lookup, governed key | p50 | 6.00 ms (5.79-6.06) | 1.48 ms (1.46-1.51) | 1.20 ms (1.16-1.20) |
+| | p99 / p99.9 | 7.6 / 13.6 ms | 2.4 / 3.3 ms | 1.9 / 2.5 ms |
+
+For one plain caller, main and v0.41.0 overlap: three fewer store reads don't show at this speed. The cache's
+-24% does. A governed call went from 6 ms to 1.5.
+
+### Latency against offered load
+
+The lookup, open loop, latency-corrected, 3 rounds of 20 s per rate. Capacity is each build's closed-loop rate above
+(743 and 875 requests a second):
+
+| Offered | main: p50 / p99 / p99.9 | Cached: p50 / p99 / p99.9 |
+|---|---|---|
+| 25% of capacity | 2.0 / 2.9 / 12.0 ms | 1.5 / 2.3 / 7.8 ms |
+| 50% | 1.6 / 2.7 / 6.1 ms | 1.2 / 2.0 / 8.7 ms |
+| 75% | 1.5 / 3.5 / 13.6 ms | 1.2 / 3.4 / 14.0 ms |
+| 90% | 1.6 / 7.9 / 15.6 ms | 1.2 / 12.2 / 19.4 ms |
+| 100% | 1.7 / 18.4 / 25.3 ms | 1.7 / 15.0 / 23.3 ms |
+| 110% | 411 / 1,379 / 1,396 ms - served 765 of 816 | 347 / 1,047 / 1,062 ms - served 917 of 962 |
+
+- **p50 stays flat** right up to capacity. **p99 holds under 4 ms to 75%,** then climbs: 2× at 90%, 5× at 100%.
+- **Past capacity, a queue builds.** Latency goes to seconds within the 20 s run, and only the capacity's worth of
+  requests is served.
+- **For capacity planning,** that means about 75% of the closed-loop number: about 550 requests a second per worker
+  without the cache, 650 with it, for p99 under 4 ms.
+- The lightest loads show a higher p99.9 than 50%: at a trickle, an idle core clocks down between requests.
+
+### Scale-out
+
+Workers in one gunicorn (each a process, as each container would be), 64 callers, 3 rounds of 30 s:
+
+| Workers | Lookups req/s: main / Cached | Writes req/s: main / Cached | p99 lookups: main / Cached | Gateway cores | PostgreSQL cores: main / Cached |
+|---|---|---|---|---|---|
+| 1 | 747 / 878 | 742 / 873 | 99 / 86 ms | 1.2 | 0.29 / 0.17 |
+| 2 | 1,214 / 1,472 | 1,202 / 1,448 | 69 / 62 ms | 2.4 | 0.56 / 0.31 |
+| 4 | 1,742 / 2,156 | 1,734 / 2,114 | 67 / 61 ms | 4.6 | 1.04 / 0.59 |
+| 8 | 2,241 / 2,741 | 2,200 / 2,617 | 148 / 105 ms | 7.2 | 1.64 / 0.88 |
+
+The cache's lead is clear at every size: +17% to +24%.
+
+- **Throughput grows with processes, but not linearly here,** and the table shows why: requests a second per
+  gateway core fall from 623 at 1 worker to 310 at 8. All 8 workers share CPUs 0-7, which are only four physical
+  cores. From 4 workers on, each pair shares a core's two hyperthreads, and a hyperthread is worth far less than a
+  core. Containers on their own cores, or their own hosts, would scale better than this. This run can't show by how
+  much.
+- **The cache halves PostgreSQL's work.** At 8 workers it used 1.64 cores without the cache and 0.88 with it - most
+  of PostgreSQL's load was QueryAPIGate's own store, not the queries.
+- **p99 at 8 workers** rises because 8 processes, 64 callers, and the gateway's own threads all contend for 8 hardware
+  threads.
+
+### Threads per worker
+
+One worker, the lookup, 32 callers, threads interleaved, 3 rounds:
+
+| Threads | req/s | p99 | Gateway cores |
+|---|---|---|---|
+| 1 | 778 (777-828) | 52.5 ms | 0.88 |
+| 2 | 832 (831-902) | 49.1 ms | 1.12 |
+| 4 | 763 (760-763) | 53.3 ms | 1.18 |
+| 8 | 723 (722-725) | 56.4 ms | 1.20 |
+
+A second thread helps a little: it runs Python while the first waits on the database. **Beyond two, throughput
+falls.** Eight threads, the Docker image's setting, are 13% slower than two on this workload, because they compete
+for Python's global interpreter lock - and, the profile shows, for the logging module's lock. Threads aren't for
+CPU. They are for calls that wait: slow queries, `?stream=true` exports, and `/events` connections that stay open.
+v1 said "they don't add CPU" and cited +42% from 1 to 2 threads. That figure came from the unstable laptop; this one
+doesn't.
+
+### The cold path: every 60 seconds
+
+150 s of the lookup at 8 callers, each request's duration taken from gunicorn's access log (`%(D)s`):
+
+| Key | Requests | p50 | p99 | p99.9 | p99.99 | Slowest |
+|---|---|---|---|---|---|---|
+| governed | 106,741 | 9.25 ms | 14.66 ms | 19.2 ms | 73.7 ms | 146.9 ms |
+| plain | 115,314 | 8.58 ms | 13.57 ms | 16.9 ms | 20.9 ms | 26.0 ms |
+
+- **The governed key's slow seconds come every 60 s:** t=1 (147 ms), t=61 (76 ms) and t=121 (74 ms). In a typical
+  second, the slowest request takes 17 ms. Those are the moments QueryAPIGate re-reads the connection's schema and
+  re-traces the statement for masking, which it does every 60 seconds.
+- **Some callers pay for it:** the few that arrive while it happens wait about 60 ms more. It shows at p99.99, not
+  at p99.9.
+- **The plain key** has no table check or masking to redo, and no such spikes.
+
+### The access log
+
+`main`, the lookup, 32 callers, gunicorn's access log on and off, interleaved, 5 rounds:
+
+| Access log | req/s | p50 | p99 |
+|---|---|---|---|
+| on (the Docker image's default) | 736 (735-739) | 43.0 ms | 54.4 ms |
+| off | 785 (782-792) | 40.2 ms | 51.7 ms |
+
+**The access log costs 7%.** QueryAPIGate also logs two lines of its own for each request, at INFO, which can't be
+turned off. The profile below puts all logging at a fifth of the gateway's CPU.
+
+### A database across a network
+
+netem on the database container delays everything PostgreSQL sends by 0.5 ms, which is a same-zone cloud round trip
+(`tc qdisc add dev eth0 root netem delay 0.5ms`, ping 0.04 → 0.56 ms). The lookup, 3 rounds of 30 s:
+
+| | v0.41.0 | main | Cached |
+|---|---|---|---|
+| One caller: req/s | 132 (132-134) | 161 (159-162) | 270 (268-270) |
+| One caller: p50 | 7.63 ms | 6.24 ms | 3.69 ms |
+| 32 callers: req/s | 677 (672-752) | 741 (735-750) | 860 (857-870) |
+
+- **One caller pays for every round trip.** At 0.5 ms each, a call went from 1.4 to 6.2 ms on `main`. Fewer store
+  reads made `main` 22% faster than v0.41.0. The cache made it 67% faster again, and halved single-call latency to
+  3.7 ms.
+- **With 32 callers, round trips overlap,** and the CPU is the limit again: the same order as without a delay.
+  v0.41.0's range overlaps `main`'s here, because one of its rounds ran fast.
+- This is a simulation: one-way delay, no packet loss or jitter. Read it as how many round trips a call makes, not
+  as a cloud measurement.
+
+### Mixed reads and writes, and hot rows
+
+`main`, 3 rounds of 30 s:
+
+| Workload | req/s | p50 | p99 |
+|---|---|---|---|
+| Reads (24 callers) and writes (8 callers) at once | 547 + 181 = 728 | 43.3 / 43.6 ms | 54.8 / 54.9 ms |
+| Writes on 10 million accounts (32 callers) | 734 (729-734) | 43.1 ms | 55.0 ms |
+| Writes on 99 hot accounts (32 callers) | 735 (731-740) | 43.0 ms | 54.7 ms |
+
+- **Mixing reads and writes changes nothing:** they share the process's capacity in proportion.
+- **Writes on 99 hot rows cost the same as on 10 million.** One worker sends at most 8 at once, so PostgreSQL's row
+  locks never queue long enough to show. With many workers, or a slow transaction, they would.
+
+## Where the time goes
+
+### Round trips per call
+
+Counted exactly: `log_statement = 'all'` on each database, then 100 calls after a warm-up.
+
+| Statements per call | v0.41.0 | main | Cached |
+|---|---|---|---|
+| Store, plain key or writer | 7: 5 reads, 2 inserts | 3: the key, the query, the connection | 0.1: history, in batches |
+| Store, governed key | 8 | 4 | 1 - the masking hash key |
+| Data database, any call | 4: `BEGIN READ ONLY`, `SET LOCAL statement_timeout`, the query, `ROLLBACK` | 4 | 4 |
+
+- **History and events** are written in batches of up to 500 by a background thread, about once a second. That's
+  about 0.01 statements per call in `main`, against one insert per row in v0.41.0.
+- **The governed key reads the masking hash key on every call,** even with the cache on.
+- **A query takes four round trips** to the data database: a transaction, its time limit, the statement, and the
+  rollback (or commit, for a write). That's what the network test above measures.
+
+### The CPU
+
+py-spy at 200 samples a second across the worker's threads, during 30 s of the lookup at 32 callers. Each sample is
+counted under the innermost frame that falls in one of these categories:
+
+| Where the samples fall | main | Cached |
+|---|---|---|
+| Store layer: queries, decoding rows, checks | 28.2% | 13.4% |
+| Logging: the access log and QueryAPIGate's own lines | 18.4% | 20.4% |
+| gunicorn, sockets, HTTP | 16.8% | 21.0% |
+| Data query: the driver and the pool | 12.3% | 15.4% |
+| Flask and Werkzeug | 9.9% | 11.9% |
+| QueryAPIGate's request handling | 4.6% | 5.6% |
+| History writer thread | 3.0% | 3.7% |
+| Authentication, limits, quotas, metrics | 2.5% | 2.8% |
+| SQL checks, parameters, masking | 1.7% | 1.9% |
+| JSON | 1.3% | 2.6% |
+| Other | 1.3% | 1.3% |
+
+The busiest single frames say more:
+
+- **`logging` lock acquisition: 8-10%.** Eight threads write log lines through one handler, and wait on its lock -
+  the same contention that makes more threads slower.
+- **`store.refuse_store_access`: 7-10%.** A safety check that a connection doesn't point at QueryAPIGate's own
+  SQLite file. It resolves file paths (`os.path.realpath`, several system calls) on every call - even for a
+  PostgreSQL connection, which has no file to point at. With the cache on, it is the largest single cost in the store
+  layer.
+- **The store's `execute`: 17% in main, gone with the cache** - the three reads.
+- **gunicorn's per-request worker heartbeat (`workertmp.notify`): 3%.**
+
+## What to do with this
+
+**For running QueryAPIGate:**
+
+- **Plan on about 550 requests a second per worker for fast OLTP queries,** or 650 with the metadata cache. That's
+  75% of capacity, where p99 stays under 4 ms. Then measure your own queries, which will usually cost more than
+  these.
+- **Turn on `QUERYAPIGATE_METADATA_CACHE_TTL`** if a few seconds' delay is acceptable for a change made on another
+  instance to reach this one. In return, a worker serves 16-24% more, PostgreSQL does half the work, and across a
+  network a single call takes 40% less time. Its trade-off is in [PERFORMANCE.md](PERFORMANCE.md#the-metadata-cache).
+- **For fast queries, try `--threads 2` to `4`.** Keep 8 if calls wait on slow queries, exports or `/events`.
+- **Turn off gunicorn's access log** if a proxy in front already logs requests: +7%.
+- **Scale with processes on their own cores.** Hyperthreads gave about half a core each here.
+
+**For QueryAPIGate itself** - findings worth an issue each, in the order I'd take them:
+
+1. **Fewer round trips per query.** Set `default_transaction_read_only` and `statement_timeout` once per pooled
+   session, or send `BEGIN` and `SET LOCAL` in one round trip with the query. That's 4 round trips down to 1 or 2,
+   and over a network, the largest remaining part of a call.
+2. **Skip `refuse_store_access`'s path checks for server databases.** Only SQLite, DuckDB and H2 open a file. That
+   would save 7-10% of CPU on every PostgreSQL, MySQL, ClickHouse and Trino call.
+3. **Cache the masking hash key.** It's read on every governed call and almost never changes.
+4. **Make logging cheaper:** a setting to skip the per-request INFO lines, or a queue handler so threads don't
+   wait on one lock. That's up to a fifth of the CPU.
+5. **Refresh the schema and masking trace in the background**, before they expire, so no caller waits 60-140 ms
+   every minute.
+
+## What changed from v1
+
+What the reviews raised, and what this run did about it:
+
+| Raised | Done |
+|---|---|
+| A laptop whose speed changes 2× | AC power, the `performance` profile, every part pinned to its own cores, a `/health` floor around every block (-13% to +3% over 2.5 hours), clock and temperature per run |
+| Single runs compared against each other | 3-5 interleaved, rotated rounds per cell; median and min-max; a difference counts only when the ranges don't overlap |
+| Closed-loop load only, which hides latency at saturation | Open-loop runs at fixed rates, latency-corrected, from 25% to 110% of capacity |
+| 10 s runs that never cross the 60 s expiry, and no p99.9 | 30 s runs with p99.9; 150 s runs timed per request, which show the 60 s spikes |
+| No network hop | A 0.5 ms simulated round trip |
+| The threads claim contradicted its own data | Measured, interleaved: two threads are best here, eight are 13% slower |
+| The 2-worker row looked like a regression | It was one noisy run. Interleaved, every row is clear |
+| Throughput only in the scaling table | Latency, gateway and database CPU, and throughput per core |
+| No profile of the time left | py-spy, broken down by category and by frame |
+| Access log cost unknown | 7% |
+| Only the lookup was reproducible | All three queries and keys are spelled out above, and the harness creates them |
+| "`main` after 0.41.0" isn't a version | Commits, versions and the oha image digest are recorded with the results |
+
+**Two things v1 got wrong:**
+
+- **The store transactions per call.** v1 said about 5.5 before its changes and 2.6 after. Counted exactly, it's 7
+  statements before (5 reads and 2 inserts) and 3 after. PostgreSQL holds back an idle session's statistics for up
+  to 10 seconds, and v1 read them about 2 seconds after its run ended.
+- **Its PostgreSQL throughput figures were about half these.** That's the laptop's power state, not the code. The
+  same build served 368 requests a second for v1 and 743 here.
+
+## Limits
+
+- **One machine.** The gateway, the database and the load generator share it, on separate cores but one memory bus
+  and one cooling system. Four physical cores for the gateway limit what scale-out can show.
+- **No TLS, no load balancer or proxy, no Redis**, and so no shared rate limits. Each would add to the cost of a
+  call.
+- **The network is simulated**, one way, without jitter or loss.
+- **Uniform random keys.** Real traffic is skewed. Hot rows were tested for writes, but not as a skewed read
+  pattern, which would matter to a cache in front of the database.
+- **Small results only:** one row, or a page of 100. Large results, `?stream=true`, the MCP server, and other
+  databases weren't measured.
+- **p99.99 and the slowest requests** come only from the 150 s runs. Elsewhere, 30 s runs give about 20,000 samples,
+  enough for p99.9.
+- **py-spy counts samples of threads it considers active,** and a thread waiting for the interpreter lock can count.
+  The shares say where time is spent, not exactly how much each part would save.
+
+## Run it yourself
+
+Needs Docker, `taskset`, and QueryAPIGate's server, PostgreSQL and masking dependencies in the Python that runs the
+script. py-spy is optional, for the profile:
+
+```bash
+pip install -e ".[server,postgres,flow]" py-spy
+python benchmarks/oltp.py --out /tmp/qag-oltp setup all teardown     # about 2.5 hours
+python benchmarks/oltp_report.py /tmp/qag-oltp/results.jsonl         # writes results.md beside it
+```
+
+- **Cores and refs:** `--gateway-cpus`, `--db-cpus` and `--load-cpus` take `taskset`-style lists; check your own
+  machine's layout with `lscpu -e`. `--base` and `--head` choose the two git refs (v0.41.0 and `origin/main` by
+  default).
+- **Fewer blocks:** name them instead of `all`, e.g. `setup env b1 b2 teardown`. `--smoke` runs every block for 2 s
+  to check the setup in about 10 minutes.
+- **What it leaves behind:** `teardown` removes the database container and its data volume, about 2 GB.
+
+
+# Performance
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE
+
+# Performance
+
+> **For PostgreSQL, read [Performance, v3](PERFORMANCE_V3.md) instead.** It's a more careful run: pinned cores,
+> 5 interleaved rounds per comparison with their ranges, open-loop load, a simulated network, a measured round-trip
+> count, and a profile. It also corrects two figures on this page. A call's statements on the store went from 7 to 3, not "about 5.5 to about 2.6". And the
+> PostgreSQL throughput here is about half what that machine gives in a steady state.
+
+**The short answer:** QueryAPIGate adds a millisecond or two to a request, and almost none of that is the governance.
+In front of PostgreSQL, one container in its default configuration serves about 300-400 requests a second, reads or
+writes, with a key's masking and table allow-list on or off. Throughput grows with the number of containers. The
+database is rarely the limit: in these tests PostgreSQL used about a core or less per container.
+
+This page is what we measured, where the time goes, and how to measure it on your own hardware. Every number comes
+from one laptop, so read them as a guide to proportions, not a promise. The same laptop measured about half these
+numbers earlier on the same day, even on `/health`, which does no work. Compare numbers within a table, not across
+tables or with your own machine.
+
+## How it was measured
+
+- **The machine:** a 20-thread Intel i7-12700H laptop with 32 GB of memory. The load generator, QueryAPIGate and the
+  database all ran on it, so there's no network hop, and the load generator takes CPU from the server.
+- **The server:** QueryAPIGate as the Docker image runs it: gunicorn, **one worker with eight threads**
+  (`--worker-class gthread`), the access log on. For [Scaling out](#scaling-out-in-front-of-postgresql), 2, 4 and 8
+  workers.
+- **The load:** [oha](https://github.com/hatoo/oha), a 3-second warm-up, then 10 seconds per run. For PostgreSQL,
+  each request asks for a random row, so nothing is answered from a cache the test made warm.
+- **Two setups:**
+    - the bundled [example APIs](EXAMPLES.md) on SQLite, to show the gateway's own cost on a database that answers
+      in microseconds;
+    - an OLTP database on PostgreSQL 16 - pgbench's 10-million-row bank schema, with QueryAPIGate's own store in the
+      same PostgreSQL, as a production deployment would have it.
+
+Measured 2026-10-23 on `main` after 0.41.0, with the changes this page describes.
+
+## The example APIs on SQLite
+
+- **Two queries:**
+    - a **primary-key lookup** (`SELECT film_id, title FROM film WHERE film_id = :film_id`), so the gateway's own cost
+      shows;
+    - `example_film_lookup`, a **join and aggregate** over the rentals table, as a realistic query.
+- **Two kinds of key:**
+    - **plain** - a scoped key with no masking and no table allow-list;
+    - **governed** - the same key with `allowed_tables` and a masking rule that hashes `title` on every row.
+
+Requests a second, and latency in milliseconds:
+
+| Call | Concurrency | req/s | p50 | p99 |
+|---|---|---|---|---|
+| `/health` - the floor | 1 | 1,583 | 0.6 | 1.3 |
+| Primary-key lookup, plain key | 1 | 839 | 1.2 | 1.9 |
+| Primary-key lookup, **governed key** | 1 | 778 | 1.2 | 2.4 |
+| Join query, plain key | 1 | 526 | 1.9 | 2.9 |
+| Join query, **governed key** | 1 | 510 | 1.9 | 3.1 |
+| Join query, governed key | 8 | 583 | 12.6 | 26.7 |
+| Join query, governed key | 32 | 505 | 61.8 | 92.5 |
+
+A governed call costs about the same as a plain one. Masking and the table check are worked out once per statement
+and reused, so on a repeated call they add almost nothing.
+
+Throughput stays flat as concurrency rises; latency is what grows. One worker process runs Python code on one core
+at a time, so extra concurrent callers wait their turn: 32 callers sharing about 500 requests a second each wait
+about 60 ms. That's why you scale by adding processes rather than threads (see [Scaling](#scaling)).
+
+## An OLTP database on PostgreSQL
+
+### The database
+
+pgbench's TPC-B-like schema at scale 100 (`pgbench -i -s 100`): 1.5 GB, in a `postgres:16` container started with
+`-c shared_buffers=2GB -c max_connections=300` - the whole database fits in memory, so this measures the gateway,
+not the disk.
+
+| Table | Rows | Columns | Key |
+|---|---|---|---|
+| `pgbench_accounts` | 10,000,000 | `aid integer`, `bid integer`, `abalance integer`, `filler character(84)` | primary key `aid` |
+| `pgbench_branches` | 100 | `bid integer`, `bbalance integer`, `filler character(88)` | primary key `bid` |
+| `pgbench_tellers` | 1,000 | `tid integer`, `bid integer`, `tbalance integer`, `filler character(84)` | primary key `tid` |
+| `pgbench_history` | 0 at the start | `tid`, `bid`, `aid`, `delta integer`, `mtime timestamp`, `filler character(22)` | none |
+
+QueryAPIGate's own store - keys, saved queries, connections, run history - was a second database, `qagstore`, in the
+same PostgreSQL (`QUERYAPIGATE_DATABASE_URL`).
+
+### The calls
+
+Three saved queries, run through `/q/<name>` with a random id on every request:
+
+| Saved query | SQL | Called as |
+|---|---|---|
+| `account` - a **lookup** | `SELECT aid, bid, abalance FROM pgbench_accounts WHERE aid = :aid` | `/q/account?aid=` 1 to 9,999,999 |
+| `account_page` - a **100-row page** with a join | `SELECT a.aid, a.abalance, b.bid, b.bbalance FROM pgbench_accounts a JOIN pgbench_branches b ON b.bid = a.bid WHERE a.aid BETWEEN :start AND :start + 99 ORDER BY a.aid` | `/q/account_page?start=` 1 to 999,999`&page_size=100` |
+| `deposit` - a **write** | `UPDATE pgbench_accounts SET abalance = abalance + :delta WHERE aid = :aid` | `/q/deposit?aid=` 1 to 9,999,999`&delta=` 1 to 9 |
+
+And three keys:
+
+- **plain** - granted `account` and `account_page`, nothing else;
+- **governed** - the same, plus `allowed_tables` (`pgbench_accounts`, `pgbench_branches`) and a masking rule that
+  hashes `*.abalance`;
+- **writer** - granted `deposit`, with `allow_writes` and `allowed_write_ops: ["update"]`, on a server started with
+  `QUERYAPIGATE_ALLOW_WRITES=1`.
+
+Every request in every run below returned 200, and the writes landed.
+
+### The database on its own
+
+pgbench against the same container, for scale:
+
+| Workload | Clients | Transactions a second | Average latency |
+|---|---|---|---|
+| Primary-key read (`pgbench -S`) | 1 | 11,821 | 0.085 ms |
+| Primary-key read (`pgbench -S`) | 32 | 221,481 | 0.144 ms |
+| TPC-B transaction - three updates, a select and an insert | 32 | 20,869 | 1.5 ms |
+
+A lookup costs PostgreSQL under a tenth of a millisecond. Whatever a call through the gateway takes beyond that is the
+gateway.
+
+### Through the gateway: one container
+
+One worker, eight threads, 32 concurrent callers; requests a second. *Before* is the request path before the changes
+to the store reads and the pool below. *Now* is this version's, at its defaults. *Now, with the metadata cache* adds `QUERYAPIGATE_METADATA_CACHE_TTL=5` (see
+[The metadata cache](#the-metadata-cache)).
+
+| Call | Before | Now | Now, with the metadata cache |
+|---|---|---|---|
+| Lookup, plain key | 326 | 368 | 430 |
+| Lookup, governed key | 343 | 338 | 392 |
+| 100-row page | 306 | 318 | 346 |
+| Write | 326 | 368 | 420 |
+
+The lookup row is the median of three rounds, run interleaved; the others are one run each. Runs varied by up to about
+10% between rounds, so a smaller difference than that, such as the governed lookup's, isn't one.
+
+Latency for one caller at a time, the lookup with a plain key, median of three rounds:
+
+| | req/s | p50 |
+|---|---|---|
+| Before | 414 | 1.9 ms |
+| Now | 440 | 1.8 ms |
+| Now, with the metadata cache | 692 | 1.2 ms |
+
+### Scaling out in front of PostgreSQL
+
+Requests a second with 64 concurrent callers, by the number of gunicorn workers - each one a process like a
+container's:
+
+| Workers | Before: lookups / writes | Now: lookups / writes | Now, with the metadata cache: lookups / writes |
+|---|---|---|---|
+| 1 | 339 / 380 | 419 / 410 | 473 / 464 |
+| 2 | 1,094 / 921 | 933 / 928 | 1,144 / 1,157 |
+| 4 | 1,336 / 1,308 | 1,444 / 1,447 | 1,876 / 1,830 |
+| 8 | 1,926 / 1,763 | 2,093 / 2,078 | 2,732 / 2,650 |
+
+- **Processes add throughput.** Eight of them served five to six times what one did, on the same database.
+- **One process with 64 callers does worse than its share.** The callers queue for its eight threads, which is why the
+  step from one worker to two is more than double. Don't size capacity from one overloaded process.
+- **The metadata cache matters more as you scale out.** With 8 workers, it's 30% more requests a second, and the
+  store's PostgreSQL has far less to do.
+- **These are workers on one 20-thread laptop**, sharing it with the database and the load generator. Containers on
+  their own hosts would scale more cleanly.
+
+## Where the time goes
+
+On SQLite, each part of a call, measured on its own:
+
+| Part of a call | Primary-key lookup | Join query |
+|---|---|---|
+| The database query itself | 0.009 ms | 0.26 ms |
+| The read-only SQL check | 0.01 ms | 0.03 ms |
+| The table check (`allowed_tables`), first call for a statement | 0.3 ms | 1.5 ms |
+| Masking's trace of the result columns, first call for a statement | 6.9 ms | 28.9 ms |
+
+The first call for a statement pays for the table check and the masking trace; after that, both are reused. The
+table check depends only on the query text, so it can't go stale. The masking trace depends on the connection's
+schema too, so it is kept only as long as QueryAPIGate keeps that schema - 60 seconds - and is worked out again after
+that, or straight away when the connection is changed.
+
+The rest is the gateway itself, the same for every query: authentication, limits, the record of the run, the HTTP
+response. Against a database that takes 50 ms to answer, it hardly matters; against one that answers in 0.01 ms, it's
+nearly the whole call. Serialization is small at typical page sizes - about 0.1 ms here.
+
+Part of that fixed cost is QueryAPIGate's own store. Every call reads the key its secret belongs to, the saved query
+and the connection, and adds a run to the history. Transactions on the store, per call, counted in PostgreSQL's
+`pg_stat_database` over 200 lookups:
+
+| | Store transactions per call |
+|---|---|
+| Before | about 5.5 - the saved query was read three times |
+| Now | about 2.6 - one read each for the key, the query and the connection; history in batches |
+| Now, with the metadata cache | about 0 - only the batched history writes, about one a second |
+
+The data database saw about one transaction per call throughout: the query itself.
+
+## What governance costs
+
+Column masking has to know which source column each result column comes from, so it traces the query through its
+aliases, joins, subqueries and unions - a few milliseconds of SQL analysis. The table check parses the query to find
+the tables it reads. Before the caches, both ran on every call, and a governed key was 4-8 times slower than a plain
+one.
+
+Caching doesn't change what is masked or what is refused. A query that can't be traced or checked is refused every
+time, the same as before. Both caches have a fixed size, so a key sending many different ad-hoc queries can't make
+them grow without bound.
+
+## The metadata cache
+
+`QUERYAPIGATE_METADATA_CACHE_TTL` (seconds, off by default) keeps the rows a call reads from the store - the API key,
+the saved query, the connection - in memory for that long, instead of reading them again on every call. In the
+tests above, it took the store out of a call's path: 10-20% more throughput for a container, and a third off the
+latency of a single call (1.8 ms to 1.2 ms).
+
+What it caches is the rows, never a decision: whether a key is active, expired, used from an allowed address or still
+inside a rotation's grace period is checked on every call, against the cached row. What it can delay is a change:
+
+- **A change made through the same server** - the Console, the Management API - is seen at once: every change to the
+  store clears this server's cache.
+- **A change made anywhere else** - another instance, another gunicorn worker, the `queryapigate` CLI, an edit straight
+  to the database - is seen up to one TTL later. A key revoked on one instance keeps working on the others for that
+  long.
+
+So it is a trade: a few seconds of delay for a revocation that reaches other instances, for fewer reads on the store.
+Leave it off if a revoked key must stop working everywhere at once; with one instance, a TTL of a few seconds changes
+nothing anyone would notice.
+
+## Scaling
+
+- **More containers, not more threads.** Each container is one Python process. Run several behind a load balancer
+  on a shared PostgreSQL store and Redis, and throughput grows with the number of containers - see [Scaling
+  out](DEPLOYMENT.md#scaling-out) and [Run several instances behind a load
+  balancer](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/42-run-several-instances.md).
+- **Why one worker per container.** `/metrics` is counted per process (and, without Redis, so are rate limits), so
+  with several workers in one container a scraper would read one worker's numbers at random. One worker per
+  container keeps every count complete.
+- **The eight threads are for waiting.** They let one container keep serving while some calls wait on a slow
+  database or a long-lived `/events` connection. They don't add CPU: in an earlier, slower run on the same laptop, one
+  worker served 119, 169 and 164 requests a second with 1, 2 and 8 threads.
+- **The database can take it.** In that earlier run, at 8 processes and 1,700 requests a second, PostgreSQL used about
+  four cores - mostly for QueryAPIGate's own store, not the queries. The metadata cache takes most of that away.
+
+## Making it faster
+
+- **Cache what you can.** A saved query with a [`cache_ttl`](API.md#response-caching) is answered without the
+  database for repeat calls.
+- **Turn on the [metadata cache](#the-metadata-cache)** if a few seconds' delay for a change made on another
+  instance is acceptable.
+- **Tune the connection pool** for the number of callers -
+  [Diagnose and tune the connection pool](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/37-tune-the-connection-pool.md).
+  The default of 8 idle connections matches the Docker image's 8 threads. Below that, a busy server closes
+  connections only to open new ones for the next calls.
+- **Stream large results** with `?stream=true` instead of paging through them - see
+  [Streaming exports](API.md#streaming-exports).
+- **Look at the database first.** On anything bigger than a primary-key lookup, the query plan and indexes usually
+  matter more than anything in the gateway.
+
+## What wasn't measured
+
+MySQL and ClickHouse as the data source; a database across a network, with the round trip that comes with it; large
+result sets; the MCP server; and several containers behind a load balancer - the scaling numbers are several workers
+on one machine. Measure on your own hardware before you plan capacity from these numbers.
+
+## Measure it yourself
+
+### On the example APIs
+
+Start a server the way the Docker image does, on the example APIs:
+
+```bash
+pip install "queryapigate[server,flow]"   # flow: the SQL analysis masking uses
+mkdir -p /tmp/qag-bench
+QUERYAPIGATE_HOME=/tmp/qag-bench QUERYAPIGATE_API_KEY=bench-admin QUERYAPIGATE_LOAD_EXAMPLES=1 \
+  gunicorn --bind 127.0.0.1:5090 --workers 1 --worker-class gthread --threads 8 \
+  --access-logfile /tmp/qag-bench/access.log -c python:queryapigate.gunicorn_conf 'queryapigate.app:create_app()'
+```
+
+Create a governed key, then put load on a query with it:
+
+```bash
+curl -s -X POST http://127.0.0.1:5090/api/v1/api-keys -H 'X-API-Key: bench-admin' -H 'Content-Type: application/json' \
+  -d '{"name": "bench-governed", "queries": ["example_film_lookup"], "connections": [],
+       "allowed_tables": ["film", "rental"], "mask": [{"column": "*.title", "action": "hash"}]}'
+# copy the "secret" from the response
+
+docker run --rm --network host ghcr.io/hatoo/oha -z 10s -c 8 -H 'X-API-Key: <the secret>' \
+  'http://127.0.0.1:5090/q/example_film_lookup?film_id=7'
+```
+
+Run a few seconds first as a warm-up - the first calls for each statement pay for the table check and the masking
+trace - then measure for at least 10 seconds: once with `-c 1` for latency on an idle server, then at higher
+concurrency for throughput. Point it at your own queries and database for numbers you can plan from.
+
+### On PostgreSQL
+
+A PostgreSQL with pgbench's schema, and a second database for QueryAPIGate's store:
+
+```bash
+docker run -d --name qag-bench-pg -e POSTGRES_PASSWORD=pw -p 55433:5432 postgres:16 \
+  -c shared_buffers=2GB -c max_connections=300
+docker exec qag-bench-pg psql -U postgres -c 'CREATE DATABASE bench' -c 'CREATE DATABASE qagstore'
+docker exec qag-bench-pg pgbench -U postgres -i -s 100 bench     # 10 million accounts, about 1.5 GB
+docker exec qag-bench-pg pgbench -U postgres -S -c 32 -j 8 -T 10 bench   # the database on its own
+```
+
+QueryAPIGate on that store - `psycopg2` is in the `postgres` extra:
+
+```bash
+pip install "queryapigate[server,postgres]"
+mkdir -p /tmp/qag-oltp
+QUERYAPIGATE_HOME=/tmp/qag-oltp QUERYAPIGATE_API_KEY=bench-admin \
+  QUERYAPIGATE_DATABASE_URL=postgresql://postgres:pw@127.0.0.1:55433/qagstore \
+  gunicorn --bind 127.0.0.1:5091 --workers 1 --worker-class gthread --threads 8 \
+  -c python:queryapigate.gunicorn_conf 'queryapigate.app:create_app()'
+```
+
+A connection, the lookup as a saved query, and a key for it:
+
+```bash
+A='X-API-Key: bench-admin'; J='Content-Type: application/json'; U=http://127.0.0.1:5091
+curl -s -X POST $U/api/v1/connections -H "$A" -H "$J" -d '{"name": "oltp", "db": "postgres", "host": "127.0.0.1",
+  "port": 55433, "database": "bench", "user": "postgres", "password": "pw", "active": true}'
+curl -s -X POST $U/api/v1/queries -H "$A" -H "$J" -d '{"name": "account", "connection_name": "oltp",
+  "sql": "SELECT aid, bid, abalance FROM pgbench_accounts WHERE aid = :aid",
+  "parameters": {"aid": {"type": "int", "required": true}}, "description": "One account", "publish": true}'
+curl -s -X POST $U/api/v1/api-keys -H "$A" -H "$J" -d '{"name": "bench", "queries": ["account"], "connections": []}'
+# copy the "secret" from the response
+```
+
+Then the load, with a random account on every request:
+
+```bash
+docker run --rm --network host ghcr.io/hatoo/oha -z 10s -c 32 -H 'X-API-Key: <the secret>' \
+  --rand-regex-url 'http://127.0.0.1:5091/q/account\?aid=[1-9][0-9]{0,6}'
+```
+
+Restart gunicorn with `QUERYAPIGATE_METADATA_CACHE_TTL=5` to see the metadata cache, or with `--workers 4` to see a
+second process's worth. When you're done, `docker rm -fv qag-bench-pg` removes the container and its data.
 
 
 # Threat model
@@ -17521,6 +17521,137 @@ For a *live* feed rather than history, the **Home** screen's requests panel upda
 - [Wire up Prometheus and Grafana](35-wire-up-prometheus-and-grafana.md) - the live counters as dashboards and alerts.
 - [Read the audit log](20-read-the-audit-log.md) - not *what ran*, but *who changed the configuration*.
 - [Send the audit log to your SIEM](53-send-the-audit-log-to-your-siem.md) - ship the record off the box.
+
+
+# One MySQL server, six services, one gateway
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-mysql-six-services
+
+# One MySQL server, six services, one gateway
+
+A common shape for a growing system is one MySQL server, with a database per microservice: `crm` for customers,
+`orders`, `billing`, `inventory`, and so on. Sooner or later, something needs to read across them: a support tool, a
+partner API, an AI agent. "Show me this user's latest order, with the items and their payments" is three services'
+data in one query. MySQL can join across databases on the same server, so the question is what putting a governed
+gateway in front of that costs.
+
+We measured it. We loaded TPC-C's data into MySQL 8.4 (600,000 customers, 6 million order lines) and split its tables
+into six databases, one per service. Then we ran six per-user queries through QueryAPIGate and straight into MySQL,
+side by side. The full write-up, with every table and its ranges, is
+[Performance on MySQL](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/documentation/PERFORMANCE_MYSQL_V1.md).
+
+## A fixed 1.2 ms
+
+| Query | MySQL directly | Through the gateway | Added |
+|---|---|---|---|
+| One customer by id | 0.03 ms | 1.16 ms | 1.1 ms |
+| TPC-C Order-Status (customer, last order, its lines) | 0.08 ms | 1.40 ms | 1.3 ms |
+| TPC-C Stock-Level (a range and a `COUNT(DISTINCT)`) | 0.42 ms | 1.64 ms | 1.2 ms |
+
+These are single calls at p50, with the metadata cache on. The gateway adds about the same 1.1-1.3 ms to every query,
+so the cost is fixed, not a percentage. For a query MySQL answers in microseconds, that cost is most of the call. For
+one that takes 20 ms, it's noise.
+
+The cost is the gateway's work: identity, the grant check, the SQL guard, the record of the run, and the HTTP response.
+All of it is Python. One worker serves 580-780 of these calls a second, while MySQL, on two cores, could answer 8 to
+110 times more. So you scale with workers. At eight workers, the heaviest query kept MySQL busy on 2.5 of its 4
+hardware threads, and the lighter ones on less than one.
+
+## Three round trips, one of them a ping
+
+We counted every statement MySQL received: two per call, the query and a `ROLLBACK` when the pooled connection goes
+back to the pool. That's half what PostgreSQL gets, because the MySQL driver sets read-only mode and the time limit
+once per connection, not once per query.
+
+Then we timed calls at 0, 0.5, 1 and 2 ms of simulated network delay. The slope of latency against delay counts the
+round trips a call actually waits for, and it said **three**.
+
+The third turned out to be in the MySQL client library. Every time code asks mysql-connector for a cursor, the library
+pings the server first, and our driver asked for a new cursor on every query. A ping isn't a statement, so the log
+never showed it. Across a 0.5 ms network, that's 0.6 ms a call we can take back by reusing a cursor. It's on the list
+for the next release.
+
+## Lookups want one thread
+
+| Threads per worker | 1 | 2 | 4 | 8 |
+|---|---|---|---|---|
+| One customer by id (0.03 ms) | **865/s** | 823 | 722 | 676 |
+| Stock-Level (0.42 ms) | 630 | **772** | 683 | 642 |
+
+The Docker image runs eight threads per worker. For a 0.03 ms lookup, one thread was 28% faster than eight: extra
+threads only compete for Python's interpreter lock. The 0.42 ms query wanted two, because with one thread a worker sits
+idle while MySQL works. The rule is simple: the faster the query, the fewer threads it needs. Slow reports and exports
+are the opposite, and that's what the eight threads are for.
+
+## Busy users make a response cache pay
+
+Real traffic isn't uniform. A few accounts call far more than the rest. We drew users from a Zipf distribution and
+gave the Order-Status query a 30-second response cache (`cache_ttl: 30`):
+
+- **59% of calls were answered from the cache,** throughput rose 23%, and MySQL got 58% fewer statements.
+- **With uniform users, the same cache cost 8%.** Only 5% of 600,000 equally likely users came back within 30
+  seconds, and storing the rest bought nothing.
+
+So put `cache_ttl` on queries whose callers repeat themselves, such as dashboards and popular accounts, and not on
+lookups every user makes once.
+
+## The store across the network
+
+QueryAPIGate reads three rows of its own on every call: the API key, the saved query and the connection. On one
+instance with its store on local SQLite, those reads are cheap in time but not in CPU: a fifth of the worker's.
+Several instances share a PostgreSQL store instead, and then the reads cross the network too:
+
+| QueryAPIGate's store | One call |
+|---|---|
+| SQLite, local | 3.5 ms |
+| PostgreSQL, 0.5 ms away | 6.1 ms |
+| PostgreSQL, 0.5 ms away, with the metadata cache | **3.4 ms** |
+
+The metadata cache (`QUERYAPIGATE_METADATA_CACHE_TTL`) keeps those three rows in memory. It caches rows, never
+decisions: whether a key is active, expired or used from an allowed address is checked on every call. For a
+multi-instance deployment, it's the difference between the second row and the third. On a single instance, it still
+adds 12-15% throughput.
+
+## What fills the disk
+
+Every call is written to the store's event log, which keeps 24 hours of events for clients that resume from where
+they left off. In five hours of this benchmark, that came to 10.6 million events and 6 GB of SQLite: about 570
+bytes a call. At 500 calls a second, the log levels off around 25 GB. Either size the store's disk for it, or shorten
+`QUERYAPIGATE_EVENTS_RETENTION_HOURS`.
+
+## The gap to close first
+
+Six services in one server raise a question the performance numbers don't answer: can a key for one service be kept
+out of another's tables? We checked. A key allowed to read `customer` could read `crm.customer`, as intended, and
+could also read a `billing.customer` table in another service's database. On MySQL, QueryAPIGate's table allow-list
+matches bare table names; only Trino connections match the full `catalog.schema.table`.
+
+Until that changes, keep services apart with MySQL's own grants. Give each service a MySQL user that can only see its
+own databases, add it as its own QueryAPIGate connection, and grant keys that connection only. Matching
+`schema.table` on MySQL is planned for the next release. Saved queries aren't affected: a key granted named queries
+can only run their SQL, which the publisher wrote.
+
+## What's next
+
+From this run, for 0.43:
+
+1. **Reuse a cursor per pooled MySQL connection,** to drop the ping: 3 round trips down to 2.
+2. **Match `schema.table` in MySQL table allow-lists,** to close the isolation gap.
+3. **Stop re-reading settings from the environment on every call:** 3.6% of the CPU.
+4. **Look at autocommit for read-only MySQL connections,** which would drop the `ROLLBACK` too, and make a call a
+   single round trip.
+
+## Check it yourself
+
+```bash
+pip install -e ".[server,mysql,postgres]" py-spy
+python benchmarks/tpcc_mysql.py --out /tmp/qag-tpcc --go-tpc ./go-tpc setup A B teardown
+python benchmarks/tpcc_mysql_report.py /tmp/qag-tpcc/results.jsonl
+```
+
+The harness starts its own MySQL, loads the data with [go-tpc](https://github.com/pingcap/go-tpc), splits it into the
+six databases, pins each part to its own cores, and compares releases side by side, with five rounds per comparison.
+It's TPC-C's data and two of its queries, but not the TPC-C benchmark, so these aren't TPC-C results. Plug the laptop
+in first.
 
 
 # What a governed call costs

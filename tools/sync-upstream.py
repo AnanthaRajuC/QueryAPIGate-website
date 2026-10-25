@@ -30,9 +30,15 @@ DOC_CAT = {  # top-level documents whose group the site sets by hand; anything e
     'INSTALLATION_AND_SETUP': 'Run it', 'CONFIGURATION': 'Run it', 'DEPLOYMENT': 'Run it', 'DATABASE_CONNECTION_CONFIGURATION': 'Run it',
     'API': 'Reference', 'MCP': 'Reference', 'FEATURES': 'Reference', 'EXAMPLES': 'Reference', 'QUERY_METADATA_MANAGEMENT': 'Reference', 'SCREENSHOTS': 'Reference',
     'THREAT_MODEL': 'Security', 'DATA_PROTECTION': 'Security', 'SECURITY': 'Security', 'ARCHITECTURE': 'Security', 'QUESTIONNAIRE': 'Security', 'SBOM': 'Security',
+    'PERFORMANCE_V3': 'Performance', 'PERFORMANCE_MYSQL_V1': 'Performance', 'PERFORMANCE_V2': 'Performance', 'PERFORMANCE': 'Performance',
     'WHY': 'Project', 'TECHNOLOGY_STACK': 'Project', 'CONTRIBUTING': 'Project', 'CODE_OF_CONDUCT': 'Project',
 }
-DOC_GROUP_ORDER = ['Run it', 'Reference', 'Security', 'Project']
+DOC_GROUP_ORDER = ['Run it', 'Reference', 'Performance', 'Security', 'Project']
+
+
+def doc_cat(slug, default='Reference'):
+    """A document's group: set by hand in DOC_CAT, or Performance for any PERFORMANCE* report, else the default."""
+    return DOC_CAT.get(slug) or ('Performance' if slug.upper().startswith('PERFORMANCE') else default)
 
 def api(path):
     req = urllib.request.Request(f'https://api.github.com/repos/{REPO}/contents/{path}?ref={BRANCH}',
@@ -105,8 +111,8 @@ def rebuild_index():
         txt = open(os.path.join(ROOT, 'documentation', name), encoding='utf-8').read()
         h1 = re.search(r'^#\s+(.+?)\s*$', txt, re.M)
         docs.append({'slug': re.sub(r'\.md$', '', name, flags=re.I), 'path': 'documentation/' + name,
-                     'title': clean(h1.group(1)) if h1 else name, 'cat': DOC_CAT.get(re.sub(r'\.md$', '', name, flags=re.I), 'Reference')})
-    for d in docs: d['cat'] = DOC_CAT.get(d['slug'], d.get('cat', 'Reference'))
+                     'title': clean(h1.group(1)) if h1 else name, 'cat': doc_cat(re.sub(r'\.md$', '', name, flags=re.I))})
+    for d in docs: d['cat'] = doc_cat(d['slug'], d.get('cat', 'Reference'))
     docs.sort(key=lambda d: (DOC_GROUP_ORDER.index(d['cat']) if d['cat'] in DOC_GROUP_ORDER else 99, list(DOC_CAT).index(d['slug']) if d['slug'] in DOC_CAT else 99))
     new = ('export const guides = ' + json.dumps(guides, indent=1, ensure_ascii=False) + ';\n\n'
            'export const docs = ' + json.dumps(docs, indent=1, ensure_ascii=False) + ';\n\n'

@@ -5,8 +5,16 @@
   <link href="https://anantharajuc.github.io/QueryAPIGate-website/Blog.dc.html"/>
   <link rel="self" href="https://anantharajuc.github.io/QueryAPIGate-website/feed.xml"/>
   <id>https://anantharajuc.github.io/QueryAPIGate-website/Blog.dc.html</id>
-  <updated>2026-10-24T12:00:00Z</updated>
+  <updated>2026-10-25T12:00:00Z</updated>
   <author><name>QueryAPIGate</name></author>
+  <entry>
+    <title>One MySQL server, six services, one gateway</title>
+    <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-mysql-six-services"/>
+    <id>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-mysql-six-services</id>
+    <updated>2026-10-25T12:00:00Z</updated>
+    <category term="Benchmark"/>
+    <summary>Per-user queries joining across six microservice databases on one MySQL server, through QueryAPIGate: about 1.2 ms added a call, 580-780 calls a second per worker, a ping we didn&#x27;t know we were paying for, why lookups want one thread, and the isolation gap to close before you rely on table allow-lists.</summary>
+  </entry>
   <entry>
     <title>What a governed call costs</title>
     <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=what-a-governed-call-costs"/>

@@ -15,6 +15,7 @@
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Home.dc.html</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Integrations.dc.html</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/MCP.dc.html</loc></url>
+  <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Performance-MySQL.dc.html</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Performance.dc.html</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Playground.dc.html</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Roadmap.dc.html</loc></url>
@@ -46,9 +47,9 @@
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=EXAMPLES</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=QUERY_METADATA_MANAGEMENT</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=SCREENSHOTS</loc></url>
-  <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE</loc></url>
-  <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V2</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V3</loc></url>
+  <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V2</loc></url>
+  <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=THREAT_MODEL</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=DATA_PROTECTION</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=SECURITY</loc></url>
@@ -121,6 +122,7 @@
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=60-give-each-team-its-own-workspace</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=61-connect-to-trino</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=62-see-whats-being-used-from-the-console</loc></url>
+  <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-mysql-six-services</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=what-a-governed-call-costs</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=agents-can-write-now</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=why-every-front-door-runs-the-same-eight-steps</loc></url>

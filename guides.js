@@ -621,22 +621,22 @@ export const docs = [
   "cat": "Reference"
  },
  {
-  "slug": "PERFORMANCE",
-  "path": "documentation/PERFORMANCE.md",
-  "title": "Performance",
-  "cat": "Reference"
+  "slug": "PERFORMANCE_V3",
+  "path": "documentation/PERFORMANCE_V3.md",
+  "title": "Performance, v3: an OLTP benchmark on PostgreSQL",
+  "cat": "Performance"
  },
  {
   "slug": "PERFORMANCE_V2",
   "path": "documentation/PERFORMANCE_V2.md",
   "title": "Performance, v2: an OLTP benchmark on PostgreSQL",
-  "cat": "Reference"
+  "cat": "Performance"
  },
  {
-  "slug": "PERFORMANCE_V3",
-  "path": "documentation/PERFORMANCE_V3.md",
-  "title": "Performance, v3: an OLTP benchmark on PostgreSQL",
-  "cat": "Reference"
+  "slug": "PERFORMANCE",
+  "path": "documentation/PERFORMANCE.md",
+  "title": "Performance",
+  "cat": "Performance"
  },
  {
   "slug": "THREAT_MODEL",
@@ -709,6 +709,14 @@ export const docs = [
    topic and version are optional labels. summary is the card text. featured: true puts a post in the large card at the top
    (otherwise the newest is). href sends the card somewhere other than blog/<slug>.md, such as the changelog. */
 export const posts = [
+ {
+  "slug": "one-mysql-six-services",
+  "title": "One MySQL server, six services, one gateway",
+  "date": "2026-10-25",
+  "cat": "Benchmark",
+  "topic": "Operations",
+  "summary": "Per-user queries joining across six microservice databases on one MySQL server, through QueryAPIGate: about 1.2 ms added a call, 580-780 calls a second per worker, a ping we didn't know we were paying for, why lookups want one thread, and the isolation gap to close before you rely on table allow-lists."
+ },
  {
   "slug": "what-a-governed-call-costs",
   "title": "What a governed call costs",
