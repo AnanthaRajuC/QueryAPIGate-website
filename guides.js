@@ -627,6 +627,12 @@ export const docs = [
   "cat": "Performance"
  },
  {
+  "slug": "PERFORMANCE_MYSQL_V1",
+  "path": "documentation/PERFORMANCE_MYSQL_V1.md",
+  "title": "Performance on MySQL, v1: microservice databases, per-user queries",
+  "cat": "Performance"
+ },
+ {
   "slug": "PERFORMANCE_V2",
   "path": "documentation/PERFORMANCE_V2.md",
   "title": "Performance, v2: an OLTP benchmark on PostgreSQL",
