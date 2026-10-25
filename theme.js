@@ -28,6 +28,8 @@
     ':where(p,li,td,dd,summary,figcaption) code:not(pre code),code.qx{font-family:\'JetBrains Mono\',monospace;font-size:0.88em;background:oklch(0.52 0.11 170 / 0.08);border:1px solid oklch(0.52 0.11 170 / 0.16);border-radius:5px;padding:0.05em 0.35em;-webkit-box-decoration-break:clone;box-decoration-break:clone}',
     '.rs-mega-foot{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 22px;padding-top:8px;margin-top:4px;border-top:1px solid var(--line-soft)}.rs-mega-foot .rs-mega-more{border-top:0;padding-top:0;margin-top:0}.rs-mega-foot .rs-mega-more:first-child{margin-right:auto}',
     '.rs-mega-inner .rs-mega-grid.rs-mega-grid5{grid-template-columns:repeat(4,minmax(0,1fr)) !important}',
+    '.rs-mega-inner .rs-mega-grid.rs-mega-grid3{grid-template-columns:repeat(3,minmax(0,1fr)) !important}',
+    '@media (max-width:1180px){.rs-dd.rs-mega-deploy .rs-dd-panel{display:none !important}}',
     // Guides menu: reading paths, topics and a "new here" card, with the architecture chips in the footer row.
     '.rs-gm{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,0.85fr) minmax(0,0.9fr);gap:28px}',
     '.rs-gm-col{display:grid;gap:2px;align-content:start}.rs-gm-h{font-family:\'JetBrains Mono\',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px 10px}',
