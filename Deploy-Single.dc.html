@@ -169,7 +169,7 @@
 <script>
 (function () {
   // Section rail on the left: marks the section in view; clicking scrolls without touching the hash.
-  var ids = ['top','shape','move','next'], raf = 0;
+  var ids = ['shape','files','start','day2','backups','nodocker','moveon','move','next'], raf = 0;
   function update() {
     raf = 0;
     var links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
@@ -182,6 +182,17 @@
   window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
   document.addEventListener('click', function (e) { var a = e.target.closest('.rail a[data-rail]'); if (!a) return; var el = document.getElementById(a.getAttribute('data-rail')); if (!el) return; e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
   var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
+})();
+</script>
+<script>
+(function () {
+  // Copy buttons on the code blocks: copy the block's text as shown.
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-copy]'); if (!b) return;
+    var pre = b.closest('.dpc') && b.closest('.dpc').querySelector('pre'); if (!pre) return;
+    try { navigator.clipboard && navigator.clipboard.writeText(pre.textContent); } catch (err) {}
+    var t = b.querySelector('span'); if (t) { t.textContent = 'Copied'; clearTimeout(b._t); b._t = setTimeout(function () { t.textContent = 'Copy'; }, 1400); }
+  });
 })();
 </script>
 </head>
@@ -422,6 +433,33 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 @media (max-width:900px){.dp-next{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:640px){.dp-hero{padding:48px 16px 32px}.dp-page{padding:8px 16px 64px;gap:48px}}
 @media (prefers-reduced-motion:reduce){.dp-other{transition:none}.dp-other:hover{transform:none}}
+/* Deploy shape pages: code blocks, tables, notes and lists for the per-shape sections. */
+.dp-lede{margin:0;color:var(--ink-2);text-wrap:pretty}
+.dp-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}.dp-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.dp-stack{display:grid;gap:16px;align-content:start;min-width:0}.dp-flow{display:grid;gap:16px;min-width:0}
+.dpc{background:#10201b;border:1px solid #243b34;border-radius:12px;overflow:hidden;min-width:0;box-shadow:0 24px 48px -32px rgba(16,32,27,0.6)}
+.dpc-bar{display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #243b34}
+.dpc-dots{display:flex;gap:5px}.dpc-dots i{width:9px;height:9px;border-radius:50%;display:block;background:#ff5f57}.dpc-dots i:nth-child(2){background:#febc2e}.dpc-dots i:nth-child(3){background:#28c840}
+.dpc-t{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88}.dpc-copy{margin-left:auto}
+.dpc pre{margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.dpc-c{color:#7c8f88}
+.dp-tcard{border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.dp-tbl{width:100%;border-collapse:collapse;font-size:14.5px;min-width:520px}
+.dp-tbl th{text-align:left;font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);padding:11px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.dp-tbl td{padding:12px 16px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--ink-2);line-height:1.55}.dp-tbl tr:last-child td{border-bottom:0}
+.dp-tbl td:first-child{color:var(--ink);font-weight:600;width:30%}
+.dp-note{--c:var(--accent-ink);display:grid;gap:4px;padding:14px 18px;border-radius:12px;border-left:3px solid var(--c);background:color-mix(in oklch,var(--c) 8%,var(--surface));font-size:14.5px;line-height:1.6;color:var(--ink-2)}
+.dp-note b{color:var(--ink);font-size:15px}.dp-note.warn{--c:oklch(0.66 0.16 60)}.dp-note.ci{--c:oklch(0.6 0.13 255)}
+.dp-list{margin:0;padding-left:20px;display:grid;gap:8px;font-size:15px;line-height:1.6;color:var(--ink-2)}.dp-list b{color:var(--ink)}
+.dp-steps{margin:0;padding-left:22px;display:grid;gap:8px;font-size:15px;line-height:1.6;color:var(--ink-2)}
+.dp-p{margin:0;font-size:15px;line-height:1.65;color:var(--ink-2);max-width:80ch}.dp-p b{color:var(--ink)}
+.dp-small{margin:0;font-size:13.5px;color:var(--ink-3);line-height:1.55}
+.dp-card2{display:grid;gap:10px;align-content:start;padding:20px 22px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}.dp-card2 h3{margin:0;font-size:16px;font-weight:600}
+.dp-stab{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px 18px;align-items:start;padding:18px 22px;border-radius:14px;border:1px solid color-mix(in oklch,var(--accent-ink) 40%,var(--line));background:color-mix(in oklch,var(--accent-ink) 7%,var(--surface));text-align:left;max-width:860px}
+.dp-stab-tag{font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--accent-ink);background:oklch(0.52 0.11 170 / 0.12);border-radius:999px;padding:5px 10px;white-space:nowrap}
+.dp-stab p{margin:0;font-size:14.5px;line-height:1.6;color:var(--ink-2)}.dp-stab b{color:var(--ink)}
+@media (max-width:960px){.dp-grid2,.dp-grid3{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.dp-stab{grid-template-columns:minmax(0,1fr)}.dp-tbl td:first-child{width:auto}}
 </style>
 </helmet>
 <div data-screen-label="Deploy: Single instance" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
@@ -460,8 +498,13 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   </header>
 
   <nav class="rail" aria-label="Sections">
-    <a href="#top" data-rail="top"><span>Overview</span></a>
     <a href="#shape" data-rail="shape"><span>The shape</span></a>
+    <a href="#files" data-rail="files"><span>The files</span></a>
+    <a href="#start" data-rail="start"><span>Start it</span></a>
+    <a href="#day2" data-rail="day2"><span>Day two</span></a>
+    <a href="#backups" data-rail="backups"><span>Backups</span></a>
+    <a href="#nodocker" data-rail="nodocker"><span>Without Docker</span></a>
+    <a href="#moveon" data-rail="moveon"><span>When to move on</span></a>
     <a href="#move" data-rail="move"><span>Moving here</span></a>
     <a href="#next" data-rail="next"><span>Before go-live</span></a>
   </nav>
@@ -481,13 +524,80 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
+  <section id="files" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">The files</span><h2 class="dp-h2">Three files in one folder</h2></div><p class="dp-lede">Only the proxy publishes ports, so QueryAPIGate is reachable only through it.</p></div>
+    <div class="dp-flow"><div class="dp-stack"><div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">docker-compose.yml</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy docker-compose.yml"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>services:
+  queryapigate:
+    image: ghcr.io/anantharajuc/queryapigate:0.42.0   <span class="dpc-c"># pin a version: upgrades should be deliberate</span>
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      QUERYAPIGATE_TRUST_PROXY: "1"                   <span class="dpc-c"># one proxy in front: Caddy</span>
+    volumes:
+      - queryapigate-data:/data                       <span class="dpc-c"># queryapigate.db lives here</span>
+    networks: [internal]
+
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["443:443", "80:80"]
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    networks: [internal]
+    depends_on: [queryapigate]
+
+networks:
+  internal:
+volumes:
+  queryapigate-data:
+  caddy-data:</pre></div></div><div class="dp-stack"><div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">Caddyfile</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy Caddyfile"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>api.example.com {
+    reverse_proxy queryapigate:5000
+}</pre></div><div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">.env · never committed, chmod 600</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy .env · never committed, chmod 600"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>QUERYAPIGATE_API_KEY=&lt;openssl rand -hex 32&gt;
+QUERYAPIGATE_SECRET_KEY=&lt;a Fernet key&gt;       <span class="dpc-c"># encrypts connection passwords in the store</span>
+WAREHOUSE_PASSWORD=&lt;your database's password&gt; <span class="dpc-c"># referred to as ${WAREHOUSE_PASSWORD}</span></pre></div><div class="dp-note warn"><b>The admin key isn't optional in a container.</b><span>With no key, the server answers only local clients. Inside Docker the caller's address is the container network, so every request is refused with <code class="qx">403 open_access_remote</code> until a key is set.</span></div></div></div>
+  </section>
+
+  <section id="start" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Start it</span><h2 class="dp-h2">Up, healthy, and behind TLS</h2></div><p class="dp-lede">Caddy gets and renews a certificate by itself once DNS points at the host and ports 80 and 443 are open. Then open <code class="qx">/console</code>, sign in with the admin key, add a connection, and create scoped keys for each caller.</p></div>
+    <div class="dp-flow"><div class="dp-stack"><div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">shell</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy shell"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>docker compose run --rm queryapigate queryapigate init   <span class="dpc-c"># optional: inactive template connections</span>
+docker compose up -d
+docker compose ps                                         <span class="dpc-c"># becomes "healthy"</span>
+curl https://api.example.com/health</pre></div></div><div class="dp-card2"><h3>What's already in the image</h3><ul class="dp-list"><li>Runs as a non-root user (uid 1000) and has a <code class="qx">HEALTHCHECK</code> on <code class="qx">/health</code> every 30 seconds.</li><li>gunicorn, one worker, eight <code class="qx">gthread</code> threads, a 120-second timeout.</li><li>Drivers for PostgreSQL, MySQL, ClickHouse, DuckDB, SQLite and MongoDB, plus JWT, the Redis cache and <code class="qx">queryapigate mcp</code>. The <code class="qx">-h2</code> tag adds Java for H2 and generic JDBC.</li><li><b>One catch:</b> a SQLite or DuckDB file must exist inside the container. Put it on <code class="qx">/data</code>; relative paths resolve against it.</li></ul></div></div>
+  </section>
+
+  <section id="day2" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Day two</span><h2 class="dp-h2">Logs, upgrades, monitoring</h2></div><span></span></div>
+    <div class="dp-tcard"><div style="overflow-x:auto"><table class="dp-tbl"><thead><tr><th></th><th>How</th></tr></thead><tbody><tr><td>Logs</td><td><code class="qx">docker compose logs -f queryapigate</code>: one line per request, with the request id and key name</td></tr><tr><td>Upgrades</td><td>Read the changelog, back up, bump the pinned tag, <code class="qx">docker compose pull &amp;&amp; docker compose up -d</code>. The store is migrated on first start.</td></tr><tr><td>Monitoring</td><td><code class="qx">/metrics</code> for Prometheus. Set <code class="qx">QUERYAPIGATE_METRICS_TOKEN</code>, since its labels name your keys, queries and connections.</td></tr><tr><td>Optional services</td><td>Same image, other commands: <code class="qx">redis:7-alpine</code> + <code class="qx">QUERYAPIGATE_REDIS_URL</code> for a cache that survives restarts; <code class="qx">queryapigate events --host 0.0.0.0</code> for live events to many clients; <code class="qx">queryapigate mcp --host 0.0.0.0</code> for AI agents. Give each the same <code class="qx">.env</code> and volume.</td></tr></tbody></table></div></div>
+  </section>
+
+  <section id="backups" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Backups</span><h2 class="dp-h2">queryapigate backup, not cp</h2></div><p class="dp-lede">It uses SQLite's backup API, so the copy is one consistent moment, including changes still in the write-ahead log. Measured on a running server: a <code class="qx">cp</code> taken moments earlier was missing the last two keys created (30 keys against 32).</p></div>
+    <div class="dp-flow"><div class="dp-stack"><div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">shell</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy shell"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>docker compose exec queryapigate queryapigate backup /data/backup.db --force
+docker compose cp queryapigate:/data/backup.db "./backups/queryapigate-$(date +%F).db"
+docker compose exec queryapigate rm /data/backup.db</pre></div><p class="dp-p"><b>To restore,</b> stop the server, put the backup in place as <code class="qx">queryapigate.db</code>, and delete the old <code class="qx">-wal</code> and <code class="qx">-shm</code> files.</p></div><div class="dp-stack"><div class="dp-note warn"><b>What a backup doesn't hold</b><span><code class="qx">QUERYAPIGATE_SECRET_KEY</code> (without it, encrypted passwords can't be read; keep it in your secrets manager, not next to the backup), the admin key, the <code class="qx">${VAR}</code> values connections refer to, and the databases QueryAPIGate queries. Scoped keys are in the store as hashes, so they keep working after a restore.</span></div><div class="dp-note ci"><b>In CI on every push</b><span><code class="qx">tests/test_backup_restore.py</code> fills a store, backs it up, loses it, restores it and checks the admin API sees the same.</span></div></div></div>
+  </section>
+
+  <section id="nodocker" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Without Docker</span><h2 class="dp-h2">pip and gunicorn</h2></div><p class="dp-lede">Always one worker per process: <code class="qx">/metrics</code> is per process, and without Redis so are rate limits. Put a TLS proxy in front and set <code class="qx">QUERYAPIGATE_TRUST_PROXY</code> to the number of proxies.</p></div>
+    <div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">shell</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy shell"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>pip install "queryapigate[server]"
+QUERYAPIGATE_API_KEY=… gunicorn --bind 127.0.0.1:5000 --workers 1 --worker-class gthread --threads 8 \
+  --timeout 120 "queryapigate.app:create_app()"</pre></div>
+  </section>
+
+  <section id="moveon" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">When to move on</span><h2 class="dp-h2">Outgrowing one instance</h2></div><span></span></div>
+    <ul class="dp-list"><li><b>Don't raise the replica count of this Compose file.</b> Each copy would get its own SQLite volume and be a separate server with its own keys.</li><li>For capacity or availability, move the store to PostgreSQL and add Redis (<a href="Deploy-HA.dc.html">High availability</a>). <code class="qx">queryapigate migrate-to-postgres</code> copies the SQLite store across once, before you switch traffic.</li><li>For simple redundancy without PostgreSQL, run one active instance and a standby restored from backups.</li></ul>
+  </section>
+
   <section id="move" class="dp-sec">
     <div class="d-hdr"><h2 class="dp-h2">What changes when you move</h2><p style="margin:0;color:var(--ink-2);text-wrap:pretty">Moving between shapes is a configuration change. This is what each step adds; the step for this page is highlighted.</p></div>
     <div class="d-move">
 <div style="border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:10px;align-content:start;background:oklch(0.52 0.11 170 / 0.07);border-color:var(--accent-ink)">
             <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">01</span><b style="font-weight:600">Single instance</b></div>
             <code>QUERYAPIGATE_API_KEY=…</code>
-            <span style="font-size:13.5px;color:var(--ink-2)">One process or container. The store is SQLite on a volume; nothing else to set.</span>
+            <code>QUERYAPIGATE_SECRET_KEY=…</code>
+            <span style="font-size:13.5px;color:var(--ink-2)">One process or container, with the store as SQLite on a volume. The key is required in a container; the secret key encrypts connection passwords at rest.</span>
           </div><div style="border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:10px;align-content:start;background:var(--surface-2)">
             <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">02</span><b style="font-weight:600">+ High availability</b></div>
             <code>QUERYAPIGATE_DATABASE_URL=postgres://…</code>
@@ -497,7 +607,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
             <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">03</span><b style="font-weight:600">+ Kubernetes</b></div>
             <code>store.type: postgres · replicas: 3</code>
             <code>existingSecret: queryapigate</code>
-            <span style="font-size:13.5px;color:var(--ink-2)">The same two URLs and the key live in one Secret; the chart refuses several pods without Redis or a database URL. <a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm" style="font-weight:600">Guide 54 →</a></span>
+            <span style="font-size:13.5px;color:var(--ink-2)">The same two URLs and the key live in one Secret; the chart refuses several pods on SQLite, several without Redis, PostgreSQL without a database URL, and secrets put in <code style="display:inline;padding:1px 5px;font-size:0.92em">config</code>. <a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm" style="font-weight:600">Guide 54 →</a></span>
           </div>
     </div>
   </section>

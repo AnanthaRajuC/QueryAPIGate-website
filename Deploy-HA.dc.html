@@ -169,7 +169,7 @@
 <script>
 (function () {
   // Section rail on the left: marks the section in view; clicking scrolls without touching the hash.
-  var ids = ['top','shape','move','next'], raf = 0;
+  var ids = ['shape','needs','compose','check','rolling','day2','move','next'], raf = 0;
   function update() {
     raf = 0;
     var links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
@@ -182,6 +182,17 @@
   window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
   document.addEventListener('click', function (e) { var a = e.target.closest('.rail a[data-rail]'); if (!a) return; var el = document.getElementById(a.getAttribute('data-rail')); if (!el) return; e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
   var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
+})();
+</script>
+<script>
+(function () {
+  // Copy buttons on the code blocks: copy the block's text as shown.
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-copy]'); if (!b) return;
+    var pre = b.closest('.dpc') && b.closest('.dpc').querySelector('pre'); if (!pre) return;
+    try { navigator.clipboard && navigator.clipboard.writeText(pre.textContent); } catch (err) {}
+    var t = b.querySelector('span'); if (t) { t.textContent = 'Copied'; clearTimeout(b._t); b._t = setTimeout(function () { t.textContent = 'Copy'; }, 1400); }
+  });
 })();
 </script>
 </head>
@@ -422,6 +433,33 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 @media (max-width:900px){.dp-next{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:640px){.dp-hero{padding:48px 16px 32px}.dp-page{padding:8px 16px 64px;gap:48px}}
 @media (prefers-reduced-motion:reduce){.dp-other{transition:none}.dp-other:hover{transform:none}}
+/* Deploy shape pages: code blocks, tables, notes and lists for the per-shape sections. */
+.dp-lede{margin:0;color:var(--ink-2);text-wrap:pretty}
+.dp-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}.dp-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.dp-stack{display:grid;gap:16px;align-content:start;min-width:0}.dp-flow{display:grid;gap:16px;min-width:0}
+.dpc{background:#10201b;border:1px solid #243b34;border-radius:12px;overflow:hidden;min-width:0;box-shadow:0 24px 48px -32px rgba(16,32,27,0.6)}
+.dpc-bar{display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #243b34}
+.dpc-dots{display:flex;gap:5px}.dpc-dots i{width:9px;height:9px;border-radius:50%;display:block;background:#ff5f57}.dpc-dots i:nth-child(2){background:#febc2e}.dpc-dots i:nth-child(3){background:#28c840}
+.dpc-t{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88}.dpc-copy{margin-left:auto}
+.dpc pre{margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.dpc-c{color:#7c8f88}
+.dp-tcard{border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.dp-tbl{width:100%;border-collapse:collapse;font-size:14.5px;min-width:520px}
+.dp-tbl th{text-align:left;font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);padding:11px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.dp-tbl td{padding:12px 16px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--ink-2);line-height:1.55}.dp-tbl tr:last-child td{border-bottom:0}
+.dp-tbl td:first-child{color:var(--ink);font-weight:600;width:30%}
+.dp-note{--c:var(--accent-ink);display:grid;gap:4px;padding:14px 18px;border-radius:12px;border-left:3px solid var(--c);background:color-mix(in oklch,var(--c) 8%,var(--surface));font-size:14.5px;line-height:1.6;color:var(--ink-2)}
+.dp-note b{color:var(--ink);font-size:15px}.dp-note.warn{--c:oklch(0.66 0.16 60)}.dp-note.ci{--c:oklch(0.6 0.13 255)}
+.dp-list{margin:0;padding-left:20px;display:grid;gap:8px;font-size:15px;line-height:1.6;color:var(--ink-2)}.dp-list b{color:var(--ink)}
+.dp-steps{margin:0;padding-left:22px;display:grid;gap:8px;font-size:15px;line-height:1.6;color:var(--ink-2)}
+.dp-p{margin:0;font-size:15px;line-height:1.65;color:var(--ink-2);max-width:80ch}.dp-p b{color:var(--ink)}
+.dp-small{margin:0;font-size:13.5px;color:var(--ink-3);line-height:1.55}
+.dp-card2{display:grid;gap:10px;align-content:start;padding:20px 22px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}.dp-card2 h3{margin:0;font-size:16px;font-weight:600}
+.dp-stab{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px 18px;align-items:start;padding:18px 22px;border-radius:14px;border:1px solid color-mix(in oklch,var(--accent-ink) 40%,var(--line));background:color-mix(in oklch,var(--accent-ink) 7%,var(--surface));text-align:left;max-width:860px}
+.dp-stab-tag{font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--accent-ink);background:oklch(0.52 0.11 170 / 0.12);border-radius:999px;padding:5px 10px;white-space:nowrap}
+.dp-stab p{margin:0;font-size:14.5px;line-height:1.6;color:var(--ink-2)}.dp-stab b{color:var(--ink)}
+@media (max-width:960px){.dp-grid2,.dp-grid3{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.dp-stab{grid-template-columns:minmax(0,1fr)}.dp-tbl td:first-child{width:auto}}
 </style>
 </helmet>
 <div data-screen-label="Deploy: High availability" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
@@ -460,8 +498,12 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   </header>
 
   <nav class="rail" aria-label="Sections">
-    <a href="#top" data-rail="top"><span>Overview</span></a>
     <a href="#shape" data-rail="shape"><span>The shape</span></a>
+    <a href="#needs" data-rail="needs"><span>What it needs</span></a>
+    <a href="#compose" data-rail="compose"><span>Compose</span></a>
+    <a href="#check" data-rail="check"><span>Check it</span></a>
+    <a href="#rolling" data-rail="rolling"><span>Rolling upgrades</span></a>
+    <a href="#day2" data-rail="day2"><span>Day two</span></a>
     <a href="#move" data-rail="move"><span>Moving here</span></a>
     <a href="#next" data-rail="next"><span>Before go-live</span></a>
   </nav>
@@ -481,13 +523,52 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
+  <section id="needs" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">What it needs</span><h2 class="dp-h2">What several instances need</h2></div><span></span></div>
+    <div class="dp-tcard"><div style="overflow-x:auto"><table class="dp-tbl"><thead><tr><th></th><th>Why</th></tr></thead><tbody><tr><td>A PostgreSQL store (<code class="qx">QUERYAPIGATE_DATABASE_URL</code>)</td><td>Connections, saved queries and versions, keys, roles, history and the audit log are shared. Separate SQLite volumes would make separate servers.</td></tr><tr><td>Redis (<code class="qx">QUERYAPIGATE_REDIS_URL</code>)</td><td>Rate limits, quotas, concurrency caps and the response cache are counted once. Without Redis each instance counts on its own, and an alert says so.</td></tr><tr><td><code class="qx">queryapigate events</code></td><td>Reads every instance's runs from the store. Route <code class="qx">/events</code> to it.</td></tr><tr><td>The same secrets everywhere</td><td><code class="qx">QUERYAPIGATE_API_KEY</code>, <code class="qx">QUERYAPIGATE_SECRET_KEY</code>, and every <code class="qx">${VAR}</code> a connection uses.</td></tr><tr><td>One gunicorn worker per container</td><td>Scale with containers, not workers, so each <code class="qx">/metrics</code> is one process.</td></tr></tbody></table></div></div>
+  </section>
+
+  <section id="compose" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">The reference deployment</span><h2 class="dp-h2">deploy/scale-out/</h2></div><p class="dp-lede">Three instances, PostgreSQL, Redis, the events server and Caddy, in one Compose file. Caddy round-robins across the instances, drops one that fails <code class="qx">/health</code>, and retries a request on another if one can't be reached. To add an instance, copy a block.</p></div>
+    <div class="dp-flow"><div class="dp-stack"><div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">shell</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy shell"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>cd deploy/scale-out
+cp .env.example .env &amp;&amp; chmod 600 .env   <span class="dpc-c"># pin QUERYAPIGATE_IMAGE; set the key, passwords and SITE_ADDRESS</span>
+docker compose up -d
+docker compose ps                        <span class="dpc-c"># six services, healthy</span></pre></div></div><div class="dp-stack"><div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">Caddyfile</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy Caddyfile"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>{$SITE_ADDRESS} {
+    reverse_proxy /events* events:5002
+    reverse_proxy queryapigate-1:5000 queryapigate-2:5000 queryapigate-3:5000 {
+        lb_policy round_robin
+        lb_try_duration 5s
+        health_uri /health
+        health_interval 10s
+    }
+    respond /metrics 403   <span class="dpc-c"># scrape the instances directly</span>
+}</pre></div></div></div>
+  </section>
+
+  <section id="check" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Check it</span><h2 class="dp-h2">Check that they act as one</h2></div><span></span></div>
+    <div class="dp-flow"><div class="dp-stack"><div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">shell</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy shell"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>curl https://api.example.com/api/v1/instances -H 'X-API-Key: …'
+<span class="dpc-c"># three "serve" instances and one "events", each "shared_limits": true, and "problems": []</span></pre></div><div class="dp-note ci"><b>In CI on every push</b><span><code class="qx">tests/test_multinode.py</code> runs three real servers and an events server on one PostgreSQL and Redis. Every check makes a change through one node and looks for it on another: keys, query versions, connections, rate limits, the cache, history, the audit log and live events.</span></div></div><div class="dp-stack"><span class="dp-eye">Verified end to end, before the reference deployment was published</span><div class="dp-tcard"><div style="overflow-x:auto"><table class="dp-tbl"><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody><tr><td>Calls through the load balancer</td><td>Answered by the three instances in turn</td></tr><tr><td>A key limited to <code class="qx">4/minute</code>, called across instances</td><td>200 four times, then 429</td></tr><tr><td>One instance stopped, twelve calls</td><td>All twelve 200: Caddy retried on the others</td></tr><tr><td><code class="qx">/events</code></td><td>Runs arrived through the proxy</td></tr><tr><td><code class="qx">/metrics</code> through the proxy</td><td>403</td></tr></tbody></table></div></div></div></div>
+  </section>
+
+  <section id="rolling" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Rolling upgrades</span><h2 class="dp-h2">Replace instances one at a time</h2></div><p class="dp-lede">Within a release line the store changes only additively: new tables, columns and indexes, never a rename or a drop. So instances still on the previous release keep working on a store the new release has upgraded.</p></div>
+    <div class="dp-grid2"><div class="dp-stack"><ol class="dp-steps"><li>Back up the store (<code class="qx">pg_dump</code>).</li><li>Start one instance on the new version. It upgrades the store. Check its <code class="qx">/health</code>.</li><li>Replace the others one by one. <code class="qx">GET /api/v1/instances</code> shows who runs which version.</li><li>Replace <code class="qx">queryapigate events</code> along with them.</li></ol><div class="dp-note ci"><b>In CI on every push</b><span>The previous release from PyPI keeps serving, writing and recording runs beside the current code (<code class="qx">tests/test_rolling_upgrade.py</code>).</span></div></div><div class="dp-stack"><div class="dp-note warn"><b>Limits</b><span>Upgrade one minor version at a time when rolling (0.41 → 0.42, not 0.40 → 0.42). Once the store is upgraded, an instance can't <i>start</i> on the previous release: if one restarts mid-upgrade, bring it back on the new version. A release that can't keep this rule says so under <b>Breaking</b>, and every instance must stop first. The one case so far was 0.38 (workspaces), which changed the store's primary keys.</span></div></div></div>
+  </section>
+
+  <section id="day2" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Day two</span><h2 class="dp-h2">Running several instances</h2></div><span></span></div>
+    <div class="dp-grid2"><div class="dp-stack"><ul class="dp-list"><li><b>Store connections:</b> about 9 per instance (threads + 1), plus one per events or MCP process. Three instances and an events server need about 30, well under PostgreSQL's default 100. For many more, use PgBouncer in <b>session</b> mode; transaction mode breaks the store's advisory locks.</li><li><b>Metrics:</b> scrape each instance. The bundled Grafana dashboard sums them. The Console's Metrics screen shows only the instance that served it.</li><li><b>Backups:</b> <code class="qx">pg_dump</code> of the store's schema, which is safe while serving. <code class="qx">queryapigate backup</code> prints the exact command.</li><li><b>Alerts to know:</b> <code class="qx">instances_not_shared</code> (some instances run without Redis), <code class="qx">instances_versions_differ</code> (a rolling upgrade hasn't finished), <code class="qx">rate_limits_not_shared</code> (Redis is unreachable, so limits fall back to per instance). A Redis outage degrades the cache to a miss and never fails a request.</li><li><b>Faster calls:</b> <code class="qx">QUERYAPIGATE_METADATA_CACHE_TTL=5</code> gives 16-23% more per worker and halves the store's load. The trade-off: a key revoked on another instance keeps working here for up to that many seconds.</li></ul></div><div class="dp-card2"><h3>On Kubernetes without Helm</h3><p class="dp-p"><code class="qx">deploy/kubernetes/</code> has the same shape as plain manifests: three replicas, the events server, a PodDisruptionBudget and an Ingress. A test keeps them in step with what the chart renders. Settings that running it turned up:</p><ul class="dp-list"><li><code class="qx">enableServiceLinks: false</code>: a Service named <code class="qx">queryapigate-events</code> would otherwise inject <code class="qx">QUERYAPIGATE_EVENTS_PORT=tcp://…</code>, which is one of QueryAPIGate's own settings.</li><li>A <code class="qx">preStop</code> pause and a 45-second grace period. Without them a rolling update dropped 2 of 1,633 requests; with them, 0 of 1,896.</li><li><code class="qx">maxUnavailable: 0</code>, <code class="qx">maxSurge: 1</code>, and readiness and liveness probes on <code class="qx">/health</code>.</li></ul></div></div>
+  </section>
+
   <section id="move" class="dp-sec">
     <div class="d-hdr"><h2 class="dp-h2">What changes when you move</h2><p style="margin:0;color:var(--ink-2);text-wrap:pretty">Moving between shapes is a configuration change. This is what each step adds; the step for this page is highlighted.</p></div>
     <div class="d-move">
 <div style="border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:10px;align-content:start;background:var(--surface-2)">
             <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">01</span><b style="font-weight:600">Single instance</b></div>
             <code>QUERYAPIGATE_API_KEY=…</code>
-            <span style="font-size:13.5px;color:var(--ink-2)">One process or container. The store is SQLite on a volume; nothing else to set.</span>
+            <code>QUERYAPIGATE_SECRET_KEY=…</code>
+            <span style="font-size:13.5px;color:var(--ink-2)">One process or container, with the store as SQLite on a volume. The key is required in a container; the secret key encrypts connection passwords at rest.</span>
           </div><div style="border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:10px;align-content:start;background:oklch(0.52 0.11 170 / 0.07);border-color:var(--accent-ink)">
             <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">02</span><b style="font-weight:600">+ High availability</b></div>
             <code>QUERYAPIGATE_DATABASE_URL=postgres://…</code>
@@ -497,7 +578,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
             <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">03</span><b style="font-weight:600">+ Kubernetes</b></div>
             <code>store.type: postgres · replicas: 3</code>
             <code>existingSecret: queryapigate</code>
-            <span style="font-size:13.5px;color:var(--ink-2)">The same two URLs and the key live in one Secret; the chart refuses several pods without Redis or a database URL. <a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm" style="font-weight:600">Guide 54 →</a></span>
+            <span style="font-size:13.5px;color:var(--ink-2)">The same two URLs and the key live in one Secret; the chart refuses several pods on SQLite, several without Redis, PostgreSQL without a database URL, and secrets put in <code style="display:inline;padding:1px 5px;font-size:0.92em">config</code>. <a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm" style="font-weight:600">Guide 54 →</a></span>
           </div>
     </div>
   </section>

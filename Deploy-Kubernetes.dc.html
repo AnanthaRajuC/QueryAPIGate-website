@@ -169,7 +169,7 @@
 <script>
 (function () {
   // Section rail on the left: marks the section in view; clicking scrolls without touching the hash.
-  var ids = ['top','shape','move','next'], raf = 0;
+  var ids = ['shape','install','pods','refuses','hardening','values','upgrades','gitops','verify','good','next'], raf = 0;
   function update() {
     raf = 0;
     var links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
@@ -182,6 +182,17 @@
   window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
   document.addEventListener('click', function (e) { var a = e.target.closest('.rail a[data-rail]'); if (!a) return; var el = document.getElementById(a.getAttribute('data-rail')); if (!el) return; e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
   var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
+})();
+</script>
+<script>
+(function () {
+  // Copy buttons on the code blocks: copy the block's text as shown.
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-copy]'); if (!b) return;
+    var pre = b.closest('.dpc') && b.closest('.dpc').querySelector('pre'); if (!pre) return;
+    try { navigator.clipboard && navigator.clipboard.writeText(pre.textContent); } catch (err) {}
+    var t = b.querySelector('span'); if (t) { t.textContent = 'Copied'; clearTimeout(b._t); b._t = setTimeout(function () { t.textContent = 'Copy'; }, 1400); }
+  });
 })();
 </script>
 </head>
@@ -422,6 +433,33 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 @media (max-width:900px){.dp-next{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:640px){.dp-hero{padding:48px 16px 32px}.dp-page{padding:8px 16px 64px;gap:48px}}
 @media (prefers-reduced-motion:reduce){.dp-other{transition:none}.dp-other:hover{transform:none}}
+/* Deploy shape pages: code blocks, tables, notes and lists for the per-shape sections. */
+.dp-lede{margin:0;color:var(--ink-2);text-wrap:pretty}
+.dp-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}.dp-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.dp-stack{display:grid;gap:16px;align-content:start;min-width:0}.dp-flow{display:grid;gap:16px;min-width:0}
+.dpc{background:#10201b;border:1px solid #243b34;border-radius:12px;overflow:hidden;min-width:0;box-shadow:0 24px 48px -32px rgba(16,32,27,0.6)}
+.dpc-bar{display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #243b34}
+.dpc-dots{display:flex;gap:5px}.dpc-dots i{width:9px;height:9px;border-radius:50%;display:block;background:#ff5f57}.dpc-dots i:nth-child(2){background:#febc2e}.dpc-dots i:nth-child(3){background:#28c840}
+.dpc-t{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88}.dpc-copy{margin-left:auto}
+.dpc pre{margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.dpc-c{color:#7c8f88}
+.dp-tcard{border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.dp-tbl{width:100%;border-collapse:collapse;font-size:14.5px;min-width:520px}
+.dp-tbl th{text-align:left;font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);padding:11px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.dp-tbl td{padding:12px 16px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--ink-2);line-height:1.55}.dp-tbl tr:last-child td{border-bottom:0}
+.dp-tbl td:first-child{color:var(--ink);font-weight:600;width:30%}
+.dp-note{--c:var(--accent-ink);display:grid;gap:4px;padding:14px 18px;border-radius:12px;border-left:3px solid var(--c);background:color-mix(in oklch,var(--c) 8%,var(--surface));font-size:14.5px;line-height:1.6;color:var(--ink-2)}
+.dp-note b{color:var(--ink);font-size:15px}.dp-note.warn{--c:oklch(0.66 0.16 60)}.dp-note.ci{--c:oklch(0.6 0.13 255)}
+.dp-list{margin:0;padding-left:20px;display:grid;gap:8px;font-size:15px;line-height:1.6;color:var(--ink-2)}.dp-list b{color:var(--ink)}
+.dp-steps{margin:0;padding-left:22px;display:grid;gap:8px;font-size:15px;line-height:1.6;color:var(--ink-2)}
+.dp-p{margin:0;font-size:15px;line-height:1.65;color:var(--ink-2);max-width:80ch}.dp-p b{color:var(--ink)}
+.dp-small{margin:0;font-size:13.5px;color:var(--ink-3);line-height:1.55}
+.dp-card2{display:grid;gap:10px;align-content:start;padding:20px 22px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}.dp-card2 h3{margin:0;font-size:16px;font-weight:600}
+.dp-stab{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px 18px;align-items:start;padding:18px 22px;border-radius:14px;border:1px solid color-mix(in oklch,var(--accent-ink) 40%,var(--line));background:color-mix(in oklch,var(--accent-ink) 7%,var(--surface));text-align:left;max-width:860px}
+.dp-stab-tag{font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--accent-ink);background:oklch(0.52 0.11 170 / 0.12);border-radius:999px;padding:5px 10px;white-space:nowrap}
+.dp-stab p{margin:0;font-size:14.5px;line-height:1.6;color:var(--ink-2)}.dp-stab b{color:var(--ink)}
+@media (max-width:960px){.dp-grid2,.dp-grid3{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.dp-stab{grid-template-columns:minmax(0,1fr)}.dp-tbl td:first-child{width:auto}}
 </style>
 </helmet>
 <div data-screen-label="Deploy: Kubernetes" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
@@ -456,13 +494,21 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     <span class="dp-eye">Deploy · Helm chart</span>
     <h1>Kubernetes</h1>
     <p>The signed Helm chart: one pod on SQLite, or several on PostgreSQL and Redis behind a disruption budget. Installed and upgraded under load on a real cluster in CI, and it refuses setups that can't work.</p>
+    <div class="dp-stab"><span class="dp-stab-tag">Stable since 0.30</span><p><b>Values may be added; none is renamed or removed except through the deprecation process.</b> Chart X.Y.Z runs QueryAPIGate X.Y.Z. It installs no PostgreSQL or Redis of its own, and its NetworkPolicy stays off until you give it your cluster's rules. Requires Kubernetes 1.25 or later, with Helm 3 or 4.</p></div>
     <div class="dp-go"><a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm" class="dp-btn">Guide 54: Helm →</a><a href="Guide.dc.html?g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request" class="dp-btn dp-btn-o">Guide 55: GitOps →</a><a href="Deploy.dc.html#compare" class="dp-btn dp-btn-o">Compare the three shapes</a></div>
   </header>
 
   <nav class="rail" aria-label="Sections">
-    <a href="#top" data-rail="top"><span>Overview</span></a>
     <a href="#shape" data-rail="shape"><span>The shape</span></a>
-    <a href="#move" data-rail="move"><span>Moving here</span></a>
+    <a href="#install" data-rail="install"><span>Install</span></a>
+    <a href="#pods" data-rail="pods"><span>Several pods</span></a>
+    <a href="#refuses" data-rail="refuses"><span>What it refuses</span></a>
+    <a href="#hardening" data-rail="hardening"><span>Hardening</span></a>
+    <a href="#values" data-rail="values"><span>Values</span></a>
+    <a href="#upgrades" data-rail="upgrades"><span>Upgrades</span></a>
+    <a href="#gitops" data-rail="gitops"><span>GitOps</span></a>
+    <a href="#verify" data-rail="verify"><span>Verify</span></a>
+    <a href="#good" data-rail="good"><span>Good to know</span></a>
     <a href="#next" data-rail="next"><span>Before go-live</span></a>
   </nav>
 
@@ -481,13 +527,76 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </section>
 
+  <section id="install" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Install</span><h2 class="dp-h2">One pod on SQLite</h2></div><p class="dp-lede">One pod, with <code class="qx">queryapigate.db</code> on a 1 Gi PersistentVolumeClaim. <b>The claim is kept on <code class="qx">helm uninstall</code>.</b> Reinstall under the same name and namespace and it picks the store up again, keys and all. Upgrades on SQLite replace the pod instead of rolling it, so expect a few seconds of downtime.</p></div>
+    <div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">shell</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy shell"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>kubectl create namespace queryapigate
+kubectl -n queryapigate create secret generic queryapigate \
+  --from-literal=QUERYAPIGATE_API_KEY=&lt;a long random key&gt; \
+  --from-literal=QUERYAPIGATE_SECRET_KEY=&lt;a Fernet key&gt;
+helm install queryapigate oci://ghcr.io/anantharajuc/charts/queryapigate --version 0.42.0 \
+  -n queryapigate --set existingSecret=queryapigate --wait</pre></div>
+  </section>
+
+  <section id="pods" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Several pods</span><h2 class="dp-h2">On PostgreSQL and Redis</h2></div><p class="dp-lede">The pods roll one at a time, and a new pod must be ready before an old one stops (<code class="qx">maxUnavailable: 0</code>). The PodDisruptionBudget keeps all but one up during node drains. Use managed PostgreSQL and Redis in production; <code class="qx">deploy/kubernetes/dev-dependencies.yaml</code> starts throwaway ones for a trial.</p></div>
+    <div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">values-prod.yaml</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy values-prod.yaml"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>store: {type: postgres}
+replicas: 3
+existingSecret: queryapigate      <span class="dpc-c"># + QUERYAPIGATE_DATABASE_URL and QUERYAPIGATE_REDIS_URL</span>
+redis: {inExistingSecret: true}   <span class="dpc-c"># the chart can't see inside your Secret</span>
+events: {enabled: true}           <span class="dpc-c"># live events for many clients</span>
+mcp: {enabled: true}              <span class="dpc-c"># the MCP server for AI agents</span>
+config:
+  QUERYAPIGATE_JSON_LOGS: "1"</pre></div>
+  </section>
+
+  <section id="refuses" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">What it refuses</span><h2 class="dp-h2">Refused before anything changes</h2></div><p class="dp-lede"><code class="qx">helm install</code> and <code class="qx">helm upgrade</code> fail without touching the cluster.</p></div>
+    <div class="dp-flow"><div class="dp-stack"><ul class="dp-list"><li>more than one pod on SQLite,</li><li>more than one pod without Redis (otherwise rate limits, quotas and <code class="qx">max_concurrent</code> would be counted per pod),</li><li><code class="qx">store.type: postgres</code> without a database URL,</li><li>a secret setting (a key, or the database or Redis URL) in <code class="qx">config</code>, where it would sit in plain text in the Deployment,</li><li>a value not in <code class="qx">values.schema.json</code>. A misspelt <code class="qx">replica=3</code> fails with <code class="qx">additional properties 'replica' not allowed</code>.</li></ul></div><div class="dp-stack"><div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">helm upgrade</span></div><pre>Error: UPGRADE FAILED: store.type sqlite keeps the store in one file on one volume - it runs one pod.
+For several, set store.type: postgres (QUERYAPIGATE_DATABASE_URL in the secret) and Redis.</pre></div></div></div>
+  </section>
+
+  <section id="hardening" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Hardening</span><h2 class="dp-h2">Locked down by default</h2></div><p class="dp-lede">Non-root (UID 1000), read-only root filesystem, every capability dropped, RuntimeDefault seccomp, no service account token (QueryAPIGate never calls the Kubernetes API). It writes only to <code class="qx">/data</code> and <code class="qx">/tmp</code>.</p></div>
+    <div class="dp-grid2"><div class="dp-stack"><div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">kubectl</span></div><pre>$ kubectl exec deploy/queryapigate -- sh -c 'id; touch /x'
+uid=1000(app) gid=1000(app) groups=1000(app)
+touch: cannot touch '/x': Read-only file system</pre></div></div><div class="dp-stack"><div class="dp-note "><b>Metrics need a token</b><span><code class="qx">/metrics</code> needs a token by default (<code class="qx">metricsAuth</code>): the chart creates one in its own Secret, keeps it across upgrades, and the ServiceMonitor sends it.</span></div></div></div>
+  </section>
+
+  <section id="values" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Values</span><h2 class="dp-h2">The values that matter</h2></div><span></span></div>
+    <div class="dp-tcard"><div style="overflow-x:auto"><table class="dp-tbl"><thead><tr><th>Concern</th><th>Values</th></tr></thead><tbody><tr><td>Secrets</td><td><code class="qx">existingSecret</code> (recommended: sealed-secrets, External Secrets, Vault), or <code class="qx">secret.create</code> + <code class="qx">secret.values</code></td></tr><tr><td>Other settings</td><td><code class="qx">config</code>: any <code class="qx">QUERYAPIGATE_*</code> or <code class="qx">OTEL_*</code></td></tr><tr><td>Routing</td><td><code class="qx">ingress.*</code> sends <code class="qx">/events</code> to the events pods and everything else to the API pods, and sets <code class="qx">QUERYAPIGATE_TRUST_PROXY=1</code>. <code class="qx">mcp.ingress.host</code> gives MCP its own host. The defaults are ingress-nginx no-buffering annotations; replace them for another controller.</td></tr><tr><td>Image</td><td><code class="qx">image.digest</code>: pull by the digest you verified</td></tr><tr><td>Observability</td><td><code class="qx">serviceMonitor.enabled</code>, <code class="qx">metricsAuth</code>, tracing through <code class="qx">OTEL_EXPORTER_OTLP_ENDPOINT</code></td></tr><tr><td>Network</td><td><code class="qx">networkPolicy.enabled</code> with <code class="qx">ingressFrom</code> and <code class="qx">egress</code>. List your databases, Redis and SIEM there, or queries can't reach them.</td></tr><tr><td>Scale</td><td><code class="qx">autoscaling.enabled</code> (CPU-based, PostgreSQL shape only; 2-6 replicas by default)</td></tr><tr><td>Secrets managers</td><td><code class="qx">vaultToken.enabled</code> (a projected, short-lived token for Vault only); <code class="qx">serviceAccount.annotations</code> for IRSA</td></tr><tr><td>Files by path</td><td><code class="qx">extraVolumes</code> / <code class="qx">extraVolumeMounts</code> for SIEM certificates or export directories, since the root filesystem is read-only</td></tr></tbody></table></div></div>
+  </section>
+
+  <section id="upgrades" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Upgrades</span><h2 class="dp-h2">Upgrades under load</h2></div><p class="dp-lede">The same <code class="qx">helm upgrade</code> with the new <code class="qx">--version</code>. In the guide's run, a pod called <code class="qx">/q/tables</code> every 50 ms throughout the upgrade: <b>1,690 answered, 0 failed.</b> Upgrade one minor version at a time, and read its changelog entry first.</p></div>
+    <div class="dp-note ci"><b>In CI on every push</b><span>The chart is linted and rendered with Helm 3.22 and 4.3 (<code class="qx">tests/test_helm.py</code>: refusals, hardening, routes, and the plain manifests kept in step). Then it is installed on a kind cluster in the PostgreSQL shape with three pods, events and MCP, and upgraded from the previous release's chart to the current code while a pod keeps calling it. A single failed request fails the build. The same run checks that <code class="qx">/metrics</code> answers 401 without the chart's token.</span></div>
+  </section>
+
+  <section id="gitops" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">GitOps</span><h2 class="dp-h2">Configuration as code</h2></div><span></span></div>
+    <p class="dp-p"><code class="qx">configAsCode.enabled</code> with <code class="qx">configAsCode.file</code> (or <code class="qx">existingConfigMap</code>) puts connections, queries, roles and keys in one file in git, with no secrets: passwords are <code class="qx">${VAR}</code> references and keys are stored as <code class="qx">secret_sha256</code>. The first new API pod applies it as it starts, once per file. A change to the file rolls the pods. A file that can't be applied stops the rollout at its first pod, while the old pods keep serving. <code class="qx">locked: true</code> restricts what the file manages to changes through the file, so a Console edit gets <code class="qx">409 config_managed</code>. Argo CD or Flux syncing the chart is then the deploy (<a href="Guide.dc.html?g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request">guide 55</a>).</p>
+  </section>
+
+  <section id="verify" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Verify</span><h2 class="dp-h2">Verify before you run it</h2></div><p class="dp-lede">The same works for the <code class="qx">-h2</code> image and the chart. Then set <code class="qx">image.digest</code> to the verified digest (<a href="Guide.dc.html?g=59-verify-a-release-before-you-run-it">guide 59</a>).</p></div>
+    <div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">shell</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy shell"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>cosign verify ghcr.io/anantharajuc/queryapigate:0.42.0 \
+  --certificate-identity https://github.com/AnanthaRajuC/QueryAPIGate/.github/workflows/docker.yml@refs/tags/v0.42.0 \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com</pre></div>
+  </section>
+
+  <section id="good" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Good to know</span><h2 class="dp-h2">Good to know</h2></div><span></span></div>
+    <ul class="dp-list"><li><b>Changing a Secret you manage doesn't restart the pods</b>, because the chart can't see inside it. Run <code class="qx">kubectl rollout restart</code> on each Deployment (<code class="qx">-events</code> and <code class="qx">-mcp</code> too). Changes to <code class="qx">config</code>, or to a Secret the chart makes, roll the pods on <code class="qx">helm upgrade</code>.</li><li><b>Backups:</b> on SQLite, <code class="qx">kubectl exec deploy/queryapigate -- queryapigate backup /tmp/backup.db --force</code>, then <code class="qx">kubectl cp</code> the file out. To restore, scale to 0, put the file on the claim from a one-off pod, remove <code class="qx">-wal</code> and <code class="qx">-shm</code>, and scale back to 1. On PostgreSQL, use your database's own backups.</li><li><b>Without Helm:</b> <code class="qx">deploy/kubernetes/queryapigate.yaml</code> is the same deployment as plain manifests, kept in step by a test.</li></ul>
+  </section>
+
   <section id="move" class="dp-sec">
     <div class="d-hdr"><h2 class="dp-h2">What changes when you move</h2><p style="margin:0;color:var(--ink-2);text-wrap:pretty">Moving between shapes is a configuration change. This is what each step adds; the step for this page is highlighted.</p></div>
     <div class="d-move">
 <div style="border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:10px;align-content:start;background:var(--surface-2)">
             <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">01</span><b style="font-weight:600">Single instance</b></div>
             <code>QUERYAPIGATE_API_KEY=…</code>
-            <span style="font-size:13.5px;color:var(--ink-2)">One process or container. The store is SQLite on a volume; nothing else to set.</span>
+            <code>QUERYAPIGATE_SECRET_KEY=…</code>
+            <span style="font-size:13.5px;color:var(--ink-2)">One process or container, with the store as SQLite on a volume. The key is required in a container; the secret key encrypts connection passwords at rest.</span>
           </div><div style="border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:10px;align-content:start;background:var(--surface-2)">
             <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">02</span><b style="font-weight:600">+ High availability</b></div>
             <code>QUERYAPIGATE_DATABASE_URL=postgres://…</code>
@@ -497,7 +606,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
             <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">03</span><b style="font-weight:600">+ Kubernetes</b></div>
             <code>store.type: postgres · replicas: 3</code>
             <code>existingSecret: queryapigate</code>
-            <span style="font-size:13.5px;color:var(--ink-2)">The same two URLs and the key live in one Secret; the chart refuses several pods without Redis or a database URL. <a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm" style="font-weight:600">Guide 54 →</a></span>
+            <span style="font-size:13.5px;color:var(--ink-2)">The same two URLs and the key live in one Secret; the chart refuses several pods on SQLite, several without Redis, PostgreSQL without a database URL, and secrets put in <code style="display:inline;padding:1px 5px;font-size:0.92em">config</code>. <a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm" style="font-weight:600">Guide 54 →</a></span>
           </div>
     </div>
   </section>
