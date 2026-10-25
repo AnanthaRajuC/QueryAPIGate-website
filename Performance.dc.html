@@ -346,6 +346,21 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 @media (max-width:820px){.pf-head{grid-template-columns:minmax(0,1fr)}.pf-wrap{padding:64px 16px}.pf-hero{padding:64px 16px 48px}.pf-legend-x{margin-left:0;flex-basis:100%}}
 @media (max-width:640px){.pf-tiles{grid-template-columns:minmax(0,1fr)}.pf-rts{grid-template-columns:minmax(0,1fr)}.pf-rt-arrow{display:none}.pf-in{grid-template-columns:minmax(0,1fr)}.pf-inputs,.pf-out{padding:20px}.pf-caveat{padding:14px 20px}.pf-next{grid-template-columns:minmax(0,1fr)}.pf-cpu{grid-template-columns:minmax(0,1fr);gap:4px}.pf-big{font-size:60px}}
 @media (prefers-reduced-motion:reduce){.pf-switch i,.pf-switch i::after{transition:none}}
+/* The database switch under the hero, and the MySQL tab's extras. */
+.pf-dbs-row{position:relative;z-index:2;max-width:1240px;margin:-36px auto 0;padding:0 24px 40px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.pf-seg{display:inline-flex;padding:4px;border-radius:999px;background:var(--surface);border:1px solid var(--line-2);box-shadow:0 18px 40px -30px rgba(16,32,27,0.5)}
+.pf-seg button{font:inherit;font-size:14.5px;font-weight:600;display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border:0;border-radius:999px;background:transparent;color:var(--ink-2);cursor:pointer;transition:background .2s,color .2s}
+.pf-seg button:hover{color:var(--ink)}.pf-seg button[aria-checked="true"]{background:#10201b;color:#e6efeb}
+:root[data-theme=dark] .pf-seg button[aria-checked="true"]{background:#e6efeb;color:#10201b}
+.pf-seg button:focus-visible{outline:2px solid var(--accent-ink);outline-offset:2px}
+.pf-seg-ic{width:16px;height:16px;display:block;background:center/contain no-repeat}.pf-seg-ic.pg{background-image:url(https://cdn.simpleicons.org/postgresql)}.pf-seg-ic.my{background-image:url(https://cdn.simpleicons.org/mysql)}
+.pf-seg button[aria-checked="true"] .pf-seg-ic{background-color:#fff;border-radius:4px;box-shadow:0 0 0 2px #fff}
+.pf-seg-note{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-3)}
+.pf-table-my{min-width:720px}.pf-table td i{font-style:normal}.pf-table td.pf-direct{color:#9fb3ac}
+.pf-warn{margin:0;padding:12px 16px;border-radius:10px;border-left:3px solid oklch(0.75 0.15 70);background:oklch(0.75 0.15 70 / 0.12);color:#f2dcb5;font-size:14.5px;line-height:1.55;max-width:90ch}.pf-warn b{color:oklch(0.85 0.13 75)}
+.pf-more{justify-self:start;font-size:15px;font-weight:600;color:oklch(0.8 0.11 170)}.pf-more:hover{color:#e6efeb}
+.pf-myline{margin:0;padding:10px 14px;border-radius:10px;background:var(--surface);border:1px dashed var(--line-2);font-size:14px;color:var(--ink-3)}
+@media (max-width:640px){.pf-dbs-row{margin-top:-24px;padding:0 16px 32px}.pf-seg button{padding:8px 14px}}
 </style>
 </helmet>
 <div data-screen-label="Performance" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
@@ -377,11 +392,15 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   <header class="f-pad pf-hero">
     <span class="pf-eye-h">Performance</span>
     <h1>What a governed call costs</h1>
-    <p>Measured on PostgreSQL with 10 million rows, every comparison run five times with the builds taking turns, and the harness published so you can rerun it. Here are the numbers, how to size a deployment from them, and what they don't cover.</p>
+    <p>{{ lede }}</p>
     <div class="pf-hero-go"><a href="#sizing" class="pf-btn">Size a deployment</a><a href="#numbers" class="pf-btn pf-btn-o">See the numbers</a></div>
     <a href="Guide.dc.html?p=what-a-governed-call-costs" class="pf-story">Read the story behind these numbers →</a>
     <a href="Performance-MySQL.dc.html" class="pf-story">MySQL, a database per microservice →</a>
   </header>
+  <div class="pf-dbs-row"><div class="pf-seg" role="radiogroup" aria-label="Database">
+    <button type="button" role="radio" aria-checked="{{ pgOn }}" onClick="{{ pickPg }}"><span class="pf-seg-ic pg" aria-hidden="true"></span>PostgreSQL</button>
+    <button type="button" role="radio" aria-checked="{{ myOn }}" onClick="{{ pickMy }}"><span class="pf-seg-ic my" aria-hidden="true"></span>MySQL</button>
+  </div><span class="pf-seg-note">{{ segNote }}</span></div>
 
   <nav class="rail" aria-label="Sections">
     <a href="#numbers" data-rail="numbers"><span>The numbers</span></a>
@@ -395,6 +414,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 
   <section id="numbers" class="pf-sec pf-dark">
     <div class="f-pad pf-wrap">
+      <sc-if value="{{ isPg }}" hint-placeholder-val="{{ true }}">
       <div class="pf-head dark"><div style="display:grid;gap:10px"><span class="pf-eye">01 · The numbers</span><h2>One worker, on PostgreSQL</h2></div><p>0.42.0, one gunicorn worker as in the Docker image, a saved query by primary key on 10 million rows, 32 callers at once.</p></div>
       <div class="pf-tiles">
         <div class="pf-tile"><b>730-875 <small>calls/s</small></b><span>Per worker - one gunicorn process with 8 threads - on a primary-key lookup, 32 callers. 875 with the metadata cache on.</span></div>
@@ -412,11 +432,33 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         </tbody></table></div>
       </div>
       <p class="pf-note">PostgreSQL answers this lookup in 0.03 ms. Everything else is the gateway - and it never used more than half of PostgreSQL's cores.</p>
+      </sc-if>
+      <sc-if value="{{ isMy }}" hint-placeholder-val="{{ false }}">
+      <div class="pf-head dark"><div style="display:grid;gap:10px"><span class="pf-eye">01 · The numbers</span><h2>One MySQL server, six services</h2></div><p>Per-user queries joining across six microservice databases on one MySQL server, one gunicorn worker, 32 callers at once.</p></div>
+      <div class="pf-tiles">
+        <div class="pf-tile"><b>+1.2 ms</b><span>What the gateway adds to a call: 1.1-1.3 ms on per-user queries MySQL answers in 0.03-0.42 ms.</span></div>
+        <div class="pf-tile"><b>580-780 <small>calls/s</small></b><span>Per worker, 32 callers, across six per-user queries joining up to six databases. 651-777 with the metadata cache.</span></div>
+        <div class="pf-tile"><b>+28%</b><span>One thread per worker against the default eight, for a primary-key lookup.</span></div>
+        <div class="pf-tile"><b>59%</b><span>Calls answered by a 30 s response cache when a few users are much busier than the rest.</span></div>
+      </div>
+      <div class="pf-tcard">
+        <div class="pf-tcap"><b>Per query, one worker, 32 callers</b><span>Calls a second. The figures under 0.43 were measured on <code class="qx">main</code> after 0.42.0.</span></div>
+        <div style="overflow-x:auto"><table class="pf-table pf-table-my"><thead><tr><th>Query (databases it joins)</th><th class="n">MySQL directly</th><th class="n">0.42</th><th class="n">0.43 (in development)</th><th class="n">0.43, metadata cache</th></tr></thead><tbody>
+          <tr><td>One customer by id <i>(crm)</i></td><td class="n pf-direct">75,420</td><td class="n">643</td><td class="n">676</td><td class="n hi">777</td></tr>
+          <tr><td>Order-Status <i>(crm, orders)</i></td><td class="n pf-direct">25,063</td><td class="n">558</td><td class="n">579</td><td class="n hi">651</td></tr>
+          <tr><td>Stock-Level <i>(org, orders, inventory)</i></td><td class="n pf-direct">5,343</td><td class="n">613</td><td class="n">642</td><td class="n hi">725</td></tr>
+        </tbody></table></div>
+      </div>
+      <p class="pf-note">One MySQL server, a database per microservice, one read-only connection. Joins across databases cost no more than joins within one.</p>
+      <p class="pf-warn"><b>Caution.</b> On MySQL, a key's table allow-list matches bare table names, so it can't keep one service's key out of another service's same-named table yet. Use one MySQL user per service until 0.43.</p>
+      <a href="Performance-MySQL.dc.html" class="pf-more">The full MySQL page: threads, busy users, the store across a network, keeping services apart →</a>
+      </sc-if>
     </div>
   </section>
 
   <section id="load" class="pf-sec">
     <div class="f-pad pf-wrap">
+      <sc-if value="{{ isMy }}" hint-placeholder-val="{{ false }}"><p class="pf-myline">Latency under load, scale-out and where the time goes on MySQL: <a href="Performance-MySQL.dc.html">see the full MySQL page →</a></p></sc-if>
       <div class="pf-head"><div style="display:grid;gap:10px"><span class="pf-eye">02 · Under load</span><h2>Plan at 75%.</h2></div><p>p50 stays flat right up to capacity. p99 holds at about 4 ms to 75% load, then climbs: about 3× at 90%, 6× at 100%. Past capacity a queue builds, and latency is measured in seconds.</p></div>
       <div class="pf-chartcard">
         <div class="pf-legend"><span><i class="s1"></i>0.42</span><span><i class="s2"></i>0.42, cached</span><span class="pf-legend-x">Offered load, as a share of capacity</span></div>
@@ -472,6 +514,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         <div class="pf-calc-bar"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span>sizing · workers</span></div>
         <div class="pf-calc-body">
           <div class="pf-inputs">
+            <label class="pf-in"><span>Database</span><span class="pf-step pf-sel"><select value="{{ db }}" onChange="{{ onDb }}"><option value="postgres">PostgreSQL</option><option value="mysql">MySQL</option></select></span></label>
             <label class="pf-in"><span>Calls a second you need</span><span class="pf-step"><button type="button" onClick="{{ decTarget }}" aria-label="Less">−</button><input type="number" inputmode="decimal" min="0" step="100" value="{{ vTarget }}" onChange="{{ onTarget }}"><button type="button" onClick="{{ incTarget }}" aria-label="More">+</button><em>/s</em></span></label>
             <label class="pf-in"><span>Average query time in the database</span><span class="pf-step"><button type="button" onClick="{{ decQuery }}" aria-label="Less">−</button><input type="number" inputmode="decimal" min="0" step="1" value="{{ vQuery }}" onChange="{{ onQuery }}"><button type="button" onClick="{{ incQuery }}" aria-label="More">+</button><em>ms</em></span></label>
             <label class="pf-in"><span>Network round trip to the database</span><span class="pf-step"><button type="button" onClick="{{ decRtt }}" aria-label="Less">−</button><input type="number" inputmode="decimal" min="0" step="0.1" value="{{ vRtt }}" onChange="{{ onRtt }}"><button type="button" onClick="{{ incRtt }}" aria-label="More">+</button><em>ms</em></span></label>
@@ -487,7 +530,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
             <sc-if value="{{ hint }}" hint-placeholder-val="{{ false }}"><p class="pf-hint">{{ hint }}</p></sc-if>
           </div>
         </div>
-        <p class="pf-caveat">Planning figures from one machine and one query shape: a 0.03 ms primary-key lookup. Heavier calls use more CPU, so the CPU figure only goes down from here. Measure your own queries at 75% of what you plan to serve.</p>
+        <p class="pf-caveat">{{ caveat }}</p>
       </div>
       <p class="pf-note pf-note-l">The rule: a worker serves at most 550 fast calls a second on CPU (650 with the metadata cache), which is 75% of measured capacity. Waiting allows threads ÷ (query time + round trips × round-trip time), with 7 round trips a call in 0.42 or 4 cached. Take the smaller, divide your load by it, and add one worker you can afford to lose.</p>
     </div>
@@ -507,7 +550,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         <div class="pf-card pf-limits">
           <b>What it doesn't cover</b>
           <ul><li>one machine, not separate hosts;</li><li>no TLS, load balancer or Redis in the path;</li><li>a simulated network;</li><li>uniform random keys;</li><li>small results only;</li><li>no soak or failure tests.</li></ul>
-          <div class="pf-links"><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/documentation/PERFORMANCE_V3.md">Full method and every table →</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/tree/main/benchmarks/results">Raw results →</a></div>
+          <div class="pf-links"><a href="Guide.dc.html?d=PERFORMANCE_V3">Full method and every table →</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/tree/main/benchmarks/results">Raw results →</a></div>
         </div>
       </div>
     </div>
@@ -555,10 +598,18 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
   // The calculator keeps what was typed, so a half-typed "0." stays put; the numbers are read from it when rendering.
-  state = { copied: null, target: '1000', query: '2', rtt: '0.5', threads: '8', cache: false };
+  state = { copied: null, target: '1000', query: '2', rtt: '0.5', threads: '8', cache: false, db: 'postgres' };
   limits = { target: [1, 100000], query: [0, 10000], rtt: [0, 50] };
   steps = { target: 100, query: 1, rtt: 0.1 };
+  componentDidMount() {
+    try { if (new URLSearchParams(location.search).get('db') === 'mysql') this.setState({ db: 'mysql' }); } catch (e) {}
+  }
   componentWillUnmount() { clearTimeout(this.copyT); }
+  // The switch under the hero and the calculator's select set the same state; ?db=mysql links to the MySQL tab.
+  setDb(db) {
+    this.setState({ db });
+    try { const u = new URL(location.href); if (db === 'mysql') u.searchParams.set('db', 'mysql'); else u.searchParams.delete('db'); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (e) {}
+  }
   copy(key, text) {
     return () => {
       try { navigator.clipboard && navigator.clipboard.writeText(text); } catch (e) {}
@@ -574,14 +625,20 @@ class Component extends DCLogic {
     const v = {};
     Object.keys(this.snippets).forEach(k => { v['copy' + k] = this.copy(k, this.snippets[k]); v['copied' + k] = this.state.copied === k ? 'Copied' : 'Copy'; });
     const target = this.num('target'), queryMs = this.num('query'), rttMs = this.num('rtt'), threads = parseInt(this.state.threads, 10), cache = this.state.cache;
-    const cpu = cache ? 650 : 550;                 // calls/s per worker at 75% of capacity (fast calls)
-    const trips = cache ? 4 : 7;                   // round trips per call
+    const db = this.state.db;
+    // calls/s per worker at 75% of capacity, and round trips per call - from PERFORMANCE_V3.md and PERFORMANCE_MYSQL_V1.md
+    const K = {
+      postgres: { cpu: cache ? 650 : 550, trips: cache ? 4 : 7 },  // 0.03 ms primary-key lookup
+      mysql:    { cpu: cache ? 490 : 440, trips: 3 },              // Order-Status-class per-user join; query, ROLLBACK, ping
+    }[db];
+    const cpu = K.cpu, trips = K.trips;
     const perCallMs = queryMs + trips * rttMs;     // what each call waits for
     const waitCap = perCallMs > 0 ? threads * 1000 / perCallMs : Infinity;
     const perWorker = Math.min(cpu, waitCap);
     const workers = Math.ceil(target / perWorker) + 1;   // +1: one to lose
     const limit = waitCap < cpu ? 'waiting' : 'CPU';
-    const hint = limit === 'CPU' && threads > 4 ? 'Fast calls: try 2-4 threads per worker - more threads compete for Python\'s lock.'
+    const my = db === 'mysql';
+    const hint = limit === 'CPU' && threads > (my ? 2 : 4) ? 'Fast calls: try ' + (my ? '1-2' : '2-4') + ' threads per worker - more threads compete for Python\'s lock.'
       : limit === 'waiting' ? 'Calls spend most of their time waiting: more threads per worker would raise this, while CPU allows.' : '';
     const fmt = n => Math.round(n).toLocaleString('en-US');
     ['Target', 'Query', 'Rtt'].forEach(K => { const k = K.toLowerCase(); v['v' + K] = this.state[k]; v['on' + K] = e => this.setState({ [k]: e.target.value }); v['inc' + K] = this.nudge(k, 1); v['dec' + K] = this.nudge(k, -1); });
@@ -589,6 +646,12 @@ class Component extends DCLogic {
       threads: this.state.threads, onThreads: e => this.setState({ threads: e.target.value }),
       cache, cacheLabel: cache ? 'on' : 'off', onCache: e => this.setState({ cache: e.target.checked }),
       workers: String(workers), perWorker: fmt(perWorker), limit, hint,
+      db, isPg: !my, isMy: my, pgOn: String(!my), myOn: String(my), pickPg: () => this.setDb('postgres'), pickMy: () => this.setDb('mysql'), onDb: e => this.setDb(e.target.value),
+      segNote: my ? 'TPC-C-derived data in six databases · 0.43 in development' : 'pgbench, 10 million rows · 0.42.0',
+      lede: my ? 'Measured on MySQL with TPC-C\'s data split into six microservice databases, per-user queries joining across them, five rounds per comparison. Here are the headline numbers; the MySQL page has the rest.'
+        : 'Measured on PostgreSQL with 10 million rows, every comparison run five times with the builds taking turns, and the harness published so you can rerun it. Here are the numbers, how to size a deployment from them, and what they don\'t cover.',
+      caveat: my ? 'Planning figures from one machine, for per-user queries MySQL answers in under half a millisecond. Single-table lookups run about 15% above the CPU figure; heavier queries below it. Measure your own at 75% of what you plan to serve.'
+        : 'Planning figures from one machine and one query shape: a 0.03 ms primary-key lookup. Heavier calls use more CPU, so the CPU figure only goes down from here. Measure your own queries at 75% of what you plan to serve.',
       cpuCap: fmt(cpu) + '/s', waitCap: isFinite(waitCap) ? fmt(waitCap) + '/s' : 'no limit' };
   }
 }
