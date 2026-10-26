@@ -94,6 +94,7 @@ Everything below in one file: https://anantharajuc.github.io/QueryAPIGate-websit
 - [Guide 60: Give each team its own workspace](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=60-give-each-team-its-own-workspace): how-to, Access
 - [Guide 61: Connect to Trino](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=61-connect-to-trino): how-to, Start
 - [Guide 62: See what's being used, from the Console](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=62-see-whats-being-used-from-the-console): how-to, Operate
+- [Guide 63: Tune a deployment for throughput](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=63-tune-a-deployment-for-throughput): how-to, Operate
 - [One MySQL server, six services, one gateway](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-mysql-six-services): blog, Benchmark, 2026-10-25
 - [What a governed call costs](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=what-a-governed-call-costs): blog, Benchmark, 2026-10-24
 - [Agents can write now. A person approves each write.](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=agents-can-write-now): blog, Release, 2026-10-11

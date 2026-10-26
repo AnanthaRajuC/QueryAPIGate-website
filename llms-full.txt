@@ -251,7 +251,9 @@ Everything is configured through environment variables (all optional):
 | `QUERYAPIGATE_AUDIT_OTLP` | `false` | Stream every audit entry as OTLP log records to the OTLP logs endpoint. |
 | `QUERYAPIGATE_AUDIT_KEY` | *(unset)* | HMAC key (32+ characters) the audit log's hash chain is signed with, so an edit made with only the store can't be re-signed. Several, comma-separated, while rotating it. Unset: plain SHA-256. |
 | `QUERYAPIGATE_HSTS_MAX_AGE` | *(unset)* | Seconds browsers should use only HTTPS for this host (`Strict-Transport-Security`), sent only on requests that arrived over HTTPS. Unset: not sent - set it once every client reaches the server over HTTPS. |
-| `QUERYAPIGATE_POOL_SIZE` | `8` | Idle connections kept per distinct connection setting - one per thread of the Docker image. `0` turns pooling off. |
+| `QUERYAPIGATE_THREADS` | `8` | Requests one server process serves at once: the Docker image's gunicorn threads (`queryapigate/gunicorn_conf.py`). 1 to 256. The pool size and the `/events` stream cap default from it. See [Tune a deployment for throughput](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/63-tune-a-deployment-for-throughput.md). |
+| `QUERYAPIGATE_ACCESS_LOG` | on | The Docker image's gunicorn access log, one line per request on stdout. `off` writes none - for a deployment whose proxy or load balancer logs requests already. `QUERYAPIGATE_LOG_REQUESTS` is QueryAPIGate's own request log, separate from it. |
+| `QUERYAPIGATE_POOL_SIZE` | one per thread | Idle connections kept per distinct connection setting - by default `QUERYAPIGATE_THREADS` (8). `0` turns pooling off. |
 | `QUERYAPIGATE_POOL_IDLE_TIMEOUT` | `300` | Seconds an idle pooled connection is kept before it is closed. |
 | `QUERYAPIGATE_METADATA_CACHE_TTL` | `0` | Seconds the API key, saved query and connection a request reads from the store are reused, instead of read again each time - see [Performance](PERFORMANCE.md#the-metadata-cache). A change made through this server is seen at once; one made through another instance up to this long later. `0` turns it off. |
 | `QUERYAPIGATE_QUERY_TIMEOUT` | `30` | Seconds a query may run before it is cancelled (HTTP 504). `0` disables the limit. A request can lower it with `?timeout=`, never raise it. |
@@ -272,7 +274,7 @@ Everything is configured through environment variables (all optional):
 | `QUERYAPIGATE_LOAD_EXAMPLES` | unset | `yes` loads the [example APIs](EXAMPLES.md) (reporting, dashboard, export, partner) at startup - idempotent; a malformed value stops startup. Never removes anything: use `queryapigate examples unload`. |
 | `QUERYAPIGATE_AUDIT_LOG_EXPORT_FILE` | unset | Path to also append every audit entry to, one JSON object per line, never capped - for retention beyond the rolling window above. |
 | `QUERYAPIGATE_JWT_JWKS_URL` / `QUERYAPIGATE_JWT_SECRET` | unset | Accept signed-in users' tokens (`Authorization: Bearer`) from your identity provider or your own backend, with a role (`QUERYAPIGATE_JWT_ROLE` / `QUERYAPIGATE_JWT_ROLE_CLAIM`) for what they may do, and parameters bound to their claims (`from_claim`). See [Signed-in users](API.md#signed-in-users-jwt) for the related `QUERYAPIGATE_JWT_*` settings. |
-| `QUERYAPIGATE_EVENTS_MAX_STREAMS` | `4` | Concurrent `GET /events` streams the main server holds open (each takes a request thread); beyond it, `503`. `0` turns it off. |
+| `QUERYAPIGATE_EVENTS_MAX_STREAMS` | `4` | Concurrent `GET /events` streams the main server holds open (each takes a request thread); beyond it, `503`. `0` turns it off. Unset, never more than half of `QUERYAPIGATE_THREADS`. |
 | `QUERYAPIGATE_EVENTS_PORT` | `5002` | Port of `queryapigate events`, the separate live-events server for many clients - see [Live events](API.md#live-events-server-sent-events). |
 | `QUERYAPIGATE_EVENTS_MAX_CONNECTIONS` | `10000` | Open streams one `queryapigate events` process accepts. |
 | `QUERYAPIGATE_EVENTS_POLL_INTERVAL` | `1` | Seconds between `queryapigate events` checks for new runs (on PostgreSQL a notification usually arrives first). |
@@ -686,14 +688,19 @@ succeeded - Caddy retried them on the others. Walkthrough:
 
 **One worker per container, more containers for more capacity.** The image runs gunicorn with one worker and eight
 threads, and that stays right when scaling out: each process keeps its own `/metrics`, and Prometheus scraping a
-container with several workers would reach one of them at random. For more headroom inside one container, raise
-`--threads` - `gthread` keeps a slow request from blocking the others - with a `command:` override:
+container with several workers would reach one of them at random. For more headroom inside one container, raise the
+threads - `gthread` keeps a slow request from blocking the others - with `QUERYAPIGATE_THREADS` (from 0.43; the pool
+follows it). Before 0.43 this took a `command:` override with `--threads`, which still works: a flag, or
+`GUNICORN_CMD_ARGS`, beats the setting.
 
 ~~~yaml
-    command: ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--worker-class", "gthread",
-              "--threads", "16", "--timeout", "120", "--graceful-timeout", "30", "--access-logfile", "-",
-              "--no-control-socket", "-c", "python:queryapigate.gunicorn_conf", "queryapigate.app:create_app()"]
+    environment:
+      QUERYAPIGATE_THREADS: "16"
+      QUERYAPIGATE_ACCESS_LOG: "off"   # when the proxy in front logs requests already
 ~~~
+
+How many threads, and how much CPU to give each container:
+[Tune a deployment for throughput](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/63-tune-a-deployment-for-throughput.md).
 
 **What stays per instance:** `/metrics` (scrape each instance; the bundled dashboard sums them), the Console's Metrics
 screen, and the main server's own `GET /events` (use `queryapigate events`). `GET /api/v1/instances` lists the
@@ -826,7 +833,7 @@ object; `GET /api/v1/connections/{name}` returns them under `options`.
 | `db` | Driver | Notes |
 |------|--------|-------|
 | `mysql` | `mysql-connector-python` | Sessions are opened `READ ONLY` unless writes are enabled |
-| `postgres` | `psycopg2` | Sessions are opened read-only unless writes are enabled |
+| `postgres` | `psycopg2` | Each query runs in a read-only transaction unless writes are enabled |
 | `clickhouse` | `clickhouse-driver` (native protocol, port 9000) | `readonly=1` unless writes are enabled |
 | `sqlite` | `sqlite3` | Opened with `mode=ro` unless writes are enabled |
 | `h2` | `JayDeBeApi` + bundled JDBC jar | Connects to a running H2 TCP server: `jdbc:h2:tcp://<host>[:port]/~/<database>` |
@@ -942,6 +949,7 @@ distinct connection setting, default 8, `0` disables pooling) and `QUERYAPIGATE_
 | `port` | no | Overrides the driver's default port |
 | `user`, `password` | usually | Credentials |
 | `jar`, `driver_class`, `jdbc_url` | `db: "jdbc"` only | See [Generic JDBC connections](#generic-jdbc-connections) |
+| `options.schema` | no | Trino: the default schema. PostgreSQL: the schema an unqualified `allowed_tables` name means, `public` by default (a table-restricted key's calls run with `search_path` set to it) |
 
 ## Experimental: h2, jdbc and trino
 
@@ -2563,9 +2571,27 @@ connections, the dialects QueryAPIGate can actually parse for this - **a table-r
 `h2` or `jdbc` connection is refused on every query, with a `403` naming the unsupported connection type, never
 silently left unrestricted.** On a `mongo` connection the list is the collections the key may `find()` in - one
 outside it is refused with `403 table_not_allowed` before the server is asked anything (from 0.34.1; until then it
-wasn't checked on MongoDB at all). Table names are matched case-insensitively and bare (not
-schema-qualified), the same simplification `allowed_write_ops`'s keyword list already makes; a table-valued
-function (e.g. ClickHouse's `numbers(10)`) touches no real table, so this can't meaningfully restrict one.
+wasn't checked on MongoDB at all).
+
+Table names are matched case-insensitively and **qualified** (from 0.43; Trino's always were, as
+`catalog.schema.table`). A grant or a query's table that leaves out its schema means the connection's default:
+
+| Connection | `customer` means |
+|---|---|
+| `mysql`, `clickhouse` | the connection's `database`: `crm.customer` |
+| `postgres` | `public.customer`, or the connection's `options.schema` instead of `public` |
+| `sqlite`, `duckdb` | `main.customer` |
+
+So `["customer"]` doesn't reach `billing.customer`: grant that as `billing.customer`. A query naming a catalog too
+(`shop.public.orders`) needs a grant written the same way. On PostgreSQL, a table-restricted call runs with
+`search_path` set to that default schema, so its unqualified names resolve where they were checked, whatever the
+role's own `search_path`. A table-valued function (e.g. ClickHouse's `numbers(10)`) touches no real table, so this
+can't meaningfully restrict one.
+
+**Statements whose tables can't be checked are refused** for a table-restricted key, with `403
+table_check_failed`: `SHOW`, `SET`, `USE`, `ATTACH`, `PRAGMA`, `CALL`, `PREPARE`/`EXECUTE`, `DECLARE`/`FETCH`,
+and any statement the parser keeps only as text. Each could read a table, or its columns, or reroute a later
+call's names, without naming it where the check looks. `EXPLAIN` is checked against the statement it explains.
 The key's view of the schema follows the same list: `GET /connections/<name>/schema` and MCP's `list_tables` leave
 other tables out (a foreign key pointing at one shows as `null`), and `table_ddl` answers a forbidden table with the
 same `404` as a table that doesn't exist.
@@ -3443,7 +3469,7 @@ Every error - from `/api/v1`, the runtime routes (`/q/<name>`, `/execute_sql`, `
 events` and MCP tool calls - has the same shape:
 
 ~~~json
-{"error": "This API key may only query these tables: film. ...", "code": "table_not_allowed",
+{"error": "This API key may only query these tables: public.film. ...", "code": "table_not_allowed",
  "request_id": "9f2c41d07a1b"}
 ~~~
 
@@ -5379,12 +5405,14 @@ another's tables? This is the result of checking, not a performance number. A ke
 | `SELECT COUNT(*) FROM billing.customer` | **200: allowed, though it's another service's table** |
 | `SELECT COUNT(*) FROM billing.history` | 403 `table_not_allowed`, as intended |
 
-**On MySQL, the table allow-list matches bare table names,** so `customer` means `customer` in any database the
-connection's user can reach. Only Trino connections match `catalog.schema.table`.
+**On MySQL, the table allow-list matched bare table names** (0.42 and earlier), so `customer` meant `customer` in
+any database the connection's user could reach. Only Trino connections matched `catalog.schema.table`.
 
-**Until that changes,** keep services apart with MySQL's own grants: one MySQL user per service, granted only its
-databases, each as its own QueryAPIGate connection, with keys granted only their service's connection. Matching
-`schema.table` on MySQL, as Trino already does, is planned for 0.43.
+**Fixed in 0.43:** grants are schema-qualified on every SQL connection, so `customer` means the connection's own
+database's `customer`, and `billing.customer` is refused unless granted (the CHANGELOG's Security entry). Keeping
+services apart with MySQL's own grants is still the stronger boundary: one MySQL user per service, granted only its
+databases, each as its own QueryAPIGate connection, with keys granted only their service's connection. The
+integration tests check both.
 
 Saved queries aren't affected. A key granted named queries can only run those queries' SQL, and that SQL is written
 by whoever publishes it.
@@ -6128,8 +6156,11 @@ On SQLite, each part of a call, measured on its own:
 
 The first call for a statement pays for the table check and the masking trace; after that, both are reused. The
 table check depends only on the query text, so it can't go stale. The masking trace depends on the connection's
-schema too, so it is kept only as long as QueryAPIGate keeps that schema - 60 seconds - and is worked out again after
-that, or straight away when the connection is changed.
+schema too, so it is kept only as long as QueryAPIGate keeps that schema - at most 60 seconds - and straight away
+when the connection is changed. From 0.43 a busy connection's schema is read again in the background after 45 seconds,
+while calls go on using the cached copy; when it hasn't changed, the traces are kept. So no call waits for the read or
+the trace again - before, one call a minute took about 75 ms longer ([Performance, v3](PERFORMANCE_V3.md#the-cold-path-every-60-seconds)).
+A connection with no masked call for a whole minute is read again in its next call, as before.
 
 The rest is the gateway itself, the same for every query: authentication, limits, the record of the run, the HTTP
 response. Against a database that takes 50 ms to answer, it hardly matters; against one that answers in 0.01 ms, it's
@@ -6177,6 +6208,17 @@ inside a rotation's grace period is checked on every call, against the cached ro
 So it is a trade: a few seconds of delay for a revocation that reaches other instances, for fewer reads on the store.
 Leave it off if a revoked key must stop working everywhere at once; with one instance, a TTL of a few seconds changes
 nothing anyone would notice.
+
+Where it is set:
+
+| Setup | `QUERYAPIGATE_METADATA_CACHE_TTL` | Why |
+|---|---|---|
+| The server and the Docker image | `0`, off | The image runs anywhere, often several instances at a time |
+| The one-command Compose demo (`docker-compose.yml`) | `5` | One instance: only a change made with the CLI waits, up to 5 s |
+| The scale-out Compose setup (`deploy/scale-out/`) | off | Three instances: a revocation would take up to a TTL to reach the other two |
+| The Helm chart | off; `config.QUERYAPIGATE_METADATA_CACHE_TTL` | Set it with one replica, or when the delay is acceptable |
+
+Change it for any setup with the variable; the Console's Settings screen shows the value in use.
 
 ## Scaling
 
@@ -6567,7 +6609,8 @@ This is the part worth being the most precise about, because it's also the part 
   against an allow-list when writes aren't permitted - then looks behind a read-only one for writes it can hide: a
   writable CTE (`WITH d AS (DELETE ... RETURNING *) SELECT ...`), the statement `EXPLAIN ANALYZE` runs, and
   `SELECT ... INTO`. The same rule covers a key's `allowed_write_ops`. PostgreSQL, MySQL, ClickHouse and SQLite
-  connections also run read-only queries in read-only sessions, so the database refuses a write even if the guard
+  connections also run read-only queries read-only in the database (a read-only transaction on PostgreSQL and MySQL,
+  a read-only setting or file mode on ClickHouse and SQLite), so the database refuses a write even if the guard
   missed it; **DuckDB, H2 and JDBC connections are opened read-write, so there the guard is the only lock** - the
   case where 0.16 closed a real gap (`EXPLAIN ANALYZE DELETE` ran on DuckDB with writes off). **This is explicitly
   documented as defence in depth,
@@ -6577,6 +6620,21 @@ This is the part worth being the most precise about, because it's also the part 
 - **`allowed_tables` uses a real parser** (`sqlglot`) specifically because table extraction has to be
   correct, not just approximately right - a key restricted to certain tables is refused entirely rather
   than let through on a best-effort guess when the dialect can't be parsed reliably (H2/JDBC).
+- **`allowed_tables` is matched schema-qualified** (from 0.43). Before, every dialect but Trino matched bare names,
+  so a grant of `customer` read `billing.customer` too, on a connection whose user could see both. Now a reference's
+  and a grant's missing schema is the connection's default (`engine._table_defaults`): MySQL's or ClickHouse's
+  database, PostgreSQL's `public` or `options.schema`, SQLite's and DuckDB's `main`. A catalog a reference names
+  stays part of its name (fail closed). PostgreSQL resolves unqualified names through `search_path`, so a
+  table-restricted call pins it to that schema, inside the call's own transaction. Names are compared lower-cased, so
+  two tables differing only in case (MySQL with `lower_case_table_names=0`, quoted PostgreSQL names) share a grant.
+- **Statements the check can't see into are refused for a table-restricted key:** `SHOW`, `SET`, `USE`, `ATTACH`,
+  `PRAGMA`, `CALL`, `PREPARE`/`EXECUTE`, `DECLARE`/`FETCH`, and anything sqlglot only keeps as text
+  (`tableguard._statements`). Each names its tables somewhere the check doesn't look, or none at all: before 0.43,
+  `SHOW CREATE TABLE secret` showed a forbidden table's DDL, `PREPARE` then `EXECUTE` read its rows, and DuckDB's
+  `SET search_path` rerouted later calls on a pooled connection. `EXPLAIN` is checked by the statement it explains.
+- **Nothing a PostgreSQL query sets outlives it** (ADR 0027). Calls run in autocommit, where a session setting a
+  query changes (`SELECT set_config(...)`) is committed with it, so each message begins `RESET ALL`. Read-only, the
+  time limit and the pinned `search_path` are set `LOCAL`, inside the message's transaction.
 - **DuckDB file access is enforced by DuckDB itself.** A DuckDB connection reads only its `allowed_paths` - none by
   default - because each connection's configuration is locked as it opens (`enable_external_access = false`, the
   allowed paths, `lock_configuration`): no SQL can reach another file, URL or extension, or change the setting back.
@@ -11316,6 +11374,7 @@ Every way of reaching another table is refused with `403` and `"code": "table_no
 | `SELECT * FROM orders WHERE total > (SELECT AVG(amount) FROM salaries)` | refused - the subquery counts |
 | `WITH s AS (SELECT * FROM salaries) SELECT * FROM s` | refused - the CTE's source counts |
 | `SELECT * FROM main.salaries` | refused - a schema prefix doesn't hide it |
+| `SELECT * FROM archive.orders` | refused - the same name in another schema or attached database is another table |
 | `SELECT * FROM sqlite_master` | refused - system catalogues are tables too |
 | `WITH big AS (SELECT * FROM orders WHERE total > 40) SELECT * FROM big` | allowed - `big` is the CTE's name, not a table |
 | `SELECT * FROM ORDERS` | allowed - names match case-insensitively |
@@ -11323,7 +11382,7 @@ Every way of reaching another table is refused with `403` and `"code": "table_no
 The error names both lists:
 
 ```json
-{"error": "This API key may only query these tables: customers, orders. Forbidden: salaries.",
+{"error": "This API key may only query these tables: main.customers, main.orders. Forbidden: main.salaries.",
  "code": "table_not_allowed", "request_id": "ac0ec09aa1d6"}
 ```
 
@@ -11338,12 +11397,16 @@ tables.
 - **Database types:** supported for PostgreSQL, MySQL, SQLite, DuckDB, ClickHouse and Trino - the dialects the parser
   handles. On **Trino** the match is **fully qualified** (`catalog.schema.table`): a grant of `orders` means the
   connection's default catalog and schema only, never `orders` in another catalog or schema - see
-  [Connect to Trino](61-connect-to-trino.md). On an `h2`, `jdbc` or `mongo` connection a table-restricted key is
-  **refused on every query** (`403` naming the connection type), never left unrestricted. See the
+  [Connect to Trino](61-connect-to-trino.md). On an `h2` or `jdbc` connection a table-restricted key is **refused on
+  every query** (`403` naming the connection type), never left unrestricted; on `mongo` the list is the collections
+  the key may read. See the
   [support matrix](../documentation/DATABASE_CONNECTION_CONFIGURATION.md#support-matrix).
-- **Table names, not schemas:** entries are bare names matched case-insensitively. `orders` allows `orders` in any
-  schema the connection can see. If two schemas both have an `orders` table, this can't tell them apart - use a
-  database user that sees only one.
+- **Schema-qualified** (from 0.43; 0.42 and earlier matched bare names): a bare entry means the table in the
+  connection's own database or schema - MySQL's and ClickHouse's `database`, PostgreSQL's `public` (or the
+  connection's `options.schema`), SQLite's and DuckDB's `main`. So `orders` doesn't reach `archive.orders`; list that
+  as `archive.orders`. Names are matched case-insensitively.
+- **Statements that hide their tables are refused** (`403 table_check_failed`): `SHOW`, `SET`, `USE`, `ATTACH`,
+  `PRAGMA`, `CALL`, `PREPARE`/`EXECUTE`, cursors. `EXPLAIN` works, checked against the statement it explains.
 - **The schema shows only the listed tables.** The schema browser (`GET /connections/shop/schema`) and MCP's
   `list_tables` leave the others out, and a foreign key pointing at one shows as none. `table_ddl` for a forbidden
   table answers `404` - *'salaries' is not a table on 'shop'* - exactly as for a table that doesn't exist.
@@ -12547,8 +12610,8 @@ error body has:
 
 ```python
 res.isError            # True
-res.structuredContent  # {"error": "This API key may only query these tables: customers, orders, products.
-                       #  Forbidden: salaries.", "code": "table_not_allowed"}
+res.structuredContent  # {"error": "This API key may only query these tables: main.customers, main.orders,
+                       #  main.products. Forbidden: main.salaries.", "code": "table_not_allowed"}
 ```
 
 Branch on `code`; the `error` text is for people and may change between releases. Codes seen over MCP while writing
@@ -13950,7 +14013,7 @@ Symptoms and what to change:
 
 | You see | Likely cause | Change |
 |---|---|---|
-| Latency rises with traffic, CPU is low, `queryapigate_active_queries` sits at the thread count | requests are queuing for threads | more `--threads` (see [Scaling out](../documentation/DEPLOYMENT.md#scaling-out)) |
+| Latency rises with traffic, CPU is low, `queryapigate_active_queries` sits at the thread count | requests are queuing for threads | more threads, `QUERYAPIGATE_THREADS` (see [Tune a deployment for throughput](63-tune-a-deployment-for-throughput.md)) |
 | "too many connections" errors from the database | threads (or several QueryAPIGate processes) exceed its limit | fewer threads, a higher `max_connections`, or a pooler such as PgBouncer in front of the database |
 | Every request pays connection setup; `queryapigate_pool_idle_connections` stays at 0 | pooling is off, or traffic is so sparse that connections expire | default `QUERYAPIGATE_POOL_SIZE`, longer `QUERYAPIGATE_POOL_IDLE_TIMEOUT` |
 | The DBA asks why connections sit idle all night | the lazy timeout above | `QUERYAPIGATE_POOL_SIZE=1` or `2` on that server, or accept it - idle connections cost little |
@@ -18018,6 +18081,151 @@ For a *live* feed rather than history, the **Home** screen's requests panel upda
 - [Wire up Prometheus and Grafana](35-wire-up-prometheus-and-grafana.md) - the live counters as dashboards and alerts.
 - [Read the audit log](20-read-the-audit-log.md) - not *what ran*, but *who changed the configuration*.
 - [Send the audit log to your SIEM](53-send-the-audit-log-to-your-siem.md) - ship the record off the box.
+
+
+# Guide 63: Tune a deployment for throughput
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=63-tune-a-deployment-for-throughput
+
+# How to tune a deployment for throughput
+
+**Time:** 20 minutes to read, plus a load test of your own. **You'll end up with:** threads, CPU, logging, cache and
+disk settings chosen for your queries and your database's distance, a number of containers to start from, and the
+figures each one rests on.
+
+Every figure here comes from the benchmarks in [Performance, v3](../documentation/PERFORMANCE_V3.md) (PostgreSQL) and
+[Performance on MySQL](../documentation/PERFORMANCE_MYSQL_V1.md), run on one laptop with the gateway, the database and
+the load generator each on their own cores. They are measured on 0.42 and `main` before 0.43's round-trip changes
+([ADR 0027](../documentation/adr/0027-fewer-round-trips-per-query.md)), which make calls across a network cheaper still,
+so treat them as conservative. Measure your own queries before you commit to a size.
+
+## 1. One worker per container, more containers for more
+
+The image runs gunicorn with **one worker** and keeps it that way: each process has its own `/metrics`, its own
+response cache without Redis, and its own `/events` streams. Python runs one thread at a time per process, so a worker
+saturates about one core. More capacity means more containers, behind a load balancer, on a shared PostgreSQL store and
+Redis ([Run several instances](42-run-several-instances.md)).
+
+## 2. Threads: by how long your calls wait
+
+A worker's threads let it run Python for one call while others wait on the database. They help only while calls spend
+real time waiting. Measured, one worker, 32 callers:
+
+| Threads | PostgreSQL lookup, 0.03 ms | MySQL lookup, 0.03 ms | MySQL `stock_level`, 0.42 ms |
+|---|---|---|---|
+| 1 | 788 req/s | **865** | 630 |
+| 2 | **843** | 823 | **772** |
+| 4 | 777 | 722 | 683 |
+| 8 (the default) | 735 | 676 | 642 |
+
+Past what the waiting needs, threads cost: they compete for Python's interpreter lock, and on these fast queries the
+best setting was 15-28% faster than the default eight. So:
+
+| Your calls | `QUERYAPIGATE_THREADS` |
+|---|---|
+| Fast lookups (well under 1 ms) on a database on the same host or rack | `2` |
+| Queries of a few ms, or a database a network hop away | `4`-`8` |
+| Slow reports (tens of ms and up), or a warehouse or Trino across a network | `8`-`16`, while CPU allows |
+
+The waiting limit of one worker is **threads ÷ (query time + round trips × network round-trip time)** calls a second.
+From 0.43 a PostgreSQL call makes 1 round trip to its database and a MySQL call 2, plus 3 to a PostgreSQL store, none
+with the metadata cache (section 4). A 20 ms report query at 0.5 ms away, with 8 threads: 8 ÷ (20 + 4 × 0.5 ms) = about
+360 a second - more threads would raise it, as long as the CPU figure in section 7 isn't lower.
+
+**MySQL across a network before 0.43:** extra threads gained nothing - mysql-connector held Python's interpreter lock
+while it pinged the server, once per call (ADR 0027). 0.43 removes the ping; threads overlap MySQL waits again.
+
+The pool of idle database connections follows the threads (`QUERYAPIGATE_POOL_SIZE` defaults to them), and the main
+server's `/events` streams never take more than half of them.
+
+```yaml
+# Docker Compose
+    environment:
+      QUERYAPIGATE_THREADS: "2"
+```
+
+```yaml
+# Helm
+config:
+  QUERYAPIGATE_THREADS: "2"
+```
+
+## 3. CPU: about 1.25-1.5 cores per container
+
+At full load one worker used **1.1-1.3 cores**: one for Python, the rest for its threads' I/O (PostgreSQL 1.2, MySQL
+1.1-1.3). A CPU limit below that throttles it, and the throttling shows up as latency, not as an error.
+
+| | Request | Limit |
+|---|---|---|
+| A small or shared cluster (the Helm chart's default) | `250m` | none |
+| Serving at capacity | `1` | `1.5`, or none |
+
+```yaml
+# Helm
+resources:
+  requests: {cpu: "1", memory: 256Mi}
+  limits: {cpu: 1500m, memory: 1Gi}
+```
+
+On one host, give each container its own physical core. In the benchmarks, eight workers on four cores' hyperthreads
+did 307 lookups a second per core, against 612 for one worker on its own: a hyperthread is worth far less than a core.
+
+## 4. The metadata cache: +12-23%, at the cost of a delay
+
+`QUERYAPIGATE_METADATA_CACHE_TTL=5` keeps the key, saved query and connection a call reads from the store for 5
+seconds instead of reading them on every call. Measured: +18-23% on PostgreSQL, +12-15% on MySQL, and half of
+PostgreSQL's load, which was mostly the store's.
+
+The cost: a change made on **another** instance (or with the CLI) takes up to the TTL to arrive there - a revoked key
+keeps working on the other instances for that long. A change made through the same instance is seen at once. With
+one instance, turn it on; with several, decide whether a 5-second revocation delay is acceptable
+([the metadata cache](../documentation/PERFORMANCE.md#the-metadata-cache)).
+
+## 5. Logs: off where something else already logs
+
+| Setting | What it writes | Cost measured | Turn off when |
+|---|---|---|---|
+| `QUERYAPIGATE_ACCESS_LOG=off` | gunicorn's access line per request, on stdout | 7% of throughput | the proxy or load balancer logs requests |
+| `QUERYAPIGATE_LOG_REQUESTS=off` | QueryAPIGate's own request and query lines (INFO) | part of the fifth of CPU logging took | the same - errors, warnings, slow queries and agent writes are still logged |
+
+Turn the access log off with the setting, not by sending it to `/dev/null`: that still formats and writes every line.
+At these rates the logs grow by gigabytes an hour - 6.6 GB in a five-hour MySQL run.
+
+## 6. Disk: the event log
+
+Every call is recorded in the store's event log (ADR 0020), kept for 24 hours by default: **about 570 bytes a call**
+on a SQLite store, more on PostgreSQL.
+
+| Sustained calls a second | Event log after 24 hours |
+|---|---|
+| 50 | about 2.5 GB |
+| 500 | about 25 GB |
+| 2,000 | about 100 GB |
+
+`QUERYAPIGATE_EVENTS_RETENTION_HOURS` shortens it, and the disk with it. It is also how far back a `queryapigate
+events` client can resume after a disconnect, so keep it above the longest outage a client must ride out.
+
+## 7. How many containers
+
+Per worker, at 75% of measured capacity, where p99 stays at about 4-5 ms:
+
+| | Plain | With the metadata cache |
+|---|---|---|
+| PostgreSQL, fast OLTP calls | 550 calls a second | 650 |
+| MySQL, `order_status`-class calls | 440 | 490 |
+
+**Containers** = the larger of (your calls a second ÷ that figure) and (your calls a second ÷ the waiting limit from
+section 2), **plus one** to lose without falling over. Every millisecond of Python a call costs beyond these simple
+lookups lowers the CPU figure; masked keys and large pages cost more.
+
+Then load-test your own queries at 75% of what you plan to serve, and watch p99, not the average: it holds flat to
+about 75% and triples by 90%.
+
+## What hasn't been measured yet
+
+- **Containers on separate hosts.** The scale-out figures are workers sharing one laptop's cores; separate hosts
+  should scale better, by an amount not yet measured.
+- **0.43's figures.** The round-trip changes, the thread setting and sqlglot 30 are measured at the driver, not yet
+  through whole requests. The benchmarks are rerun for the 0.43 release, and this guide will be updated with them.
 
 
 # One MySQL server, six services, one gateway

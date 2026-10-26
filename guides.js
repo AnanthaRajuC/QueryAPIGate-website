@@ -556,6 +556,15 @@ export const guides = [
   "time": "10 min",
   "timeMin": 10,
   "outcome": "A clear read on which keys, connections, queries and tools are actually in use - which ones are busy, which are granted but never touched - without wiring up any external monitoring."
+ },
+ {
+  "num": "63",
+  "slug": "63-tune-a-deployment-for-throughput",
+  "title": "Tune a deployment for throughput",
+  "cat": "Operate",
+  "time": "20 min",
+  "timeMin": 20,
+  "outcome": "Threads, CPU, logging, cache and disk settings chosen for your queries and your database's distance, a number of containers to start from, and the figures each one rests on."
  }
 ];
 

@@ -169,8 +169,11 @@ On SQLite, each part of a call, measured on its own:
 
 The first call for a statement pays for the table check and the masking trace; after that, both are reused. The
 table check depends only on the query text, so it can't go stale. The masking trace depends on the connection's
-schema too, so it is kept only as long as QueryAPIGate keeps that schema - 60 seconds - and is worked out again after
-that, or straight away when the connection is changed.
+schema too, so it is kept only as long as QueryAPIGate keeps that schema - at most 60 seconds - and straight away
+when the connection is changed. From 0.43 a busy connection's schema is read again in the background after 45 seconds,
+while calls go on using the cached copy; when it hasn't changed, the traces are kept. So no call waits for the read or
+the trace again - before, one call a minute took about 75 ms longer ([Performance, v3](PERFORMANCE_V3.md#the-cold-path-every-60-seconds)).
+A connection with no masked call for a whole minute is read again in its next call, as before.
 
 The rest is the gateway itself, the same for every query: authentication, limits, the record of the run, the HTTP
 response. Against a database that takes 50 ms to answer, it hardly matters; against one that answers in 0.01 ms, it's
@@ -218,6 +221,17 @@ inside a rotation's grace period is checked on every call, against the cached ro
 So it is a trade: a few seconds of delay for a revocation that reaches other instances, for fewer reads on the store.
 Leave it off if a revoked key must stop working everywhere at once; with one instance, a TTL of a few seconds changes
 nothing anyone would notice.
+
+Where it is set:
+
+| Setup | `QUERYAPIGATE_METADATA_CACHE_TTL` | Why |
+|---|---|---|
+| The server and the Docker image | `0`, off | The image runs anywhere, often several instances at a time |
+| The one-command Compose demo (`docker-compose.yml`) | `5` | One instance: only a change made with the CLI waits, up to 5 s |
+| The scale-out Compose setup (`deploy/scale-out/`) | off | Three instances: a revocation would take up to a TTL to reach the other two |
+| The Helm chart | off; `config.QUERYAPIGATE_METADATA_CACHE_TTL` | Set it with one replica, or when the delay is acceptable |
+
+Change it for any setup with the variable; the Console's Settings screen shows the value in use.
 
 ## Scaling
 
