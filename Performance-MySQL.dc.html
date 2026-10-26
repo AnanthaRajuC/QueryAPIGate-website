@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- site-meta -->
+<title>Performance on MySQL - QueryAPIGate</title>
+<meta name="description" content="One MySQL server, six microservice databases, per-user queries joining across them: QueryAPIGate adds about 1.2 ms a call, one worker serves 580-780 calls a second, and here is how to size it and keep services apart.">
+<meta name="theme-color" content="#10201b">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QueryAPIGate">
+<meta property="og:title" content="Performance on MySQL - QueryAPIGate">
+<meta property="og:description" content="One MySQL server, six microservice databases, per-user queries joining across them: QueryAPIGate adds about 1.2 ms a call, one worker serves 580-780 calls a second, and here is how to size it and keep services apart.">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:image" content="https://anantharajuc.github.io/QueryAPIGate-website/images/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="QueryAPIGate: one governed gate between your databases and everything that asks them for data.">
+<meta property="og:url" content="https://anantharajuc.github.io/QueryAPIGate-website/Performance-MySQL.dc.html">
+<!-- /site-meta -->
+<script src="./support.js"></script>
+<script src="./theme.js?v=12"></script>
+<script src="./search.js?v=5" defer></script>
+<script>
+(function () {
+  // Section rail on the left: marks the section in view; clicking scrolls without touching the hash.
+  var ids = ['numbers','setup','threads','cache','network','isolation','sizing','method','reproduce'], raf = 0;
+  function dark(el) { var c = getComputedStyle(el).backgroundColor.match(/\d+/g); return c && c.length >= 3 && (c.length < 4 || +c[3] > 0) && (+c[0] + +c[1] + +c[2]) < 150; }
+  function update() {
+    raf = 0;
+    var rail = document.querySelector('.rail'), links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
+    var line = window.innerHeight * 0.35, cur = ids[0];
+    for (var i = 0; i < ids.length; i++) { var el = document.getElementById(ids[i]); if (el && el.getBoundingClientRect().top <= line) cur = ids[i]; }
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = ids[ids.length - 1];
+    for (var j = 0; j < links.length; j++) links[j].classList.toggle('on', links[j].getAttribute('data-rail') === cur);
+    // light colours while the rail sits over a dark section
+    var r = rail.getBoundingClientRect(), mid = r.top + r.height / 2, onDark = false;
+    document.querySelectorAll('section, footer').forEach(function (sec) { var b = sec.getBoundingClientRect(); if (b.top <= mid && b.bottom >= mid && dark(sec)) onDark = true; });
+    rail.classList.toggle('dark', onDark);
+  }
+  function tick() { if (!raf) raf = requestAnimationFrame(update); }
+  window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
+  document.addEventListener('click', function (e) { var a = e.target.closest('.rail a[data-rail]'); if (!a) return; var el = document.getElementById(a.getAttribute('data-rail')); if (!el) return; e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
+})();
+</script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+.rs-ghn svg{display:block}
+.rs-ghn-n{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1;color:var(--ink-3);min-width:0}
+.rs-ghn-n:empty{display:none}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
+a{color:var(--accent-ink);text-decoration:none}a:hover{color:var(--accent-ink-2);text-decoration:underline}
+pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.rs-burger{display:none}
+.rs-menu-toggle{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+@media (max-width:1180px){
+  .rs-burger{display:inline-grid;place-items:center;width:40px;height:40px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;margin-left:auto;flex:none}
+  .rs-burger span{display:block;width:16px;height:2px;background:var(--ink);border-radius:2px;box-shadow:0 -5px 0 var(--ink),0 5px 0 var(--ink)}
+  .rs-actions{margin-left:0 !important}
+  .rs-nav{display:none !important;flex-basis:100%;flex-direction:column;align-items:flex-start;gap:0 !important;font-size:16px !important;border-top:1px solid var(--line);padding:8px 0 4px !important;margin-top:4px}
+  .rs-nav a{display:block;width:100%;padding:11px 4px;border-bottom:1px solid var(--line-soft)}
+  .rs-nav a:last-child{border-bottom:0}
+  .rs-menu-toggle:checked ~ .rs-nav{display:flex !important}
+  .rs-menu-toggle:checked ~ .rs-burger span{background:transparent;box-shadow:none}
+  .rs-menu-toggle:checked ~ .rs-burger span::before,.rs-menu-toggle:checked ~ .rs-burger span::after{content:"";position:absolute;width:18px;height:2px;background:var(--ink);border-radius:2px}
+  .rs-menu-toggle:checked ~ .rs-burger span::before{transform:rotate(45deg)}
+  .rs-menu-toggle:checked ~ .rs-burger span::after{transform:rotate(-45deg)}
+  .rs-navbar{flex-wrap:wrap !important;gap:12px !important}
+}
+@media (max-width:480px){.rs-gh{display:none !important}}
+@media (max-width:960px){
+  .f-bento{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+  .f-bento > *{grid-column:span 1 !important}
+  .f-2col{grid-template-columns:minmax(0,1fr) !important}
+  .f-3col{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+  .f-sec{grid-template-columns:minmax(0,1fr) !important}
+}
+@media (max-width:640px){
+  .f-bento,.f-3col,.f-badges{grid-template-columns:minmax(0,1fr) !important}
+  .f-pad{padding-left:16px !important;padding-right:16px !important}
+  .f-table th:nth-child(3),.f-table td:nth-child(3){display:none}
+}
+/* Section rail on the left, as on Features; over the dark sections it switches to light colours. */
+.rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:30;display:grid;gap:10px;transition:opacity 0.25s;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
+.rail a{display:flex;align-items:center;gap:12px;color:#9fb3ac;text-decoration:none;transition:color 0.2s}
+.rail a::before{content:'';flex:none;width:22px;height:1px;background:var(--line-2);transition:width 0.25s,background 0.25s,height 0.25s}
+.rail a:hover{color:var(--ink);text-decoration:none}
+.rail a.on{color:var(--ink)}.rail a.on::before{width:40px;height:2px;background:oklch(0.52 0.11 170)}
+.rail.dark a{color:#7c8f88}.rail.dark a::before{background:#34413d}.rail.dark a:hover,.rail.dark a.on{color:#e6efeb}.rail.dark a.on::before{background:oklch(0.62 0.13 170)}
+@media (max-width:1599px){.rail span{opacity:0;visibility:hidden;transform:translateX(-6px);transition:opacity 0.2s,transform 0.2s,visibility 0.2s}.rail:hover span{opacity:1;visibility:visible;transform:none}}
+@media (max-width:1279px){.rail{display:none}}
+@media (prefers-reduced-motion:reduce){.rail a::before,.rail span{transition:none}}
+.t-table td,.t-table th{padding:14px 16px;text-align:left;vertical-align:top;border-top:1px solid #243b34;font-size:14px}
+.t-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac;border-top:0;padding-top:0}
+.t-docs td{padding:16px 18px;vertical-align:top;border-top:1px solid var(--line);font-size:14.5px}
+@media (max-width:640px){.t-docs td:nth-child(3){display:none}}
+.d-tabs{scrollbar-width:none}.d-tabs::-webkit-scrollbar{display:none}
+.d-table td,.d-table th{padding:14px 16px;text-align:left;vertical-align:top;border-top:1px solid var(--line);font-size:14px}
+.d-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);border-top:0}
+@media (max-width:960px){.d-check{grid-template-columns:minmax(0,1fr) !important}}
+.u-case{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}
+.u-case.u-flip > .u-code{order:-1}
+@media (max-width:960px){.u-case{grid-template-columns:minmax(0,1fr) !important}.u-case.u-flip > .u-code{order:2}.u-personas{grid-template-columns:repeat(2,minmax(0,1fr)) !important}.u-personas > .u-last{grid-column:span 2}}
+@media (max-width:640px){.u-personas{grid-template-columns:minmax(0,1fr) !important}.u-personas > .u-last{grid-column:span 1}}
+.f-bento > .f-last{grid-column:span 4}
+@media (max-width:960px){.f-bento > .f-last{grid-column:span 2 !important}}
+@media (max-width:640px){.f-bento > .f-last{grid-column:span 1 !important}}
+.f-table td,.f-table th{padding:14px 16px;text-align:left;vertical-align:top;border-top:1px solid #243b34}
+.f-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac;border-top:0;padding-top:0}
+.e-roles td,.e-roles th{padding:12px 16px;text-align:left;vertical-align:top;border-top:1px solid var(--line);font-size:14px}
+.e-roles th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);border-top:0}
+.e-split td,.e-split th{padding:14px 18px;text-align:left;vertical-align:top;border-top:1px solid var(--line);font-size:14.5px}
+.e-split th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);border-top:0}
+.e-dl{display:inline-flex;gap:10px;align-items:center}
+@media (max-width:640px){.e-roles td:nth-child(3),.e-roles th:nth-child(3){display:none}}
+/* Use-cases dropdown in the top nav (desktop only; the burger menu keeps a plain link). */
+.rs-dd{position:relative}
+.rs-dd-panel{display:none;position:absolute;top:100%;left:-18px;padding-top:12px;z-index:30}
+.rs-dd-inner{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35);padding:18px 20px 14px;display:grid;gap:14px;width:max-content;max-width:calc(100vw - 48px)}
+.rs-dd-grid{display:grid;grid-template-columns:repeat(5,max-content);gap:18px 28px}
+.rs-dd-grid>div{display:grid;gap:7px;align-content:start}
+.rs-dd-grid small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+.rs-dd-grid a{font-size:13.5px;font-weight:500;color:var(--ink);white-space:nowrap;text-decoration:none}
+.rs-dd-grid a:hover{color:var(--accent-ink)}
+.rs-dd-all{font-size:13px;font-weight:600;border-top:1px solid var(--line-soft);padding-top:12px;text-decoration:none}
+@media (max-width:1400px){.rs-dd-grid{grid-template-columns:repeat(3,max-content)}}
+@media (max-width:1180px){.rs-dd{width:100%}.rs-dd-panel{display:none !important}}
+/* Current page in the top nav: bold, ink-dark, with an accent underline (a left bar in the burger menu). */
+.rs-nav > a[aria-current="page"],.rs-nav > .rs-dd > a[aria-current="page"]{color:var(--ink) !important;font-weight:600;text-decoration:underline;text-decoration-color:var(--accent-ink);text-decoration-thickness:2px;text-underline-offset:7px}
+.rs-nav > a[aria-current="page"]:hover,.rs-nav > .rs-dd > a[aria-current="page"]:hover{text-decoration-color:var(--accent-ink-2)}
+.rs-mega-card[aria-current="page"]{background:var(--bg);box-shadow:inset 3px 0 0 oklch(0.52 0.11 170)}
+@media (max-width:1180px){.rs-nav > a[aria-current="page"]{text-decoration:none;box-shadow:inset 3px 0 0 oklch(0.52 0.11 170);padding-left:12px !important}}
+.rs-dd-right .rs-dd-panel{left:auto;right:-18px}
+/* Dropdown triggers: a caret that turns while open; the panel stays open for a moment after the pointer leaves,
+   and the trigger's hover area reaches down to the panel so crossing the gap never closes it. */
+.rs-dd>a{display:inline-flex;align-items:center;gap:5px;padding:14px 0;margin:-14px 0}
+.rs-caret{transition:transform 0.2s;flex:none}
+.rs-dd:hover>a .rs-caret,.rs-dd:focus-within>a .rs-caret{transform:rotate(180deg)}
+.rs-dd-panel{display:block;visibility:hidden;opacity:0;transition:opacity 0.15s,visibility 0s linear 0.25s}
+.rs-dd:hover .rs-dd-panel,.rs-dd:focus-within .rs-dd-panel,.rs-dd-panel:hover{visibility:visible;opacity:1;transition-delay:0s}
+@media (max-width:1180px){.rs-caret{display:none}.rs-dd>a{padding:11px 4px;margin:0}}
+/* Use-cases mega menu: the panel spans the whole nav bar, one card per use case. */
+.rs-navbar{position:relative}
+.rs-dd.rs-mega{position:static}
+.rs-mega .rs-dd-panel{left:24px;right:24px;padding-top:0;top:calc(100% - 1px)}
+.rs-mega-inner{width:auto !important;max-width:none !important;padding:22px 24px 20px !important;gap:18px !important}
+.rs-mega-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--line-soft)}
+.rs-mega-head>div{display:grid;gap:4px}
+.rs-mega-eyebrow{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)}
+.rs-mega-head b{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.01em;color:var(--ink)}
+.rs-mega-all{font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap}
+.rs-mega-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.rs-mega-card{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start;padding:12px;border-radius:10px;text-decoration:none;color:var(--ink);transition:background 0.15s}
+.rs-mega-card:hover{background:var(--bg);text-decoration:none}
+.rs-mega-ico{width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.1);position:relative}
+.rs-mega-ico::after{content:'';position:absolute;inset:9px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.rs-mega-txt{display:grid;gap:2px;min-width:0}
+.rs-mega-txt small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)}
+.rs-mega-txt b{font-size:14px;font-weight:600}
+.rs-mega-txt>span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+@media (max-width:1400px){.rs-mega-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* Guides mega menu: reading paths on the left, documentation grouped on the right. */
+.rs-mega-body{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.3fr);gap:28px}
+.rs-mega-sub{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)}
+.rs-mega-paths{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;align-content:start}
+.rs-mega-paths .rs-mega-sub{grid-column:1/-1;margin-bottom:4px}
+.rs-mega-path{display:grid;gap:2px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink);transition:background 0.15s}
+.rs-mega-path:hover{background:var(--bg);text-decoration:none}
+.rs-mega-path small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.04em;color:var(--ink-3)}
+.rs-mega-path b{font-size:14px;font-weight:600}
+.rs-mega-path>span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+.rs-mega-paths .rs-mega-sub2{margin-top:10px;margin-bottom:2px}
+.rs-mega-arch{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px}
+.rs-mega-arch a{font-size:12px;font-weight:500;padding:4px 9px;white-space:nowrap;border:1px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;transition:background 0.15s,border-color 0.15s}
+.rs-mega-arch a:hover{border-color:#9fb3ac;background:var(--bg);text-decoration:none}
+.rs-mega-docs{display:grid;gap:12px;align-content:start;padding-left:28px;border-left:1px solid var(--line-soft)}
+.rs-mega-docgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.rs-mega-docgrid>div{display:grid;gap:6px;align-content:start}
+.rs-mega-docgrid small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+.rs-mega-docgrid a{font-size:13.5px;font-weight:500;color:var(--ink);text-decoration:none;line-height:1.35}
+.rs-mega-docgrid a:hover{color:var(--accent-ink)}
+.rs-mega-more{font-size:13px;font-weight:600;text-decoration:none;padding-top:8px;border-top:1px solid var(--line-soft)}
+.rs-mega-body-solo{grid-template-columns:minmax(0,1fr)}
+.rs-mega-body-solo .rs-mega-paths{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rs-mega-docs-solo{padding-left:0;border-left:none}
+.rs-mega-docs-solo .rs-mega-docgrid{grid-template-columns:repeat(5,minmax(0,1fr)) !important}
+.rs-mega-docs-solo .rs-mega-docgrid{gap:20px 40px}
+.rs-mega-docs-solo .rs-mega-docgrid>div{gap:2px}
+.rs-mega-docs-solo .rs-mega-docgrid small{margin:0 0 6px 10px}
+.rs-mega-docs-solo .rs-mega-docgrid a.rs-doc{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink);text-decoration:none;transition:background 0.15s}
+.rs-mega-docs-solo .rs-mega-docgrid a.rs-doc:hover{background:var(--bg);color:var(--ink)}
+.rs-doc-ico{flex:none;width:28px;height:28px;border-radius:7px;background:oklch(0.52 0.11 170 / 0.09);position:relative}
+.rs-doc-ico::after{content:'';position:absolute;inset:7px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.rs-mega-docs-solo .rs-mega-more{margin-top:4px}
+@media (max-width:1400px){.rs-mega-docgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* MCP shortcut beside the GitHub icon: a tinted pill with the plug icon. */
+.rs-mcp{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;color:var(--accent-ink-2);background:oklch(0.52 0.11 170 / 0.1);border:1px solid oklch(0.52 0.11 170 / 0.45);border-radius:999px;padding:5px 11px 5px 9px;text-decoration:none;transition:background 0.2s,border-color 0.2s,color 0.2s}
+.rs-mcp:hover{background:oklch(0.52 0.11 170 / 0.18);border-color:var(--accent-ink);color:var(--accent-ink-2);text-decoration:none}
+.rs-mcp svg{display:block}
+/* Footer */
+.ft a{text-decoration:none}.ft a:hover{text-decoration:underline}
+.ft-grid{display:grid;grid-template-columns:minmax(0,1.7fr) repeat(4,minmax(0,1fr));gap:36px 28px}
+.ft-brand{display:grid;gap:16px;align-content:start;min-width:0}
+.ft-col{display:grid;gap:10px;align-content:start}
+.ft-col a{color:var(--ink-2);font-size:14px}.ft-col a:hover{color:var(--ink)}
+.ft-h{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);margin-bottom:2px}
+.ft-chip{font-size:11.5px;font-weight:500;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.ft-btn{font-size:13.5px;font-weight:600;color:var(--ink);border:1px solid var(--line-2);border-radius:8px;padding:8px 13px;background:var(--surface)}
+.ft-btn:hover{border-color:var(--ink);text-decoration:none !important}
+.ft-btn-dark{background:#10201b;border-color:#10201b;color:#e6efeb}.ft-btn-dark:hover{background:#1b3a30;border-color:#1b3a30}
+.ft-bottom{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-3)}
+.ft-badges{display:inline-flex;align-items:center;gap:10px}.ft-badges img{display:block;height:20px}
+@media (max-width:1100px){.ft-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ft-brand{grid-column:1/-1}}
+@media (max-width:560px){.ft-grid{grid-template-columns:minmax(0,1fr)}}
+.copy-btn{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:#c5d3cd;background:#1b2f29;border:1px solid #2a3d37;border-radius:6px;padding:4px 9px;min-height:26px;cursor:pointer;transition:background 0.2s,color 0.2s}
+.copy-btn:hover{background:#24403a;color:#e6efeb}
+/* Evaluate menu: seven cards, four to a row; on narrow screens the trigger hides and plain links show in the burger. */
+.rs-mega-grid5{grid-template-columns:repeat(4,minmax(0,1fr)) !important}
+.rs-sub{display:none}
+@media (max-width:1400px){.rs-mega-grid5{grid-template-columns:repeat(4,minmax(0,1fr)) !important}}
+@media (max-width:1180px){.rs-dd.rs-mega-eval{display:none !important}.rs-sub{display:block}}
+/* MCP pill: a small menu of the MCP pages. */
+.rs-dd-mcp>a.rs-mcp{padding:5px 11px 5px 9px;margin:0}
+.rs-dd-mcp .rs-dd-panel{left:-6px}
+.rs-dd-mcp-inner{display:grid;gap:4px;width:340px !important;padding:12px !important}
+.rs-dd-mcp-inner small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);padding:4px 10px 6px}
+.rs-dd-mcp-inner a{display:grid;gap:2px;padding:9px 10px;border-radius:8px;color:var(--ink);text-decoration:none;transition:background 0.15s}
+.rs-dd-mcp-inner a:hover{background:var(--bg);text-decoration:none}
+.rs-dd-mcp-inner a[aria-current="page"]{background:var(--bg);box-shadow:inset 3px 0 0 oklch(0.52 0.11 170)}
+.rs-dd-mcp-inner b{font-size:13.5px;font-weight:600}
+.rs-dd-mcp-inner span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+@media (max-width:1180px){.rs-dd-mcp .rs-dd-panel{display:none !important}.rs-dd-mcp .rs-caret{display:none}}
+/* Performance page */
+.pf-wrap{max-width:1240px;margin:0 auto;padding:88px 24px;display:grid;gap:32px}
+.pf-sec{scroll-margin-top:0}
+.pf-dark{background:#10201b;color:#e6efeb}.pf-band{background:var(--surface-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pf-eye,.pf-eye-h{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent-ink)}.pf-eye-h{font-family:inherit;font-weight:600;letter-spacing:0.08em;text-transform:uppercase}
+.pf-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:end}
+.pf-head h2{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.2vw,40px);line-height:1.1;font-weight:700;letter-spacing:-0.015em;text-wrap:balance}
+.pf-head p{margin:0;color:var(--ink-2);text-wrap:pretty}
+.pf-head.dark .pf-eye{color:oklch(0.8 0.11 170)}.pf-head.dark p{color:#9fb3ac}
+.pf-hero{max-width:1240px;margin:0 auto;padding:96px 24px 72px;display:grid;gap:22px;justify-items:center;text-align:center;position:relative}
+.pf-hero::before{content:'';position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse 45% 60% at 50% 40%,oklch(0.62 0.13 170 / 0.12),transparent 70%),radial-gradient(circle,var(--dots) 0.6px,transparent 1px) 0 0/18px 18px;-webkit-mask:linear-gradient(transparent,#000 20%,#000 70%,transparent);mask:linear-gradient(transparent,#000 20%,#000 70%,transparent);pointer-events:none}
+.pf-hero h1{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(38px,5.2vw,68px);line-height:1;font-weight:800;letter-spacing:-0.025em;max-width:18ch;text-wrap:balance}
+.pf-hero>p{margin:0;font-size:19px;color:var(--ink-2);max-width:64ch;text-wrap:pretty}
+.pf-hero-go{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.pf-btn{font-size:15px;font-weight:600;background:#10201b;color:#e6efeb;padding:13px 22px;border-radius:8px;border:1px solid #10201b;transition:background .2s,border-color .2s}.pf-btn:hover{background:#1b3a30;color:#e6efeb;text-decoration:none}
+.pf-btn-o{background:var(--surface);color:var(--ink);border-color:var(--line-2)}.pf-btn-o:hover{background:var(--surface);color:var(--ink);border-color:var(--ink)}
+:root[data-theme=dark] .pf-btn:not(.pf-btn-o){background:#e6efeb;color:#10201b;border-color:#e6efeb}
+.pf-story{font-size:14px;font-weight:600}
+.pf-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:#243b34;border:1px solid #243b34;border-radius:14px;overflow:hidden}
+.pf-tile{background:#0c1915;padding:26px;display:grid;gap:10px;align-content:start}
+.pf-tile b{font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3vw,40px);line-height:1;font-weight:800;letter-spacing:-0.02em}.pf-tile b small{font-size:0.45em;font-weight:600;letter-spacing:0;color:#9fb3ac}
+.pf-tile span{font-size:14px;color:#9fb3ac;line-height:1.5}
+.pf-tcard{border:1px solid #243b34;border-radius:14px;overflow:hidden;background:#0c1915}
+.pf-tcap{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;padding:16px 20px;border-bottom:1px solid #243b34}.pf-tcap b{font-size:16px}.pf-tcap span{font-size:13px;color:#9fb3ac}
+.pf-table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:560px;font-variant-numeric:tabular-nums}
+.pf-table th{text-align:left;font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac;padding:12px 20px;border-bottom:1px solid #243b34}
+.pf-table td{padding:13px 20px;border-bottom:1px solid #1b2f29;color:#e6efeb}.pf-table tr:last-child td{border-bottom:0}
+.pf-table .n{text-align:right;white-space:nowrap}.pf-table td i{font-style:normal;color:#7c8f88;font-size:13px}.pf-table td.hi{color:oklch(0.85 0.1 170);font-weight:600}
+.pf-note{margin:0;font-size:14.5px;color:#9fb3ac;max-width:84ch}.pf-note-l{color:var(--ink-3);font-size:14px}
+.pf-chartcard,.pf-card{background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.45);padding:22px 24px;display:grid;gap:14px;align-content:start;min-width:0}
+.pf-legend{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:13px;color:var(--ink-2)}.pf-legend span{display:inline-flex;align-items:center;gap:7px}
+.pf-legend i{width:18px;height:3px;border-radius:2px;display:block}.pf-legend i.s1{background:var(--ink-3)}.pf-legend i.s2{background:var(--accent-ink)}.pf-legend-x{margin-left:auto;color:var(--ink-3)}
+.pf-chart{width:100%;height:auto;display:block}
+.pf-grid{stroke:var(--line-soft);stroke-width:1}.pf-ax{font-family:'JetBrains Mono',monospace;font-size:11px;fill:var(--ink-3)}
+.pf-s1,.pf-s2{fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}.pf-s1{stroke:var(--ink-3)}.pf-s2{stroke:var(--accent-ink)}
+.pf-s1-dot{fill:var(--surface);stroke:var(--ink-3);stroke-width:2}.pf-s2-dot{fill:var(--surface);stroke:var(--accent-ink);stroke-width:2}
+.pf-val{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;fill:var(--ink-2)}.pf-val-c{fill:var(--accent-ink)}
+.pf-plan{stroke:oklch(0.66 0.17 40);stroke-width:1.5;stroke-dasharray:5 4}.pf-plan-t{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;fill:oklch(0.6 0.16 40)}
+.pf-chart-note{margin:0;font-size:13px;color:var(--ink-3)}
+.pf-2col{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;align-items:start}
+.pf-sg{display:grid;grid-template-columns:86px minmax(0,1fr);gap:12px;align-items:center;padding:6px 0}
+.pf-sg-n{font-size:13px;color:var(--ink-2)}.pf-sg-b{display:grid;gap:5px}
+.pf-bar{display:flex;align-items:center;gap:8px;min-width:0}.pf-bar i{display:block;height:14px;border-radius:0 4px 4px 0;background:var(--ink-4);min-width:3px;flex:none}
+.pf-bar span{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);white-space:nowrap}
+.pf-bar-c i{background:var(--accent-ink)}.pf-bar-m i{background:oklch(0.52 0.11 170 / 0.55)}
+.pf-points{list-style:none;margin:0;padding:0;display:grid;gap:16px}
+.pf-points li{display:flex;gap:14px;align-items:flex-start;font-size:15px;line-height:1.6;color:var(--ink-2)}.pf-points b{color:var(--ink);font-weight:600}
+.pf-ico{display:block;position:relative;flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.1)}
+.pf-ico::after{content:'';position:absolute;inset:9px;background:var(--accent-ink);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.pf-card-t{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;justify-content:space-between}.pf-card-t b{font-size:16px}.pf-card-t>span{font-size:13px;color:var(--ink-3)}
+.pf-key{display:inline-flex;align-items:center;gap:6px}.pf-key i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-left:6px}
+.pf-key i.st,.pf-sq i.st{background:var(--ink-4)}.pf-key i.db,.pf-sq i.db{background:var(--accent-ink)}
+.pf-rts{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center}
+.pf-rt{display:grid;gap:6px;justify-items:start;padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);min-width:0}
+.pf-rt.on{border-color:var(--accent-ink);background:oklch(0.52 0.11 170 / 0.07)}
+.pf-rt small{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-3)}
+.pf-rt b{font-family:'JetBrains Mono',monospace;font-size:36px;font-weight:500;line-height:1;color:var(--ink)}.pf-rt.on b{color:var(--accent-ink)}
+.pf-rt>span:last-child{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+.pf-sq{display:flex;flex-wrap:wrap;gap:3px}.pf-sq i{width:10px;height:10px;border-radius:2px;display:block}
+.pf-rt-arrow{font-style:normal;color:var(--ink-4)}
+.pf-small{margin:0;font-size:13.5px;line-height:1.55;color:var(--ink-3)}
+.pf-cpus{display:grid;gap:10px}.pf-cpu{display:grid;grid-template-columns:minmax(0,46%) minmax(0,1fr);gap:12px;align-items:center;font-size:13.5px;color:var(--ink-2)}
+.pf-next{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px 20px;align-items:start;padding:18px 22px;border:1px dashed var(--line-2);border-radius:14px;background:var(--surface)}
+.pf-next-tag{font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--accent-ink);background:oklch(0.52 0.11 170 / 0.1);border-radius:999px;padding:5px 10px;white-space:nowrap}
+.pf-next ul{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px 22px;font-size:14px;color:var(--ink-2)}.pf-next li::before{content:'→ ';color:var(--ink-4)}
+/* The calculator: a dark panel like the site's terminals. */
+.pf-calc{background:#10201b;color:#e6efeb;border:1px solid #243b34;border-radius:18px;overflow:hidden;box-shadow:0 40px 80px -40px rgba(16,32,27,0.7)}
+.pf-calc-bar{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid #243b34;font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88}
+.pf-calc-body{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:0}
+.pf-inputs{display:grid;gap:14px;padding:26px 28px;border-right:1px solid #243b34}
+.pf-in{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;font-size:14px;color:#c5d3cd}
+.pf-step{display:inline-flex;align-items:center;background:#0c1915;border:1px solid #2a3d37;border-radius:9px;overflow:hidden}
+.pf-step button{font:inherit;font-size:16px;width:34px;height:36px;border:0;background:transparent;color:#9fb3ac;cursor:pointer}.pf-step button:hover{background:#1b2f29;color:#e6efeb}
+.pf-step input,.pf-step select{font-family:'JetBrains Mono',monospace;font-size:14px;width:84px;height:36px;border:0;border-left:1px solid #2a3d37;border-right:1px solid #2a3d37;background:transparent;color:#e6efeb;text-align:center;-moz-appearance:textfield}
+.pf-step input::-webkit-inner-spin-button,.pf-step input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.pf-step input:focus,.pf-step select:focus{outline:2px solid oklch(0.62 0.13 170);outline-offset:-2px}
+.pf-step em{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#7c8f88;padding:0 10px 0 8px;min-width:22px}
+.pf-sel select{width:130px;border:0;text-align:left;padding:0 12px;cursor:pointer}.pf-sel select option{background:#10201b}
+.pf-switch{display:inline-flex;align-items:center;gap:10px;cursor:pointer;position:relative}
+.pf-switch input{position:absolute;opacity:0;width:44px;height:24px;margin:0;cursor:pointer}
+.pf-switch i{width:44px;height:24px;border-radius:999px;background:#2a3d37;position:relative;transition:background .2s;display:block}
+.pf-switch i::after{content:'';position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#e6efeb;transition:transform .2s}
+.pf-switch input:checked+i{background:oklch(0.62 0.13 170)}.pf-switch input:checked+i::after{transform:translateX(20px)}
+.pf-switch input:focus-visible+i{outline:2px solid oklch(0.62 0.13 170);outline-offset:2px}
+.pf-switch em{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac;min-width:24px}
+.pf-out{display:grid;gap:6px;align-content:start;padding:26px 28px;background:radial-gradient(ellipse 80% 70% at 100% 0%,oklch(0.62 0.13 170 / 0.18),transparent 70%)}
+.pf-out small{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac}
+.pf-big{font-family:'Schibsted Grotesk',sans-serif;font-size:76px;font-weight:800;line-height:1;letter-spacing:-0.03em;color:#fff}
+.pf-out-sub{font-size:13px;color:#7c8f88}
+.pf-out-row{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;margin-top:14px;padding-top:14px;border-top:1px solid #243b34;font-size:14px;color:#9fb3ac}.pf-out-row b{color:#e6efeb;font-weight:600}
+.pf-lim{font-style:normal;font-weight:600;color:oklch(0.85 0.1 170)}
+.pf-out-caps{display:flex;flex-wrap:wrap;gap:6px 18px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#7c8f88}.pf-out-caps b{color:#c5d3cd;font-weight:500}
+.pf-hint{margin:10px 0 0;padding:10px 12px;border-radius:9px;background:oklch(0.66 0.17 40 / 0.14);color:#f2c7a8;font-size:13.5px;line-height:1.5}
+.pf-caveat{margin:0;padding:14px 28px 18px;border-top:1px solid #243b34;font-size:13px;line-height:1.55;color:#7c8f88}
+.pf-2col-m{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}
+.pf-limits{gap:10px}.pf-limits b{font-size:16px}.pf-limits ul{margin:0;padding-left:18px;color:var(--ink-3);font-size:14.5px;line-height:1.7}
+.pf-links{display:flex;flex-wrap:wrap;gap:8px 18px;padding-top:12px;border-top:1px solid var(--line-soft);font-size:14px;font-weight:600}
+.pf-repro{gap:28px}
+.pf-term{background:#0c1915;border:1px solid #243b34;border-radius:12px;overflow:hidden;min-width:0}
+.pf-term-bar{display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #243b34}
+.pf-term pre{margin:0;color:#e6efeb;padding:16px 18px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.8;overflow-x:auto;white-space:pre}.pf-term .p{color:#7c8f88}
+.pf-repro-go{display:flex;gap:12px;flex-wrap:wrap}
+.pf-pbtn{font-size:15px;font-weight:600;background:#e6efeb;color:#10201b;padding:12px 18px;border-radius:8px;transition:background .2s}.pf-pbtn:hover{background:#fff;color:#10201b;text-decoration:none}
+.pf-pbtn-o{background:transparent;color:#e6efeb;border:1px solid #2a3d37}.pf-pbtn-o:hover{background:#1b2f29;color:#e6efeb}
+@media (max-width:1000px){.pf-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.pf-2col,.pf-2col-m,.pf-calc-body{grid-template-columns:minmax(0,1fr)}.pf-inputs{border-right:0;border-bottom:1px solid #243b34}}
+@media (max-width:820px){.pf-head{grid-template-columns:minmax(0,1fr)}.pf-wrap{padding:64px 16px}.pf-hero{padding:64px 16px 48px}.pf-legend-x{margin-left:0;flex-basis:100%}}
+@media (max-width:640px){.pf-tiles{grid-template-columns:minmax(0,1fr)}.pf-rts{grid-template-columns:minmax(0,1fr)}.pf-rt-arrow{display:none}.pf-in{grid-template-columns:minmax(0,1fr)}.pf-inputs,.pf-out{padding:20px}.pf-caveat{padding:14px 20px}.pf-next{grid-template-columns:minmax(0,1fr)}.pf-cpu{grid-template-columns:minmax(0,1fr);gap:4px}.pf-big{font-size:60px}}
+@media (prefers-reduced-motion:reduce){.pf-switch i,.pf-switch i::after{transition:none}}
+/* Performance on MySQL: the Performance page's styles, plus these. */
+.pm-links{display:flex;flex-wrap:wrap;gap:6px 20px;justify-content:center;font-size:14px;font-weight:600}
+.pm-wide{min-width:820px}.pf-table .pf-dbs{font-style:normal;color:#7c8f88;font-size:12.5px}.pf-table td.pf-direct{color:#9fb3ac}
+.pm-notes{margin:0;padding-left:18px;display:grid;gap:6px;color:#9fb3ac;font-size:14.5px;line-height:1.6}
+.pm-one{max-width:820px}
+.pm-arch{display:grid;gap:16px;padding:24px;border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:0 30px 60px -40px rgba(16,32,27,0.45)}
+.pm-gw{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 14px;font-size:14px}
+.pm-gw b{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:13.5px;background:#10201b;color:#e6efeb;border-radius:9px;padding:8px 14px}
+.pm-gw-l{color:var(--ink-2);font-weight:600}.pm-gw-s{font-size:12.5px;color:var(--ink-3)}.pm-gw i{font-style:normal;color:var(--ink-4)}
+.pm-dbs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;padding:16px;border:1px dashed var(--line-2);border-radius:14px;background:var(--bg)}
+.pm-db{display:grid;gap:4px;align-content:start;padding:14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);min-width:0}
+.pm-db-ic{width:26px;height:26px;border-radius:7px;background:oklch(0.52 0.11 170 / 0.1);position:relative;margin-bottom:4px}
+.pm-db-ic::after{content:'';position:absolute;inset:6px;background:var(--accent-ink);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg) center/contain no-repeat}
+.pm-db b{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:14px;color:var(--accent-ink)}.pm-db span{font-size:13px;color:var(--ink);line-height:1.4}.pm-db small{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-3);line-height:1.5}
+.pm-tgs{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.pm-tg{display:grid;gap:8px;align-content:start}.pm-tg-h{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;margin-bottom:4px}.pm-tg-h b{font-size:15px}.pm-tg-h span{font-size:12.5px;color:var(--ink-3)}
+.pm-tb{display:grid;grid-template-columns:140px minmax(0,1fr);gap:12px;align-items:center}.pm-tb-n{font-size:13px;color:var(--ink-2)}
+.pm-tb .pf-bar i{background:var(--ink-4)}.pm-tb.best .pf-bar i{background:var(--accent-ink)}.pm-tb.best .pf-bar span{font-weight:700;color:var(--accent-ink)}
+.pf-bar-gray i{background:var(--ink-4) !important}
+.pm-2eq{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.pm-cc .pm-tb{grid-template-columns:190px minmax(0,1fr)}
+.pm-hits{font-size:13.5px;color:var(--ink-2);padding-top:10px;border-top:1px solid var(--line-soft)}.pm-hits b{font-family:'Schibsted Grotesk',sans-serif;font-size:24px;font-weight:800;color:var(--ink);margin-right:4px}
+.pm-cc.good{border-color:color-mix(in oklch,var(--accent-ink) 45%,var(--line))}.pm-cc.good .pm-hits b{color:var(--accent-ink)}
+.pm-cc:not(.good) .pm-tb.best .pf-bar i{background:var(--ink-4)}.pm-cc:not(.good) .pm-tb.best .pf-bar span{color:var(--ink);font-weight:500}
+.pm-steps{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.pm-step{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:center;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg)}
+.pm-step>span{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:oklch(0.52 0.11 170 / 0.12);font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent-ink)}
+.pm-step p{margin:0;font-size:14px;color:var(--ink-2);line-height:1.5}
+.pm-step-ping{border-style:dashed}.pm-step-ping>span{background:color-mix(in oklch,var(--warn-ink) 16%,transparent);color:var(--warn-ink)}
+.pm-tbl{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.pm-tbl th{text-align:left;font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);padding:10px 12px;border-bottom:1px solid var(--line)}
+.pm-tbl td{padding:11px 12px;border-bottom:1px solid var(--line-soft);color:var(--ink-2)}.pm-tbl tr:last-child td{border-bottom:0}
+.pm-tbl .n{text-align:right;white-space:nowrap}.pm-tbl tr.hi td{background:oklch(0.52 0.11 170 / 0.07);color:var(--ink)}.pm-tbl tr.hi b{color:var(--accent-ink)}
+/* The isolation gap: an amber callout, kept prominent. */
+.pm-gap{--c:oklch(0.66 0.16 60);border:1px solid color-mix(in oklch,var(--c) 55%,var(--line));border-left:4px solid var(--c);border-radius:18px;background:color-mix(in oklch,var(--c) 6%,var(--surface));box-shadow:0 30px 60px -40px color-mix(in oklch,var(--c) 70%,transparent);overflow:hidden}
+.pm-gap-h{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:18px 24px;border-bottom:1px solid color-mix(in oklch,var(--c) 30%,var(--line))}
+.pm-gap-h b{font-family:'Schibsted Grotesk',sans-serif;font-size:19px;font-weight:700}
+.pm-gap-tag{font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:#10201b;background:var(--c);border-radius:999px;padding:5px 11px}
+.pm-gap-body{display:grid;gap:16px;padding:20px 24px 24px}.pm-gap-body>p{margin:0;font-size:15px;line-height:1.6;color:var(--ink-2)}
+.pm-gap-tbl{background:var(--surface);border:1px solid var(--line);border-radius:12px;border-collapse:separate;border-spacing:0;overflow:hidden}
+.pm-gap-tbl tr.gap td{background:color-mix(in oklch,var(--c) 14%,var(--surface));color:var(--ink)}.pm-gap-tbl tr.gap i{font-style:normal;color:var(--ink-3);font-size:13px}
+.pm-ok,.pm-bad{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;margin-right:8px;font-size:11px;font-weight:700;vertical-align:1px}
+.pm-ok{background:oklch(0.52 0.11 170 / 0.15);color:var(--accent-ink)}.pm-bad{background:var(--c);color:#10201b}
+.pm-until{padding:16px 18px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}.pm-until b{font-size:15px}
+.pm-until ol{margin:8px 0 0;padding-left:22px;display:grid;gap:6px;font-size:14.5px;line-height:1.55;color:var(--ink-2)}
+.pm-gap-foot{font-size:14px !important;color:var(--ink-3) !important}
+.pm-disk{gap:12px;max-width:620px}.pm-disk-t{display:flex;gap:14px;align-items:flex-start}.pm-disk-t b{font-size:16px}.pm-disk-t p{margin:4px 0 0;font-size:14px;color:var(--ink-2);line-height:1.5}
+.pm-tpcc{margin:4px 0 0;padding:12px 14px;border-radius:10px;background:var(--surface-2);border:1px solid var(--line-soft);font-size:13.5px;line-height:1.55;color:var(--ink-2)}
+@media (max-width:1100px){.pm-dbs{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:1000px){.pm-tgs,.pm-2eq{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.pm-dbs{grid-template-columns:repeat(2,minmax(0,1fr));padding:10px}.pm-tb,.pm-cc .pm-tb{grid-template-columns:minmax(0,1fr);gap:4px}.pm-gap-h,.pm-gap-body{padding-left:18px;padding-right:18px}}
+</style>
+</helmet>
+<div data-screen-label="Performance on MySQL" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
+  <nav style="position:sticky;top:0;z-index:20;background:var(--bg-90);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)">
+    <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
+      <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:var(--ink);text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:var(--accent-ink)">API</span>Gate</span></a>
+      <div class="rs-actions" style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <button type="button" class="rs-search" data-search aria-label="Search the documentation (Ctrl+K)" title="Search · Ctrl+K"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span>Search</span><kbd>Ctrl K</kbd></button>        <div class="rs-dd rs-dd-mcp"><a href="MCP.dc.html" class="rs-mcp" title="MCP server: saved queries as tools for AI agents"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a6 6 0 0 1-12 0V8z"/></svg><span class="rs-mcp-t">MCP</span><svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-dd-mcp-inner"><small>MCP · AI agents</small><a href="MCP.dc.html"><b>MCP server for AI agents</b><span>What agents get, what they never get, and how to connect a client.</span></a><a href="Agent Checklist.dc.html"><b>Against Altinity's agent-safety checklist</b><span>Nineteen recommendations, point by point: 16 covered.</span></a><a href="Guide.dc.html?d=MCP"><b>MCP reference</b><span>Tools, resources, OAuth and every setting, from the documentation.</span></a><a href="Guide.dc.html?g=24-let-an-agent-call-your-queries-via-mcp"><b>Guide 24: let an agent call your queries</b><span>The ten-minute walkthrough, run against a real server.</span></a></div></div></div>
+      </div>
+      <input type="checkbox" id="rs-menu" class="rs-menu-toggle" aria-label="Open menu">
+      <label for="rs-menu" class="rs-burger" aria-hidden="true"><span></span></label>
+      <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
+        <div class="rs-dd rs-mega rs-mega-features"><a href="Features.dc.html" style="color:var(--ink-2)">Features<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Features</span><b>Everything it does, section by section</b></div><a href="Features.dc.html" class="rs-mega-all">All features →</a></div><div class="rs-mega-docs rs-mega-docs-solo"><div class="rs-mega-docgrid"><div><small>Connect and govern</small><a class="rs-doc" href="Features.dc.html#databases"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)"></span>Databases</a><a class="rs-doc" href="Features.dc.html#security"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield.svg)"></span>Security and access</a><a class="rs-doc" href="Features.dc.html#mcp"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span>MCP for AI agents</a></div><div><small>Build</small><a class="rs-doc" href="Features.dc.html#queries"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-code.svg)"></span>Saved queries</a><a class="rs-doc" href="Features.dc.html#parameters"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/list-checks.svg)"></span>Parameters</a><a class="rs-doc" href="Features.dc.html#formats"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-spreadsheet.svg)"></span>Response formats</a><a class="rs-doc" href="Features.dc.html#streaming"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/waves.svg)"></span>Paging and streaming</a></div><div><small>Serve and operate</small><a class="rs-doc" href="Features.dc.html#caching"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/zap.svg)"></span>Caching</a><a class="rs-doc" href="Features.dc.html#rate-limits"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/gauge.svg)"></span>Rate limiting</a><a class="rs-doc" href="Features.dc.html#observability"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/activity.svg)"></span>Observability</a><a class="rs-doc" href="Features.dc.html#openapi"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/braces.svg)"></span>OpenAPI</a></div><div><small>Console and proof</small><a class="rs-doc" href="Features.dc.html#console"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span>Administration UI</a><a class="rs-doc" href="Features.dc.html#testing"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/flask-conical.svg)"></span>Testing and quality</a><a class="rs-doc" href="Features.dc.html#request"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/route.svg)"></span>Every request</a></div></div><div class="rs-mega-foot"><a href="Features.dc.html" class="rs-mega-more">Features: one gate, every front door →</a><a href="Integrations.dc.html" class="rs-mega-more">Integrations</a><a href="Playground.dc.html" class="rs-mega-more">Playground</a></div></div></div></div></div>
+        <div class="rs-dd rs-mega"><a href="Use Cases.dc.html" style="color:var(--ink-2)">Use cases<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Use cases</span><b>Twelve jobs people hire QueryAPIGate for</b></div><a href="Use Cases.dc.html" class="rs-mega-all">All twelve, with the shape of each call →</a></div><div class="rs-mega-grid"><a class="rs-mega-card" href="use-cases/customer-analytics.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/chart-column.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Customer analytics</b><span>Analytics in your product, one tenant at a time</span></span></a><a class="rs-mega-card" href="use-cases/internal-tools.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Internal tools</b><span>Back an internal app without a backend team</span></span></a><a class="rs-mega-card" href="use-cases/controlled-writes.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/pencil-line.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Controlled writes</b><span>Let a partner or a form write, through one approved query</span></span></a><a class="rs-mega-card" href="use-cases/partner-data-api.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Partner data API</b><span>Hand a partner one query, not your schema</span></span></a><a class="rs-mega-card" href="use-cases/scheduled-deliveries.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/calendar-clock.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Scheduled deliveries</b><span>Deliver a daily file, incrementally, to someone else&#x27;s bucket</span></span></a><a class="rs-mega-card" href="use-cases/live-dashboards.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Live dashboards</b><span>A live view of what is being queried, by whom</span></span></a><a class="rs-mega-card" href="use-cases/self-serve-data.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/library.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Self-serve data</b><span>Data for every team, without handing out the database</span></span></a><a class="rs-mega-card" href="use-cases/files-as-an-api.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/folder-open.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Files as an API</b><span>Turn a bucket of Parquet into a queryable API</span></span></a><a class="rs-mega-card" href="use-cases/legacy-databases.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Legacy databases</b><span>A governed API in front of a database you can&#x27;t change</span></span></a><a class="rs-mega-card" href="use-cases/ai-agents.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span class="rs-mega-txt"><small>AI</small><b>AI agents</b><span>Let an agent query your data, governed like an app</span></span></a><a class="rs-mega-card" href="use-cases/compliance-and-audit.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-mega-txt"><small>Security and platform</small><b>Compliance and audit</b><span>Answer the auditor from the running system</span></span></a><a class="rs-mega-card" href="use-cases/platform-teams.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-pull-request.svg)"></span><span class="rs-mega-txt"><small>Security and platform</small><b>Platform teams</b><span>Run it like the rest of your platform</span></span></a></div></div></div></div>
+        <div class="rs-dd rs-mega rs-mega-deploy"><a href="Deploy.dc.html" style="color:var(--ink-2)">Deploy<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Deploy</span><b>Three reference architectures, each one tested in CI</b></div><a href="Deploy.dc.html" class="rs-mega-all">Overview and comparison →</a></div><div class="rs-mega-grid rs-mega-grid3"><a class="rs-mega-card" href="Deploy-Single.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/server.svg)"></span><span class="rs-mega-txt"><small>Start here</small><b>Single instance</b><span>One container or process; SQLite on a volume, or PostgreSQL.</span></span></a><a class="rs-mega-card" href="Deploy-HA.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layers.svg)"></span><span class="rs-mega-txt"><small>Several instances</small><b>High availability</b><span>A shared PostgreSQL store and Redis, so any instance answers any request.</span></span></a><a class="rs-mega-card" href="Deploy-Kubernetes.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/ship-wheel.svg)"></span><span class="rs-mega-txt"><small>Helm chart</small><b>Kubernetes</b><span>One pod on SQLite, or several behind a disruption budget.</span></span></a></div><div class="rs-mega-foot"><a class="rs-mega-more" href="Deploy.dc.html#compare">Side by side</a><a class="rs-mega-more" href="Deploy.dc.html#checklist">Production checklist</a><a class="rs-mega-more" href="Docs.dc.html#install">Install options</a><a class="rs-mega-more" href="Guide.dc.html?d=DEPLOYMENT">Deployment guide</a></div></div></div></div><a class="rs-sub" href="Deploy-Single.dc.html" style="color:var(--ink-2)">Single instance</a><a class="rs-sub" href="Deploy-HA.dc.html" style="color:var(--ink-2)">High availability</a><a class="rs-sub" href="Deploy-Kubernetes.dc.html" style="color:var(--ink-2)">Kubernetes</a>
+        <div class="rs-dd rs-mega rs-mega-docsmenu"><a href="Docs.dc.html" style="color:var(--ink-2)">Docs<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Documentation</span><b>Reference for every setting, endpoint and promise</b></div><a href="Docs.dc.html" class="rs-mega-all">All documentation →</a></div><div class="rs-mega-docs rs-mega-docs-solo"><div class="rs-mega-docgrid"><div><small>Run it</small><a class="rs-doc" href="Guide.dc.html?d=INSTALLATION_AND_SETUP"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/download.svg)"></span>Installation and setup</a><a class="rs-doc" href="Guide.dc.html?d=CONFIGURATION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/settings-2.svg)"></span>Configuration</a><a class="rs-doc" href="Guide.dc.html?d=DEPLOYMENT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/rocket.svg)"></span>Deployment</a><a class="rs-doc" href="Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)"></span>Database connections</a></div><div><small>Reference</small><a class="rs-doc" href="Guide.dc.html?d=API"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/braces.svg)"></span>API reference</a><a class="rs-doc" href="Guide.dc.html?d=MCP"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/plug.svg)"></span>MCP server</a><a class="rs-doc" href="Guide.dc.html?d=FEATURES"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/sparkles.svg)"></span>Features</a><a class="rs-doc" href="Guide.dc.html?d=EXAMPLES"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/flask-conical.svg)"></span>Example APIs</a><a class="rs-doc" href="Guide.dc.html?d=QUERY_METADATA_MANAGEMENT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/tags.svg)"></span>Query metadata</a><a class="rs-doc" href="Guide.dc.html?d=SCREENSHOTS"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span>A tour of the Console</a></div><div><small>Performance</small><a class="rs-doc" href="Performance.dc.html"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/gauge.svg)"></span>Performance and sizing</a><a class="rs-doc" href="Guide.dc.html?d=PERFORMANCE_V3"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/activity.svg)"></span>OLTP benchmark on PostgreSQL</a><a class="rs-doc" href="Guide.dc.html?p=what-a-governed-call-costs"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/newspaper.svg)"></span>What a governed call costs</a><a class="rs-doc" href="Guide.dc.html?p=one-mysql-six-services"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)"></span>One MySQL server, six services</a></div><div><small>Security</small><a class="rs-doc" href="Guide.dc.html?d=THREAT_MODEL"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-alert.svg)"></span>Threat model</a><a class="rs-doc" href="Standards.dc.html"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/scroll-text.svg)"></span>Standards and specifications</a><a class="rs-doc" href="Guide.dc.html?d=DATA_PROTECTION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/route.svg)"></span>Where data goes</a><a class="rs-doc" href="Guide.dc.html?d=SECURITY"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span>Security policy</a><a class="rs-doc" href="Guide.dc.html?d=ARCHITECTURE"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/network.svg)"></span>Architecture overview</a><a class="rs-doc" href="Guide.dc.html?d=QUESTIONNAIRE"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/clipboard-check.svg)"></span>Questionnaire answers</a><a class="rs-doc" href="Guide.dc.html?d=SBOM"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/package-check.svg)"></span>SBOM and verification</a></div><div><small>Project</small><a class="rs-doc" href="Guide.dc.html?d=WHY"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/lightbulb.svg)"></span>Why QueryAPIGate</a><a class="rs-doc" href="Guide.dc.html?d=TECHNOLOGY_STACK"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layers.svg)"></span>Technology stack</a><a class="rs-doc" href="Guide.dc.html?d=CONTRIBUTING"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-pull-request.svg)"></span>Contributing</a><a class="rs-doc" href="Guide.dc.html?d=CODE_OF_CONDUCT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/heart-handshake.svg)"></span>Code of conduct</a></div></div><div class="rs-mega-foot"><a href="Docs.dc.html" class="rs-mega-more">Docs: how the pieces fit, and where to start →</a><a href="FAQ.dc.html" class="rs-mega-more">FAQ</a><a href="Glossary.dc.html" class="rs-mega-more">Glossary</a></div></div></div></div></div>
+        <a class="rs-sub" href="FAQ.dc.html" style="color:var(--ink-2)">FAQ</a><a class="rs-sub" href="Glossary.dc.html" style="color:var(--ink-2)">Glossary</a>
+        <div class="rs-dd rs-mega rs-mega-guides"><a href="Guides.dc.html" style="color:var(--ink-2)">Guides<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">How-to guides</span><b>62 how-to guides, each run against a real server</b></div><a href="Guides.dc.html" class="rs-mega-all">All 62 guides, with times and outcomes →</a></div><div class="rs-gm"><div class="rs-gm-col"><small class="rs-gm-h">Reading paths</small><a class="rs-gm-path" href="Guides.dc.html?path=start"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/rocket.svg)"></span><span><b>Start here</b><span>The first five, in order: a query, a database, an API key.</span><small>01 → 05 · 5 guides · ≈42 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=partner"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg)"></span><span><b>Give a partner an API</b><span>One query, hashed columns, limits, an expiry, a rotation plan.</span><small>13 → 50 · 7 guides · ≈53 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=agents"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span><b>Let agents in</b><span>MCP tools, what the data means, and writes a person approves.</span><small>24 → 49 · 5 guides · ≈85 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=data"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/send.svg)"></span><span><b>Ship data out</b><span>Files as an API, scheduled deliveries, a live feed of runs.</span><small>41 → 28 · 4 guides · ≈65 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=prod"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/server-cog.svg)"></span><span><b>Go to production</b><span>The Deploy page checklist, as guides.</span><small>23 → 59 · 8 guides · ≈135 min</small></span></a></div><div class="rs-gm-col rs-gm-topics"><small class="rs-gm-h">By topic</small><a class="rs-doc" href="Guides.dc.html?cat=Start"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/play.svg)"></span><span class="rs-gm-t">Start</span><em>6</em></a><a class="rs-doc" href="Guides.dc.html?cat=Queries"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-code.svg)"></span><span class="rs-gm-t">Queries</span><em>7</em></a><a class="rs-doc" href="Guides.dc.html?cat=Access"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/key-round.svg)"></span><span class="rs-gm-t">Access</span><em>13</em></a><a class="rs-doc" href="Guides.dc.html?cat=Agents"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span class="rs-gm-t">Agents</span><em>7</em></a><a class="rs-doc" href="Guides.dc.html?cat=Events%20%26%20exports"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg)"></span><span class="rs-gm-t">Events and exports</span><em>6</em></a><a class="rs-doc" href="Guides.dc.html?cat=Operate"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/server.svg)"></span><span class="rs-gm-t">Operate</span><em>15</em></a><a class="rs-doc" href="Guides.dc.html?cat=Govern"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-gm-t">Govern</span><em>8</em></a></div><div class="rs-gm-new"><small>New here? · Guide 01 · 10 min</small><b>Turn your first SQL query into a REST API</b><span>A real HTTP endpoint, backed by your own SQL, with typed parameters, and no controller code written by hand.</span><a href="Guide.dc.html?g=01-turn-your-first-sql-query-into-a-rest-api" class="rs-gm-go">Start guide 01 →</a><a href="Playground.dc.html" class="rs-gm-alt">Or try it in the Playground first →</a></div></div><div class="rs-mega-foot rs-gm-foot"><span class="rs-gm-fh">By part of the architecture</span><div class="rs-mega-arch"><a href="Guides.dc.html#arch-who-calls">Who calls</a><a href="Guides.dc.html#arch-front-doors">Front doors</a><a href="Guides.dc.html#arch-core">The governed core</a><a href="Guides.dc.html#arch-asks">Asks</a><a href="Guides.dc.html#arch-your-data">Your data</a><a href="Guides.dc.html#arch-reports-to">Reports to</a></div></div></div></div></div>
+        <div class="rs-dd rs-mega rs-mega-eval"><a href="Trust.dc.html" style="color:var(--ink)" aria-current="page">Evaluate<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Evaluate</span><b>What an evaluation asks for: fit, security and proof</b></div><a href="Trust.dc.html" class="rs-mega-all">Start at the Trust center →</a></div><div class="rs-mega-grid rs-mega-grid5"><a class="rs-mega-card" href="Integrations.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/puzzle.svg)"></span><span class="rs-mega-txt"><b>Integrations</b><span>The databases, identity providers, secret stores, clients and tools it works with, and how each is tested.</span></span></a><a class="rs-mega-card" href="Compare.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-compare.svg)"></span><span class="rs-mega-txt"><b>Compare</b><span>Against a hand-rolled API and the other ways to put a database behind an endpoint.</span></span></a><a class="rs-mega-card" href="Performance.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/gauge.svg)"></span><span class="rs-mega-txt"><b>Performance</b><span>What a governed call costs on PostgreSQL: throughput, latency under load, scale-out and a sizing rule.</span></span></a><a class="rs-mega-card" href="Performance-MySQL.dc.html" aria-current="page"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg)"></span><span class="rs-mega-txt"><b>Performance on MySQL</b><span>One server, a database per microservice, per-user queries across them: cost, sizing and isolation.</span></span></a><a class="rs-mega-card" href="Trust.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-mega-txt"><b>Trust center</b><span>Where data goes, what you can verify yourself, and how to report a vulnerability.</span></span></a><a class="rs-mega-card" href="Enterprise.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/building-2.svg)"></span><span class="rs-mega-txt"><b>Enterprise</b><span>Identity, audit, availability, cryptography and the downloadable security pack.</span></span></a><a class="rs-mega-card" href="Security.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg)"></span><span class="rs-mega-txt"><b>Security</b><span>What each layer defends against, and the hardening checklist before go-live.</span></span></a><a class="rs-mega-card" href="Standards.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-badge.svg)"></span><span class="rs-mega-txt"><b>Standards and specifications</b><span>The twenty-five RFCs and specifications it is built on, each with what it is used for.</span></span></a></div></div></div></div>
+        <a class="rs-sub" href="Integrations.dc.html" style="color:var(--ink-2)">Integrations</a><a class="rs-sub" href="Compare.dc.html" style="color:var(--ink-2)">Compare</a><a class="rs-sub" href="Performance.dc.html" style="color:var(--ink-2)">Performance</a><a class="rs-sub" href="Performance-MySQL.dc.html" style="color:var(--ink)" aria-current="page">Performance on MySQL</a><a class="rs-sub" href="Trust.dc.html" style="color:var(--ink-2)">Trust center</a><a class="rs-sub" href="Enterprise.dc.html" style="color:var(--ink-2)">Enterprise</a><a class="rs-sub" href="Security.dc.html" style="color:var(--ink-2)">Security</a><a class="rs-sub" href="Standards.dc.html" style="color:var(--ink-2)">Standards and specifications</a>
+        <a href="Blog.dc.html" style="color:var(--ink-2)">Blog</a>
+        <a href="About.dc.html" style="color:var(--ink-2)">About</a>
+        <a href="Playground.dc.html" class="rs-pg" title="Playground: call the example APIs in your browser" aria-label="Playground"><svg class="rs-pg-ico" aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="3"/><path d="M6.5 10l3 2.5-3 2.5"/><rect class="rs-pg-caret" x="11.5" y="14" width="5" height="1.6" rx="0.8" fill="currentColor" stroke="none"/><circle class="rs-pg-live" cx="20" cy="5" r="2.6" fill="oklch(0.62 0.13 170)" stroke="var(--bg)" stroke-width="1.4"/></svg><span class="rs-pg-t">Playground</span></a>
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-ghn" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" title="GitHub" style="color:var(--ink-2);display:inline-flex;align-items:center;gap:6px" style-hover="color:var(--ink)"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg><span class="rs-ghn-n" data-gh-stars aria-label="GitHub stars"></span></a>
+        <button type="button" class="rs-theme" data-theme-toggle aria-label="Switch between light and dark theme" title="Theme"><svg class="rs-sun" aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="rs-moon" aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span class="rs-theme-t">Light / dark</span></button>
+      </div>
+    </div>
+  </nav>
+  <header class="f-pad pf-hero">
+    <span class="pf-eye-h">Performance · MySQL</span>
+    <h1>One MySQL server, six services, one gateway</h1>
+    <p>A database per microservice on one MySQL server, and queries that read across them - a customer, their orders, their payments. Measured with TPC-C's data split into six databases, five rounds per comparison, and the harness published so you can rerun it.</p>
+    <div class="pf-hero-go"><a href="#sizing" class="pf-btn">Size a deployment</a><a href="#isolation" class="pf-btn pf-btn-o">Keeping services apart</a></div>
+    <div class="pm-links"><a href="Guide.dc.html?p=one-mysql-six-services">Read the story →</a><a href="Guide.dc.html?d=PERFORMANCE_MYSQL_V1">Full method →</a><a href="Performance.dc.html">PostgreSQL →</a></div>
+  </header>
+
+  <nav class="rail" aria-label="Sections">
+    <a href="#numbers" data-rail="numbers"><span>The numbers</span></a>
+    <a href="#setup" data-rail="setup"><span>The setup</span></a>
+    <a href="#threads" data-rail="threads"><span>Threads</span></a>
+    <a href="#cache" data-rail="cache"><span>Busy users</span></a>
+    <a href="#network" data-rail="network"><span>Across a network</span></a>
+    <a href="#isolation" data-rail="isolation"><span>Keeping services apart</span></a>
+    <a href="#sizing" data-rail="sizing"><span>Sizing</span></a>
+    <a href="#method" data-rail="method"><span>How it's measured</span></a>
+    <a href="#reproduce" data-rail="reproduce"><span>Reproduce</span></a>
+  </nav>
+
+  <section id="numbers" class="pf-sec pf-dark">
+    <div class="f-pad pf-wrap">
+      <div class="pf-head dark"><div style="display:grid;gap:10px"><span class="pf-eye">01 · The numbers</span><h2>A fixed cost, not a percentage</h2></div><p>Six per-user queries across six databases on one MySQL 8.4 server, one gunicorn worker, 32 callers at once.</p></div>
+      <div class="pf-tiles">
+        <div class="pf-tile"><b>+1.2 ms</b><span>What the gateway adds to a call, whatever the query: 1.1-1.3 ms on queries MySQL answers in 0.03-0.42 ms.</span></div>
+        <div class="pf-tile"><b>580-780 <small>calls/s</small></b><span>Per worker (one gunicorn process), 32 callers, across six per-user queries. 651-777 with the metadata cache.</span></div>
+        <div class="pf-tile"><b>+28%</b><span>One thread per worker against the default eight, for a primary-key lookup. Fast queries want few threads.</span></div>
+        <div class="pf-tile"><b>59%</b><span>Calls answered by a 30 s response cache when a few users are much busier than the rest. +23% throughput.</span></div>
+      </div>
+      <div class="pf-tcard">
+        <div class="pf-tcap"><b>Per query, one worker, 32 callers</b><span>Calls a second; median of 5 rounds. The figures under 0.43 were measured on <code class="qx">main</code> after 0.42.0.</span></div>
+        <div style="overflow-x:auto"><table class="pf-table pm-wide"><thead><tr><th>Query (the databases it joins)</th><th class="n">MySQL directly, 32 threads</th><th class="n">0.41</th><th class="n">0.42</th><th class="n">0.43 (in development)</th><th class="n">0.43, metadata cache</th></tr></thead><tbody><tr><td>One customer by id <i class="pf-dbs">(crm)</i></td><td class="n pf-direct">75,420</td><td class="n">609</td><td class="n">643</td><td class="n">676</td><td class="n hi">777</td></tr><tr><td>Order-Status: the customer's last order and its lines <i class="pf-dbs">(crm, orders)</i></td><td class="n pf-direct">25,063</td><td class="n">532</td><td class="n">558</td><td class="n">579</td><td class="n hi">651</td></tr><tr><td>Last orders with item names <i class="pf-dbs">(crm, orders, catalog)</i></td><td class="n pf-direct">19,116</td><td class="n">552</td><td class="n">580</td><td class="n">604</td><td class="n hi">677</td></tr><tr><td>The customer's payments <i class="pf-dbs">(crm, billing)</i></td><td class="n pf-direct">38,136</td><td class="n">605</td><td class="n">638</td><td class="n">671</td><td class="n hi">770</td></tr><tr><td>The customer with district and warehouse <i class="pf-dbs">(crm, org)</i></td><td class="n pf-direct">50,026</td><td class="n">609</td><td class="n">641</td><td class="n">677</td><td class="n hi">772</td></tr><tr><td>Stock-Level: low-stock items among a district's last 20 orders <i class="pf-dbs">(org, orders, inventory)</i></td><td class="n pf-direct">5,343</td><td class="n">583</td><td class="n">613</td><td class="n">642</td><td class="n hi">725</td></tr></tbody></table></div>
+      </div>
+      <ul class="pm-notes">
+        <li>Joins across databases cost no more than joins within one: MySQL resolves <code class="qx">crm.customer JOIN orders.orders</code> in a single query.</li>
+        <li>The gateway's Python is the limit, not MySQL. MySQL could answer 8-110 times more, so you scale with workers.</li>
+      </ul>
+      <div class="pf-tcard pm-one">
+        <div class="pf-tcap"><b>One call on its own</b><span>p50</span></div>
+        <div style="overflow-x:auto"><table class="pf-table"><thead><tr><th>Query</th><th class="n">MySQL directly</th><th class="n">Through the gateway (0.43, cache)</th><th class="n">Added</th></tr></thead><tbody><tr><td>One customer by id</td><td class="n">0.034 ms</td><td class="n">1.16 ms</td><td class="n hi">+1.12 ms</td></tr><tr><td>Order-Status</td><td class="n">0.081 ms</td><td class="n">1.40 ms</td><td class="n hi">+1.32 ms</td></tr><tr><td>Stock-Level</td><td class="n">0.417 ms</td><td class="n">1.64 ms</td><td class="n hi">+1.22 ms</td></tr></tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="setup" class="pf-sec">
+    <div class="f-pad pf-wrap">
+      <div class="pf-head"><div style="display:grid;gap:10px"><span class="pf-eye">02 · The setup</span><h2>TPC-C's data, split the way microservices split it.</h2></div><p>MySQL 8.4, 1.9 GB of data in memory, one QueryAPIGate connection as a read-only user with <code class="qx">SELECT</code> on all six databases. No column masking. Every query takes one customer, by id.</p></div>
+      <div class="pm-arch">
+        <div class="pm-gw"><span class="pm-gw-l">Callers</span><i aria-hidden="true">→</i><b>QueryAPIGate</b><span class="pm-gw-s">one read-only connection</span><i aria-hidden="true">→</i><span class="pm-gw-l">MySQL 8.4, one server</span></div>
+        <div class="pm-dbs"><div class="pm-db"><span class="pm-db-ic" aria-hidden="true"></span><b>org</b><span>warehouse, district</span><small>20, 200</small></div><div class="pm-db"><span class="pm-db-ic" aria-hidden="true"></span><b>crm</b><span>customer</span><small>600,000 users</small></div><div class="pm-db"><span class="pm-db-ic" aria-hidden="true"></span><b>orders</b><span>orders, new_order, order_line</span><small>600,000, 180,000, 6,000,000</small></div><div class="pm-db"><span class="pm-db-ic" aria-hidden="true"></span><b>catalog</b><span>item</span><small>100,000</small></div><div class="pm-db"><span class="pm-db-ic" aria-hidden="true"></span><b>inventory</b><span>stock</span><small>2,000,000</small></div><div class="pm-db"><span class="pm-db-ic" aria-hidden="true"></span><b>billing</b><span>history (payments)</span><small>600,000</small></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="threads" class="pf-sec pf-band">
+    <div class="f-pad pf-wrap">
+      <div class="pf-head"><div style="display:grid;gap:10px"><span class="pf-eye">03 · Threads</span><h2>Fast queries want fewer threads.</h2></div><p>Extra threads compete for Python's interpreter lock. A 0.03 ms lookup is fastest with one thread, 28% faster than eight. A 0.42 ms query wants two, so one call can run while another waits on MySQL. Slow reports and exports are the opposite case, and that's what the eight are for.</p></div>
+      <div class="pf-card"><div class="pf-card-t"><b>Calls a second, by threads per worker</b><span>One worker, 32 callers</span></div><div class="pm-tgs"><div class="pm-tg"><div class="pm-tg-h"><b>One customer by id</b><span>0.03 ms in MySQL</span></div><div class="pm-tb best"><span class="pm-tb-n">1 thread</span><div class="pf-bar"><i style="width:78.0%"></i><span>865/s</span></div></div><div class="pm-tb"><span class="pm-tb-n">2 threads</span><div class="pf-bar"><i style="width:74.2%"></i><span>823/s</span></div></div><div class="pm-tb"><span class="pm-tb-n">4 threads</span><div class="pf-bar"><i style="width:65.1%"></i><span>722/s</span></div></div><div class="pm-tb"><span class="pm-tb-n">8 threads (default)</span><div class="pf-bar"><i style="width:61.0%"></i><span>676/s</span></div></div></div><div class="pm-tg"><div class="pm-tg-h"><b>Stock-Level</b><span>0.42 ms in MySQL</span></div><div class="pm-tb"><span class="pm-tb-n">1 thread</span><div class="pf-bar"><i style="width:56.8%"></i><span>630/s</span></div></div><div class="pm-tb best"><span class="pm-tb-n">2 threads</span><div class="pf-bar"><i style="width:69.6%"></i><span>772/s</span></div></div><div class="pm-tb"><span class="pm-tb-n">4 threads</span><div class="pf-bar"><i style="width:61.6%"></i><span>683/s</span></div></div><div class="pm-tb"><span class="pm-tb-n">8 threads (default)</span><div class="pf-bar"><i style="width:57.9%"></i><span>642/s</span></div></div></div></div></div>
+    </div>
+  </section>
+
+  <section id="cache" class="pf-sec">
+    <div class="f-pad pf-wrap">
+      <div class="pf-head"><div style="display:grid;gap:10px"><span class="pf-eye">04 · Busy users</span><h2>When a few users make most of the calls.</h2></div><p>With skewed traffic, a 30 s response cache answered 59% of calls, raised throughput 23%, and sent 58% fewer statements to MySQL. With uniform users it cost 8%: almost nothing repeats within 30 seconds, and storing it buys nothing. Put <code class="qx">cache_ttl</code> on what your users repeat: dashboards, popular accounts.</p></div>
+      <div class="pf-2col pm-2eq">
+        <div class="pf-card pm-cc good"><div class="pf-card-t"><b>A few very busy users</b><span>Zipf</span></div><div class="pm-tb"><span class="pm-tb-n">Without a response cache</span><div class="pf-bar pf-bar-gray"><i style="width:63.2%"></i><span>581/s</span></div></div><div class="pm-tb best"><span class="pm-tb-n">With <code class="qx">cache_ttl: 30</code></span><div class="pf-bar"><i style="width:78.0%"></i><span>717/s</span></div></div><div class="pm-hits"><b>59%</b> from cache</div></div>
+        <div class="pf-card pm-cc"><div class="pf-card-t"><b>All equally likely</b><span>600,000 users</span></div><div class="pm-tb"><span class="pm-tb-n">Without a response cache</span><div class="pf-bar pf-bar-gray"><i style="width:63.3%"></i><span>582/s</span></div></div><div class="pm-tb best"><span class="pm-tb-n">With <code class="qx">cache_ttl: 30</code></span><div class="pf-bar"><i style="width:58.4%"></i><span>537/s</span></div></div><div class="pm-hits"><b>5%</b> from cache</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="network" class="pf-sec pf-band">
+    <div class="f-pad pf-wrap">
+      <div class="pf-head"><div style="display:grid;gap:10px"><span class="pf-eye">05 · Across a network</span><h2>Three round trips, and the store.</h2></div></div>
+      <div class="pf-2col pm-2eq">
+        <div class="pf-card">
+          <div class="pf-card-t"><b>Round trips per call to MySQL</b><span>3</span></div>
+          <ol class="pm-steps"><li class="pm-step"><span>1</span><p>the query</p></li><li class="pm-step"><span>2</span><p>a <code class="qx">ROLLBACK</code> when the connection returns to the pool</p></li><li class="pm-step pm-step-ping"><span>3</span><p>a ping the MySQL client library sends before each query</p></li></ol>
+          <p class="pf-small">Counted with MySQL's statement log, and measured by timing calls at increasing network delay. The third is a ping mysql-connector sends whenever a cursor is created; it isn't a statement, so the log doesn't show it. Reusing a cursor, planned for 0.43, removes it. PostgreSQL makes 4 round trips to the data database.</p>
+        </div>
+        <div class="pf-card">
+          <div class="pf-card-t"><b>Where QueryAPIGate keeps its own data</b><span>One call, Order-Status, MySQL 0.5 ms away</span></div>
+          <div style="overflow-x:auto"><table class="pm-tbl"><thead><tr><th>QueryAPIGate's store</th><th class="n">One call</th></tr></thead><tbody>
+            <tr><td>SQLite, local (one instance)</td><td class="n">3.5 ms</td></tr>
+            <tr><td>PostgreSQL, 0.5 ms away (several instances)</td><td class="n">6.1 ms</td></tr>
+            <tr class="hi"><td>PostgreSQL, 0.5 ms away, metadata cache on</td><td class="n"><b>3.4 ms</b></td></tr>
+          </tbody></table></div>
+          <p class="pf-small" style="color:var(--ink-2)">Every call reads three of QueryAPIGate's own rows - the API key, the saved query, the connection. With several instances on a shared PostgreSQL store, those reads cross the network too. The metadata cache keeps them in memory, and takes the store off the network entirely.</p>
+          <p class="pf-small">It caches rows, never decisions: whether a key is active, expired or allowed from this address is checked on every call. A change made on another instance takes up to the TTL to arrive.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="isolation" class="pf-sec">
+    <div class="f-pad pf-wrap">
+      <div class="pf-head"><div style="display:grid;gap:10px"><span class="pf-eye">06 · Keeping services apart</span><h2>One gap to know about.</h2></div></div>
+      <div class="pm-gap">
+        <div class="pm-gap-h"><span class="pm-gap-tag">Isolation gap</span><b>On MySQL, a key's table allow-list matches bare table names.</b></div>
+        <div class="pm-gap-body">
+          <div style="overflow-x:auto"><table class="pm-tbl pm-gap-tbl"><thead><tr><th>A key allowed to read <code class="qx">customer</code> runs</th><th>Result</th></tr></thead><tbody>
+            <tr><td><code class="qx">SELECT … FROM crm.customer</code></td><td><span class="pm-ok">✓</span>allowed, as intended</td></tr>
+            <tr class="gap"><td><code class="qx">SELECT … FROM billing.customer</code> <i>(another service's table)</i></td><td><span class="pm-bad">!</span><b>allowed: the gap</b></td></tr>
+            <tr><td><code class="qx">SELECT … FROM billing.history</code></td><td><span class="pm-ok">✓</span>refused, as intended</td></tr>
+          </tbody></table></div>
+          <p>On MySQL, a key's table allow-list matches bare table names, so <code class="qx">customer</code> matches it in any database the connection can reach. Only Trino connections match the full <code class="qx">catalog.schema.table</code>. Matching <code class="qx">schema.table</code> on MySQL is planned for 0.43.</p>
+          <div class="pm-until"><b>Until then</b><ol>
+            <li>Give each service its own MySQL user, with <code class="qx">SELECT</code> on its own databases only.</li>
+            <li>Add each as its own QueryAPIGate connection.</li>
+            <li>Grant keys the connection of the service they serve, and nothing else.</li>
+          </ol></div>
+          <p class="pm-gap-foot">Saved queries aren't affected: a key granted named queries can only run their SQL, which the publisher wrote.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="sizing" class="pf-sec pf-band">
+    <div class="f-pad pf-wrap">
+      <div class="pf-head"><div style="display:grid;gap:10px"><span class="pf-eye">07 · Sizing</span><h2>How many workers?</h2></div><p>A worker runs out of CPU or of threads to wait with, whichever comes first. Put in your own load and this works out which, and how many workers to run.</p></div>
+      <div class="pf-calc">
+        <div class="pf-calc-bar"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span>sizing · workers · mysql</span></div>
+        <div class="pf-calc-body">
+          <div class="pf-inputs">
+            <label class="pf-in"><span>Calls a second you need</span><span class="pf-step"><button type="button" onClick="{{ decTarget }}" aria-label="Less">−</button><input type="number" inputmode="decimal" min="0" step="100" value="{{ vTarget }}" onChange="{{ onTarget }}"><button type="button" onClick="{{ incTarget }}" aria-label="More">+</button><em>/s</em></span></label>
+            <label class="pf-in"><span>Average query time in MySQL</span><span class="pf-step"><button type="button" onClick="{{ decQuery }}" aria-label="Less">−</button><input type="number" inputmode="decimal" min="0" step="1" value="{{ vQuery }}" onChange="{{ onQuery }}"><button type="button" onClick="{{ incQuery }}" aria-label="More">+</button><em>ms</em></span></label>
+            <label class="pf-in"><span>Network round trip to MySQL</span><span class="pf-step"><button type="button" onClick="{{ decRtt }}" aria-label="Less">−</button><input type="number" inputmode="decimal" min="0" step="0.1" value="{{ vRtt }}" onChange="{{ onRtt }}"><button type="button" onClick="{{ incRtt }}" aria-label="More">+</button><em>ms</em></span></label>
+            <label class="pf-in"><span>Threads per worker</span><span class="pf-step pf-sel"><select value="{{ threads }}" onChange="{{ onThreads }}"><option value="1">1</option><option value="2">2</option><option value="4">4</option><option value="8">8</option><option value="16">16</option><option value="32">32</option></select></span></label>
+            <label class="pf-in pf-tog"><span>Metadata cache</span><span class="pf-switch"><input type="checkbox" checked="{{ cache }}" onChange="{{ onCache }}"><i aria-hidden="true"></i><em>{{ cacheLabel }}</em></span></label>
+          </div>
+          <div class="pf-out" aria-live="polite">
+            <small>Workers needed</small>
+            <b class="pf-big">{{ workers }}</b>
+            <span class="pf-out-sub">including one spare</span>
+            <div class="pf-out-row"><span>Per worker</span><b>{{ perWorker }} calls a second</b><span>limited by <em class="pf-lim">{{ limit }}</em></span></div>
+            <div class="pf-out-caps"><span>CPU allows <b>{{ cpuCap }}</b></span><span>Waiting allows <b>{{ waitCap }}</b></span></div>
+            <sc-if value="{{ hint }}" hint-placeholder-val="{{ false }}"><p class="pf-hint">{{ hint }}</p></sc-if>
+          </div>
+        </div>
+        <p class="pf-caveat">Planning figures from one machine, for queries MySQL answers in under half a millisecond. Single-table lookups run about 15% above the CPU figure; heavier queries below it. Measure your own at 75% of what you plan to serve.</p>
+      </div>
+      <div class="pf-card pm-disk">
+        <div class="pm-disk-t"><span class="pf-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/hard-drive.svg)" aria-hidden="true"></span><div><b>Disk</b><p>Every call is written to the event log, kept 24 hours by default - about 570 bytes a call.</p></div></div>
+        <div style="overflow-x:auto"><table class="pm-tbl"><thead><tr><th class="n">Sustained calls/s</th><th class="n">Event log after 24 h</th></tr></thead><tbody>
+          <tr><td class="n">50</td><td class="n">about 2.5 GB</td></tr><tr><td class="n">500</td><td class="n">about 25 GB</td></tr><tr><td class="n">2,000</td><td class="n">about 100 GB</td></tr>
+        </tbody></table></div>
+        <p class="pf-small">Shorten it with <code class="qx">QUERYAPIGATE_EVENTS_RETENTION_HOURS</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="method" class="pf-sec">
+    <div class="f-pad pf-wrap">
+      <div class="pf-head"><div style="display:grid;gap:10px"><span class="pf-eye">08 · How it's measured</span><h2>Measured, not promised.</h2></div></div>
+      <div class="pf-2col pf-2col-m">
+        <ul class="pf-points pf-method">
+          <li><span class="pf-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/cpu.svg)" aria-hidden="true"></span><span><b>Every part on its own cores:</b> the gateway, MySQL 8.4 and the load generator, on a 20-thread laptop on AC power. A <code class="qx">/health</code> check around every block showed whether the machine changed speed.</span></li>
+          <li><span class="pf-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/repeat.svg)" aria-hidden="true"></span><span><b>Builds take turns in a rotating order,</b> 5 rounds per comparison. A difference counts only when the min-max ranges don't overlap; by chance, that happens under 1% of the time.</span></li>
+          <li><span class="pf-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)" aria-hidden="true"></span><span><b>Direct baseline:</b> sysbench sent the same SQL straight to MySQL, over TLS like the gateway's driver.</span></li>
+          <li><span class="pf-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/users.svg)" aria-hidden="true"></span><span><b>Real skew:</b> 600,000 users drawn uniformly, or from a Zipf distribution for the busy-user test.</span></li>
+          <li><span class="pf-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/circle-check.svg)" aria-hidden="true"></span><span><b>9.65 million requests, every one returned 200.</b></span></li>
+        </ul>
+        <div class="pf-card pf-limits">
+          <b>What it doesn't cover</b>
+          <ul><li>one machine, not separate hosts;</li><li>data in memory, so every query is cheap;</li><li>a simulated network;</li><li>no TLS termination, load balancer or Redis in front;</li><li>reads only, no writes.</li></ul>
+          <p class="pm-tpcc">TPC-C-derived: the data and two queries (Order-Status, Stock-Level) are TPC-C's, but this is not the TPC-C benchmark, and these are not TPC-C results.</p>
+          <div class="pf-links"><a href="Guide.dc.html?d=PERFORMANCE_MYSQL_V1">Full method and every table →</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/tree/main/benchmarks/results/tpcc-mysql-2026-10-24">Raw results →</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="reproduce" class="pf-sec pf-dark">
+    <div class="f-pad pf-wrap pf-repro">
+      <div class="pf-head dark"><div style="display:grid;gap:10px"><span class="pf-eye">09 · Reproduce</span><h2>Run it on your own machine</h2></div><p>It starts its own MySQL, loads the data with go-tpc, splits it into the six databases, pins each part to its own cores, and compares releases side by side. About 5½ hours; <code class="qx">--smoke</code> checks the setup in a few minutes.</p></div>
+      <div class="pf-term"><div class="pf-term-bar"><span aria-hidden="true" style="display:flex;gap:5px"><i style="width:9px;height:9px;border-radius:50%;background:#ff5f57;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#febc2e;display:block"></i><i style="width:9px;height:9px;border-radius:50%;background:#28c840;display:block"></i></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88">benchmarks · tpcc_mysql</span><button type="button" class="copy-btn" onClick="{{ copyBench }}" aria-label="Copy the benchmark commands" style="margin-left:auto"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ copiedBench }}</button></div><pre><span class="p">$</span> pip install -e ".[server,mysql,postgres]" py-spy
+<span class="p">$</span> python benchmarks/tpcc_mysql.py --out /tmp/qag-tpcc --go-tpc ./go-tpc setup A B teardown
+<span class="p">$</span> python benchmarks/tpcc_mysql_report.py /tmp/qag-tpcc/results.jsonl</pre></div>
+      <div class="pf-repro-go"><a href="Guide.dc.html?p=one-mysql-six-services" class="pf-pbtn">Read the story</a><a href="Performance.dc.html" class="pf-pbtn pf-pbtn-o">Performance on PostgreSQL</a></div>
+    </div>
+  </section>
+  <footer class="ft" style="border-top:0;background:radial-gradient(circle,var(--dots) 0.4px,transparent 0.7px) 0 0/8px 1px repeat-x var(--bg)">
+    <div style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;gap:40px">
+      <div class="ft-grid">
+        <div class="ft-brand">
+          <a href="Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:var(--ink);text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:var(--accent-ink)">API</span>Gate</span></a>
+          <p style="margin:0;font-size:14px;color:var(--ink-2);max-width:34ch;text-wrap:pretty">One governed gate between your databases and everything that asks them for data. Self-hosted: your data never leaves your infrastructure.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="ft-chip">Self-hosted</span><span class="ft-chip">Apache-2.0</span><span class="ft-chip">Signed releases + SBOM</span><span class="ft-chip">FIPS-approved crypto</span><span class="ft-chip">Python 3.11+</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            <a href="Docs.dc.html#install" class="ft-btn ft-btn-dark">Install →</a>
+            <a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases/latest" class="ft-btn">Latest release →</a>
+            <a href="Guide.dc.html?d=MCP" class="ft-btn">MCP server →</a>
+          </div>
+        </div>
+        <div class="ft-col"><span class="ft-h">Product</span><a href="Features.dc.html">Features</a><a href="Use Cases.dc.html">Use cases</a><a href="Integrations.dc.html">Integrations</a><a href="Playground.dc.html">Playground</a><a href="Deploy.dc.html">Deploy</a><a href="Compare.dc.html">Compare</a><a href="Roadmap.dc.html">Roadmap</a><a href="Changelog.dc.html">Changelog</a></div>
+        <div class="ft-col"><span class="ft-h">Resources</span><a href="Docs.dc.html">Docs</a><a href="FAQ.dc.html">FAQ</a><a href="Glossary.dc.html">Glossary</a><a href="Guides.dc.html">How-to guides</a><a href="Guide.dc.html?d=API">API reference</a><a href="Guide.dc.html?d=MCP">MCP server</a><a href="https://AnanthaRajuC.github.io/QueryAPIGate/">Full reference site</a><a href="Blog.dc.html">Blog</a></div>
+        <div class="ft-col"><span class="ft-h">Trust</span><a href="Trust.dc.html">Trust center</a><a href="Enterprise.dc.html">Enterprise</a><a href="Security.dc.html">Security</a><a href="Support.dc.html">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new">Report a vulnerability</a></div>
+        <div class="ft-col"><span class="ft-h">Project</span><a href="About.dc.html">About</a><a href="Stack.dc.html">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE">Licence (Apache-2.0)</a></div>
+      </div>
+      <div class="ft-bottom">
+        <span>© 2026 QueryAPIGate · Apache-2.0 · Experimental features are labelled in the product and the changelog.</span>
+        <span class="ft-badges">
+          <a href="https://github.com/AnanthaRajuC/QueryAPIGate/actions/workflows/ci.yml" aria-label="CI workflow status"><img src="https://github.com/AnanthaRajuC/QueryAPIGate/actions/workflows/ci.yml/badge.svg" alt="CI status" height="20"></a>
+          <a href="https://scorecard.dev/viewer/?uri=github.com/AnanthaRajuC/QueryAPIGate" aria-label="OpenSSF Scorecard"><img src="https://api.scorecard.dev/projects/github.com/AnanthaRajuC/QueryAPIGate/badge" alt="OpenSSF Scorecard score" height="20"></a>
+          <a href="https://github.com/AnanthaRajuC/QueryAPIGate" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" style="color:var(--ink-2);display:inline-flex"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg></a>
+        </span>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  // The calculator keeps what was typed, so a half-typed "0." stays put; the numbers are read from it when rendering.
+  state = { copied: null, target: '1000', query: '2', rtt: '0.5', threads: '8', cache: false };
+  limits = { target: [1, 100000], query: [0, 10000], rtt: [0, 50] };
+  steps = { target: 100, query: 1, rtt: 0.1 };
+  componentWillUnmount() { clearTimeout(this.copyT); }
+  copy(key, text) {
+    return () => {
+      try { navigator.clipboard && navigator.clipboard.writeText(text); } catch (e) {}
+      this.setState({ copied: key }); clearTimeout(this.copyT); this.copyT = setTimeout(() => this.setState({ copied: null }), 1400);
+    };
+  }
+  snippets = { Bench: 'pip install -e ".[server,mysql,postgres]" py-spy\npython benchmarks/tpcc_mysql.py --out /tmp/qag-tpcc --go-tpc ./go-tpc setup A B teardown\npython benchmarks/tpcc_mysql_report.py /tmp/qag-tpcc/results.jsonl' };
+  num(k) { const [lo, hi] = this.limits[k]; const v = parseFloat(this.state[k]); return Math.min(hi, Math.max(lo, isNaN(v) ? lo : v)); }
+  nudge(k, dir) {
+    return () => { const v = Math.round((this.num(k) + dir * this.steps[k]) * 1000) / 1000; const [lo, hi] = this.limits[k]; this.setState({ [k]: String(Math.min(hi, Math.max(lo, v))) }); };
+  }
+  renderVals() {
+    const v = {};
+    Object.keys(this.snippets).forEach(k => { v['copy' + k] = this.copy(k, this.snippets[k]); v['copied' + k] = this.state.copied === k ? 'Copied' : 'Copy'; });
+    const target = this.num('target'), queryMs = this.num('query'), rttMs = this.num('rtt'), threads = parseInt(this.state.threads, 10), cache = this.state.cache;
+    const cpu = cache ? 490 : 440;               // MySQL: calls/s per worker at 75% of capacity, Order-Status-class queries
+    const trips = 3;                             // round trips per call to MySQL (query, ROLLBACK, ping)
+    const perCallMs = queryMs + trips * rttMs;     // what each call waits for
+    const waitCap = perCallMs > 0 ? threads * 1000 / perCallMs : Infinity;
+    const perWorker = Math.min(cpu, waitCap);
+    const workers = Math.ceil(target / perWorker) + 1;   // +1: one to lose
+    const limit = waitCap < cpu ? 'waiting' : 'CPU';
+    const hint = limit === 'CPU' && threads > 2 ? 'Fast queries: try 1-2 threads per worker - more compete for Python\'s lock.'
+      : limit === 'waiting' ? 'Calls mostly wait on MySQL: more threads per worker would raise this, while CPU allows.' : '';
+    const fmt = n => Math.round(n).toLocaleString('en-US');
+    ['Target', 'Query', 'Rtt'].forEach(K => { const k = K.toLowerCase(); v['v' + K] = this.state[k]; v['on' + K] = e => this.setState({ [k]: e.target.value }); v['inc' + K] = this.nudge(k, 1); v['dec' + K] = this.nudge(k, -1); });
+    return { ...v,
+      threads: this.state.threads, onThreads: e => this.setState({ threads: e.target.value }),
+      cache, cacheLabel: cache ? 'on' : 'off', onCache: e => this.setState({ cache: e.target.checked }),
+      workers: String(workers), perWorker: fmt(perWorker), limit, hint,
+      cpuCap: fmt(cpu) + '/s', waitCap: isFinite(waitCap) ? fmt(waitCap) + '/s' : 'no limit' };
+  }
+}
+</script>
+</body>
+</html>

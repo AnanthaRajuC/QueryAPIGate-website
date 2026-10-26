@@ -7,7 +7,8 @@ What it does, in order:
   2. Rebuilds the `guides` export in guides.js from upstream's how-to/how-to.md index: number, slug, title and
      section, plus each guide's "Time" and "You'll end up with" line. A guide already in guides.js keeps the
      category it was given here; a new one gets the category its upstream section maps to (SECTION_MAP).
-     New top-level documents in documentation/ are added to the `docs` export under Reference, titled from their H1.
+     New top-level documents in documentation/ are added to the `docs` export, grouped by DOC_CAT (else Reference), titled from their H1.
+  4. search-index.json, llms.txt and llms-full.txt are rebuilt from the documents, guides and pages (tools/search_index.py).
   3. Rewrites the guide count wherever a page states it ("All 59 guides", "59 how-to guides", the home-page stat).
 
 Run it by hand (python3 tools/sync-upstream.py) or let .github/workflows/sync-upstream.yml run it daily.
@@ -25,6 +26,19 @@ SECTION_MAP = {  # upstream how-to.md section -> this site's category, for guide
     'Reference walkthroughs': 'Operate',
 }
 CATEGORY_ORDER = ['Start', 'Queries', 'Access', 'Agents', 'Events & exports', 'Operate', 'Govern']
+DOC_CAT = {  # top-level documents whose group the site sets by hand; anything else new lands under Reference
+    'INSTALLATION_AND_SETUP': 'Run it', 'CONFIGURATION': 'Run it', 'DEPLOYMENT': 'Run it', 'DATABASE_CONNECTION_CONFIGURATION': 'Run it',
+    'API': 'Reference', 'MCP': 'Reference', 'FEATURES': 'Reference', 'EXAMPLES': 'Reference', 'QUERY_METADATA_MANAGEMENT': 'Reference', 'SCREENSHOTS': 'Reference',
+    'THREAT_MODEL': 'Security', 'DATA_PROTECTION': 'Security', 'SECURITY': 'Security', 'ARCHITECTURE': 'Security', 'QUESTIONNAIRE': 'Security', 'SBOM': 'Security',
+    'PERFORMANCE_V3': 'Performance', 'PERFORMANCE_MYSQL_V1': 'Performance', 'PERFORMANCE_V2': 'Performance', 'PERFORMANCE': 'Performance',
+    'WHY': 'Project', 'TECHNOLOGY_STACK': 'Project', 'CONTRIBUTING': 'Project', 'CODE_OF_CONDUCT': 'Project',
+}
+DOC_GROUP_ORDER = ['Run it', 'Reference', 'Performance', 'Security', 'Project']
+
+
+def doc_cat(slug, default='Reference'):
+    """A document's group: set by hand in DOC_CAT, or Performance for any PERFORMANCE* report, else the default."""
+    return DOC_CAT.get(slug) or ('Performance' if slug.upper().startswith('PERFORMANCE') else default)
 
 def api(path):
     req = urllib.request.Request(f'https://api.github.com/repos/{REPO}/contents/{path}?ref={BRANCH}',
@@ -74,6 +88,8 @@ def rebuild_index():
     gjs = os.path.join(ROOT, 'guides.js'); src = open(gjs, encoding='utf-8').read()
     def export(name): return json.loads(re.search(r'export const %s = (\[.*?\n\]);' % name, src, re.S).group(1))
     old_guides, docs, posts = export('guides'), export('docs'), export('posts')
+    note = re.search(r'\n(/\*[^\n]*Blog posts.*?\*/\n)export const posts', src, re.S)   # the how-to-publish note above posts is kept
+    posts_note = note.group(1) if note else ''
     known = {g['slug']: g for g in old_guides}
     index = open(os.path.join(ROOT, 'how-to', 'how-to.md'), encoding='utf-8').read()
     guides, section, unknown_sections = [], None, set()
@@ -95,10 +111,12 @@ def rebuild_index():
         txt = open(os.path.join(ROOT, 'documentation', name), encoding='utf-8').read()
         h1 = re.search(r'^#\s+(.+?)\s*$', txt, re.M)
         docs.append({'slug': re.sub(r'\.md$', '', name, flags=re.I), 'path': 'documentation/' + name,
-                     'title': clean(h1.group(1)) if h1 else name, 'cat': 'Reference'})
+                     'title': clean(h1.group(1)) if h1 else name, 'cat': doc_cat(re.sub(r'\.md$', '', name, flags=re.I))})
+    for d in docs: d['cat'] = doc_cat(d['slug'], d.get('cat', 'Reference'))
+    docs.sort(key=lambda d: (DOC_GROUP_ORDER.index(d['cat']) if d['cat'] in DOC_GROUP_ORDER else 99, list(DOC_CAT).index(d['slug']) if d['slug'] in DOC_CAT else 99))
     new = ('export const guides = ' + json.dumps(guides, indent=1, ensure_ascii=False) + ';\n\n'
            'export const docs = ' + json.dumps(docs, indent=1, ensure_ascii=False) + ';\n\n'
-           'export const posts = ' + json.dumps(posts, indent=1, ensure_ascii=False) + ';\n')
+           + posts_note + 'export const posts = ' + json.dumps(posts, indent=1, ensure_ascii=False) + ';\n')
     changed = new != src
     if changed: open(gjs, 'w', encoding='utf-8').write(new)
     return guides, changed, [g for g in guides if g['slug'] not in known], unknown_sections
@@ -122,9 +140,13 @@ def main():
         if write_if_changed(name, fetch(f'https://raw.githubusercontent.com/{REPO}/{BRANCH}/{name}')): changed.append(name)
     guides, index_changed, new_guides, unknown = rebuild_index()
     touched = rewrite_counts(len(guides))
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import search_index
+    n_entries, search_changed = search_index.build()
     print(f'files updated: {len(changed)}' + (' -> ' + ', '.join(changed) if changed else ''))
     print(f'guides.js: {"rewritten" if index_changed else "unchanged"} · {len(guides)} guides' + (' · new: ' + ', '.join(g["num"] + " " + g["title"] + " [" + g["cat"] + "]" for g in new_guides) if new_guides else ''))
     if touched: print('guide count rewritten in: ' + ', '.join(touched))
+    print(f'search index: {n_entries} entries' + (' · written: ' + ', '.join(search_changed) if search_changed else ' · unchanged'))
     if unknown: print('WARNING: upstream sections without a category mapping (defaulted to Operate): ' + ', '.join(sorted(unknown))); return 2
     return 0
 

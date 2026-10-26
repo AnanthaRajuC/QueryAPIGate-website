@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>QueryAPIGate blog</title>
+  <subtitle>Release notes, design notes and performance reports.</subtitle>
+  <link href="https://anantharajuc.github.io/QueryAPIGate-website/Blog.dc.html"/>
+  <link rel="self" href="https://anantharajuc.github.io/QueryAPIGate-website/feed.xml"/>
+  <id>https://anantharajuc.github.io/QueryAPIGate-website/Blog.dc.html</id>
+  <updated>2026-10-25T12:00:00Z</updated>
+  <author><name>QueryAPIGate</name></author>
+  <entry>
+    <title>One MySQL server, six services, one gateway</title>
+    <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-mysql-six-services"/>
+    <id>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-mysql-six-services</id>
+    <updated>2026-10-25T12:00:00Z</updated>
+    <category term="Benchmark"/>
+    <summary>Per-user queries joining across six microservice databases on one MySQL server, through QueryAPIGate: about 1.2 ms added a call, 580-780 calls a second per worker, a ping we didn&#x27;t know we were paying for, why lookups want one thread, and the isolation gap to close before you rely on table allow-lists.</summary>
+  </entry>
+  <entry>
+    <title>What a governed call costs</title>
+    <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=what-a-governed-call-costs"/>
+    <id>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=what-a-governed-call-costs</id>
+    <updated>2026-10-24T12:00:00Z</updated>
+    <category term="Benchmark"/>
+    <summary>QueryAPIGate 0.42 on PostgreSQL, measured properly: masking and table allow-lists now cost about 7%, one worker serves 730-875 calls a second, and most of what&#x27;s left is round trips. The full method, every result with its range, where the time goes, a sizing rule, and what our first two attempts got wrong.</summary>
+  </entry>
+  <entry>
+    <title>Thirteen releases on the way to 1.0</title>
+    <link href="https://anantharajuc.github.io/QueryAPIGate-website/Changelog.dc.html"/>
+    <id>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=thirteen-releases-to-1-0</id>
+    <updated>2026-10-01T12:00:00Z</updated>
+    <category term="Release"/>
+    <summary>Tracing, security headers, per-key limits and quotas, a tamper-evident audit log streamed to your SIEM and a Helm chart. Configuration as code, secrets managers and short-lived credentials, FIPS-approved cryptography. Eight features graduated in 0.30, releases are signed from 0.31, and live events are stable from 0.34. 0.34.1 and 0.34.2 are security fixes for MongoDB connections: upgrade if you use one.</summary>
+  </entry>
+  <entry>
+    <title>Agents can write now. A person approves each write.</title>
+    <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=agents-can-write-now"/>
+    <id>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=agents-can-write-now</id>
+    <updated>2026-10-11T12:00:00Z</updated>
+    <category term="Release"/>
+    <summary>MCP write tools stop being a flat no. An agent proposes a write; it queues in the Console with the exact statement, the key that asked, and the connection it would touch. An administrator approves or rejects it, and both decisions land in the audit log.</summary>
+  </entry>
+  <entry>
+    <title>Why every front door runs the same eight steps</title>
+    <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=why-every-front-door-runs-the-same-eight-steps"/>
+    <id>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=why-every-front-door-runs-the-same-eight-steps</id>
+    <updated>2026-10-11T12:00:00Z</updated>
+    <category term="Design note"/>
+    <summary>REST, MCP, server-sent events and the export CLI all call one engine. Identity, limits, grant, parameters, SQL guard, execution, masking, record: the order is fixed, and a step that fails stops the call with a typed error code.</summary>
+  </entry>
+  <entry>
+    <title>One worker, many threads, and what Redis is actually for</title>
+    <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-worker-many-threads"/>
+    <id>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-worker-many-threads</id>
+    <updated>2026-10-11T12:00:00Z</updated>
+    <category term="Design note"/>
+    <summary>/metrics is per process, so gunicorn runs one worker and scales with threads; capacity comes from more instances. Redis then gives you one response cache, one rate-limit budget and one event stream, and if it blinks, limits are never lifted.</summary>
+  </entry>
+  <entry>
+    <title>SQL2API is now QueryAPIGate</title>
+    <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=sql2api-is-now-queryapigate"/>
+    <id>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=sql2api-is-now-queryapigate</id>
+    <updated>2026-10-11T12:00:00Z</updated>
+    <category term="Migration"/>
+    <summary>The same project, renamed because sql2api was shared by a dozen unrelated projects. A clean break: package, command, environment variables, metrics prefix and Docker image all change, and a server that still finds a SQL2API_* variable refuses to start.</summary>
+  </entry>
+</feed>

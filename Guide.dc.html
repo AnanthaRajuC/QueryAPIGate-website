@@ -12,9 +12,15 @@
 <meta property="og:site_name" content="QueryAPIGate">
 <meta property="og:title" content="Guide - QueryAPIGate">
 <meta property="og:description" content="A QueryAPIGate how-to guide, run against a real server.">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:image" content="https://anantharajuc.github.io/QueryAPIGate-website/images/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="QueryAPIGate: one governed gate between your databases and everything that asks them for data.">
 <!-- /site-meta -->
 <script src="./support.js"></script>
+<script src="./theme.js?v=12"></script>
+<script src="./search.js?v=5" defer></script>
 </head>
 <body>
 <x-dc>
@@ -24,8 +30,11 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
 <style>
-body{margin:0;background:#f3f5f4;color:#17201d;font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.6}
-a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 170);text-decoration:underline}
+.rs-ghn svg{display:block}
+.rs-ghn-n{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1;color:var(--ink-3);min-width:0}
+.rs-ghn-n:empty{display:none}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.6}
+a{color:var(--accent-ink);text-decoration:none}a:hover{color:var(--accent-ink-2);text-decoration:underline}
 #guide-body>:first-child{margin-top:0}
 #guide-body h1{display:none}
 #guide-body h2{font-family:"Schibsted Grotesk",sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.01em;margin:44px 0 12px;line-height:1.2}
@@ -43,19 +52,19 @@ a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 
 .copy-btn{display:inline-flex;align-items:center;gap:6px;font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:500;color:#c5d3cd;background:#1b2f29;border:1px solid #2a3d37;border-radius:6px;padding:4px 9px;min-height:26px;cursor:pointer;margin-left:auto;transition:background 0.2s,color 0.2s}
 .copy-btn:hover{background:#24403a;color:#e6efeb}
 #guide-body pre code{background:none;padding:0;font-size:inherit;color:inherit}
-#guide-body blockquote{margin:0 0 14px;padding:12px 16px;border-left:3px solid oklch(0.52 0.11 170);background:#fff;border-radius:0 8px 8px 0;color:#4a5652}
+#guide-body blockquote{margin:0 0 14px;padding:12px 16px;border-left:3px solid var(--accent-ink);background:var(--surface);border-radius:0 8px 8px 0;color:var(--ink-2)}
 #guide-body blockquote p{margin:0}
 /* Tables: identifiers never break mid-word; a table wider than the column scrolls sideways inside its wrapper. */
-#guide-body .md-table{overflow-x:auto;margin:6px 0 20px;border:1px solid #dbe2df;border-radius:10px;background:#fff}
-#guide-body table{border-collapse:collapse;width:100%;margin:0;font-size:14px;background:#fff}
+#guide-body .md-table{overflow-x:auto;margin:6px 0 20px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+#guide-body table{border-collapse:collapse;width:100%;margin:0;font-size:14px;background:var(--surface)}
 #guide-body th,#guide-body td{overflow-wrap:normal;word-break:normal}
 #guide-body td code,#guide-body th code{white-space:normal;overflow-wrap:normal}
-#guide-body th,#guide-body td{text-align:left;padding:9px 12px;border-bottom:1px solid #dbe2df;vertical-align:top}
-#guide-body th{font-weight:600;background:#f3f5f4;font-size:12px;letter-spacing:0.04em;text-transform:uppercase;color:#4a5652}
+#guide-body th,#guide-body td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+#guide-body th{font-weight:600;background:var(--bg);font-size:12px;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-2)}
 #guide-body tr:last-child td{border-bottom:none}
-#guide-body hr{border:none;border-top:1px solid #dbe2df;margin:32px 0}
-#guide-body img{max-width:100%;border-radius:10px;border:1px solid #dbe2df}
-#guide-body strong{font-weight:600;color:#17201d}
+#guide-body hr{border:none;border-top:1px solid var(--line);margin:32px 0}
+#guide-body img{max-width:100%;border-radius:10px;border:1px solid var(--line)}
+#guide-body strong{font-weight:600;color:var(--ink)}
 
 @media (max-width:1180px){
   .rs-gh{display:none !important}
@@ -88,17 +97,17 @@ a{color:oklch(0.52 0.11 170);text-decoration:none}a:hover{color:oklch(0.42 0.11 
 .rs-menu-toggle{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
 pre{white-space:pre-wrap;overflow-wrap:anywhere}
 @media (max-width:1180px){
-  .rs-burger{display:inline-grid;place-items:center;width:40px;height:40px;border:1px solid #c3cdc9;border-radius:8px;background:#fff;cursor:pointer;margin-left:auto;flex:none}
-  .rs-burger span{display:block;width:16px;height:2px;background:#17201d;border-radius:2px;box-shadow:0 -5px 0 #17201d,0 5px 0 #17201d}
+  .rs-burger{display:inline-grid;place-items:center;width:40px;height:40px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;margin-left:auto;flex:none}
+  .rs-burger span{display:block;width:16px;height:2px;background:var(--ink);border-radius:2px;box-shadow:0 -5px 0 var(--ink),0 5px 0 var(--ink)}
   .rs-actions{margin-left:0 !important}
   .rs-gh{display:inline-block !important}
   .rs-cta{display:inline-block !important}
-  .rs-nav{display:none !important;flex-basis:100%;flex-direction:column;align-items:flex-start;gap:0 !important;font-size:16px !important;overflow:visible !important;white-space:normal !important;border-top:1px solid #dbe2df;padding:8px 0 4px !important;margin-top:4px}
-  .rs-nav a{display:block;width:100%;padding:11px 4px;border-bottom:1px solid #e8edeb}
+  .rs-nav{display:none !important;flex-basis:100%;flex-direction:column;align-items:flex-start;gap:0 !important;font-size:16px !important;overflow:visible !important;white-space:normal !important;border-top:1px solid var(--line);padding:8px 0 4px !important;margin-top:4px}
+  .rs-nav a{display:block;width:100%;padding:11px 4px;border-bottom:1px solid var(--line-soft)}
   .rs-nav a:last-child{border-bottom:0}
   .rs-menu-toggle:checked ~ .rs-nav{display:flex !important}
   .rs-menu-toggle:checked ~ .rs-burger span{background:transparent;box-shadow:none}
-  .rs-menu-toggle:checked ~ .rs-burger span::before,.rs-menu-toggle:checked ~ .rs-burger span::after{content:"";position:absolute;width:18px;height:2px;background:#17201d;border-radius:2px}
+  .rs-menu-toggle:checked ~ .rs-burger span::before,.rs-menu-toggle:checked ~ .rs-burger span::after{content:"";position:absolute;width:18px;height:2px;background:var(--ink);border-radius:2px}
   .rs-menu-toggle:checked ~ .rs-burger span::before{transform:rotate(45deg)}
   .rs-menu-toggle:checked ~ .rs-burger span::after{transform:rotate(-45deg)}
   .rs-navbar{flex-wrap:wrap !important}
@@ -113,19 +122,20 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 /* Use-cases dropdown in the top nav (desktop only; the burger menu keeps a plain link). */
 .rs-dd{position:relative}
 .rs-dd-panel{display:none;position:absolute;top:100%;left:-18px;padding-top:12px;z-index:30}
-.rs-dd-inner{background:#fff;border:1px solid #dbe2df;border-radius:14px;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35);padding:18px 20px 14px;display:grid;gap:14px;width:max-content;max-width:calc(100vw - 48px)}
+.rs-dd-inner{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35);padding:18px 20px 14px;display:grid;gap:14px;width:max-content;max-width:calc(100vw - 48px)}
 .rs-dd-grid{display:grid;grid-template-columns:repeat(5,max-content);gap:18px 28px}
 .rs-dd-grid>div{display:grid;gap:7px;align-content:start}
-.rs-dd-grid small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:#626d69;margin-bottom:2px}
-.rs-dd-grid a{font-size:13.5px;font-weight:500;color:#17201d;white-space:nowrap;text-decoration:none}
-.rs-dd-grid a:hover{color:oklch(0.52 0.11 170)}
-.rs-dd-all{font-size:13px;font-weight:600;border-top:1px solid #e8edeb;padding-top:12px;text-decoration:none}
+.rs-dd-grid small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+.rs-dd-grid a{font-size:13.5px;font-weight:500;color:var(--ink);white-space:nowrap;text-decoration:none}
+.rs-dd-grid a:hover{color:var(--accent-ink)}
+.rs-dd-all{font-size:13px;font-weight:600;border-top:1px solid var(--line-soft);padding-top:12px;text-decoration:none}
 @media (max-width:1400px){.rs-dd-grid{grid-template-columns:repeat(3,max-content)}}
 @media (max-width:1180px){.rs-dd{width:100%}.rs-dd-panel{display:none !important}}
 /* Current page in the top nav: bold, ink-dark, with an accent underline (a left bar in the burger menu). */
-.rs-nav a[aria-current="page"]{color:#17201d !important;font-weight:600;text-decoration:underline;text-decoration-color:oklch(0.52 0.11 170);text-decoration-thickness:2px;text-underline-offset:7px}
-.rs-nav a[aria-current="page"]:hover{text-decoration-color:oklch(0.42 0.11 170)}
-@media (max-width:1180px){.rs-nav a[aria-current="page"]{text-decoration:none;box-shadow:inset 3px 0 0 oklch(0.52 0.11 170);padding-left:12px !important}}
+.rs-nav > a[aria-current="page"],.rs-nav > .rs-dd > a[aria-current="page"]{color:var(--ink) !important;font-weight:600;text-decoration:underline;text-decoration-color:var(--accent-ink);text-decoration-thickness:2px;text-underline-offset:7px}
+.rs-nav > a[aria-current="page"]:hover,.rs-nav > .rs-dd > a[aria-current="page"]:hover{text-decoration-color:var(--accent-ink-2)}
+.rs-mega-card[aria-current="page"]{background:var(--bg);box-shadow:inset 3px 0 0 oklch(0.52 0.11 170)}
+@media (max-width:1180px){.rs-nav > a[aria-current="page"]{text-decoration:none;box-shadow:inset 3px 0 0 oklch(0.52 0.11 170);padding-left:12px !important}}
 .rs-dd-right .rs-dd-panel{left:auto;right:-18px}
 /* Dropdown triggers: a caret that turns while open; the panel stays open for a moment after the pointer leaves,
    and the trigger's hover area reaches down to the panel so crossing the gap never closes it. */
@@ -140,129 +150,217 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .rs-dd.rs-mega{position:static}
 .rs-mega .rs-dd-panel{left:24px;right:24px;padding-top:0;top:calc(100% - 1px)}
 .rs-mega-inner{width:auto !important;max-width:none !important;padding:22px 24px 20px !important;gap:18px !important}
-.rs-mega-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid #e8edeb}
+.rs-mega-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--line-soft)}
 .rs-mega-head>div{display:grid;gap:4px}
-.rs-mega-eyebrow{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)}
-.rs-mega-head b{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.01em;color:#17201d}
+.rs-mega-eyebrow{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)}
+.rs-mega-head b{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.01em;color:var(--ink)}
 .rs-mega-all{font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap}
 .rs-mega-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.rs-mega-card{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start;padding:12px;border-radius:10px;text-decoration:none;color:#17201d;transition:background 0.15s}
-.rs-mega-card:hover{background:#f3f5f4;text-decoration:none}
+.rs-mega-card{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start;padding:12px;border-radius:10px;text-decoration:none;color:var(--ink);transition:background 0.15s}
+.rs-mega-card:hover{background:var(--bg);text-decoration:none}
 .rs-mega-ico{width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.1);position:relative}
 .rs-mega-ico::after{content:'';position:absolute;inset:9px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
 .rs-mega-txt{display:grid;gap:2px;min-width:0}
-.rs-mega-txt small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#626d69}
+.rs-mega-txt small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)}
 .rs-mega-txt b{font-size:14px;font-weight:600}
-.rs-mega-txt>span{font-size:12.5px;color:#4a5652;line-height:1.4}
+.rs-mega-txt>span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
 @media (max-width:1400px){.rs-mega-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 /* Guides mega menu: reading paths on the left, documentation grouped on the right. */
 .rs-mega-body{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.3fr);gap:28px}
-.rs-mega-sub{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69}
+.rs-mega-sub{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)}
 .rs-mega-paths{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;align-content:start}
 .rs-mega-paths .rs-mega-sub{grid-column:1/-1;margin-bottom:4px}
-.rs-mega-path{display:grid;gap:2px;padding:10px 12px;border-radius:10px;text-decoration:none;color:#17201d;transition:background 0.15s}
-.rs-mega-path:hover{background:#f3f5f4;text-decoration:none}
-.rs-mega-path small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.04em;color:#626d69}
+.rs-mega-path{display:grid;gap:2px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink);transition:background 0.15s}
+.rs-mega-path:hover{background:var(--bg);text-decoration:none}
+.rs-mega-path small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.04em;color:var(--ink-3)}
 .rs-mega-path b{font-size:14px;font-weight:600}
-.rs-mega-path>span{font-size:12.5px;color:#4a5652;line-height:1.4}
-.rs-mega-docs{display:grid;gap:12px;align-content:start;padding-left:28px;border-left:1px solid #e8edeb}
+.rs-mega-path>span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+.rs-mega-paths .rs-mega-sub2{margin-top:10px;margin-bottom:2px}
+.rs-mega-arch{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px}
+.rs-mega-arch a{font-size:12px;font-weight:500;padding:4px 9px;white-space:nowrap;border:1px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;transition:background 0.15s,border-color 0.15s}
+.rs-mega-arch a:hover{border-color:#9fb3ac;background:var(--bg);text-decoration:none}
+.rs-mega-docs{display:grid;gap:12px;align-content:start;padding-left:28px;border-left:1px solid var(--line-soft)}
 .rs-mega-docgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
 .rs-mega-docgrid>div{display:grid;gap:6px;align-content:start}
-.rs-mega-docgrid small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#626d69;margin-bottom:2px}
-.rs-mega-docgrid a{font-size:13.5px;font-weight:500;color:#17201d;text-decoration:none;line-height:1.35}
-.rs-mega-docgrid a:hover{color:oklch(0.52 0.11 170)}
-.rs-mega-more{font-size:13px;font-weight:600;text-decoration:none;padding-top:8px;border-top:1px solid #e8edeb}
+.rs-mega-docgrid small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+.rs-mega-docgrid a{font-size:13.5px;font-weight:500;color:var(--ink);text-decoration:none;line-height:1.35}
+.rs-mega-docgrid a:hover{color:var(--accent-ink)}
+.rs-mega-more{font-size:13px;font-weight:600;text-decoration:none;padding-top:8px;border-top:1px solid var(--line-soft)}
+.rs-mega-body-solo{grid-template-columns:minmax(0,1fr)}
+.rs-mega-body-solo .rs-mega-paths{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rs-mega-docs-solo{padding-left:0;border-left:none}
+.rs-mega-docs-solo .rs-mega-docgrid{grid-template-columns:repeat(5,minmax(0,1fr)) !important}
+.rs-mega-docs-solo .rs-mega-docgrid{gap:20px 40px}
+.rs-mega-docs-solo .rs-mega-docgrid>div{gap:2px}
+.rs-mega-docs-solo .rs-mega-docgrid small{margin:0 0 6px 10px}
+.rs-mega-docs-solo .rs-mega-docgrid a.rs-doc{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink);text-decoration:none;transition:background 0.15s}
+.rs-mega-docs-solo .rs-mega-docgrid a.rs-doc:hover{background:var(--bg);color:var(--ink)}
+.rs-doc-ico{flex:none;width:28px;height:28px;border-radius:7px;background:oklch(0.52 0.11 170 / 0.09);position:relative}
+.rs-doc-ico::after{content:'';position:absolute;inset:7px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.rs-mega-docs-solo .rs-mega-more{margin-top:4px}
 @media (max-width:1400px){.rs-mega-docgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* MCP shortcut beside the GitHub icon: a tinted pill with the plug icon. */
-.rs-mcp{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;color:oklch(0.42 0.11 170);background:oklch(0.52 0.11 170 / 0.1);border:1px solid oklch(0.52 0.11 170 / 0.45);border-radius:999px;padding:5px 11px 5px 9px;text-decoration:none;transition:background 0.2s,border-color 0.2s,color 0.2s}
-.rs-mcp:hover{background:oklch(0.52 0.11 170 / 0.18);border-color:oklch(0.52 0.11 170);color:oklch(0.36 0.11 170);text-decoration:none}
+.rs-mcp{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;color:var(--accent-ink-2);background:oklch(0.52 0.11 170 / 0.1);border:1px solid oklch(0.52 0.11 170 / 0.45);border-radius:999px;padding:5px 11px 5px 9px;text-decoration:none;transition:background 0.2s,border-color 0.2s,color 0.2s}
+.rs-mcp:hover{background:oklch(0.52 0.11 170 / 0.18);border-color:var(--accent-ink);color:var(--accent-ink-2);text-decoration:none}
 .rs-mcp svg{display:block}
 /* Footer */
 .ft a{text-decoration:none}.ft a:hover{text-decoration:underline}
 .ft-grid{display:grid;grid-template-columns:minmax(0,1.7fr) repeat(4,minmax(0,1fr));gap:36px 28px}
 .ft-brand{display:grid;gap:16px;align-content:start;min-width:0}
 .ft-col{display:grid;gap:10px;align-content:start}
-.ft-col a{color:#4a5652;font-size:14px}.ft-col a:hover{color:#17201d}
-.ft-h{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#17201d;margin-bottom:2px}
-.ft-chip{font-size:11.5px;font-weight:500;color:#4a5652;background:#f3f5f4;border:1px solid #dbe2df;border-radius:999px;padding:3px 9px;white-space:nowrap}
-.ft-btn{font-size:13.5px;font-weight:600;color:#17201d;border:1px solid #c3cdc9;border-radius:8px;padding:8px 13px;background:#fff}
-.ft-btn:hover{border-color:#17201d;text-decoration:none !important}
+.ft-col a{color:var(--ink-2);font-size:14px}.ft-col a:hover{color:var(--ink)}
+.ft-h{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);margin-bottom:2px}
+.ft-chip{font-size:11.5px;font-weight:500;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.ft-btn{font-size:13.5px;font-weight:600;color:var(--ink);border:1px solid var(--line-2);border-radius:8px;padding:8px 13px;background:var(--surface)}
+.ft-btn:hover{border-color:var(--ink);text-decoration:none !important}
 .ft-btn-dark{background:#10201b;border-color:#10201b;color:#e6efeb}.ft-btn-dark:hover{background:#1b3a30;border-color:#1b3a30}
-.ft-bottom{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center;padding-top:20px;border-top:1px solid #dbe2df;font-size:13px;color:#626d69}
+.ft-bottom{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-3)}
 .ft-badges{display:inline-flex;align-items:center;gap:10px}.ft-badges img{display:block;height:20px}
 @media (max-width:1100px){.ft-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ft-brand{grid-column:1/-1}}
 @media (max-width:560px){.ft-grid{grid-template-columns:minmax(0,1fr)}}
 /* "On this page" rail: h2s as top-level links, h3s indented; the heading in view is marked. */
-.g-toc a{display:block;padding:5px 0 5px 14px;margin-left:-1px;border-left:2px solid transparent;color:#626d69;text-decoration:none;line-height:1.4;overflow-wrap:anywhere;transition:color 0.15s,border-color 0.15s}
+.g-toc a{display:block;padding:5px 0 5px 14px;margin-left:-1px;border-left:2px solid transparent;color:var(--ink-3);text-decoration:none;line-height:1.4;overflow-wrap:anywhere;transition:color 0.15s,border-color 0.15s}
 .g-toc a.h3{padding-left:26px;font-size:12.5px}
-.g-toc a:hover{color:#17201d;text-decoration:none}
-.g-toc a.on{color:#17201d;font-weight:600;border-left-color:oklch(0.52 0.11 170)}
+.g-toc a:hover{color:var(--ink);text-decoration:none}
+.g-toc a.on{color:var(--ink);font-weight:600;border-left-color:var(--accent-ink)}
 #guide-body h2,#guide-body h3,#guide-body h4{scroll-margin-top:92px}
 @media (max-width:1100px){.g-layout{grid-template-columns:230px minmax(0,1fr) !important;gap:48px !important}.g-toc{display:none !important}}
 @media (max-width:820px){.g-layout{grid-template-columns:minmax(0,1fr) !important;gap:32px !important;padding-left:20px !important;padding-right:20px !important}}
+:root[data-theme=dark] #guide-body p,:root[data-theme=dark] #guide-body ul,:root[data-theme=dark] #guide-body ol{color:#c9d5d0}
+/* Blog posts: the guide layout (posts on the left, "On this page" on the right) with a larger header carrying the post's summary. */
+.g-layout[data-kind=p] #guide-body{font-size:17px;line-height:1.7}
+.g-layout[data-kind=p] #guide-body h2{font-size:27px;margin-top:52px}
+.bp-head{display:grid;gap:16px;padding-bottom:28px;border-bottom:1px solid var(--line)}
+.bp-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)}
+.bp-cat{display:inline-flex;align-items:center;gap:7px;color:var(--ink)}.bp-cat i{width:8px;height:8px;border-radius:50%}
+.bp-ver{font-family:'JetBrains Mono',monospace;font-weight:500;letter-spacing:0;text-transform:none;padding:2px 8px;border-radius:999px;background:oklch(0.52 0.11 170 / 0.1);color:var(--accent-ink)}
+.bp-head h1{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(32px,4.4vw,50px);line-height:1.06;font-weight:800;letter-spacing:-0.025em;text-wrap:balance}
+.bp-dek{margin:0;font-size:19px;line-height:1.55;color:var(--ink-2);text-wrap:pretty}
+.bp-by{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;font-size:14px;color:var(--ink-3)}
+.bp-share{font:inherit;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;margin-left:auto;padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);cursor:pointer;transition:border-color .2s,color .2s}
+.bp-share:hover{border-color:var(--accent-ink);color:var(--accent-ink)}.bp-share svg{display:block}
+/* Markdown extras for any page; written for performance reports. */
+/* > [!NOTE] / [!TIP] / [!IMPORTANT] / [!WARNING] / [!CAUTION]: a callout with a title. */
+#guide-body .md-callout{--c:var(--accent-ink);border-left:3px solid var(--c);background:color-mix(in oklch,var(--c) 7%,var(--surface));border-radius:0 10px 10px 0;padding:14px 18px;color:var(--ink-2)}
+#guide-body .md-callout>p:last-child{margin-bottom:0}
+#guide-body .md-callout-t{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--c);margin-bottom:6px}
+#guide-body .md-callout.tip{--c:oklch(0.58 0.13 150)}#guide-body .md-callout.important{--c:oklch(0.58 0.15 290)}
+#guide-body .md-callout.warning{--c:var(--warn-ink)}#guide-body .md-callout.caution{--c:var(--danger-ink)}
+/* Numbers in tables line up: a column of numbers is right-aligned in tabular figures. */
+#guide-body td,#guide-body th{font-variant-numeric:tabular-nums}
+#guide-body .md-table .num{text-align:right;white-space:nowrap}
+#guide-body tbody tr:hover td{background:var(--surface-2)}
+/* An image alone in a paragraph is a figure; its title (or alt text) is the caption. */
+#guide-body figure{margin:8px 0 24px;display:grid;gap:10px}#guide-body figure img{display:block;width:100%;height:auto;background:var(--surface)}
+#guide-body figcaption{font-size:13.5px;color:var(--ink-3);text-align:center;text-wrap:balance}
+/* ```stats: "value | label | note" per line, as a row of headline numbers. */
+#guide-body .md-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;margin:10px 0 24px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+#guide-body .md-stat{display:grid;gap:4px;align-content:start;padding:16px 18px;background:var(--surface)}
+#guide-body .md-stat b{font-family:'Schibsted Grotesk',sans-serif;font-size:30px;font-weight:800;letter-spacing:-0.02em;line-height:1.05;color:var(--ink)}
+#guide-body .md-stat span{font-size:13.5px;font-weight:600;color:var(--ink)}#guide-body .md-stat small{font-size:12.5px;color:var(--ink-3);line-height:1.4}
+/* ```bars: "label | value unit" per line, a horizontal bar chart; "title: ..." gives it a caption, a trailing " *" highlights a bar. */
+#guide-body .md-bars{margin:10px 0 24px;padding:18px 20px;border:1px solid var(--line);border-radius:12px;background:var(--surface);display:grid;gap:10px}
+#guide-body .md-bars-t{font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:2px}
+#guide-body .md-bar{display:grid;grid-template-columns:minmax(90px,30%) minmax(0,1fr);gap:14px;align-items:center;font-size:14px}
+#guide-body .md-bar-l{color:var(--ink-2);overflow-wrap:anywhere}
+#guide-body .md-bar-track{display:flex;align-items:center;gap:10px;min-width:0}
+#guide-body .md-bar-fill{height:14px;border-radius:0 4px 4px 0;background:var(--line-2);min-width:2px;flex:none}
+#guide-body .md-bar.hi .md-bar-fill{background:var(--accent-ink)}#guide-body .md-bar.hi .md-bar-l{color:var(--ink);font-weight:600}
+#guide-body .md-bar-v{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--ink);white-space:nowrap;font-variant-numeric:tabular-nums}
+@media (max-width:560px){#guide-body .md-bar{grid-template-columns:minmax(0,1fr);gap:4px}}
+/* Evaluate menu: seven cards, four to a row; on narrow screens the trigger hides and plain links show in the burger. */
+.rs-mega-grid5{grid-template-columns:repeat(4,minmax(0,1fr)) !important}
+.rs-sub{display:none}
+@media (max-width:1400px){.rs-mega-grid5{grid-template-columns:repeat(4,minmax(0,1fr)) !important}}
+@media (max-width:1180px){.rs-dd.rs-mega-eval{display:none !important}.rs-sub{display:block}}
+/* MCP pill: a small menu of the MCP pages. */
+.rs-dd-mcp>a.rs-mcp{padding:5px 11px 5px 9px;margin:0}
+.rs-dd-mcp .rs-dd-panel{left:-6px}
+.rs-dd-mcp-inner{display:grid;gap:4px;width:340px !important;padding:12px !important}
+.rs-dd-mcp-inner small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);padding:4px 10px 6px}
+.rs-dd-mcp-inner a{display:grid;gap:2px;padding:9px 10px;border-radius:8px;color:var(--ink);text-decoration:none;transition:background 0.15s}
+.rs-dd-mcp-inner a:hover{background:var(--bg);text-decoration:none}
+.rs-dd-mcp-inner a[aria-current="page"]{background:var(--bg);box-shadow:inset 3px 0 0 oklch(0.52 0.11 170)}
+.rs-dd-mcp-inner b{font-size:13.5px;font-weight:600}
+.rs-dd-mcp-inner span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+@media (max-width:1180px){.rs-dd-mcp .rs-dd-panel{display:none !important}.rs-dd-mcp .rs-caret{display:none}}
 </style>
 </helmet>
-<div data-screen-label="Guide" style="min-height:100vh;background:#f3f5f4;color:#17201d;font-family:'Instrument Sans',system-ui,sans-serif">
-  <nav style="position:sticky;top:0;z-index:20;background:rgba(243,245,244,0.9);backdrop-filter:blur(10px);border-bottom:1px solid #dbe2df">
+<div data-screen-label="Guide" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
+  <nav style="position:sticky;top:0;z-index:20;background:var(--bg-90);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)">
     <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
-      <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:#17201d;text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
+      <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:var(--ink);text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:var(--accent-ink)">API</span>Gate</span></a>
       <div class="rs-actions" style="margin-left:auto;display:flex;gap:10px;align-items:center">
-        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-gh" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" title="GitHub" style="color:#4a5652;padding:8px 10px;line-height:0" style-hover="color:#17201d"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg></a>
-        <a href="MCP.dc.html" class="rs-mcp" title="MCP server: saved queries as tools for AI agents"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a6 6 0 0 1-12 0V8z"/></svg>MCP</a>
+        <button type="button" class="rs-search" data-search aria-label="Search the documentation (Ctrl+K)" title="Search · Ctrl+K"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span>Search</span><kbd>Ctrl K</kbd></button>        <div class="rs-dd rs-dd-mcp"><a href="MCP.dc.html" class="rs-mcp" title="MCP server: saved queries as tools for AI agents"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a6 6 0 0 1-12 0V8z"/></svg><span class="rs-mcp-t">MCP</span><svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-dd-mcp-inner"><small>MCP · AI agents</small><a href="MCP.dc.html"><b>MCP server for AI agents</b><span>What agents get, what they never get, and how to connect a client.</span></a><a href="Agent Checklist.dc.html"><b>Against Altinity's agent-safety checklist</b><span>Nineteen recommendations, point by point: 16 covered.</span></a><a href="Guide.dc.html?d=MCP"><b>MCP reference</b><span>Tools, resources, OAuth and every setting, from the documentation.</span></a><a href="Guide.dc.html?g=24-let-an-agent-call-your-queries-via-mcp"><b>Guide 24: let an agent call your queries</b><span>The ten-minute walkthrough, run against a real server.</span></a></div></div></div>
       </div>
       <input type="checkbox" id="rs-menu" class="rs-menu-toggle" aria-label="Open menu">
       <label for="rs-menu" class="rs-burger" aria-hidden="true"><span></span></label>
       <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
-        <a href="Features.dc.html" style="color:#4a5652">Features</a>
-        <div class="rs-dd rs-mega"><a href="Use Cases.dc.html" style="color:#4a5652">Use cases<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Use cases</span><b>Twelve jobs people hire QueryAPIGate for</b></div><a href="Use Cases.dc.html" class="rs-mega-all">All twelve, with the shape of each call →</a></div><div class="rs-mega-grid"><a class="rs-mega-card" href="use-cases/customer-analytics.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/chart-column.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Customer analytics</b><span>Analytics in your product, one tenant at a time</span></span></a><a class="rs-mega-card" href="use-cases/internal-tools.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Internal tools</b><span>Back an internal app without a backend team</span></span></a><a class="rs-mega-card" href="use-cases/controlled-writes.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/pencil-line.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Controlled writes</b><span>Let a partner or a form write, through one approved query</span></span></a><a class="rs-mega-card" href="use-cases/partner-data-api.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Partner data API</b><span>Hand a partner one query, not your schema</span></span></a><a class="rs-mega-card" href="use-cases/scheduled-deliveries.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/calendar-clock.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Scheduled deliveries</b><span>Deliver a daily file, incrementally, to someone else&#x27;s bucket</span></span></a><a class="rs-mega-card" href="use-cases/live-dashboards.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Live dashboards</b><span>A live view of what is being queried, by whom</span></span></a><a class="rs-mega-card" href="use-cases/self-serve-data.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/library.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Self-serve data</b><span>Data for every team, without handing out the database</span></span></a><a class="rs-mega-card" href="use-cases/files-as-an-api.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/folder-open.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Files as an API</b><span>Turn a bucket of Parquet into a queryable API</span></span></a><a class="rs-mega-card" href="use-cases/legacy-databases.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Legacy databases</b><span>A governed API in front of a database you can&#x27;t change</span></span></a><a class="rs-mega-card" href="use-cases/ai-agents.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span class="rs-mega-txt"><small>AI</small><b>AI agents</b><span>Let an agent query your data, governed like an app</span></span></a><a class="rs-mega-card" href="use-cases/compliance-and-audit.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-mega-txt"><small>Security and platform</small><b>Compliance and audit</b><span>Answer the auditor from the running system</span></span></a><a class="rs-mega-card" href="use-cases/platform-teams.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-pull-request.svg)"></span><span class="rs-mega-txt"><small>Security and platform</small><b>Platform teams</b><span>Run it like the rest of your platform</span></span></a></div></div></div></div>
-        <a href="Enterprise.dc.html" style="color:#4a5652">Enterprise</a>
-        <a href="Deploy.dc.html" style="color:#4a5652">Deploy</a>
-        <a href="Docs.dc.html" style="color:#4a5652">Docs</a>
-        <div class="rs-dd rs-mega rs-mega-guides"><a href="Guides.dc.html" style="color:#17201d" aria-current="page">Guides<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Guides and documentation</span><b>60 how-to guides, each run against a real server</b></div><a href="Guides.dc.html" class="rs-mega-all">All 60 guides, with times and outcomes →</a></div><div class="rs-mega-body"><div class="rs-mega-paths"><span class="rs-mega-sub">Reading paths</span><a class="rs-mega-path" href="Guides.dc.html?path=start"><small>01 → 05 · 5 guides · ≈42 min</small><b>Start here</b><span>The first five, in order: a query, a database, an API key.</span></a><a class="rs-mega-path" href="Guides.dc.html?path=partner"><small>13 → 50 · 7 guides · ≈53 min</small><b>Give a partner an API</b><span>One query, hashed columns, limits, an expiry, a rotation plan.</span></a><a class="rs-mega-path" href="Guides.dc.html?path=agents"><small>24 → 49 · 5 guides · ≈85 min</small><b>Let agents in</b><span>MCP tools, what the data means, and writes a person approves.</span></a><a class="rs-mega-path" href="Guides.dc.html?path=data"><small>41 → 28 · 4 guides · ≈65 min</small><b>Ship data out</b><span>Files as an API, scheduled deliveries, a live feed of runs.</span></a><a class="rs-mega-path" href="Guides.dc.html?path=prod"><small>23 → 59 · 8 guides · ≈135 min</small><b>Go to production</b><span>The Deploy page checklist, as guides.</span></a></div><div class="rs-mega-docs"><span class="rs-mega-sub">Documentation</span><div class="rs-mega-docgrid"><div><small>Run it</small><a href="Guide.dc.html?d=INSTALLATION_AND_SETUP">Installation and setup</a><a href="Guide.dc.html?d=CONFIGURATION">Configuration</a><a href="Guide.dc.html?d=DEPLOYMENT">Deployment</a><a href="Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION">Database connections</a></div><div><small>Reference</small><a href="Guide.dc.html?d=API">API reference</a><a href="Guide.dc.html?d=MCP">MCP server</a><a href="Guide.dc.html?d=FEATURES">Features</a><a href="Guide.dc.html?d=EXAMPLES">Example APIs</a><a href="Guide.dc.html?d=QUERY_METADATA_MANAGEMENT">Query metadata</a><a href="Guide.dc.html?d=SCREENSHOTS">A tour of the Console</a></div><div><small>Security</small><a href="Guide.dc.html?d=THREAT_MODEL">Threat model</a><a href="Guide.dc.html?d=DATA_PROTECTION">Where data goes</a><a href="Guide.dc.html?d=SECURITY">Security policy</a><a href="Guide.dc.html?d=ARCHITECTURE">Architecture overview</a><a href="Guide.dc.html?d=QUESTIONNAIRE">Questionnaire answers</a><a href="Guide.dc.html?d=SBOM">SBOM and verification</a></div><div><small>Project</small><a href="Guide.dc.html?d=WHY">Why QueryAPIGate</a><a href="Guide.dc.html?d=TECHNOLOGY_STACK">Technology stack</a><a href="Guide.dc.html?d=CONTRIBUTING">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT">Code of conduct</a></div></div><a href="Docs.dc.html" class="rs-mega-more">Docs: how the pieces fit, and where to start →</a></div></div></div></div></div>
-        <a href="Compare.dc.html" style="color:#4a5652">Compare</a>
-        <a href="Trust.dc.html" style="color:#4a5652">Trust</a>
-        <a href="Blog.dc.html" style="color:#4a5652">Blog</a>
-        <a href="About.dc.html" style="color:#4a5652">About</a>
+        <div class="rs-dd rs-mega rs-mega-features"><a href="Features.dc.html" style="color:var(--ink-2)">Features<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Features</span><b>Everything it does, section by section</b></div><a href="Features.dc.html" class="rs-mega-all">All features →</a></div><div class="rs-mega-docs rs-mega-docs-solo"><div class="rs-mega-docgrid"><div><small>Connect and govern</small><a class="rs-doc" href="Features.dc.html#databases"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)"></span>Databases</a><a class="rs-doc" href="Features.dc.html#security"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield.svg)"></span>Security and access</a><a class="rs-doc" href="Features.dc.html#mcp"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span>MCP for AI agents</a></div><div><small>Build</small><a class="rs-doc" href="Features.dc.html#queries"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-code.svg)"></span>Saved queries</a><a class="rs-doc" href="Features.dc.html#parameters"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/list-checks.svg)"></span>Parameters</a><a class="rs-doc" href="Features.dc.html#formats"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-spreadsheet.svg)"></span>Response formats</a><a class="rs-doc" href="Features.dc.html#streaming"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/waves.svg)"></span>Paging and streaming</a></div><div><small>Serve and operate</small><a class="rs-doc" href="Features.dc.html#caching"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/zap.svg)"></span>Caching</a><a class="rs-doc" href="Features.dc.html#rate-limits"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/gauge.svg)"></span>Rate limiting</a><a class="rs-doc" href="Features.dc.html#observability"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/activity.svg)"></span>Observability</a><a class="rs-doc" href="Features.dc.html#openapi"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/braces.svg)"></span>OpenAPI</a></div><div><small>Console and proof</small><a class="rs-doc" href="Features.dc.html#console"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span>Administration UI</a><a class="rs-doc" href="Features.dc.html#testing"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/flask-conical.svg)"></span>Testing and quality</a><a class="rs-doc" href="Features.dc.html#request"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/route.svg)"></span>Every request</a></div></div><div class="rs-mega-foot"><a href="Features.dc.html" class="rs-mega-more">Features: one gate, every front door →</a><a href="Integrations.dc.html" class="rs-mega-more">Integrations</a><a href="Playground.dc.html" class="rs-mega-more">Playground</a></div></div></div></div></div>
+        <div class="rs-dd rs-mega"><a href="Use Cases.dc.html" style="color:var(--ink-2)">Use cases<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Use cases</span><b>Twelve jobs people hire QueryAPIGate for</b></div><a href="Use Cases.dc.html" class="rs-mega-all">All twelve, with the shape of each call →</a></div><div class="rs-mega-grid"><a class="rs-mega-card" href="use-cases/customer-analytics.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/chart-column.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Customer analytics</b><span>Analytics in your product, one tenant at a time</span></span></a><a class="rs-mega-card" href="use-cases/internal-tools.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Internal tools</b><span>Back an internal app without a backend team</span></span></a><a class="rs-mega-card" href="use-cases/controlled-writes.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/pencil-line.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Controlled writes</b><span>Let a partner or a form write, through one approved query</span></span></a><a class="rs-mega-card" href="use-cases/partner-data-api.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Partner data API</b><span>Hand a partner one query, not your schema</span></span></a><a class="rs-mega-card" href="use-cases/scheduled-deliveries.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/calendar-clock.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Scheduled deliveries</b><span>Deliver a daily file, incrementally, to someone else&#x27;s bucket</span></span></a><a class="rs-mega-card" href="use-cases/live-dashboards.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Live dashboards</b><span>A live view of what is being queried, by whom</span></span></a><a class="rs-mega-card" href="use-cases/self-serve-data.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/library.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Self-serve data</b><span>Data for every team, without handing out the database</span></span></a><a class="rs-mega-card" href="use-cases/files-as-an-api.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/folder-open.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Files as an API</b><span>Turn a bucket of Parquet into a queryable API</span></span></a><a class="rs-mega-card" href="use-cases/legacy-databases.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Legacy databases</b><span>A governed API in front of a database you can&#x27;t change</span></span></a><a class="rs-mega-card" href="use-cases/ai-agents.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span class="rs-mega-txt"><small>AI</small><b>AI agents</b><span>Let an agent query your data, governed like an app</span></span></a><a class="rs-mega-card" href="use-cases/compliance-and-audit.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-mega-txt"><small>Security and platform</small><b>Compliance and audit</b><span>Answer the auditor from the running system</span></span></a><a class="rs-mega-card" href="use-cases/platform-teams.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-pull-request.svg)"></span><span class="rs-mega-txt"><small>Security and platform</small><b>Platform teams</b><span>Run it like the rest of your platform</span></span></a></div></div></div></div>
+        <div class="rs-dd rs-mega rs-mega-deploy"><a href="Deploy.dc.html" style="color:var(--ink-2)">Deploy<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Deploy</span><b>Three reference architectures, each one tested in CI</b></div><a href="Deploy.dc.html" class="rs-mega-all">Overview and comparison →</a></div><div class="rs-mega-grid rs-mega-grid3"><a class="rs-mega-card" href="Deploy-Single.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/server.svg)"></span><span class="rs-mega-txt"><small>Start here</small><b>Single instance</b><span>One container or process; SQLite on a volume, or PostgreSQL.</span></span></a><a class="rs-mega-card" href="Deploy-HA.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layers.svg)"></span><span class="rs-mega-txt"><small>Several instances</small><b>High availability</b><span>A shared PostgreSQL store and Redis, so any instance answers any request.</span></span></a><a class="rs-mega-card" href="Deploy-Kubernetes.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/ship-wheel.svg)"></span><span class="rs-mega-txt"><small>Helm chart</small><b>Kubernetes</b><span>One pod on SQLite, or several behind a disruption budget.</span></span></a></div><div class="rs-mega-foot"><a class="rs-mega-more" href="Deploy.dc.html#compare">Side by side</a><a class="rs-mega-more" href="Deploy.dc.html#checklist">Production checklist</a><a class="rs-mega-more" href="Docs.dc.html#install">Install options</a><a class="rs-mega-more" href="Guide.dc.html?d=DEPLOYMENT">Deployment guide</a></div></div></div></div><a class="rs-sub" href="Deploy-Single.dc.html" style="color:var(--ink-2)">Single instance</a><a class="rs-sub" href="Deploy-HA.dc.html" style="color:var(--ink-2)">High availability</a><a class="rs-sub" href="Deploy-Kubernetes.dc.html" style="color:var(--ink-2)">Kubernetes</a>
+        <div class="rs-dd rs-mega rs-mega-docsmenu"><a href="Docs.dc.html" style="color:var(--ink-2)">Docs<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Documentation</span><b>Reference for every setting, endpoint and promise</b></div><a href="Docs.dc.html" class="rs-mega-all">All documentation →</a></div><div class="rs-mega-docs rs-mega-docs-solo"><div class="rs-mega-docgrid"><div><small>Run it</small><a class="rs-doc" href="Guide.dc.html?d=INSTALLATION_AND_SETUP"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/download.svg)"></span>Installation and setup</a><a class="rs-doc" href="Guide.dc.html?d=CONFIGURATION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/settings-2.svg)"></span>Configuration</a><a class="rs-doc" href="Guide.dc.html?d=DEPLOYMENT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/rocket.svg)"></span>Deployment</a><a class="rs-doc" href="Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)"></span>Database connections</a></div><div><small>Reference</small><a class="rs-doc" href="Guide.dc.html?d=API"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/braces.svg)"></span>API reference</a><a class="rs-doc" href="Guide.dc.html?d=MCP"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/plug.svg)"></span>MCP server</a><a class="rs-doc" href="Guide.dc.html?d=FEATURES"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/sparkles.svg)"></span>Features</a><a class="rs-doc" href="Guide.dc.html?d=EXAMPLES"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/flask-conical.svg)"></span>Example APIs</a><a class="rs-doc" href="Guide.dc.html?d=QUERY_METADATA_MANAGEMENT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/tags.svg)"></span>Query metadata</a><a class="rs-doc" href="Guide.dc.html?d=SCREENSHOTS"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span>A tour of the Console</a></div><div><small>Performance</small><a class="rs-doc" href="Performance.dc.html"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/gauge.svg)"></span>Performance and sizing</a><a class="rs-doc" href="Guide.dc.html?d=PERFORMANCE_V3"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/activity.svg)"></span>OLTP benchmark on PostgreSQL</a><a class="rs-doc" href="Guide.dc.html?p=what-a-governed-call-costs"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/newspaper.svg)"></span>What a governed call costs</a><a class="rs-doc" href="Guide.dc.html?p=one-mysql-six-services"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)"></span>One MySQL server, six services</a></div><div><small>Security</small><a class="rs-doc" href="Guide.dc.html?d=THREAT_MODEL"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-alert.svg)"></span>Threat model</a><a class="rs-doc" href="Standards.dc.html"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/scroll-text.svg)"></span>Standards and specifications</a><a class="rs-doc" href="Guide.dc.html?d=DATA_PROTECTION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/route.svg)"></span>Where data goes</a><a class="rs-doc" href="Guide.dc.html?d=SECURITY"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span>Security policy</a><a class="rs-doc" href="Guide.dc.html?d=ARCHITECTURE"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/network.svg)"></span>Architecture overview</a><a class="rs-doc" href="Guide.dc.html?d=QUESTIONNAIRE"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/clipboard-check.svg)"></span>Questionnaire answers</a><a class="rs-doc" href="Guide.dc.html?d=SBOM"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/package-check.svg)"></span>SBOM and verification</a></div><div><small>Project</small><a class="rs-doc" href="Guide.dc.html?d=WHY"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/lightbulb.svg)"></span>Why QueryAPIGate</a><a class="rs-doc" href="Guide.dc.html?d=TECHNOLOGY_STACK"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layers.svg)"></span>Technology stack</a><a class="rs-doc" href="Guide.dc.html?d=CONTRIBUTING"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-pull-request.svg)"></span>Contributing</a><a class="rs-doc" href="Guide.dc.html?d=CODE_OF_CONDUCT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/heart-handshake.svg)"></span>Code of conduct</a></div></div><div class="rs-mega-foot"><a href="Docs.dc.html" class="rs-mega-more">Docs: how the pieces fit, and where to start →</a><a href="FAQ.dc.html" class="rs-mega-more">FAQ</a><a href="Glossary.dc.html" class="rs-mega-more">Glossary</a></div></div></div></div></div>
+        <a class="rs-sub" href="FAQ.dc.html" style="color:var(--ink-2)">FAQ</a><a class="rs-sub" href="Glossary.dc.html" style="color:var(--ink-2)">Glossary</a>
+        <div class="rs-dd rs-mega rs-mega-guides"><a href="Guides.dc.html" style="color:var(--ink)" aria-current="page">Guides<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">How-to guides</span><b>62 how-to guides, each run against a real server</b></div><a href="Guides.dc.html" class="rs-mega-all">All 62 guides, with times and outcomes →</a></div><div class="rs-gm"><div class="rs-gm-col"><small class="rs-gm-h">Reading paths</small><a class="rs-gm-path" href="Guides.dc.html?path=start"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/rocket.svg)"></span><span><b>Start here</b><span>The first five, in order: a query, a database, an API key.</span><small>01 → 05 · 5 guides · ≈42 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=partner"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg)"></span><span><b>Give a partner an API</b><span>One query, hashed columns, limits, an expiry, a rotation plan.</span><small>13 → 50 · 7 guides · ≈53 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=agents"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span><b>Let agents in</b><span>MCP tools, what the data means, and writes a person approves.</span><small>24 → 49 · 5 guides · ≈85 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=data"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/send.svg)"></span><span><b>Ship data out</b><span>Files as an API, scheduled deliveries, a live feed of runs.</span><small>41 → 28 · 4 guides · ≈65 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=prod"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/server-cog.svg)"></span><span><b>Go to production</b><span>The Deploy page checklist, as guides.</span><small>23 → 59 · 8 guides · ≈135 min</small></span></a></div><div class="rs-gm-col rs-gm-topics"><small class="rs-gm-h">By topic</small><a class="rs-doc" href="Guides.dc.html?cat=Start"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/play.svg)"></span><span class="rs-gm-t">Start</span><em>6</em></a><a class="rs-doc" href="Guides.dc.html?cat=Queries"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-code.svg)"></span><span class="rs-gm-t">Queries</span><em>7</em></a><a class="rs-doc" href="Guides.dc.html?cat=Access"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/key-round.svg)"></span><span class="rs-gm-t">Access</span><em>13</em></a><a class="rs-doc" href="Guides.dc.html?cat=Agents"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span class="rs-gm-t">Agents</span><em>7</em></a><a class="rs-doc" href="Guides.dc.html?cat=Events%20%26%20exports"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg)"></span><span class="rs-gm-t">Events and exports</span><em>6</em></a><a class="rs-doc" href="Guides.dc.html?cat=Operate"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/server.svg)"></span><span class="rs-gm-t">Operate</span><em>15</em></a><a class="rs-doc" href="Guides.dc.html?cat=Govern"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-gm-t">Govern</span><em>8</em></a></div><div class="rs-gm-new"><small>New here? · Guide 01 · 10 min</small><b>Turn your first SQL query into a REST API</b><span>A real HTTP endpoint, backed by your own SQL, with typed parameters, and no controller code written by hand.</span><a href="Guide.dc.html?g=01-turn-your-first-sql-query-into-a-rest-api" class="rs-gm-go">Start guide 01 →</a><a href="Playground.dc.html" class="rs-gm-alt">Or try it in the Playground first →</a></div></div><div class="rs-mega-foot rs-gm-foot"><span class="rs-gm-fh">By part of the architecture</span><div class="rs-mega-arch"><a href="Guides.dc.html#arch-who-calls">Who calls</a><a href="Guides.dc.html#arch-front-doors">Front doors</a><a href="Guides.dc.html#arch-core">The governed core</a><a href="Guides.dc.html#arch-asks">Asks</a><a href="Guides.dc.html#arch-your-data">Your data</a><a href="Guides.dc.html#arch-reports-to">Reports to</a></div></div></div></div></div>
+        <div class="rs-dd rs-mega rs-mega-eval"><a href="Trust.dc.html" style="color:var(--ink-2)">Evaluate<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Evaluate</span><b>What an evaluation asks for: fit, security and proof</b></div><a href="Trust.dc.html" class="rs-mega-all">Start at the Trust center →</a></div><div class="rs-mega-grid rs-mega-grid5"><a class="rs-mega-card" href="Integrations.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/puzzle.svg)"></span><span class="rs-mega-txt"><b>Integrations</b><span>The databases, identity providers, secret stores, clients and tools it works with, and how each is tested.</span></span></a><a class="rs-mega-card" href="Compare.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-compare.svg)"></span><span class="rs-mega-txt"><b>Compare</b><span>Against a hand-rolled API and the other ways to put a database behind an endpoint.</span></span></a><a class="rs-mega-card" href="Performance.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/gauge.svg)"></span><span class="rs-mega-txt"><b>Performance</b><span>What a governed call costs on PostgreSQL: throughput, latency under load, scale-out and a sizing rule.</span></span></a><a class="rs-mega-card" href="Performance-MySQL.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg)"></span><span class="rs-mega-txt"><b>Performance on MySQL</b><span>One server, a database per microservice, per-user queries across them: cost, sizing and isolation.</span></span></a><a class="rs-mega-card" href="Trust.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-mega-txt"><b>Trust center</b><span>Where data goes, what you can verify yourself, and how to report a vulnerability.</span></span></a><a class="rs-mega-card" href="Enterprise.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/building-2.svg)"></span><span class="rs-mega-txt"><b>Enterprise</b><span>Identity, audit, availability, cryptography and the downloadable security pack.</span></span></a><a class="rs-mega-card" href="Security.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg)"></span><span class="rs-mega-txt"><b>Security</b><span>What each layer defends against, and the hardening checklist before go-live.</span></span></a><a class="rs-mega-card" href="Standards.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-badge.svg)"></span><span class="rs-mega-txt"><b>Standards and specifications</b><span>The twenty-five RFCs and specifications it is built on, each with what it is used for.</span></span></a></div></div></div></div>
+        <a class="rs-sub" href="Integrations.dc.html" style="color:var(--ink-2)">Integrations</a><a class="rs-sub" href="Compare.dc.html" style="color:var(--ink-2)">Compare</a><a class="rs-sub" href="Performance.dc.html" style="color:var(--ink-2)">Performance</a><a class="rs-sub" href="Performance-MySQL.dc.html" style="color:var(--ink-2)">Performance on MySQL</a><a class="rs-sub" href="Trust.dc.html" style="color:var(--ink-2)">Trust center</a><a class="rs-sub" href="Enterprise.dc.html" style="color:var(--ink-2)">Enterprise</a><a class="rs-sub" href="Security.dc.html" style="color:var(--ink-2)">Security</a><a class="rs-sub" href="Standards.dc.html" style="color:var(--ink-2)">Standards and specifications</a>
+        <a href="Blog.dc.html" style="color:var(--ink-2)">Blog</a>
+        <a href="About.dc.html" style="color:var(--ink-2)">About</a>
+        <a href="Playground.dc.html" class="rs-pg" title="Playground: call the example APIs in your browser" aria-label="Playground"><svg class="rs-pg-ico" aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="3"/><path d="M6.5 10l3 2.5-3 2.5"/><rect class="rs-pg-caret" x="11.5" y="14" width="5" height="1.6" rx="0.8" fill="currentColor" stroke="none"/><circle class="rs-pg-live" cx="20" cy="5" r="2.6" fill="oklch(0.62 0.13 170)" stroke="var(--bg)" stroke-width="1.4"/></svg><span class="rs-pg-t">Playground</span></a>
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-ghn" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" title="GitHub" style="color:var(--ink-2);display:inline-flex;align-items:center;gap:6px" style-hover="color:var(--ink)"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg><span class="rs-ghn-n" data-gh-stars aria-label="GitHub stars"></span></a>
+        <button type="button" class="rs-theme" data-theme-toggle aria-label="Switch between light and dark theme" title="Theme"><svg class="rs-sun" aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="rs-moon" aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span class="rs-theme-t">Light / dark</span></button>
       </div>
     </div>
   </nav>
 
-  <div id="top" class="rs-2col g-layout" style="max-width:1600px;margin:0 auto;padding:56px 32px 88px;display:grid;grid-template-columns:250px minmax(0,1fr) 230px;gap:56px;align-items:start">
+  <div id="top" class="rs-2col g-layout" data-kind="{{ kind }}" style="max-width:1600px;margin:0 auto;padding:56px 32px 88px;display:grid;grid-template-columns:250px minmax(0,1fr) 230px;gap:56px;align-items:start">
     <aside class="rs-aside" style="position:sticky;top:84px;display:grid;gap:4px;font-size:13.5px;max-height:calc(100vh - 110px);overflow:auto">
-      <a href="{{ backHref }}" style="color:#4a5652;padding:4px 0 12px;font-weight:500">{{ backLabel }}</a>
-      <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69;padding-bottom:6px">{{ catLabel }}</span>
-      <sc-for list="{{ siblings }}" as="s" hint-placeholder-count="6">
-        <a href="{{ s.href }}" class="rs-2col" style="display:grid;grid-template-columns:26px minmax(0,1fr);gap:6px;padding:5px 0;color:{{ s.color }};font-weight:{{ s.weight }}"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:oklch(0.52 0.11 170);padding-top:3px">{{ s.num }}</span><span>{{ s.title }}</span></a>
+      <a href="{{ backHref }}" style="color:var(--ink-2);padding:4px 0 12px;font-weight:500">{{ backLabel }}</a>
+      <sc-for list="{{ railGroups }}" as="rg" hint-placeholder-count="1">
+        <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);padding:{{ rg.pad }} 0 6px">{{ rg.label }}</span>
+        <sc-for list="{{ rg.items }}" as="s" hint-placeholder-count="6">
+          <a href="{{ s.href }}" class="rs-2col" style="display:grid;grid-template-columns:{{ s.cols }};gap:6px;padding:5px 0;color:{{ s.color }};font-weight:{{ s.weight }}"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-ink);padding-top:3px">{{ s.num }}</span><span>{{ s.title }}</span></a>
+        </sc-for>
       </sc-for>
     </aside>
 
     <article style="display:grid;gap:24px;min-width:0">
-      <header style="display:grid;gap:12px;padding-bottom:24px;border-bottom:1px solid #dbe2df">
-        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.52 0.11 170)">{{ kindLabel }} · {{ catLabel }}</span>
-        <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(30px,3.8vw,44px);line-height:1.08;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">{{ title }}</h1>
-        <sc-if value="{{ showRepo }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13.5px;color:#626d69"><a href="{{ ghHref }}" style="color:#4a5652">View on GitHub ↗</a><a href="{{ editHref }}" style="color:#4a5652">Suggest an edit ↗</a></div></sc-if>
-      </header>
-      <sc-if value="{{ error }}" hint-placeholder-val="{{ false }}"><p style="margin:0;color:#4a5652">{{ error }}</p></sc-if>
+      <sc-if value="{{ post }}" hint-placeholder-val="{{ false }}">
+        <header class="bp-head">
+          <span class="bp-meta"><span class="bp-cat"><i style="background:{{ post.color }}"></i>{{ post.cat }}</span><span style="display:{{ post.topicShow }}">{{ post.topic }}</span><span class="bp-ver" style="display:{{ post.verShow }}">{{ post.version }}</span></span>
+          <h1>{{ title }}</h1>
+          <p class="bp-dek" style="display:{{ post.dekShow }}">{{ post.summary }}</p>
+          <div class="bp-by"><span>{{ post.when }}</span><button type="button" class="bp-share" onClick="{{ post.share }}"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>{{ post.shareLabel }}</button></div>
+        </header>
+      </sc-if>
+      <sc-if value="{{ notPost }}" hint-placeholder-val="{{ true }}">
+      <header style="display:grid;gap:12px;padding-bottom:24px;border-bottom:1px solid var(--line)">
+          <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">{{ kindLabel }} · {{ catLabel }}</span>
+          <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(30px,3.8vw,44px);line-height:1.08;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">{{ title }}</h1>
+          <sc-if value="{{ showRepo }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13.5px;color:var(--ink-3)"><a href="{{ ghHref }}" style="color:var(--ink-2)">View on GitHub ↗</a><a href="{{ editHref }}" style="color:var(--ink-2)">Suggest an edit ↗</a></div></sc-if>
+        </header>
+      </sc-if>
+      <sc-if value="{{ error }}" hint-placeholder-val="{{ false }}"><p style="margin:0;color:var(--ink-2)">{{ error }}</p></sc-if>
       <div id="guide-body" ref="{{ bodyRef }}" style="min-height:200px;min-width:0;max-width:100%;overflow-wrap:anywhere"></div>
-      <nav style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:28px;border-top:1px solid #dbe2df">
-        <sc-if value="{{ prev }}" hint-placeholder-val="{{ false }}"><a href="{{ prev.href }}" style="display:grid;gap:4px;padding:16px 18px;background:#fff;border:1px solid #dbe2df;border-radius:10px;color:#17201d" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-size:12px;color:#626d69">← Previous</span><b style="font-weight:600">{{ prev.title }}</b></a></sc-if>
-        <sc-if value="{{ next }}" hint-placeholder-val="{{ false }}"><a href="{{ next.href }}" style="display:grid;gap:4px;padding:16px 18px;background:#fff;border:1px solid #dbe2df;border-radius:10px;color:#17201d;text-align:right;grid-column:2" style-hover="border-color:oklch(0.52 0.11 170);text-decoration:none"><span style="font-size:12px;color:#626d69">Next →</span><b style="font-weight:600">{{ next.title }}</b></a></sc-if>
+      <nav style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-top:28px;border-top:1px solid var(--line)">
+        <sc-if value="{{ prev }}" hint-placeholder-val="{{ false }}"><a href="{{ prev.href }}" style="display:grid;gap:4px;padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--ink)" style-hover="border-color:var(--accent-ink);text-decoration:none"><span style="font-size:12px;color:var(--ink-3)">{{ prevLabel }}</span><b style="font-weight:600">{{ prev.title }}</b></a></sc-if>
+        <sc-if value="{{ next }}" hint-placeholder-val="{{ false }}"><a href="{{ next.href }}" style="display:grid;gap:4px;padding:16px 18px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--ink);text-align:right;grid-column:2" style-hover="border-color:var(--accent-ink);text-decoration:none"><span style="font-size:12px;color:var(--ink-3)">{{ nextLabel }}</span><b style="font-weight:600">{{ next.title }}</b></a></sc-if>
       </nav>
     </article>
 
     <aside class="g-toc rs-aside" aria-label="On this page" style="position:sticky;top:84px;gap:10px;font-size:13px;max-height:calc(100vh - 110px);overflow:auto;display:{{ tocDisplay }}">
-      <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#626d69">On this page</span>
-      <nav ref="{{ tocRef }}" style="display:grid;gap:2px;border-left:1px solid #dbe2df"></nav>
-      <a href="#top" style="font-size:12.5px;color:#626d69;padding-top:8px">Back to top ↑</a>
+      <span style="font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">On this page</span>
+      <nav ref="{{ tocRef }}" style="display:grid;gap:2px;border-left:1px solid var(--line)"></nav>
+      <a href="#top" style="font-size:12.5px;color:var(--ink-3);padding-top:8px">Back to top ↑</a>
     </aside>
   </div>
 
-  <footer class="ft" style="border-top:1px solid #dbe2df;background:#fff">
+  <footer class="ft" style="border-top:0;background:radial-gradient(circle,var(--dots) 0.4px,transparent 0.7px) 0 0/8px 1px repeat-x var(--bg)">
     <div style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;gap:40px">
       <div class="ft-grid">
         <div class="ft-brand">
-          <a href="Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:#17201d;text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:oklch(0.52 0.11 170)">API</span>Gate</span></a>
-          <p style="margin:0;font-size:14px;color:#4a5652;max-width:34ch;text-wrap:pretty">One governed gate between your databases and everything that asks them for data. Self-hosted: your data never leaves your infrastructure.</p>
+          <a href="Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:var(--ink);text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:var(--accent-ink)">API</span>Gate</span></a>
+          <p style="margin:0;font-size:14px;color:var(--ink-2);max-width:34ch;text-wrap:pretty">One governed gate between your databases and everything that asks them for data. Self-hosted: your data never leaves your infrastructure.</p>
           <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="ft-chip">Self-hosted</span><span class="ft-chip">Apache-2.0</span><span class="ft-chip">Signed releases + SBOM</span><span class="ft-chip">FIPS-approved crypto</span><span class="ft-chip">Python 3.11+</span></div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
             <a href="Docs.dc.html#install" class="ft-btn ft-btn-dark">Install →</a>
@@ -270,8 +368,8 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
             <a href="Guide.dc.html?d=MCP" class="ft-btn">MCP server →</a>
           </div>
         </div>
-        <div class="ft-col"><span class="ft-h">Product</span><a href="Features.dc.html">Features</a><a href="Use Cases.dc.html">Use cases</a><a href="Deploy.dc.html">Deploy</a><a href="Compare.dc.html">Compare</a><a href="Roadmap.dc.html">Roadmap</a><a href="Changelog.dc.html">Changelog</a></div>
-        <div class="ft-col"><span class="ft-h">Resources</span><a href="Docs.dc.html">Docs</a><a href="Guides.dc.html">How-to guides</a><a href="Guide.dc.html?d=API">API reference</a><a href="Guide.dc.html?d=MCP">MCP server</a><a href="https://AnanthaRajuC.github.io/QueryAPIGate/">Full reference site</a><a href="Blog.dc.html">Blog</a></div>
+        <div class="ft-col"><span class="ft-h">Product</span><a href="Features.dc.html">Features</a><a href="Use Cases.dc.html">Use cases</a><a href="Integrations.dc.html">Integrations</a><a href="Playground.dc.html">Playground</a><a href="Deploy.dc.html">Deploy</a><a href="Compare.dc.html">Compare</a><a href="Roadmap.dc.html">Roadmap</a><a href="Changelog.dc.html">Changelog</a></div>
+        <div class="ft-col"><span class="ft-h">Resources</span><a href="Docs.dc.html">Docs</a><a href="FAQ.dc.html">FAQ</a><a href="Glossary.dc.html">Glossary</a><a href="Guides.dc.html">How-to guides</a><a href="Guide.dc.html?d=API">API reference</a><a href="Guide.dc.html?d=MCP">MCP server</a><a href="https://AnanthaRajuC.github.io/QueryAPIGate/">Full reference site</a><a href="Blog.dc.html">Blog</a></div>
         <div class="ft-col"><span class="ft-h">Trust</span><a href="Trust.dc.html">Trust center</a><a href="Enterprise.dc.html">Enterprise</a><a href="Security.dc.html">Security</a><a href="Support.dc.html">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new">Report a vulnerability</a></div>
         <div class="ft-col"><span class="ft-h">Project</span><a href="About.dc.html">About</a><a href="Stack.dc.html">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE">Licence (Apache-2.0)</a></div>
       </div>
@@ -280,7 +378,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         <span class="ft-badges">
           <a href="https://github.com/AnanthaRajuC/QueryAPIGate/actions/workflows/ci.yml" aria-label="CI workflow status"><img src="https://github.com/AnanthaRajuC/QueryAPIGate/actions/workflows/ci.yml/badge.svg" alt="CI status" height="20"></a>
           <a href="https://scorecard.dev/viewer/?uri=github.com/AnanthaRajuC/QueryAPIGate" aria-label="OpenSSF Scorecard"><img src="https://api.scorecard.dev/projects/github.com/AnanthaRajuC/QueryAPIGate/badge" alt="OpenSSF Scorecard score" height="20"></a>
-          <a href="https://github.com/AnanthaRajuC/QueryAPIGate" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" style="color:#4a5652;display:inline-flex"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg></a>
+          <a href="https://github.com/AnanthaRajuC/QueryAPIGate" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" style="color:var(--ink-2);display:inline-flex"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg></a>
         </span>
       </div>
     </div>
@@ -300,6 +398,9 @@ class Component extends DCLogic {
       if (q.get('d')) { kind = 'd'; slug = q.get('d'); } else if (q.get('p')) { kind = 'p'; slug = q.get('p'); }
       if (!slug) slug = this.guides[0].slug;
       this.kind = kind;
+      // a post belongs to the Blog in the nav, not to Guides
+      if (kind === 'p') document.querySelectorAll('.rs-nav a[aria-current="page"]').forEach(a => { a.removeAttribute('aria-current'); a.style.color = 'var(--ink-2)'; });
+      if (kind === 'p') document.querySelectorAll('.rs-nav > a[href="Blog.dc.html"]').forEach(a => { a.setAttribute('aria-current', 'page'); a.style.color = 'var(--ink)'; });
       const path = kind === 'd' ? (this.docs.find(d => d.slug === slug) || {}).path : kind === 'p' ? 'blog/' + slug + '.md' : 'how-to/' + slug + '.md';
       this.setState({ slug });
       fetch(path).then(r => r.ok ? r.text() : Promise.reject(new Error(r.status))).then(md => this.setState({ md })).catch(() => this.setState({ error: 'This guide could not be loaded. It is on GitHub.' }));
@@ -315,7 +416,7 @@ class Component extends DCLogic {
     const t = g.title + ' - QueryAPIGate';
     if (document.title !== t) document.title = t;
     const desc = document.querySelector('meta[name="description"]');
-    if (desc) desc.setAttribute('content', (kind === 'd' ? 'QueryAPIGate documentation: ' : kind === 'p' ? 'QueryAPIGate blog: ' : 'QueryAPIGate how-to guide: ') + g.title);
+    if (desc) desc.setAttribute('content', kind === 'p' && g.summary ? g.summary : (kind === 'd' ? 'QueryAPIGate documentation: ' : kind === 'p' ? 'QueryAPIGate blog: ' : 'QueryAPIGate how-to guide: ') + g.title);
   }
   renderMd() {
     const el = this.bodyRef.current;
@@ -323,6 +424,7 @@ class Component extends DCLogic {
     const html = window.marked.parse(this.state.md, { gfm: true, breaks: false });
     el.innerHTML = html;
     el.querySelectorAll('table').forEach(t => { const w = document.createElement('div'); w.className = 'md-table'; t.parentNode.insertBefore(w, t); w.appendChild(t); });
+    this.mdExtras(el);
     // every code block becomes a terminal window with a language label and a Copy button
     const ICON = '<svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
     el.querySelectorAll('pre').forEach(pre => {
@@ -362,6 +464,53 @@ class Component extends DCLogic {
     el.querySelectorAll('h2, h3, h4, h5, h6').forEach(h => { if (h.id) return; const base = h.textContent.trim().toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/\s/g, '-'); const n = seenIds[base] || 0; seenIds[base] = n + 1; h.id = n ? base + '-' + n : base; });
     this.buildToc(el);
   }
+  // Extras for reports: callouts, right-aligned number columns, captioned figures, ```stats and ```bars blocks.
+  mdExtras(el) {
+    const esc = t => t.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const KINDS = { NOTE: 'Note', TIP: 'Tip', IMPORTANT: 'Important', WARNING: 'Warning', CAUTION: 'Caution' };
+    el.querySelectorAll('blockquote').forEach(q => {
+      const p = q.firstElementChild; const m = p && p.tagName === 'P' && p.innerHTML.match(/^\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]\s*(<br>)?\s*/i);
+      if (!m) return;
+      const k = m[1].toUpperCase(); p.innerHTML = p.innerHTML.slice(m[0].length); if (!p.textContent.trim()) p.remove();
+      q.className = 'md-callout ' + k.toLowerCase(); q.insertAdjacentHTML('afterbegin', '<div class="md-callout-t">' + KINDS[k] + '</div>');
+    });
+    const NUM = /^[~≈<>≤≥±+\-−]?\s*[$€£]?\d[\d,.\s]*(\.\d+)?\s*(%|×|x|[a-zA-Zµ/]{1,7})?$/;
+    el.querySelectorAll('.md-table table').forEach(t => {
+      const rows = [...t.querySelectorAll('tbody tr')]; if (!rows.length) return;
+      const n = Math.max(...rows.map(r => r.cells.length));
+      for (let c = 1; c < n; c++) {
+        const cells = rows.map(r => r.cells[c]).filter(Boolean); const vals = cells.map(x => x.textContent.trim()).filter(v => v && v !== '—' && v !== '-');
+        // "682 (679-686)" and "2.1 / 3.0 ms" count as numbers too: a value with its range, or several values
+        const isNum = v => v.replace(/\s*\([^)]*\)/g, '').split(/\s*\/\s*(?=[\d~≈<>±+\-−])/).every(x => NUM.test(x.trim()));
+        if (!vals.length || !vals.every(isNum)) continue;
+        cells.forEach(x => x.classList.add('num')); const h = t.tHead && t.tHead.rows[0] && t.tHead.rows[0].cells[c]; if (h) h.classList.add('num');
+      }
+    });
+    el.querySelectorAll('p > img:only-child').forEach(img => {
+      const p = img.parentElement; if (p.textContent.trim()) return;
+      const cap = img.getAttribute('title') || img.getAttribute('alt') || '';
+      const f = document.createElement('figure'); p.replaceWith(f); f.appendChild(img); img.loading = 'lazy';
+      if (cap) { const c = document.createElement('figcaption'); c.textContent = cap; f.appendChild(c); }
+    });
+    el.querySelectorAll('pre > code.language-stats').forEach(code => {
+      const box = document.createElement('div'); box.className = 'md-stats';
+      code.textContent.split('\n').map(l => l.trim()).filter(Boolean).forEach(l => {
+        const [v, label, note] = l.split('|').map(x => (x || '').trim());
+        box.insertAdjacentHTML('beforeend', '<div class="md-stat"><b>' + esc(v) + '</b>' + (label ? '<span>' + esc(label) + '</span>' : '') + (note ? '<small>' + esc(note) + '</small>' : '') + '</div>');
+      });
+      code.parentElement.replaceWith(box);
+    });
+    el.querySelectorAll('pre > code.language-bars').forEach(code => {
+      const box = document.createElement('figure'); box.className = 'md-bars'; let title = '';
+      const rows = code.textContent.split('\n').map(l => l.trim()).filter(Boolean).filter(l => { const m = l.match(/^title:\s*(.+)$/i); if (m) { title = m[1]; return false; } return true; })
+        .map(l => { const hi = / \*$/.test(l); const [label, val] = l.replace(/ \*$/, '').split('|').map(x => (x || '').trim()); return { label, val, hi, n: parseFloat((val || '').replace(/,/g, '')) || 0 }; });
+      const max = Math.max(...rows.map(r => r.n), 0) || 1;
+      box.innerHTML = (title ? '<figcaption class="md-bars-t">' + esc(title) + '</figcaption>' : '') + rows.map(r =>
+        '<div class="md-bar' + (r.hi ? ' hi' : '') + '"><span class="md-bar-l">' + esc(r.label) + '</span><span class="md-bar-track"><span class="md-bar-fill" style="width:calc((100% - 90px) * ' + (r.n / max).toFixed(4) + ')"></span><span class="md-bar-v">' + esc(r.val || '') + '</span></span></div>').join('');
+      box.setAttribute('role', 'img'); box.setAttribute('aria-label', (title ? title + ': ' : '') + rows.map(r => r.label + ' ' + r.val).join(', '));
+      code.parentElement.replaceWith(box);
+    });
+  }
   // "On this page": one link per h2 and h3; the one whose section is in view is marked as you scroll.
   buildToc(el) {
     const toc = this.tocRef.current; if (!toc) return;
@@ -384,19 +533,35 @@ class Component extends DCLogic {
     const gs = (kind === 'd' ? this.docs : kind === 'p' ? this.posts : this.guides) || [];
     const i = gs.findIndex(g => g.slug === this.state.slug);
     const g = gs[i];
-    const href = s => 'Guide.dc.html?' + kind + '=' + s.slug;
+    const href = s => s.href || 'Guide.dc.html?' + kind + '=' + s.slug;
     const sib = g ? (kind === 'p' ? gs : gs.filter(x => x.cat === g.cat)) : [];
     const repoPath = g ? (kind === 'd' ? g.path : kind === 'p' ? null : 'how-to/' + g.slug + '.md') : null;
     const backHref = kind === 'd' ? 'Docs.dc.html' : kind === 'p' ? 'Blog.dc.html' : 'Guides.dc.html';
     const backLabel = kind === 'd' ? '← Docs' : kind === 'p' ? '← Blog' : '← All guides';
+    // A post's header: category, labels, summary, date and reading time (from the markdown once it has loaded).
+    const PC = { Benchmark: 'oklch(0.66 0.17 40)', Performance: 'oklch(0.72 0.15 65)', Release: 'oklch(0.62 0.12 170)', 'Design note': 'oklch(0.62 0.13 255)', Migration: 'oklch(0.62 0.14 320)' };
+    const MON = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    let post = null;
+    if (kind === 'p' && g) {
+      const d = (g.date || '').split('-').map(Number);
+      const date = d[2] ? d[2] + ' ' + MON[d[1] - 1] + ' ' + d[0] : d[1] ? MON[d[1] - 1] + ' ' + d[0] : '';
+      const words = this.state.md ? this.state.md.replace(/```[\s\S]*?```/g, ' ').split(/\s+/).filter(Boolean).length : 0;
+      post = { cat: g.cat, topic: g.topic || '', topicShow: g.topic ? 'inline' : 'none', version: g.version || '', verShow: g.version ? 'inline-block' : 'none', color: PC[g.cat] || 'var(--ink-4)',
+        summary: g.summary || '', dekShow: g.summary ? 'block' : 'none', when: date + (words ? ' · ' + Math.max(1, Math.round(words / 220)) + ' min read' : ''),
+        shareLabel: this.state.copied ? 'Link copied' : 'Copy link',
+        share: () => { try { navigator.clipboard.writeText(location.origin + location.pathname + '?p=' + g.slug); } catch (e) {} this.setState({ copied: true }); clearTimeout(this.copyT); this.copyT = setTimeout(() => this.setState({ copied: false }), 1600); } };
+    }
     return {
+      kind, post, notPost: kind !== 'p', prevLabel: kind === 'p' ? '← Newer post' : '← Previous', nextLabel: kind === 'p' ? 'Older post →' : 'Next →',
       bodyRef: this.bodyRef, tocRef: this.tocRef, tocDisplay: this.state.tocCount ? 'grid' : 'none', error: this.state.error, backHref, backLabel,
       kindLabel: kind === 'd' ? 'Documentation' : kind === 'p' ? (g ? g.date : 'Blog') : 'Guide ' + (g ? g.num : ''),
       showRepo: !!repoPath,
       num: g ? g.num : '', title: g ? g.title : 'Loading…', catLabel: g ? g.cat : '',
       ghHref: g && g.repoUrl ? g.repoUrl : repoPath ? 'https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/' + repoPath : '#',
       editHref: g && g.repoUrl ? g.repoUrl.replace('/blob/', '/edit/') : repoPath ? 'https://github.com/AnanthaRajuC/QueryAPIGate/edit/main/' + repoPath : '#',
-      siblings: sib.map(s => ({ num: s.num || '', title: s.title, href: href(s), color: s.slug === this.state.slug ? '#17201d' : '#4a5652', weight: s.slug === this.state.slug ? 600 : 400 })),
+      // Left rail: guides show the current category; documents show every group, so the rail reads as the documentation's table of contents.
+      railGroups: (kind === 'd' ? ['Run it', 'Reference', 'Performance', 'Security', 'Project'].map(c => ({ label: c, items: gs.filter(x => x.cat === c) })).filter(x => x.items.length) : [{ label: kind === 'p' ? 'All posts' : g ? g.cat : '', items: sib }])
+        .map((grp, k) => ({ label: grp.label, pad: k ? '14px' : '0', items: grp.items.map(s => ({ num: s.num || '', cols: s.num ? '26px minmax(0,1fr)' : '0 minmax(0,1fr)', title: s.title, href: href(s), color: s.slug === this.state.slug ? 'var(--ink)' : 'var(--ink-2)', weight: s.slug === this.state.slug ? 600 : 400 })) })),
       prev: i > 0 ? { title: gs[i - 1].title, href: href(gs[i - 1]) } : null,
       next: i >= 0 && i < gs.length - 1 ? { title: gs[i + 1].title, href: href(gs[i + 1]) } : null,
     };

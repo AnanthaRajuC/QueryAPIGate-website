@@ -538,6 +538,24 @@ export const guides = [
   "time": "15 min",
   "timeMin": 15,
   "outcome": "One QueryAPIGate serving several teams, each managing its own connections, saved queries and API keys in a workspace of its own - its owner running it without reaching anyone else's, its apps calling it as if it were the only one, and you, the platform team, seeing all of it."
+ },
+ {
+  "num": "61",
+  "slug": "61-connect-to-trino",
+  "title": "Connect to Trino",
+  "cat": "Start",
+  "time": "10 min",
+  "timeMin": 10,
+  "outcome": "One connection that reaches every catalog behind a Trino endpoint - Hive, Iceberg, Delta, Kafka, object stores, other databases - each one a governed, saved REST and MCP query, with allowed_tables, masking and a real query time limit."
+ },
+ {
+  "num": "62",
+  "slug": "62-see-whats-being-used-from-the-console",
+  "title": "See what's being used, from the Console",
+  "cat": "Operate",
+  "time": "10 min",
+  "timeMin": 10,
+  "outcome": "A clear read on which keys, connections, queries and tools are actually in use - which ones are busy, which are granted but never touched - without wiring up any external monitoring."
  }
 ];
 
@@ -546,6 +564,12 @@ export const docs = [
   "slug": "INSTALLATION_AND_SETUP",
   "path": "documentation/INSTALLATION_AND_SETUP.md",
   "title": "Installation and setup",
+  "cat": "Run it"
+ },
+ {
+  "slug": "CONFIGURATION",
+  "path": "documentation/CONFIGURATION.md",
+  "title": "Configuration",
   "cat": "Run it"
  },
  {
@@ -573,6 +597,12 @@ export const docs = [
   "cat": "Reference"
  },
  {
+  "slug": "FEATURES",
+  "path": "documentation/FEATURES.md",
+  "title": "Features",
+  "cat": "Reference"
+ },
+ {
   "slug": "EXAMPLES",
   "path": "documentation/EXAMPLES.md",
   "title": "Example APIs",
@@ -583,6 +613,36 @@ export const docs = [
   "path": "documentation/QUERY_METADATA_MANAGEMENT.md",
   "title": "Query metadata",
   "cat": "Reference"
+ },
+ {
+  "slug": "SCREENSHOTS",
+  "path": "documentation/SCREENSHOTS.md",
+  "title": "A tour of the Console",
+  "cat": "Reference"
+ },
+ {
+  "slug": "PERFORMANCE_V3",
+  "path": "documentation/PERFORMANCE_V3.md",
+  "title": "Performance, v3: an OLTP benchmark on PostgreSQL",
+  "cat": "Performance"
+ },
+ {
+  "slug": "PERFORMANCE_MYSQL_V1",
+  "path": "documentation/PERFORMANCE_MYSQL_V1.md",
+  "title": "Performance on MySQL, v1: microservice databases, per-user queries",
+  "cat": "Performance"
+ },
+ {
+  "slug": "PERFORMANCE_V2",
+  "path": "documentation/PERFORMANCE_V2.md",
+  "title": "Performance, v2: an OLTP benchmark on PostgreSQL",
+  "cat": "Performance"
+ },
+ {
+  "slug": "PERFORMANCE",
+  "path": "documentation/PERFORMANCE.md",
+  "title": "Performance",
+  "cat": "Performance"
  },
  {
   "slug": "THREAT_MODEL",
@@ -624,6 +684,12 @@ export const docs = [
   "repoUrl": "https://github.com/AnanthaRajuC/QueryAPIGate-website/blob/main/security-pack/SBOM.md"
  },
  {
+  "slug": "WHY",
+  "path": "documentation/WHY.md",
+  "title": "Why QueryAPIGate",
+  "cat": "Project"
+ },
+ {
   "slug": "TECHNOLOGY_STACK",
   "path": "documentation/TECHNOLOGY_STACK.MD",
   "title": "Technology stack",
@@ -640,56 +706,73 @@ export const docs = [
   "path": "CODE_OF_CONDUCT.md",
   "title": "Code of conduct",
   "cat": "Project"
- },
- {
-  "slug": "CONFIGURATION",
-  "path": "documentation/CONFIGURATION.md",
-  "title": "Configuration",
-  "cat": "Reference"
- },
- {
-  "slug": "FEATURES",
-  "path": "documentation/FEATURES.md",
-  "title": "Features",
-  "cat": "Reference"
- },
- {
-  "slug": "SCREENSHOTS",
-  "path": "documentation/SCREENSHOTS.md",
-  "title": "A tour of the Console",
-  "cat": "Reference"
- },
- {
-  "slug": "WHY",
-  "path": "documentation/WHY.md",
-  "title": "Why QueryAPIGate",
-  "cat": "Reference"
  }
 ];
 
+/* Blog posts, newest first: the Blog page, each post's page, the search index, the sitemap and feed.xml all read this list.
+   To publish: add blog/<slug>.md and an entry here, then run python3 tools/search_index.py.
+   date: "YYYY-MM-DD" (or "YYYY-MM"). cat: Benchmark, Performance, Release, Design note or Migration; a new one gets a filter of its own.
+   topic and version are optional labels. summary is the card text. featured: true puts a post in the large card at the top
+   (otherwise the newest is). href sends the card somewhere other than blog/<slug>.md, such as the changelog. */
 export const posts = [
+ {
+  "slug": "one-mysql-six-services",
+  "title": "One MySQL server, six services, one gateway",
+  "date": "2026-10-25",
+  "cat": "Benchmark",
+  "topic": "Operations",
+  "summary": "Per-user queries joining across six microservice databases on one MySQL server, through QueryAPIGate: about 1.2 ms added a call, 580-780 calls a second per worker, a ping we didn't know we were paying for, why lookups want one thread, and the isolation gap to close before you rely on table allow-lists."
+ },
+ {
+  "slug": "what-a-governed-call-costs",
+  "title": "What a governed call costs",
+  "date": "2026-10-24",
+  "cat": "Benchmark",
+  "topic": "Operations",
+  "summary": "QueryAPIGate 0.42 on PostgreSQL, measured properly: masking and table allow-lists now cost about 7%, one worker serves 730-875 calls a second, and most of what's left is round trips. The full method, every result with its range, where the time goes, a sizing rule, and what our first two attempts got wrong."
+ },
+ {
+  "slug": "thirteen-releases-to-1-0",
+  "title": "Thirteen releases on the way to 1.0",
+  "date": "2026-10",
+  "cat": "Release",
+  "topic": "Release roundup",
+  "version": "0.22 – 0.34",
+  "href": "Changelog.dc.html",
+  "cta": "Read the changelog",
+  "summary": "Tracing, security headers, per-key limits and quotas, a tamper-evident audit log streamed to your SIEM and a Helm chart. Configuration as code, secrets managers and short-lived credentials, FIPS-approved cryptography. Eight features graduated in 0.30, releases are signed from 0.31, and live events are stable from 0.34. 0.34.1 and 0.34.2 are security fixes for MongoDB connections: upgrade if you use one."
+ },
  {
   "slug": "agents-can-write-now",
   "title": "Agents can write now. A person approves each write.",
-  "date": "11 October 2026",
-  "cat": "Release"
+  "date": "2026-10-11",
+  "cat": "Release",
+  "topic": "Agents",
+  "version": "0.21",
+  "summary": "MCP write tools stop being a flat no. An agent proposes a write; it queues in the Console with the exact statement, the key that asked, and the connection it would touch. An administrator approves or rejects it, and both decisions land in the audit log."
  },
  {
   "slug": "why-every-front-door-runs-the-same-eight-steps",
   "title": "Why every front door runs the same eight steps",
-  "date": "11 October 2026",
-  "cat": "Design note"
+  "date": "2026-10-11",
+  "cat": "Design note",
+  "topic": "Architecture",
+  "summary": "REST, MCP, server-sent events and the export CLI all call one engine. Identity, limits, grant, parameters, SQL guard, execution, masking, record: the order is fixed, and a step that fails stops the call with a typed error code."
  },
  {
   "slug": "one-worker-many-threads",
   "title": "One worker, many threads, and what Redis is actually for",
-  "date": "11 October 2026",
-  "cat": "Design note"
+  "date": "2026-10-11",
+  "cat": "Design note",
+  "topic": "Operations",
+  "summary": "/metrics is per process, so gunicorn runs one worker and scales with threads; capacity comes from more instances. Redis then gives you one response cache, one rate-limit budget and one event stream, and if it blinks, limits are never lifted."
  },
  {
   "slug": "sql2api-is-now-queryapigate",
   "title": "SQL2API is now QueryAPIGate",
-  "date": "11 October 2026",
-  "cat": "Migration"
+  "date": "2026-10-11",
+  "cat": "Migration",
+  "topic": "Project",
+  "summary": "The same project, renamed because sql2api was shared by a dozen unrelated projects. A clean break: package, command, environment variables, metrics prefix and Docker image all change, and a server that still finds a SQL2API_* variable refuses to start."
  }
 ];

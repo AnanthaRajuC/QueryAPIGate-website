@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- site-meta -->
+<title>Kubernetes - QueryAPIGate</title>
+<meta name="description" content="Run QueryAPIGate on Kubernetes with the signed Helm chart: one pod on SQLite, or several on PostgreSQL and Redis behind a disruption budget, installed and upgraded under load in CI.">
+<meta name="theme-color" content="#10201b">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QueryAPIGate">
+<meta property="og:title" content="Kubernetes - QueryAPIGate">
+<meta property="og:description" content="Run QueryAPIGate on Kubernetes with the signed Helm chart: one pod on SQLite, or several on PostgreSQL and Redis behind a disruption budget, installed and upgraded under load in CI.">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:image" content="https://anantharajuc.github.io/QueryAPIGate-website/images/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="QueryAPIGate: one governed gate between your databases and everything that asks them for data.">
+<meta property="og:url" content="https://anantharajuc.github.io/QueryAPIGate-website/Deploy-Kubernetes.dc.html">
+<!-- /site-meta -->
+<script src="./support.js"></script>
+<script src="./theme.js?v=12"></script>
+<script src="./search.js?v=5" defer></script>
+<script>
+(function () {
+  // The three deployment diagrams: a request pill travels the edges, each edge lights as it passes, the node it reaches
+  // is outlined, and a caption narrates. A button per shape runs a scenario (restart, failover, rollout). Timelines only
+  // advance while the diagram is on screen; with reduced motion the moves are instant and only the captions step.
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var figs = [], inView = true;
+  var SCENES = {
+    single: {
+      idle: [
+        { n: '01', cap: 'TLS ends at the reverse proxy; the key travels in a header', move: ['apps-proxy'], label: 'GET /q/orders', pk: 1, ms: 1100 },
+        { n: '02', cap: 'the gateway checks the key, the grant and the parameters', move: ['proxy-gate'], pk: 1, ms: 900, on: 'gate', hold: 900 },
+        { n: '03', cap: 'bound parameters run on your database', move: ['gate-db'], label: 'SELECT …', pk: 1, ms: 900, on: 'db', hold: 500 },
+        { n: '04', cap: 'rows come back, masked and formatted; the run is recorded in the store', move: ['gate-db'], back: true, label: '200 · 12 rows', pk: 2, ms: 900, on: 'store', hold: 700 },
+        { n: '05', cap: 'the answer goes out the way it came', move: ['proxy-gate', 'apps-proxy'], back: true, label: '200 · 12 rows', pk: 2, ms: 1300, hold: 1800 }
+      ],
+      restart: [
+        { n: 'S1', cap: 'the process stops: a crash, a redeploy, a reboot', state: { gate: 'off' }, cut: ['proxy-gate', 'gate-db', 'gate-store'], hold: 1800 },
+        { n: 'S2', cap: 'the store is a file on a volume: queries, keys and history are all still there', on: 'store', hold: 2000 },
+        { n: 'S3', cap: 'the container restarts; same data, same keys, nothing to re-create', state: { gate: '' }, cut: [], on: 'gate', hold: 1600 },
+        { n: 'S4', cap: 'the first request after the restart is served like any other', move: ['apps-proxy', 'proxy-gate'], label: 'GET /q/orders', pk: 1, ms: 1500, on: 'gate', hold: 1200 }
+      ]
+    },
+    ha: {
+      idle: [
+        { n: '01', cap: 'the balancer health-checks every instance and picks a healthy one', move: ['apps-lb'], label: 'GET /q/orders', pk: 1, ms: 1000 },
+        { n: '02', cap: 'any instance can answer: keys, grants and history live in the shared PostgreSQL store', move: ['lb-i1'], pk: 1, ms: 900, on: 'i1', hold: 500 },
+        { n: '03', cap: 'rate limits, quotas and the cache are counted in Redis, across every instance', move: ['i1-pg'], label: 'grant?', pk: 1, ms: 800, on: 'pg', hold: 600 },
+        { n: '04', cap: 'the next request lands on another instance and meets the same rules', move: ['apps-lb', 'lb-i2'], label: 'GET /q/orders', pk: 1, ms: 1500, on: 'i2', hold: 500 },
+        { n: '05', cap: 'its limit is checked against the shared count in Redis', move: ['i2-redis'], label: '87 / 100', pk: 2, ms: 800, on: 'redis', hold: 1800 }
+      ],
+      kill: [
+        { n: 'S1', cap: 'instance 2 stops answering health checks', state: { i2: 'fail' }, cut: ['lb-i2'], hold: 1600 },
+        { n: 'S2', cap: 'the balancer skips it: the next requests go to the healthy instances', move: ['apps-lb', 'lb-i1'], label: 'GET /q/orders', pk: 1, ms: 1500, on: 'i1', hold: 300 },
+        { n: 'S3', cap: 'nothing is lost: limits, cache and events are shared, not held by the instance', move: ['i1-pg'], label: 'grant?', pk: 1, ms: 800, on: 'pg', hold: 1400 },
+        { n: 'S4', cap: 'it passes its checks again and rejoins the pool', state: { i2: '' }, cut: [], on: 'i2', hold: 1600 }
+      ]
+    },
+    k8s: {
+      idle: [
+        { n: '01', cap: 'the ingress routes REST calls to the deployment’s pods', move: ['ingress-deploy'], label: 'GET /q/orders', pk: 1, ms: 1100, on: 'deploy', hold: 500 },
+        { n: '02', cap: 'database credentials come from a Secret or Vault, never from the chart values', move: ['deploy-secret'], label: 'existingSecret', pk: 2, ms: 800, back: true, on: 'secret', hold: 600 },
+        { n: '03', cap: 'the pod queries your database; the store and limits are in PostgreSQL and Redis', move: ['deploy-db'], label: 'SELECT …', pk: 1, ms: 1100, on: 'db', hold: 600 },
+        { n: '04', cap: '/events and MCP are routed to their own pods, scaled separately', move: ['ingress-events'], label: 'tools/call', pk: 1, ms: 1100, on: 'events', hold: 500 },
+        { n: '05', cap: 'a ServiceMonitor scrapes token-protected /metrics from every pod', move: ['events-svcmon'], label: '/metrics', pk: 2, ms: 800, on: 'svcmon', hold: 1800 }
+      ],
+      rollout: [
+        { n: 'S1', cap: 'helm upgrade: the rolling update replaces one pod at a time', pods: { 1: 'drain' }, on: 'deploy', hold: 1300 },
+        { n: 'S2', cap: 'the disruption budget keeps two pods serving while pod 1 is replaced', pods: { 1: 'new' }, move: ['ingress-deploy'], label: 'GET /q/orders', pk: 1, ms: 1100, hold: 500 },
+        { n: 'S3', cap: 'pod 2 drains once pod 1 passes its readiness probe', pods: { 2: 'drain' }, hold: 1200 },
+        { n: 'S4', cap: 'pod 2 replaced; requests never stopped', pods: { 2: 'new' }, move: ['ingress-deploy'], label: 'GET /q/orders', pk: 1, ms: 1100, hold: 500 },
+        { n: 'S5', cap: 'pod 3 drains and comes back on the new version', pods: { 3: 'drain' }, hold: 1200 },
+        { n: 'S6', cap: 'all three pods on the new version; the chart refused nothing, because the setup can work', pods: { 3: 'new' }, hold: 2200, then: { 1: '', 2: '', 3: '' } }
+      ]
+    }
+  };
+  function pts(d) { var m = d.match(/-?[\d.]+/g).map(Number), o = []; for (var i = 0; i < m.length; i += 2) o.push([m[i], m[i + 1]]); return o; }
+  function Fig(el) {
+    var self = this; this.el = el; this.key = el.getAttribute('data-shape'); this.svg = el.querySelector('svg');
+    this.nodes = {}; el.querySelectorAll('.dn').forEach(function (g) { self.nodes[g.getAttribute('data-node')] = g; });
+    this.edges = {}; el.querySelectorAll('.de').forEach(function (p) { self.edges[p.getAttribute('data-edge')] = { el: p, pts: pts(p.getAttribute('d')), glow: el.querySelector('[data-glow="' + p.getAttribute('data-edge') + '"]') }; });
+    for (var k in this.edges) { var g = this.edges[k].glow, L = g.getTotalLength(); this.edges[k].len = L; g.style.strokeDasharray = L; g.style.strokeDashoffset = L; }
+    this.pk = { 1: el.querySelector('[data-pk="1"]'), 2: el.querySelector('[data-pk="2"]') };
+    this.capN = el.querySelector('.d-cap-n'); this.capT = el.querySelector('.d-cap-t'); this.cap = el.querySelector('.d-cap'); this.btn = el.querySelector('.d-scn');
+    this.scene = SCENES[this.key].idle; this.i = -1; this.t = 0; this.step = null; this.scn = false;
+    this.btn.addEventListener('click', function () { if (self.scn) return; self.run(self.key === 'single' ? 'restart' : self.key === 'ha' ? 'kill' : 'rollout'); });
+  }
+  Fig.prototype.fit = function () {
+    if (this.fitted) return; this.fitted = true;
+    this.el.querySelectorAll('.dn').forEach(function (g) {
+      var lg = g.querySelector('.logos'), t = g.querySelector('.ttl'); if (!lg || !t) return;
+      var marks = lg.children, lw = marks.length * 14 + (marks.length - 1) * 4, tw = t.getComputedTextLength(), cx = +t.getAttribute('x'), ty = +t.getAttribute('y');
+      var x0 = cx - (lw + 6 + tw) / 2;
+      for (var i = 0; i < marks.length; i++) marks[i].setAttribute('transform', 'translate(' + (x0 + i * 18) + ' ' + (ty - 7) + ')');
+      t.setAttribute('text-anchor', 'start'); t.setAttribute('x', x0 + lw + 6);
+    });
+  };
+  Fig.prototype.visible = function () { return inView && !document.hidden && this.svg.getClientRects().length > 0 && this.svg.getBoundingClientRect().width > 0; };
+  Fig.prototype.run = function (name) { this.scn = true; this.btn.disabled = true; this.btn.textContent = 'Running…'; this.cap.classList.add('scn'); this.reset(); this.scene = SCENES[this.key][name]; this.i = -1; this.t = 0; this.begin(); };
+  Fig.prototype.reset = function () {
+    for (var k in this.nodes) this.nodes[k].setAttribute('class', 'dn'); for (var e in this.edges) { this.edges[e].el.classList.remove('cut'); this.edges[e].glow.classList.remove('lit'); }
+    this.pk[1].classList.remove('on'); this.pk[2].classList.remove('on'); this.el.querySelectorAll('.pod').forEach(function (p) { p.setAttribute('class', 'pod'); });
+  };
+  Fig.prototype.begin = function () {
+    var st = this.step, self = this;
+    if (st && st.then) Object.keys(st.then).forEach(function (n) { self.pod(n, st.then[n]); });
+    this.i++;
+    if (this.i >= this.scene.length) {
+      if (this.scn) { this.scn = false; this.btn.disabled = false; this.btn.textContent = this.btnLabel; this.cap.classList.remove('scn'); this.reset(); this.scene = SCENES[this.key].idle; }
+      this.i = 0;
+    }
+    st = this.step = this.scene[this.i]; this.t = 0;
+    this.capN.textContent = st.n; this.capT.textContent = st.cap;
+    for (var k in this.nodes) this.nodes[k].classList.remove('on');
+    for (var e in this.edges) this.edges[e].glow.classList.remove('lit');
+    if (st.state) for (var n in st.state) this.nodes[n].setAttribute('class', 'dn' + (st.state[n] ? ' ' + st.state[n] : ''));
+    if (st.cut) for (var e2 in this.edges) this.edges[e2].el.classList.toggle('cut', st.cut.indexOf(e2) >= 0);
+    if (st.pods) for (var pn in st.pods) this.pod(pn, st.pods[pn]);
+    if (st.move) {
+      var path = [], total = 0, segs = [];
+      for (var m = 0; m < st.move.length; m++) { var ed = this.edges[st.move[m]], p = ed.pts.slice(); if (st.back) p.reverse(); segs.push({ ed: ed, pts: p, len: ed.len, start: total }); total += ed.len; }
+      this.mv = { segs: segs, total: total, ms: still ? 0 : st.ms };
+      var g = this.pk[st.pk || 1]; if (st.label) { var tx = g.querySelector('text'), rc = g.querySelector('rect'); tx.textContent = st.label; var w = Math.max(28, tx.getComputedTextLength() + 14); rc.setAttribute('width', w); rc.setAttribute('x', -w / 2); tx.setAttribute('x', 0); }
+      g.classList.add('on'); this.place(0);
+    } else { this.mv = null; if (st.on) this.nodes[st.on].classList.add('on'); }
+  };
+  Fig.prototype.pod = function (n, state) { var p = this.el.querySelector('.pod[data-pod="' + n + '"]'); if (p) p.setAttribute('class', 'pod' + (state ? ' ' + state : '')); };
+  Fig.prototype.place = function (f) {
+    var mv = this.mv, dist = f * mv.total, g = this.pk[this.step.pk || 1], x = 0, y = 0;
+    for (var i = 0; i < mv.segs.length; i++) {
+      var sg = mv.segs[i], local = dist - sg.start;
+      if (local >= sg.len || i === mv.segs.length - 1) { if (local >= sg.len) { sg.ed.glow.classList.add('lit'); sg.ed.glow.style.strokeDashoffset = this.step.back ? -sg.len * 0 : 0; } }
+      if (local < 0) break;
+      var q = Math.min(1, local / sg.len), a = sg.pts[0], b = sg.pts[sg.pts.length - 1];
+      x = a[0] + (b[0] - a[0]) * q; y = a[1] + (b[1] - a[1]) * q;
+      sg.ed.glow.classList.add('lit'); sg.ed.glow.style.strokeDashoffset = this.step.back ? sg.len * (1 - q) * -1 + 0 : sg.len * (1 - q);
+      if (this.step.back) { sg.ed.glow.style.strokeDashoffset = sg.len * (1 - q); }
+    }
+    g.setAttribute('transform', 'translate(' + x + ' ' + (y - 8) + ')');
+  };
+  Fig.prototype.tick = function (dt) {
+    this.fit();
+    if (!this.step) { this.btnLabel = this.btn.textContent; this.begin(); return; }
+    this.t += dt; var st = this.step;
+    if (this.mv) {
+      var f = this.mv.ms ? Math.min(1, this.t / this.mv.ms) : 1; this.place(f);
+      if (f >= 1) { this.pk[st.pk || 1].classList.remove('on'); if (st.on) this.nodes[st.on].classList.add('on'); this.mv = null; this.t = 0; }
+    } else if (this.t >= (st.hold || 300)) this.begin();
+  };
+  var last = 0;
+  function frame(now) {
+    var dt = Math.min(50, now - (last || now)); last = now;
+    for (var i = 0; i < figs.length; i++) if (figs[i].visible()) figs[i].tick(dt);
+    requestAnimationFrame(frame);
+  }
+  function init() {
+    var els = document.querySelectorAll('.d-fig'); if (els.length < 1) return false;
+    els.forEach(function (el) { figs.push(new Fig(el)); });
+    if ('IntersectionObserver' in window) new IntersectionObserver(function (es) { inView = es.some(function (e) { return e.isIntersecting; }); }, { threshold: 0.05 }).observe(document.getElementById('shape'));
+    requestAnimationFrame(frame); return true;
+  }
+  var tries = 0, t = setInterval(function () { if (init() || ++tries > 60) clearInterval(t); }, 150);
+})();
+</script>
+<script>
+(function () {
+  // Section rail on the left: marks the section in view; clicking scrolls without touching the hash.
+  var ids = ['shape','install','pods','refuses','hardening','values','upgrades','gitops','verify','good','next'], raf = 0;
+  function update() {
+    raf = 0;
+    var links = document.querySelectorAll('.rail a[data-rail]'); if (!links.length) return;
+    var line = window.innerHeight * 0.35, cur = ids[0];
+    for (var i = 0; i < ids.length; i++) { var el = document.getElementById(ids[i]); if (el && el.getBoundingClientRect().top <= line) cur = ids[i]; }
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) cur = ids[ids.length - 1];
+    for (var j = 0; j < links.length; j++) links[j].classList.toggle('on', links[j].getAttribute('data-rail') === cur);
+  }
+  function tick() { if (!raf) raf = requestAnimationFrame(update); }
+  window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick);
+  document.addEventListener('click', function (e) { var a = e.target.closest('.rail a[data-rail]'); if (!a) return; var el = document.getElementById(a.getAttribute('data-rail')); if (!el) return; e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
+})();
+</script>
+<script>
+(function () {
+  // Copy buttons on the code blocks: copy the block's text as shown.
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-copy]'); if (!b) return;
+    var pre = b.closest('.dpc') && b.closest('.dpc').querySelector('pre'); if (!pre) return;
+    try { navigator.clipboard && navigator.clipboard.writeText(pre.textContent); } catch (err) {}
+    var t = b.querySelector('span'); if (t) { t.textContent = 'Copied'; clearTimeout(b._t); b._t = setTimeout(function () { t.textContent = 'Copy'; }, 1400); }
+  });
+})();
+</script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Deployment shape diagrams: nodes, edges that light as a request passes, a travelling request pill, a narrating caption. */
+.dn .box{transition:stroke .3s,fill .3s,opacity .3s}.dn.on .box{stroke:var(--accent-ink);stroke-width:2}
+.dn.off{opacity:.38}.dn .sub-alt{display:none}.dn.fail .sub,.dn.off .sub{display:none}.dn.fail .sub-alt,.dn.off .sub-alt{display:block}
+.dn.fail .box{fill:#4a2320;stroke:#8b3b35}.dn.off .sub-alt{fill:#9fb3ac}
+.de{transition:opacity .3s}.de.cut{opacity:.18}
+.de-glow{opacity:0;transition:opacity .5s}.de-glow.lit{opacity:1;transition:none}
+.pk{opacity:0;transition:opacity .2s}.pk.on{opacity:1}
+.pod{transition:fill .3s}.pod.drain{fill:oklch(0.8 0.13 80)}.pod.new{fill:oklch(0.72 0.14 170)}.pod.gone{fill:transparent;stroke:#9fb3ac;stroke-dasharray:2 2}
+.d-capbar{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:40px}
+.d-cap{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink-2);min-width:0}
+.d-cap-n{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent-ink);flex:none}
+.d-cap-t{min-width:0}.d-cap.scn .d-cap-n{color:oklch(0.65 0.14 75)}
+.d-scn{flex:none;font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:var(--surface);border:1px solid var(--line-2);border-radius:999px;padding:7px 14px;cursor:pointer;transition:border-color .2s,color .2s}
+.d-scn:hover{border-color:var(--ink)}.d-scn[disabled]{opacity:.55;cursor:default}
+@media (max-width:640px){.d-capbar{flex-direction:column;align-items:flex-start}}
+@media (prefers-reduced-motion:reduce){.dn .box,.de,.de-glow,.pk,.pod{transition:none}}
+.rail{position:fixed;left:28px;top:50%;transform:translateY(-50%);z-index:30;display:grid;gap:13px;transition:opacity 0.25s;}
+.rail.hide{opacity:0;pointer-events:none}
+.rail{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.14em;text-transform:uppercase}
+.rail a{display:flex;align-items:center;gap:12px;color:#9fb3ac;text-decoration:none;transition:color 0.2s}
+.rail a::before{content:'';flex:none;width:22px;height:1px;background:var(--line-2);transition:width 0.25s,background 0.25s,height 0.25s}
+.rail a:hover{color:var(--ink);text-decoration:none}
+.rail a.on{color:var(--ink)}.rail a.on::before{width:40px;height:2px;background:oklch(0.52 0.11 170)}
+@media (max-width:1599px){.rail span{opacity:0;visibility:hidden;transform:translateX(-6px);transition:opacity 0.2s,transform 0.2s,visibility 0.2s}.rail:hover span{opacity:1;visibility:visible;transform:none}}
+@media (max-width:1279px){.rail{display:none}}
+@media (prefers-reduced-motion:reduce){.rail a::before,.rail span{transition:none}}
+.rs-ghn svg{display:block}
+.rs-ghn-n{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1;color:var(--ink-3);min-width:0}
+.rs-ghn-n:empty{display:none}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
+a{color:var(--accent-ink);text-decoration:none}a:hover{color:var(--accent-ink-2);text-decoration:underline}
+pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.rs-burger{display:none}
+.rs-menu-toggle{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+@media (max-width:1180px){
+  .rs-burger{display:inline-grid;place-items:center;width:40px;height:40px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;margin-left:auto;flex:none}
+  .rs-burger span{display:block;width:16px;height:2px;background:var(--ink);border-radius:2px;box-shadow:0 -5px 0 var(--ink),0 5px 0 var(--ink)}
+  .rs-actions{margin-left:0 !important}
+  .rs-nav{display:none !important;flex-basis:100%;flex-direction:column;align-items:flex-start;gap:0 !important;font-size:16px !important;border-top:1px solid var(--line);padding:8px 0 4px !important;margin-top:4px}
+  .rs-nav a{display:block;width:100%;padding:11px 4px;border-bottom:1px solid var(--line-soft)}
+  .rs-nav a:last-child{border-bottom:0}
+  .rs-menu-toggle:checked ~ .rs-nav{display:flex !important}
+  .rs-menu-toggle:checked ~ .rs-burger span{background:transparent;box-shadow:none}
+  .rs-menu-toggle:checked ~ .rs-burger span::before,.rs-menu-toggle:checked ~ .rs-burger span::after{content:"";position:absolute;width:18px;height:2px;background:var(--ink);border-radius:2px}
+  .rs-menu-toggle:checked ~ .rs-burger span::before{transform:rotate(45deg)}
+  .rs-menu-toggle:checked ~ .rs-burger span::after{transform:rotate(-45deg)}
+  .rs-navbar{flex-wrap:wrap !important;gap:12px !important}
+}
+@media (max-width:480px){.rs-gh{display:none !important}}
+@media (max-width:960px){
+  .f-bento{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+  .f-bento > *{grid-column:span 1 !important}
+  .f-2col{grid-template-columns:minmax(0,1fr) !important}
+  .f-3col{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+  .f-sec{grid-template-columns:minmax(0,1fr) !important}
+}
+@media (max-width:640px){
+  .f-bento,.f-3col,.f-badges{grid-template-columns:minmax(0,1fr) !important}
+  .f-pad{padding-left:16px !important;padding-right:16px !important}
+  .f-table th:nth-child(3),.f-table td:nth-child(3){display:none}
+}
+.f-panel-dark{background:#10201b;color:#e6efeb;border-radius:16px;padding:36px}
+@media (max-width:900px){.f-panel-dark{padding:20px}}
+@media (max-width:1180px){.f-sub{top:70px !important}}
+.d-hdr{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end}
+@media (max-width:960px){.d-hdr{grid-template-columns:minmax(0,1fr)}}
+.d-sub a{display:flex;gap:8px;align-items:center;padding:14px 12px;font-size:13.5px;font-weight:500;color:#9fb3ac;text-decoration:none;white-space:nowrap}
+.d-sub a:hover{color:var(--on-ink);text-decoration:none}
+.d-move{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:960px){.d-move{grid-template-columns:minmax(0,1fr)}}
+.d-move code{font-family:'JetBrains Mono',monospace;font-size:12px;display:block;padding:6px 9px;border-radius:6px;background:var(--bg);border:1px solid var(--line);color:var(--ink);overflow-wrap:anywhere}
+.bm-bar{display:block;height:100%;border-radius:3px;transform-origin:left;animation:bm-grow 0.9s cubic-bezier(0.2,0.7,0.2,1) both}
+@keyframes bm-grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.copy-btn{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:#c5d3cd;background:#1b2f29;border:1px solid #2a3d37;border-radius:6px;padding:4px 9px;min-height:26px;cursor:pointer;transition:background 0.2s,color 0.2s}
+.copy-btn:hover{background:#24403a;color:#e6efeb}
+@media (prefers-reduced-motion:reduce){.bm-bar{animation:none}}
+.d-tabs{scrollbar-width:none}.d-tabs::-webkit-scrollbar{display:none}
+.d-table td,.d-table th{padding:14px 16px;text-align:left;vertical-align:top;border-top:1px solid var(--line);font-size:14px}
+.d-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);border-top:0}
+@media (max-width:960px){.d-check{grid-template-columns:minmax(0,1fr) !important}}
+.u-case{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr)}
+.u-case.u-flip > .u-code{order:-1}
+@media (max-width:960px){.u-case{grid-template-columns:minmax(0,1fr) !important}.u-case.u-flip > .u-code{order:2}.u-personas{grid-template-columns:repeat(2,minmax(0,1fr)) !important}.u-personas > .u-last{grid-column:span 2}}
+@media (max-width:640px){.u-personas{grid-template-columns:minmax(0,1fr) !important}.u-personas > .u-last{grid-column:span 1}}
+.f-bento > .f-last{grid-column:span 4}
+@media (max-width:960px){.f-bento > .f-last{grid-column:span 2 !important}}
+@media (max-width:640px){.f-bento > .f-last{grid-column:span 1 !important}}.f-sub::-webkit-scrollbar{display:none}
+.f-table td,.f-table th{padding:14px 16px;text-align:left;vertical-align:top;border-top:1px solid #243b34}
+.f-table th{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac;border-top:0;padding-top:0}
+/* Use-cases dropdown in the top nav (desktop only; the burger menu keeps a plain link). */
+.rs-dd{position:relative}
+.rs-dd-panel{display:none;position:absolute;top:100%;left:-18px;padding-top:12px;z-index:30}
+.rs-dd-inner{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35);padding:18px 20px 14px;display:grid;gap:14px;width:max-content;max-width:calc(100vw - 48px)}
+.rs-dd-grid{display:grid;grid-template-columns:repeat(5,max-content);gap:18px 28px}
+.rs-dd-grid>div{display:grid;gap:7px;align-content:start}
+.rs-dd-grid small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+.rs-dd-grid a{font-size:13.5px;font-weight:500;color:var(--ink);white-space:nowrap;text-decoration:none}
+.rs-dd-grid a:hover{color:var(--accent-ink)}
+.rs-dd-all{font-size:13px;font-weight:600;border-top:1px solid var(--line-soft);padding-top:12px;text-decoration:none}
+@media (max-width:1400px){.rs-dd-grid{grid-template-columns:repeat(3,max-content)}}
+@media (max-width:1180px){.rs-dd{width:100%}.rs-dd-panel{display:none !important}}
+/* Current page in the top nav: bold, ink-dark, with an accent underline (a left bar in the burger menu). */
+.rs-nav > a[aria-current="page"],.rs-nav > .rs-dd > a[aria-current="page"]{color:var(--ink) !important;font-weight:600;text-decoration:underline;text-decoration-color:var(--accent-ink);text-decoration-thickness:2px;text-underline-offset:7px}
+.rs-nav > a[aria-current="page"]:hover,.rs-nav > .rs-dd > a[aria-current="page"]:hover{text-decoration-color:var(--accent-ink-2)}
+.rs-mega-card[aria-current="page"]{background:var(--bg);box-shadow:inset 3px 0 0 oklch(0.52 0.11 170)}
+@media (max-width:1180px){.rs-nav > a[aria-current="page"]{text-decoration:none;box-shadow:inset 3px 0 0 oklch(0.52 0.11 170);padding-left:12px !important}}
+.rs-dd-right .rs-dd-panel{left:auto;right:-18px}
+/* Dropdown triggers: a caret that turns while open; the panel stays open for a moment after the pointer leaves,
+   and the trigger's hover area reaches down to the panel so crossing the gap never closes it. */
+.rs-dd>a{display:inline-flex;align-items:center;gap:5px;padding:14px 0;margin:-14px 0}
+.rs-caret{transition:transform 0.2s;flex:none}
+.rs-dd:hover>a .rs-caret,.rs-dd:focus-within>a .rs-caret{transform:rotate(180deg)}
+.rs-dd-panel{display:block;visibility:hidden;opacity:0;transition:opacity 0.15s,visibility 0s linear 0.25s}
+.rs-dd:hover .rs-dd-panel,.rs-dd:focus-within .rs-dd-panel,.rs-dd-panel:hover{visibility:visible;opacity:1;transition-delay:0s}
+@media (max-width:1180px){.rs-caret{display:none}.rs-dd>a{padding:11px 4px;margin:0}}
+/* Use-cases mega menu: the panel spans the whole nav bar, one card per use case. */
+.rs-navbar{position:relative}
+.rs-dd.rs-mega{position:static}
+.rs-mega .rs-dd-panel{left:24px;right:24px;padding-top:0;top:calc(100% - 1px)}
+.rs-mega-inner{width:auto !important;max-width:none !important;padding:22px 24px 20px !important;gap:18px !important}
+.rs-mega-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--line-soft)}
+.rs-mega-head>div{display:grid;gap:4px}
+.rs-mega-eyebrow{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)}
+.rs-mega-head b{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.01em;color:var(--ink)}
+.rs-mega-all{font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap}
+.rs-mega-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.rs-mega-card{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start;padding:12px;border-radius:10px;text-decoration:none;color:var(--ink);transition:background 0.15s}
+.rs-mega-card:hover{background:var(--bg);text-decoration:none}
+.rs-mega-ico{width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.1);position:relative}
+.rs-mega-ico::after{content:'';position:absolute;inset:9px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.rs-mega-txt{display:grid;gap:2px;min-width:0}
+.rs-mega-txt small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)}
+.rs-mega-txt b{font-size:14px;font-weight:600}
+.rs-mega-txt>span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+@media (max-width:1400px){.rs-mega-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* Guides mega menu: reading paths on the left, documentation grouped on the right. */
+.rs-mega-body{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.3fr);gap:28px}
+.rs-mega-sub{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)}
+.rs-mega-paths{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;align-content:start}
+.rs-mega-paths .rs-mega-sub{grid-column:1/-1;margin-bottom:4px}
+.rs-mega-path{display:grid;gap:2px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink);transition:background 0.15s}
+.rs-mega-path:hover{background:var(--bg);text-decoration:none}
+.rs-mega-path small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.04em;color:var(--ink-3)}
+.rs-mega-path b{font-size:14px;font-weight:600}
+.rs-mega-path>span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+.rs-mega-paths .rs-mega-sub2{margin-top:10px;margin-bottom:2px}
+.rs-mega-arch{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px}
+.rs-mega-arch a{font-size:12px;font-weight:500;padding:4px 9px;white-space:nowrap;border:1px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;transition:background 0.15s,border-color 0.15s}
+.rs-mega-arch a:hover{border-color:#9fb3ac;background:var(--bg);text-decoration:none}
+.rs-mega-docs{display:grid;gap:12px;align-content:start;padding-left:28px;border-left:1px solid var(--line-soft)}
+.rs-mega-docgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.rs-mega-docgrid>div{display:grid;gap:6px;align-content:start}
+.rs-mega-docgrid small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+.rs-mega-docgrid a{font-size:13.5px;font-weight:500;color:var(--ink);text-decoration:none;line-height:1.35}
+.rs-mega-docgrid a:hover{color:var(--accent-ink)}
+.rs-mega-more{font-size:13px;font-weight:600;text-decoration:none;padding-top:8px;border-top:1px solid var(--line-soft)}
+.rs-mega-body-solo{grid-template-columns:minmax(0,1fr)}
+.rs-mega-body-solo .rs-mega-paths{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rs-mega-docs-solo{padding-left:0;border-left:none}
+.rs-mega-docs-solo .rs-mega-docgrid{grid-template-columns:repeat(5,minmax(0,1fr)) !important}
+.rs-mega-docs-solo .rs-mega-docgrid{gap:20px 40px}
+.rs-mega-docs-solo .rs-mega-docgrid>div{gap:2px}
+.rs-mega-docs-solo .rs-mega-docgrid small{margin:0 0 6px 10px}
+.rs-mega-docs-solo .rs-mega-docgrid a.rs-doc{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink);text-decoration:none;transition:background 0.15s}
+.rs-mega-docs-solo .rs-mega-docgrid a.rs-doc:hover{background:var(--bg);color:var(--ink)}
+.rs-doc-ico{flex:none;width:28px;height:28px;border-radius:7px;background:oklch(0.52 0.11 170 / 0.09);position:relative}
+.rs-doc-ico::after{content:'';position:absolute;inset:7px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.rs-mega-docs-solo .rs-mega-more{margin-top:4px}
+@media (max-width:1400px){.rs-mega-docgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* MCP shortcut beside the GitHub icon: a tinted pill with the plug icon. */
+.rs-mcp{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;color:var(--accent-ink-2);background:oklch(0.52 0.11 170 / 0.1);border:1px solid oklch(0.52 0.11 170 / 0.45);border-radius:999px;padding:5px 11px 5px 9px;text-decoration:none;transition:background 0.2s,border-color 0.2s,color 0.2s}
+.rs-mcp:hover{background:oklch(0.52 0.11 170 / 0.18);border-color:var(--accent-ink);color:var(--accent-ink-2);text-decoration:none}
+.rs-mcp svg{display:block}
+/* Footer */
+.ft a{text-decoration:none}.ft a:hover{text-decoration:underline}
+.ft-grid{display:grid;grid-template-columns:minmax(0,1.7fr) repeat(4,minmax(0,1fr));gap:36px 28px}
+.ft-brand{display:grid;gap:16px;align-content:start;min-width:0}
+.ft-col{display:grid;gap:10px;align-content:start}
+.ft-col a{color:var(--ink-2);font-size:14px}.ft-col a:hover{color:var(--ink)}
+.ft-h{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);margin-bottom:2px}
+.ft-chip{font-size:11.5px;font-weight:500;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.ft-btn{font-size:13.5px;font-weight:600;color:var(--ink);border:1px solid var(--line-2);border-radius:8px;padding:8px 13px;background:var(--surface)}
+.ft-btn:hover{border-color:var(--ink);text-decoration:none !important}
+.ft-btn-dark{background:#10201b;border-color:#10201b;color:#e6efeb}.ft-btn-dark:hover{background:#1b3a30;border-color:#1b3a30}
+.ft-bottom{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-3)}
+.ft-badges{display:inline-flex;align-items:center;gap:10px}.ft-badges img{display:block;height:20px}
+@media (max-width:1100px){.ft-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ft-brand{grid-column:1/-1}}
+@media (max-width:560px){.ft-grid{grid-template-columns:minmax(0,1fr)}}
+/* Evaluate menu: seven cards, four to a row; on narrow screens the trigger hides and plain links show in the burger. */
+.rs-mega-grid5{grid-template-columns:repeat(4,minmax(0,1fr)) !important}
+.rs-sub{display:none}
+@media (max-width:1400px){.rs-mega-grid5{grid-template-columns:repeat(4,minmax(0,1fr)) !important}}
+@media (max-width:1180px){.rs-dd.rs-mega-eval{display:none !important}.rs-sub{display:block}}
+/* MCP pill: a small menu of the MCP pages. */
+.rs-dd-mcp>a.rs-mcp{padding:5px 11px 5px 9px;margin:0}
+.rs-dd-mcp .rs-dd-panel{left:-6px}
+.rs-dd-mcp-inner{display:grid;gap:4px;width:340px !important;padding:12px !important}
+.rs-dd-mcp-inner small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);padding:4px 10px 6px}
+.rs-dd-mcp-inner a{display:grid;gap:2px;padding:9px 10px;border-radius:8px;color:var(--ink);text-decoration:none;transition:background 0.15s}
+.rs-dd-mcp-inner a:hover{background:var(--bg);text-decoration:none}
+.rs-dd-mcp-inner a[aria-current="page"]{background:var(--bg);box-shadow:inset 3px 0 0 oklch(0.52 0.11 170)}
+.rs-dd-mcp-inner b{font-size:13.5px;font-weight:600}
+.rs-dd-mcp-inner span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+@media (max-width:1180px){.rs-dd-mcp .rs-dd-panel{display:none !important}.rs-dd-mcp .rs-caret{display:none}}
+/* A deployment shape on its own page. */
+.dp-hero{max-width:1240px;margin:0 auto;padding:72px 24px 40px;display:grid;gap:18px;justify-items:center;text-align:center;scroll-margin-top:72px;position:relative}
+.dp-hero::before{content:'';position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse 45% 60% at 50% 40%,oklch(0.62 0.13 170 / 0.12),transparent 70%),radial-gradient(circle,var(--dots) 0.6px,transparent 1px) 0 0/18px 18px;-webkit-mask:linear-gradient(transparent,#000 20%,#000 70%,transparent);mask:linear-gradient(transparent,#000 20%,#000 70%,transparent);pointer-events:none}
+.dp-crumb{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--ink-3)}.dp-crumb a{color:var(--ink-2);font-weight:500}
+.dp-eye{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)}
+.dp-hero h1{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(38px,5.2vw,68px);line-height:1;font-weight:800;letter-spacing:-0.025em;text-wrap:balance}
+.dp-hero>p{margin:0;font-size:19px;color:var(--ink-2);max-width:64ch;text-wrap:pretty}
+.dp-go{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.dp-btn{font-size:15px;font-weight:600;background:#10201b;color:#e6efeb;padding:13px 22px;border-radius:8px;border:1px solid #10201b;transition:background .2s,border-color .2s}.dp-btn:hover{background:#1b3a30;color:#e6efeb;text-decoration:none}
+.dp-btn-o{background:var(--surface);color:var(--ink);border-color:var(--line-2)}.dp-btn-o:hover{background:var(--surface);color:var(--ink);border-color:var(--ink)}
+:root[data-theme=dark] .dp-btn:not(.dp-btn-o){background:#e6efeb;color:#10201b;border-color:#e6efeb}
+.dp-page{max-width:1240px;margin:0 auto;padding:16px 24px 88px;display:grid;gap:64px}
+.dp-sec{display:grid;gap:22px;scroll-margin-top:84px}.dp-h2{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(26px,3vw,36px);line-height:1.1;font-weight:700;letter-spacing:-0.015em}
+.dp-panel{border:1px solid var(--line-2);border-radius:16px;background:var(--surface);overflow:hidden;box-shadow:0 40px 80px -40px rgba(16,32,27,0.35)}
+.dp-next{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:stretch}
+.dp-card{display:grid;gap:10px;align-content:start;padding:28px;border-radius:18px}
+.dp-dark{background:#10201b;color:#e6efeb;position:relative;overflow:hidden}.dp-dark::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 90% at 0% 0%,oklch(0.62 0.13 170 / 0.25),transparent 70%);pointer-events:none}.dp-dark>*{position:relative}
+.dp-dark small{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)}.dp-dark b{font-family:'Schibsted Grotesk',sans-serif;font-size:24px;font-weight:700;line-height:1.2}.dp-dark span{color:#9fb3ac;font-size:15px}
+.dp-links{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}.dp-links a{font-size:13.5px;font-weight:600;color:#e6efeb;border:1px solid #2a3d37;border-radius:999px;padding:7px 13px;transition:background .2s}.dp-links a:hover{background:#1b2f29;color:#e6efeb;text-decoration:none}
+.dp-others{display:grid;gap:10px;align-content:start}.dp-others-h{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)}
+.dp-other{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:14px;align-items:center;padding:16px 18px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);transition:border-color .2s,transform .2s}
+.dp-other:hover{border-color:var(--accent-ink);transform:translateY(-2px);text-decoration:none}.dp-other>span:nth-child(2){display:grid;gap:2px}.dp-other small{font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-3)}.dp-other b{font-size:16px}.dp-other i{font-style:normal;color:var(--ink-3)}
+.dp-ico{display:block;position:relative;width:40px;height:40px;border-radius:10px;background:oklch(0.52 0.11 170 / 0.1)}.dp-ico::after{content:'';position:absolute;inset:10px;background:var(--accent-ink);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+@media (max-width:900px){.dp-next{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.dp-hero{padding:48px 16px 32px}.dp-page{padding:8px 16px 64px;gap:48px}}
+@media (prefers-reduced-motion:reduce){.dp-other{transition:none}.dp-other:hover{transform:none}}
+/* Deploy shape pages: code blocks, tables, notes and lists for the per-shape sections. */
+.dp-lede{margin:0;color:var(--ink-2);text-wrap:pretty}
+.dp-grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}.dp-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:start}
+.dp-stack{display:grid;gap:16px;align-content:start;min-width:0}.dp-flow{display:grid;gap:16px;min-width:0}
+.dpc{background:#10201b;border:1px solid #243b34;border-radius:12px;overflow:hidden;min-width:0;box-shadow:0 24px 48px -32px rgba(16,32,27,0.6)}
+.dpc-bar{display:flex;align-items:center;gap:10px;padding:7px 10px 7px 12px;border-bottom:1px solid #243b34}
+.dpc-dots{display:flex;gap:5px}.dpc-dots i{width:9px;height:9px;border-radius:50%;display:block;background:#ff5f57}.dpc-dots i:nth-child(2){background:#febc2e}.dpc-dots i:nth-child(3){background:#28c840}
+.dpc-t{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88}.dpc-copy{margin-left:auto}
+.dpc pre{margin:0;color:#e6efeb;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre}
+.dpc-c{color:#7c8f88}
+.dp-tcard{border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.dp-tbl{width:100%;border-collapse:collapse;font-size:14.5px;min-width:520px}
+.dp-tbl th{text-align:left;font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);padding:11px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+.dp-tbl td{padding:12px 16px;border-bottom:1px solid var(--line-soft);vertical-align:top;color:var(--ink-2);line-height:1.55}.dp-tbl tr:last-child td{border-bottom:0}
+.dp-tbl td:first-child{color:var(--ink);font-weight:600;width:30%}
+.dp-note{--c:var(--accent-ink);display:grid;gap:4px;padding:14px 18px;border-radius:12px;border-left:3px solid var(--c);background:color-mix(in oklch,var(--c) 8%,var(--surface));font-size:14.5px;line-height:1.6;color:var(--ink-2)}
+.dp-note b{color:var(--ink);font-size:15px}.dp-note.warn{--c:oklch(0.66 0.16 60)}.dp-note.ci{--c:oklch(0.6 0.13 255)}
+.dp-list{margin:0;padding-left:20px;display:grid;gap:8px;font-size:15px;line-height:1.6;color:var(--ink-2)}.dp-list b{color:var(--ink)}
+.dp-steps{margin:0;padding-left:22px;display:grid;gap:8px;font-size:15px;line-height:1.6;color:var(--ink-2)}
+.dp-p{margin:0;font-size:15px;line-height:1.65;color:var(--ink-2);max-width:80ch}.dp-p b{color:var(--ink)}
+.dp-small{margin:0;font-size:13.5px;color:var(--ink-3);line-height:1.55}
+.dp-card2{display:grid;gap:10px;align-content:start;padding:20px 22px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}.dp-card2 h3{margin:0;font-size:16px;font-weight:600}
+.dp-stab{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px 18px;align-items:start;padding:18px 22px;border-radius:14px;border:1px solid color-mix(in oklch,var(--accent-ink) 40%,var(--line));background:color-mix(in oklch,var(--accent-ink) 7%,var(--surface));text-align:left;max-width:860px}
+.dp-stab-tag{font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--accent-ink);background:oklch(0.52 0.11 170 / 0.12);border-radius:999px;padding:5px 10px;white-space:nowrap}
+.dp-stab p{margin:0;font-size:14.5px;line-height:1.6;color:var(--ink-2)}.dp-stab b{color:var(--ink)}
+@media (max-width:960px){.dp-grid2,.dp-grid3{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:640px){.dp-stab{grid-template-columns:minmax(0,1fr)}.dp-tbl td:first-child{width:auto}}
+</style>
+</helmet>
+<div data-screen-label="Deploy: Kubernetes" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
+
+  <nav style="position:sticky;top:0;z-index:20;background:var(--bg-90);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)">
+    <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
+      <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:var(--ink);text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:var(--accent-ink)">API</span>Gate</span></a>
+      <div class="rs-actions" style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <button type="button" class="rs-search" data-search aria-label="Search the documentation (Ctrl+K)" title="Search · Ctrl+K"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span>Search</span><kbd>Ctrl K</kbd></button>        <div class="rs-dd rs-dd-mcp"><a href="MCP.dc.html" class="rs-mcp" title="MCP server: saved queries as tools for AI agents"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a6 6 0 0 1-12 0V8z"/></svg><span class="rs-mcp-t">MCP</span><svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-dd-mcp-inner"><small>MCP · AI agents</small><a href="MCP.dc.html"><b>MCP server for AI agents</b><span>What agents get, what they never get, and how to connect a client.</span></a><a href="Agent Checklist.dc.html"><b>Against Altinity's agent-safety checklist</b><span>Nineteen recommendations, point by point: 16 covered.</span></a><a href="Guide.dc.html?d=MCP"><b>MCP reference</b><span>Tools, resources, OAuth and every setting, from the documentation.</span></a><a href="Guide.dc.html?g=24-let-an-agent-call-your-queries-via-mcp"><b>Guide 24: let an agent call your queries</b><span>The ten-minute walkthrough, run against a real server.</span></a></div></div></div>
+      </div>
+      <input type="checkbox" id="rs-menu" class="rs-menu-toggle" aria-label="Open menu">
+      <label for="rs-menu" class="rs-burger" aria-hidden="true"><span></span></label>
+      <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
+        <div class="rs-dd rs-mega rs-mega-features"><a href="Features.dc.html" style="color:var(--ink-2)">Features<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Features</span><b>Everything it does, section by section</b></div><a href="Features.dc.html" class="rs-mega-all">All features →</a></div><div class="rs-mega-docs rs-mega-docs-solo"><div class="rs-mega-docgrid"><div><small>Connect and govern</small><a class="rs-doc" href="Features.dc.html#databases"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)"></span>Databases</a><a class="rs-doc" href="Features.dc.html#security"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield.svg)"></span>Security and access</a><a class="rs-doc" href="Features.dc.html#mcp"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span>MCP for AI agents</a></div><div><small>Build</small><a class="rs-doc" href="Features.dc.html#queries"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-code.svg)"></span>Saved queries</a><a class="rs-doc" href="Features.dc.html#parameters"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/list-checks.svg)"></span>Parameters</a><a class="rs-doc" href="Features.dc.html#formats"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-spreadsheet.svg)"></span>Response formats</a><a class="rs-doc" href="Features.dc.html#streaming"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/waves.svg)"></span>Paging and streaming</a></div><div><small>Serve and operate</small><a class="rs-doc" href="Features.dc.html#caching"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/zap.svg)"></span>Caching</a><a class="rs-doc" href="Features.dc.html#rate-limits"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/gauge.svg)"></span>Rate limiting</a><a class="rs-doc" href="Features.dc.html#observability"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/activity.svg)"></span>Observability</a><a class="rs-doc" href="Features.dc.html#openapi"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/braces.svg)"></span>OpenAPI</a></div><div><small>Console and proof</small><a class="rs-doc" href="Features.dc.html#console"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span>Administration UI</a><a class="rs-doc" href="Features.dc.html#testing"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/flask-conical.svg)"></span>Testing and quality</a><a class="rs-doc" href="Features.dc.html#request"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/route.svg)"></span>Every request</a></div></div><div class="rs-mega-foot"><a href="Features.dc.html" class="rs-mega-more">Features: one gate, every front door →</a><a href="Integrations.dc.html" class="rs-mega-more">Integrations</a><a href="Playground.dc.html" class="rs-mega-more">Playground</a></div></div></div></div></div>
+        <div class="rs-dd rs-mega"><a href="Use Cases.dc.html" style="color:var(--ink-2)">Use cases<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Use cases</span><b>Twelve jobs people hire QueryAPIGate for</b></div><a href="Use Cases.dc.html" class="rs-mega-all">All twelve, with the shape of each call →</a></div><div class="rs-mega-grid"><a class="rs-mega-card" href="use-cases/customer-analytics.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/chart-column.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Customer analytics</b><span>Analytics in your product, one tenant at a time</span></span></a><a class="rs-mega-card" href="use-cases/internal-tools.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Internal tools</b><span>Back an internal app without a backend team</span></span></a><a class="rs-mega-card" href="use-cases/controlled-writes.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/pencil-line.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Controlled writes</b><span>Let a partner or a form write, through one approved query</span></span></a><a class="rs-mega-card" href="use-cases/partner-data-api.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Partner data API</b><span>Hand a partner one query, not your schema</span></span></a><a class="rs-mega-card" href="use-cases/scheduled-deliveries.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/calendar-clock.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Scheduled deliveries</b><span>Deliver a daily file, incrementally, to someone else&#x27;s bucket</span></span></a><a class="rs-mega-card" href="use-cases/live-dashboards.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Live dashboards</b><span>A live view of what is being queried, by whom</span></span></a><a class="rs-mega-card" href="use-cases/self-serve-data.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/library.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Self-serve data</b><span>Data for every team, without handing out the database</span></span></a><a class="rs-mega-card" href="use-cases/files-as-an-api.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/folder-open.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Files as an API</b><span>Turn a bucket of Parquet into a queryable API</span></span></a><a class="rs-mega-card" href="use-cases/legacy-databases.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Legacy databases</b><span>A governed API in front of a database you can&#x27;t change</span></span></a><a class="rs-mega-card" href="use-cases/ai-agents.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span class="rs-mega-txt"><small>AI</small><b>AI agents</b><span>Let an agent query your data, governed like an app</span></span></a><a class="rs-mega-card" href="use-cases/compliance-and-audit.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-mega-txt"><small>Security and platform</small><b>Compliance and audit</b><span>Answer the auditor from the running system</span></span></a><a class="rs-mega-card" href="use-cases/platform-teams.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-pull-request.svg)"></span><span class="rs-mega-txt"><small>Security and platform</small><b>Platform teams</b><span>Run it like the rest of your platform</span></span></a></div></div></div></div>
+        <div class="rs-dd rs-mega rs-mega-deploy"><a href="Deploy.dc.html" style="color:var(--ink)" aria-current="page">Deploy<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Deploy</span><b>Three reference architectures, each one tested in CI</b></div><a href="Deploy.dc.html" class="rs-mega-all">Overview and comparison →</a></div><div class="rs-mega-grid rs-mega-grid3"><a class="rs-mega-card" href="Deploy-Single.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/server.svg)"></span><span class="rs-mega-txt"><small>Start here</small><b>Single instance</b><span>One container or process; SQLite on a volume, or PostgreSQL.</span></span></a><a class="rs-mega-card" href="Deploy-HA.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layers.svg)"></span><span class="rs-mega-txt"><small>Several instances</small><b>High availability</b><span>A shared PostgreSQL store and Redis, so any instance answers any request.</span></span></a><a class="rs-mega-card" href="Deploy-Kubernetes.dc.html" aria-current="page"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/ship-wheel.svg)"></span><span class="rs-mega-txt"><small>Helm chart</small><b>Kubernetes</b><span>One pod on SQLite, or several behind a disruption budget.</span></span></a></div><div class="rs-mega-foot"><a class="rs-mega-more" href="Deploy.dc.html#compare">Side by side</a><a class="rs-mega-more" href="Deploy.dc.html#checklist">Production checklist</a><a class="rs-mega-more" href="Docs.dc.html#install">Install options</a><a class="rs-mega-more" href="Guide.dc.html?d=DEPLOYMENT">Deployment guide</a></div></div></div></div><a class="rs-sub" href="Deploy-Single.dc.html" style="color:var(--ink-2)">Single instance</a><a class="rs-sub" href="Deploy-HA.dc.html" style="color:var(--ink-2)">High availability</a><a class="rs-sub" href="Deploy-Kubernetes.dc.html" style="color:var(--ink)" aria-current="page">Kubernetes</a>
+        <div class="rs-dd rs-mega rs-mega-docsmenu"><a href="Docs.dc.html" style="color:var(--ink-2)">Docs<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Documentation</span><b>Reference for every setting, endpoint and promise</b></div><a href="Docs.dc.html" class="rs-mega-all">All documentation →</a></div><div class="rs-mega-docs rs-mega-docs-solo"><div class="rs-mega-docgrid"><div><small>Run it</small><a class="rs-doc" href="Guide.dc.html?d=INSTALLATION_AND_SETUP"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/download.svg)"></span>Installation and setup</a><a class="rs-doc" href="Guide.dc.html?d=CONFIGURATION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/settings-2.svg)"></span>Configuration</a><a class="rs-doc" href="Guide.dc.html?d=DEPLOYMENT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/rocket.svg)"></span>Deployment</a><a class="rs-doc" href="Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)"></span>Database connections</a></div><div><small>Reference</small><a class="rs-doc" href="Guide.dc.html?d=API"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/braces.svg)"></span>API reference</a><a class="rs-doc" href="Guide.dc.html?d=MCP"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/plug.svg)"></span>MCP server</a><a class="rs-doc" href="Guide.dc.html?d=FEATURES"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/sparkles.svg)"></span>Features</a><a class="rs-doc" href="Guide.dc.html?d=EXAMPLES"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/flask-conical.svg)"></span>Example APIs</a><a class="rs-doc" href="Guide.dc.html?d=QUERY_METADATA_MANAGEMENT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/tags.svg)"></span>Query metadata</a><a class="rs-doc" href="Guide.dc.html?d=SCREENSHOTS"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span>A tour of the Console</a></div><div><small>Performance</small><a class="rs-doc" href="Performance.dc.html"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/gauge.svg)"></span>Performance and sizing</a><a class="rs-doc" href="Guide.dc.html?d=PERFORMANCE_V3"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/activity.svg)"></span>OLTP benchmark on PostgreSQL</a><a class="rs-doc" href="Guide.dc.html?p=what-a-governed-call-costs"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/newspaper.svg)"></span>What a governed call costs</a><a class="rs-doc" href="Guide.dc.html?p=one-mysql-six-services"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)"></span>One MySQL server, six services</a></div><div><small>Security</small><a class="rs-doc" href="Guide.dc.html?d=THREAT_MODEL"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-alert.svg)"></span>Threat model</a><a class="rs-doc" href="Standards.dc.html"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/scroll-text.svg)"></span>Standards and specifications</a><a class="rs-doc" href="Guide.dc.html?d=DATA_PROTECTION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/route.svg)"></span>Where data goes</a><a class="rs-doc" href="Guide.dc.html?d=SECURITY"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span>Security policy</a><a class="rs-doc" href="Guide.dc.html?d=ARCHITECTURE"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/network.svg)"></span>Architecture overview</a><a class="rs-doc" href="Guide.dc.html?d=QUESTIONNAIRE"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/clipboard-check.svg)"></span>Questionnaire answers</a><a class="rs-doc" href="Guide.dc.html?d=SBOM"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/package-check.svg)"></span>SBOM and verification</a></div><div><small>Project</small><a class="rs-doc" href="Guide.dc.html?d=WHY"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/lightbulb.svg)"></span>Why QueryAPIGate</a><a class="rs-doc" href="Guide.dc.html?d=TECHNOLOGY_STACK"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layers.svg)"></span>Technology stack</a><a class="rs-doc" href="Guide.dc.html?d=CONTRIBUTING"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-pull-request.svg)"></span>Contributing</a><a class="rs-doc" href="Guide.dc.html?d=CODE_OF_CONDUCT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/heart-handshake.svg)"></span>Code of conduct</a></div></div><div class="rs-mega-foot"><a href="Docs.dc.html" class="rs-mega-more">Docs: how the pieces fit, and where to start →</a><a href="FAQ.dc.html" class="rs-mega-more">FAQ</a><a href="Glossary.dc.html" class="rs-mega-more">Glossary</a></div></div></div></div></div>
+        <a class="rs-sub" href="FAQ.dc.html" style="color:var(--ink-2)">FAQ</a><a class="rs-sub" href="Glossary.dc.html" style="color:var(--ink-2)">Glossary</a>
+        <div class="rs-dd rs-mega rs-mega-guides"><a href="Guides.dc.html" style="color:var(--ink-2)">Guides<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">How-to guides</span><b>62 how-to guides, each run against a real server</b></div><a href="Guides.dc.html" class="rs-mega-all">All 62 guides, with times and outcomes →</a></div><div class="rs-gm"><div class="rs-gm-col"><small class="rs-gm-h">Reading paths</small><a class="rs-gm-path" href="Guides.dc.html?path=start"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/rocket.svg)"></span><span><b>Start here</b><span>The first five, in order: a query, a database, an API key.</span><small>01 → 05 · 5 guides · ≈42 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=partner"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg)"></span><span><b>Give a partner an API</b><span>One query, hashed columns, limits, an expiry, a rotation plan.</span><small>13 → 50 · 7 guides · ≈53 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=agents"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span><b>Let agents in</b><span>MCP tools, what the data means, and writes a person approves.</span><small>24 → 49 · 5 guides · ≈85 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=data"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/send.svg)"></span><span><b>Ship data out</b><span>Files as an API, scheduled deliveries, a live feed of runs.</span><small>41 → 28 · 4 guides · ≈65 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=prod"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/server-cog.svg)"></span><span><b>Go to production</b><span>The Deploy page checklist, as guides.</span><small>23 → 59 · 8 guides · ≈135 min</small></span></a></div><div class="rs-gm-col rs-gm-topics"><small class="rs-gm-h">By topic</small><a class="rs-doc" href="Guides.dc.html?cat=Start"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/play.svg)"></span><span class="rs-gm-t">Start</span><em>6</em></a><a class="rs-doc" href="Guides.dc.html?cat=Queries"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-code.svg)"></span><span class="rs-gm-t">Queries</span><em>7</em></a><a class="rs-doc" href="Guides.dc.html?cat=Access"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/key-round.svg)"></span><span class="rs-gm-t">Access</span><em>13</em></a><a class="rs-doc" href="Guides.dc.html?cat=Agents"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span class="rs-gm-t">Agents</span><em>7</em></a><a class="rs-doc" href="Guides.dc.html?cat=Events%20%26%20exports"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg)"></span><span class="rs-gm-t">Events and exports</span><em>6</em></a><a class="rs-doc" href="Guides.dc.html?cat=Operate"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/server.svg)"></span><span class="rs-gm-t">Operate</span><em>15</em></a><a class="rs-doc" href="Guides.dc.html?cat=Govern"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-gm-t">Govern</span><em>8</em></a></div><div class="rs-gm-new"><small>New here? · Guide 01 · 10 min</small><b>Turn your first SQL query into a REST API</b><span>A real HTTP endpoint, backed by your own SQL, with typed parameters, and no controller code written by hand.</span><a href="Guide.dc.html?g=01-turn-your-first-sql-query-into-a-rest-api" class="rs-gm-go">Start guide 01 →</a><a href="Playground.dc.html" class="rs-gm-alt">Or try it in the Playground first →</a></div></div><div class="rs-mega-foot rs-gm-foot"><span class="rs-gm-fh">By part of the architecture</span><div class="rs-mega-arch"><a href="Guides.dc.html#arch-who-calls">Who calls</a><a href="Guides.dc.html#arch-front-doors">Front doors</a><a href="Guides.dc.html#arch-core">The governed core</a><a href="Guides.dc.html#arch-asks">Asks</a><a href="Guides.dc.html#arch-your-data">Your data</a><a href="Guides.dc.html#arch-reports-to">Reports to</a></div></div></div></div></div>
+        <div class="rs-dd rs-mega rs-mega-eval"><a href="Trust.dc.html" style="color:var(--ink-2)">Evaluate<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Evaluate</span><b>What an evaluation asks for: fit, security and proof</b></div><a href="Trust.dc.html" class="rs-mega-all">Start at the Trust center →</a></div><div class="rs-mega-grid rs-mega-grid5"><a class="rs-mega-card" href="Integrations.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/puzzle.svg)"></span><span class="rs-mega-txt"><b>Integrations</b><span>The databases, identity providers, secret stores, clients and tools it works with, and how each is tested.</span></span></a><a class="rs-mega-card" href="Compare.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-compare.svg)"></span><span class="rs-mega-txt"><b>Compare</b><span>Against a hand-rolled API and the other ways to put a database behind an endpoint.</span></span></a><a class="rs-mega-card" href="Performance.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/gauge.svg)"></span><span class="rs-mega-txt"><b>Performance</b><span>What a governed call costs on PostgreSQL: throughput, latency under load, scale-out and a sizing rule.</span></span></a><a class="rs-mega-card" href="Performance-MySQL.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg)"></span><span class="rs-mega-txt"><b>Performance on MySQL</b><span>One server, a database per microservice, per-user queries across them: cost, sizing and isolation.</span></span></a><a class="rs-mega-card" href="Trust.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-mega-txt"><b>Trust center</b><span>Where data goes, what you can verify yourself, and how to report a vulnerability.</span></span></a><a class="rs-mega-card" href="Enterprise.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/building-2.svg)"></span><span class="rs-mega-txt"><b>Enterprise</b><span>Identity, audit, availability, cryptography and the downloadable security pack.</span></span></a><a class="rs-mega-card" href="Security.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg)"></span><span class="rs-mega-txt"><b>Security</b><span>What each layer defends against, and the hardening checklist before go-live.</span></span></a><a class="rs-mega-card" href="Standards.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-badge.svg)"></span><span class="rs-mega-txt"><b>Standards and specifications</b><span>The twenty-five RFCs and specifications it is built on, each with what it is used for.</span></span></a></div></div></div></div>
+        <a class="rs-sub" href="Integrations.dc.html" style="color:var(--ink-2)">Integrations</a><a class="rs-sub" href="Compare.dc.html" style="color:var(--ink-2)">Compare</a><a class="rs-sub" href="Performance.dc.html" style="color:var(--ink-2)">Performance</a><a class="rs-sub" href="Performance-MySQL.dc.html" style="color:var(--ink-2)">Performance on MySQL</a><a class="rs-sub" href="Trust.dc.html" style="color:var(--ink-2)">Trust center</a><a class="rs-sub" href="Enterprise.dc.html" style="color:var(--ink-2)">Enterprise</a><a class="rs-sub" href="Security.dc.html" style="color:var(--ink-2)">Security</a><a class="rs-sub" href="Standards.dc.html" style="color:var(--ink-2)">Standards and specifications</a>
+        <a href="Blog.dc.html" style="color:var(--ink-2)">Blog</a>
+        <a href="About.dc.html" style="color:var(--ink-2)">About</a>
+        <a href="Playground.dc.html" class="rs-pg" title="Playground: call the example APIs in your browser" aria-label="Playground"><svg class="rs-pg-ico" aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="3"/><path d="M6.5 10l3 2.5-3 2.5"/><rect class="rs-pg-caret" x="11.5" y="14" width="5" height="1.6" rx="0.8" fill="currentColor" stroke="none"/><circle class="rs-pg-live" cx="20" cy="5" r="2.6" fill="oklch(0.62 0.13 170)" stroke="var(--bg)" stroke-width="1.4"/></svg><span class="rs-pg-t">Playground</span></a>
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-ghn" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" title="GitHub" style="color:var(--ink-2);display:inline-flex;align-items:center;gap:6px" style-hover="color:var(--ink)"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg><span class="rs-ghn-n" data-gh-stars aria-label="GitHub stars"></span></a>
+        <button type="button" class="rs-theme" data-theme-toggle aria-label="Switch between light and dark theme" title="Theme"><svg class="rs-sun" aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="rs-moon" aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span class="rs-theme-t">Light / dark</span></button>
+      </div>
+    </div>
+  </nav>
+  <header id="top" class="f-pad dp-hero">
+    <nav class="dp-crumb" aria-label="Breadcrumb"><a href="Deploy.dc.html">Deploy</a><span aria-hidden="true">/</span><span>Kubernetes</span></nav>
+    <span class="dp-eye">Deploy · Helm chart</span>
+    <h1>Kubernetes</h1>
+    <p>The signed Helm chart: one pod on SQLite, or several on PostgreSQL and Redis behind a disruption budget. Installed and upgraded under load on a real cluster in CI, and it refuses setups that can't work.</p>
+    <div class="dp-stab"><span class="dp-stab-tag">Stable since 0.30</span><p><b>Values may be added; none is renamed or removed except through the deprecation process.</b> Chart X.Y.Z runs QueryAPIGate X.Y.Z. It installs no PostgreSQL or Redis of its own, and its NetworkPolicy stays off until you give it your cluster's rules. Requires Kubernetes 1.25 or later, with Helm 3 or 4.</p></div>
+    <div class="dp-go"><a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm" class="dp-btn">Guide 54: Helm →</a><a href="Guide.dc.html?g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request" class="dp-btn dp-btn-o">Guide 55: GitOps →</a><a href="Deploy.dc.html#compare" class="dp-btn dp-btn-o">Compare the three shapes</a></div>
+  </header>
+
+  <nav class="rail" aria-label="Sections">
+    <a href="#shape" data-rail="shape"><span>The shape</span></a>
+    <a href="#install" data-rail="install"><span>Install</span></a>
+    <a href="#pods" data-rail="pods"><span>Several pods</span></a>
+    <a href="#refuses" data-rail="refuses"><span>What it refuses</span></a>
+    <a href="#hardening" data-rail="hardening"><span>Hardening</span></a>
+    <a href="#values" data-rail="values"><span>Values</span></a>
+    <a href="#upgrades" data-rail="upgrades"><span>Upgrades</span></a>
+    <a href="#gitops" data-rail="gitops"><span>GitOps</span></a>
+    <a href="#verify" data-rail="verify"><span>Verify</span></a>
+    <a href="#good" data-rail="good"><span>Good to know</span></a>
+    <a href="#next" data-rail="next"><span>Before go-live</span></a>
+  </nav>
+
+  <div class="f-page dp-page">
+  <section id="shape" class="dp-sec">
+    <div class="dp-panel">
+      <div class="f-2col" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:0;align-items:stretch">
+        <div style="background:var(--bg);padding:clamp(20px,3vw,40px);display:grid;place-items:center;border-right:1px solid var(--line);min-width:0"><div class="d-fig" data-shape="k8s" style="width:100%;max-width:520px;display:grid;gap:14px"><svg viewBox="0 0 360 246" role="img" aria-label="Kubernetes: the ingress routes to the deployment pods and to the events and MCP pods; secrets come from a Secret or Vault; metrics are scraped through a ServiceMonitor." style="width:100%;height:auto;display:block;overflow:visible;font-family:Instrument Sans,system-ui,sans-serif"><defs><marker id="ahk8s" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="var(--ink-4)"/></marker></defs><path class="de" data-edge="ingress-deploy" d="M140 42 L70 64" stroke="var(--ink-4)" stroke-width="1.4" fill="none" marker-end="url(#ahk8s)"/><path class="de-glow" data-glow="ingress-deploy" d="M140 42 L70 64" stroke="var(--accent-ink)" stroke-width="2.6" fill="none" stroke-linecap="round"/><path class="de" data-edge="ingress-events" d="M220 42 L290 64" stroke="var(--ink-4)" stroke-width="1.4" fill="none" marker-end="url(#ahk8s)"/><path class="de-glow" data-glow="ingress-events" d="M220 42 L290 64" stroke="var(--accent-ink)" stroke-width="2.6" fill="none" stroke-linecap="round"/><path class="de" data-edge="deploy-secret" d="M90 112 L90 134" stroke="var(--ink-4)" stroke-width="1.4" fill="none" marker-end="url(#ahk8s)"/><path class="de-glow" data-glow="deploy-secret" d="M90 112 L90 134" stroke="var(--accent-ink)" stroke-width="2.6" fill="none" stroke-linecap="round"/><path class="de" data-edge="events-svcmon" d="M270 112 L270 134" stroke="var(--ink-4)" stroke-width="1.4" fill="none" marker-end="url(#ahk8s)"/><path class="de-glow" data-glow="events-svcmon" d="M270 112 L270 134" stroke="var(--accent-ink)" stroke-width="2.6" fill="none" stroke-linecap="round"/><path class="de" data-edge="deploy-db" d="M170 89 L190 218" stroke="var(--ink-4)" stroke-width="1.4" fill="none" marker-end="url(#ahk8s)"/><path class="de-glow" data-glow="deploy-db" d="M170 89 L190 218" stroke="var(--accent-ink)" stroke-width="2.6" fill="none" stroke-linecap="round"/><g class="dn" data-node="ingress"><rect class="box" x="90" y="8" width="180" height="34" rx="8" fill="var(--surface)" stroke="var(--line-2)"/><g class="logos"><image class="logo" x="0" y="0" href="https://cdn.simpleicons.org/kubernetes" width="14" height="14"/></g><text class="ttl" x="180.0" y="17.5" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="600" fill="var(--ink)">Ingress</text><text class="sub" x="180.0" y="32.5" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--ink-4)">/events and MCP routed</text></g><g class="dn" data-node="deploy"><rect class="box" x="10" y="66" width="160" height="46" rx="8" fill="#10201b" stroke="#10201b"/><g class="logos"><image class="logo" x="0" y="0" href="https://cdn.simpleicons.org/helm/8fb4ff" width="14" height="14"/></g><text class="ttl" x="90.0" y="81.5" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="600" fill="#e6efeb">Deployment</text><rect class="pod" data-pod="1" x="70" y="90" width="8" height="8" rx="2" fill="#9fb3ac"/><rect class="pod" data-pod="2" x="86" y="90" width="8" height="8" rx="2" fill="#9fb3ac"/><rect class="pod" data-pod="3" x="102" y="90" width="8" height="8" rx="2" fill="#9fb3ac"/><text class="sub" x="90.0" y="105" text-anchor="middle" dominant-baseline="middle" font-size="9" fill="#9fb3ac">rolling update · PDB</text></g><g class="dn" data-node="events"><rect class="box" x="190" y="66" width="160" height="46" rx="8" fill="#10201b" stroke="#10201b"/><g class="logos"><g class="logo" data-w="14"><path d="M7 13v-3M5.2 4.7V1.2M8.8 4.7V1.2M10.6 4.7v3a3.6 3.6 0 0 1-7.2 0v-3z" fill="none" stroke="#a7d7c5" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></g></g><text class="ttl" x="270.0" y="81.5" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="600" fill="#e6efeb">Events · MCP</text><text class="sub" x="270.0" y="96.5" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#9fb3ac">own pods</text></g><g class="dn" data-node="secret"><rect class="box" x="10" y="136" width="160" height="40" rx="8" fill="var(--surface)" stroke="var(--line-2)" stroke-dasharray="4 3"/><g class="logos"><image class="logo" x="0" y="0" href="https://cdn.simpleicons.org/vault/c9a227" width="14" height="14"/></g><text class="ttl" x="90.0" y="148.5" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="600" fill="var(--ink)">Secret or Vault</text><text class="sub" x="90.0" y="163.5" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--ink-4)">existingSecret</text></g><g class="dn" data-node="svcmon"><rect class="box" x="190" y="136" width="160" height="40" rx="8" fill="var(--surface)" stroke="var(--line-2)" stroke-dasharray="4 3"/><g class="logos"><image class="logo" x="0" y="0" href="https://cdn.simpleicons.org/prometheus" width="14" height="14"/></g><text class="ttl" x="270.0" y="148.5" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="600" fill="var(--ink)">ServiceMonitor</text><text class="sub" x="270.0" y="163.5" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="var(--ink-4)">token-protected /metrics</text></g><g class="dn" data-node="pgredis"><rect class="box" x="10" y="198" width="160" height="40" rx="8" fill="var(--surface)" stroke="var(--line-2)"/><g class="logos"><image class="logo" x="0" y="0" href="https://cdn.simpleicons.org/postgresql" width="14" height="14"/><image class="logo" x="0" y="0" href="https://cdn.simpleicons.org/redis" width="14" height="14"/></g><text class="ttl" x="90.0" y="218.0" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="600" fill="var(--ink)">PostgreSQL · Redis</text></g><g class="dn" data-node="db"><rect class="box" x="190" y="198" width="160" height="40" rx="8" fill="var(--surface)" stroke="var(--line-2)"/><g class="logos"><image class="logo" x="0" y="0" href="https://cdn.simpleicons.org/postgresql" width="14" height="14"/><image class="logo" x="0" y="0" href="https://cdn.simpleicons.org/mysql" width="14" height="14"/></g><text class="ttl" x="270.0" y="218.0" text-anchor="middle" dominant-baseline="middle" font-size="12" font-weight="600" fill="var(--ink)">Your databases</text></g><g class="pk" data-pk="1"><rect rx="8" height="16" fill="var(--accent-ink)"/><text y="8" dominant-baseline="middle" text-anchor="middle" font-size="8.5" font-family="JetBrains Mono,monospace" fill="var(--on-ink)"></text></g><g class="pk" data-pk="2"><rect rx="8" height="16" fill="oklch(0.8 0.13 80)"/><text y="8" dominant-baseline="middle" text-anchor="middle" font-size="8.5" font-family="JetBrains Mono,monospace" fill="#17201d"></text></g></svg><div class="d-capbar"><div class="d-cap" aria-live="polite"><span class="d-cap-n">01</span><span class="d-cap-t">…</span></div><button type="button" class="d-scn" data-scn="k8s">Roll out a new version ↑</button></div></div></div>
+        <div style="padding:clamp(22px,3vw,36px);display:grid;gap:18px;align-content:start;min-width:0">
+          <div style="display:grid;gap:6px"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">Helm chart</span><h3 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:26px;font-weight:700;letter-spacing:-0.01em">Kubernetes</h3></div>
+          <div style="display:grid;gap:10px"><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:var(--ink-2);align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>One pod on SQLite, or several on PostgreSQL and Redis behind a disruption budget.</span></div><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:var(--ink-2);align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>Non-root, read-only root filesystem, no capabilities; a NetworkPolicy and autoscaler if you want them.</span></div><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:var(--ink-2);align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>The chart refuses setups that can't work, such as several pods without Redis.</span></div></div>
+          <div style="display:grid;border-top:1px solid var(--line)"><div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px"><span style="color:var(--ink-3)">Store</span><span style="color:var(--ink)">SQLite (one pod) or PostgreSQL</span></div><div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px"><span style="color:var(--ink-3)">Redis</span><span style="color:var(--ink)">Required for more than one pod</span></div><div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px"><span style="color:var(--ink-3)">Live events</span><span style="color:var(--ink)">Events pods, routed by the ingress</span></div><div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px"><span style="color:var(--ink-3)">Availability</span><span style="color:var(--ink)">Rolling updates, disruption budget</span></div><div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px"><span style="color:var(--ink-3)">Configuration</span><span style="color:var(--ink)"><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">config</code> values, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">configAsCode</code></span></div><div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px solid var(--line-soft);font-size:13.5px"><span style="color:var(--ink-3)">Tested in CI</span><span style="color:var(--ink)">kind cluster: install, upgrade under load</span></div></div>
+          <div style="display:flex;gap:8px 18px;flex-wrap:wrap;font-size:14px;font-weight:600"><a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm">Guide 54: Helm →</a><a href="Guide.dc.html?g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request">Guide 55: GitOps →</a></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Install</span><h2 class="dp-h2">One pod on SQLite</h2></div><p class="dp-lede">One pod, with <code class="qx">queryapigate.db</code> on a 1 Gi PersistentVolumeClaim. <b>The claim is kept on <code class="qx">helm uninstall</code>.</b> Reinstall under the same name and namespace and it picks the store up again, keys and all. Upgrades on SQLite replace the pod instead of rolling it, so expect a few seconds of downtime.</p></div>
+    <div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">shell</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy shell"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>kubectl create namespace queryapigate
+kubectl -n queryapigate create secret generic queryapigate \
+  --from-literal=QUERYAPIGATE_API_KEY=&lt;a long random key&gt; \
+  --from-literal=QUERYAPIGATE_SECRET_KEY=&lt;a Fernet key&gt;
+helm install queryapigate oci://ghcr.io/anantharajuc/charts/queryapigate --version 0.42.0 \
+  -n queryapigate --set existingSecret=queryapigate --wait</pre></div>
+  </section>
+
+  <section id="pods" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Several pods</span><h2 class="dp-h2">On PostgreSQL and Redis</h2></div><p class="dp-lede">The pods roll one at a time, and a new pod must be ready before an old one stops (<code class="qx">maxUnavailable: 0</code>). The PodDisruptionBudget keeps all but one up during node drains. Use managed PostgreSQL and Redis in production; <code class="qx">deploy/kubernetes/dev-dependencies.yaml</code> starts throwaway ones for a trial.</p></div>
+    <div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">values-prod.yaml</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy values-prod.yaml"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>store: {type: postgres}
+replicas: 3
+existingSecret: queryapigate      <span class="dpc-c"># + QUERYAPIGATE_DATABASE_URL and QUERYAPIGATE_REDIS_URL</span>
+redis: {inExistingSecret: true}   <span class="dpc-c"># the chart can't see inside your Secret</span>
+events: {enabled: true}           <span class="dpc-c"># live events for many clients</span>
+mcp: {enabled: true}              <span class="dpc-c"># the MCP server for AI agents</span>
+config:
+  QUERYAPIGATE_JSON_LOGS: "1"</pre></div>
+  </section>
+
+  <section id="refuses" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">What it refuses</span><h2 class="dp-h2">Refused before anything changes</h2></div><p class="dp-lede"><code class="qx">helm install</code> and <code class="qx">helm upgrade</code> fail without touching the cluster.</p></div>
+    <div class="dp-flow"><div class="dp-stack"><ul class="dp-list"><li>more than one pod on SQLite,</li><li>more than one pod without Redis (otherwise rate limits, quotas and <code class="qx">max_concurrent</code> would be counted per pod),</li><li><code class="qx">store.type: postgres</code> without a database URL,</li><li>a secret setting (a key, or the database or Redis URL) in <code class="qx">config</code>, where it would sit in plain text in the Deployment,</li><li>a value not in <code class="qx">values.schema.json</code>. A misspelt <code class="qx">replica=3</code> fails with <code class="qx">additional properties 'replica' not allowed</code>.</li></ul></div><div class="dp-stack"><div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">helm upgrade</span></div><pre>Error: UPGRADE FAILED: store.type sqlite keeps the store in one file on one volume - it runs one pod.
+For several, set store.type: postgres (QUERYAPIGATE_DATABASE_URL in the secret) and Redis.</pre></div></div></div>
+  </section>
+
+  <section id="hardening" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Hardening</span><h2 class="dp-h2">Locked down by default</h2></div><p class="dp-lede">Non-root (UID 1000), read-only root filesystem, every capability dropped, RuntimeDefault seccomp, no service account token (QueryAPIGate never calls the Kubernetes API). It writes only to <code class="qx">/data</code> and <code class="qx">/tmp</code>.</p></div>
+    <div class="dp-grid2"><div class="dp-stack"><div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">kubectl</span></div><pre>$ kubectl exec deploy/queryapigate -- sh -c 'id; touch /x'
+uid=1000(app) gid=1000(app) groups=1000(app)
+touch: cannot touch '/x': Read-only file system</pre></div></div><div class="dp-stack"><div class="dp-note "><b>Metrics need a token</b><span><code class="qx">/metrics</code> needs a token by default (<code class="qx">metricsAuth</code>): the chart creates one in its own Secret, keeps it across upgrades, and the ServiceMonitor sends it.</span></div></div></div>
+  </section>
+
+  <section id="values" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Values</span><h2 class="dp-h2">The values that matter</h2></div><span></span></div>
+    <div class="dp-tcard"><div style="overflow-x:auto"><table class="dp-tbl"><thead><tr><th>Concern</th><th>Values</th></tr></thead><tbody><tr><td>Secrets</td><td><code class="qx">existingSecret</code> (recommended: sealed-secrets, External Secrets, Vault), or <code class="qx">secret.create</code> + <code class="qx">secret.values</code></td></tr><tr><td>Other settings</td><td><code class="qx">config</code>: any <code class="qx">QUERYAPIGATE_*</code> or <code class="qx">OTEL_*</code></td></tr><tr><td>Routing</td><td><code class="qx">ingress.*</code> sends <code class="qx">/events</code> to the events pods and everything else to the API pods, and sets <code class="qx">QUERYAPIGATE_TRUST_PROXY=1</code>. <code class="qx">mcp.ingress.host</code> gives MCP its own host. The defaults are ingress-nginx no-buffering annotations; replace them for another controller.</td></tr><tr><td>Image</td><td><code class="qx">image.digest</code>: pull by the digest you verified</td></tr><tr><td>Observability</td><td><code class="qx">serviceMonitor.enabled</code>, <code class="qx">metricsAuth</code>, tracing through <code class="qx">OTEL_EXPORTER_OTLP_ENDPOINT</code></td></tr><tr><td>Network</td><td><code class="qx">networkPolicy.enabled</code> with <code class="qx">ingressFrom</code> and <code class="qx">egress</code>. List your databases, Redis and SIEM there, or queries can't reach them.</td></tr><tr><td>Scale</td><td><code class="qx">autoscaling.enabled</code> (CPU-based, PostgreSQL shape only; 2-6 replicas by default)</td></tr><tr><td>Secrets managers</td><td><code class="qx">vaultToken.enabled</code> (a projected, short-lived token for Vault only); <code class="qx">serviceAccount.annotations</code> for IRSA</td></tr><tr><td>Files by path</td><td><code class="qx">extraVolumes</code> / <code class="qx">extraVolumeMounts</code> for SIEM certificates or export directories, since the root filesystem is read-only</td></tr></tbody></table></div></div>
+  </section>
+
+  <section id="upgrades" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Upgrades</span><h2 class="dp-h2">Upgrades under load</h2></div><p class="dp-lede">The same <code class="qx">helm upgrade</code> with the new <code class="qx">--version</code>. In the guide's run, a pod called <code class="qx">/q/tables</code> every 50 ms throughout the upgrade: <b>1,690 answered, 0 failed.</b> Upgrade one minor version at a time, and read its changelog entry first.</p></div>
+    <div class="dp-note ci"><b>In CI on every push</b><span>The chart is linted and rendered with Helm 3.22 and 4.3 (<code class="qx">tests/test_helm.py</code>: refusals, hardening, routes, and the plain manifests kept in step). Then it is installed on a kind cluster in the PostgreSQL shape with three pods, events and MCP, and upgraded from the previous release's chart to the current code while a pod keeps calling it. A single failed request fails the build. The same run checks that <code class="qx">/metrics</code> answers 401 without the chart's token.</span></div>
+  </section>
+
+  <section id="gitops" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">GitOps</span><h2 class="dp-h2">Configuration as code</h2></div><span></span></div>
+    <p class="dp-p"><code class="qx">configAsCode.enabled</code> with <code class="qx">configAsCode.file</code> (or <code class="qx">existingConfigMap</code>) puts connections, queries, roles and keys in one file in git, with no secrets: passwords are <code class="qx">${VAR}</code> references and keys are stored as <code class="qx">secret_sha256</code>. The first new API pod applies it as it starts, once per file. A change to the file rolls the pods. A file that can't be applied stops the rollout at its first pod, while the old pods keep serving. <code class="qx">locked: true</code> restricts what the file manages to changes through the file, so a Console edit gets <code class="qx">409 config_managed</code>. Argo CD or Flux syncing the chart is then the deploy (<a href="Guide.dc.html?g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request">guide 55</a>).</p>
+  </section>
+
+  <section id="verify" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Verify</span><h2 class="dp-h2">Verify before you run it</h2></div><p class="dp-lede">The same works for the <code class="qx">-h2</code> image and the chart. Then set <code class="qx">image.digest</code> to the verified digest (<a href="Guide.dc.html?g=59-verify-a-release-before-you-run-it">guide 59</a>).</p></div>
+    <div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">shell</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy shell"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>cosign verify ghcr.io/anantharajuc/queryapigate:0.42.0 \
+  --certificate-identity https://github.com/AnanthaRajuC/QueryAPIGate/.github/workflows/docker.yml@refs/tags/v0.42.0 \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com</pre></div>
+  </section>
+
+  <section id="good" class="dp-sec">
+    <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Good to know</span><h2 class="dp-h2">Good to know</h2></div><span></span></div>
+    <ul class="dp-list"><li><b>Changing a Secret you manage doesn't restart the pods</b>, because the chart can't see inside it. Run <code class="qx">kubectl rollout restart</code> on each Deployment (<code class="qx">-events</code> and <code class="qx">-mcp</code> too). Changes to <code class="qx">config</code>, or to a Secret the chart makes, roll the pods on <code class="qx">helm upgrade</code>.</li><li><b>Backups:</b> on SQLite, <code class="qx">kubectl exec deploy/queryapigate -- queryapigate backup /tmp/backup.db --force</code>, then <code class="qx">kubectl cp</code> the file out. To restore, scale to 0, put the file on the claim from a one-off pod, remove <code class="qx">-wal</code> and <code class="qx">-shm</code>, and scale back to 1. On PostgreSQL, use your database's own backups.</li><li><b>Without Helm:</b> <code class="qx">deploy/kubernetes/queryapigate.yaml</code> is the same deployment as plain manifests, kept in step by a test.</li></ul>
+  </section>
+
+  <section id="move" class="dp-sec">
+    <div class="d-hdr"><h2 class="dp-h2">What changes when you move</h2><p style="margin:0;color:var(--ink-2);text-wrap:pretty">Moving between shapes is a configuration change. This is what each step adds; the step for this page is highlighted.</p></div>
+    <div class="d-move">
+<div style="border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:10px;align-content:start;background:var(--surface-2)">
+            <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">01</span><b style="font-weight:600">Single instance</b></div>
+            <code>QUERYAPIGATE_API_KEY=…</code>
+            <code>QUERYAPIGATE_SECRET_KEY=…</code>
+            <span style="font-size:13.5px;color:var(--ink-2)">One process or container, with the store as SQLite on a volume. The key is required in a container; the secret key encrypts connection passwords at rest.</span>
+          </div><div style="border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:10px;align-content:start;background:var(--surface-2)">
+            <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">02</span><b style="font-weight:600">+ High availability</b></div>
+            <code>QUERYAPIGATE_DATABASE_URL=postgres://…</code>
+            <code>QUERYAPIGATE_REDIS_URL=redis://…</code>
+            <span style="font-size:13.5px;color:var(--ink-2)">A shared PostgreSQL store and Redis, so any instance answers any request and limits are counted once. Run <code style="display:inline;padding:1px 5px;font-size:0.92em">queryapigate events</code> behind the proxy for live events. <a href="Guide.dc.html?g=42-run-several-instances" style="font-weight:600">Guide 42 →</a></span>
+          </div><div style="border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:10px;align-content:start;background:oklch(0.52 0.11 170 / 0.07);border-color:var(--accent-ink)">
+            <div style="display:flex;align-items:baseline;gap:10px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#9fb3ac">03</span><b style="font-weight:600">+ Kubernetes</b></div>
+            <code>store.type: postgres · replicas: 3</code>
+            <code>existingSecret: queryapigate</code>
+            <span style="font-size:13.5px;color:var(--ink-2)">The same two URLs and the key live in one Secret; the chart refuses several pods on SQLite, several without Redis, PostgreSQL without a database URL, and secrets put in <code style="display:inline;padding:1px 5px;font-size:0.92em">config</code>. <a href="Guide.dc.html?g=54-install-on-kubernetes-with-helm" style="font-weight:600">Guide 54 →</a></span>
+          </div>
+    </div>
+  </section>
+
+  <section id="next" class="dp-sec">
+    <div class="dp-next">
+      <div class="dp-card dp-dark">
+        <small>Before go-live</small>
+        <b>The production checklist, the ports and the measured numbers</b>
+        <span>They apply to every shape, so they live on the Deploy overview.</span>
+        <div class="dp-links"><a href="Deploy.dc.html#checklist">Production checklist →</a><a href="Deploy.dc.html#ports">Three servers, three ports →</a><a href="Deploy.dc.html#benchmarks">Benchmarks →</a></div>
+      </div>
+      <div class="dp-others"><small class="dp-others-h">The other shapes</small><a href="Deploy-Single.dc.html" class="dp-other"><span class="dp-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/server.svg)" aria-hidden="true"></span><span><small>Start here</small><b>Single instance</b></span><i aria-hidden="true">→</i></a><a href="Deploy-HA.dc.html" class="dp-other"><span class="dp-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layers.svg)" aria-hidden="true"></span><span><small>Several instances</small><b>High availability</b></span><i aria-hidden="true">→</i></a></div>
+    </div>
+  </section>
+  </div>
+
+  <footer class="ft" style="border-top:0;background:radial-gradient(circle,var(--dots) 0.4px,transparent 0.7px) 0 0/8px 1px repeat-x var(--bg)">
+    <div style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;gap:40px">
+      <div class="ft-grid">
+        <div class="ft-brand">
+          <a href="Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:var(--ink);text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:var(--accent-ink)">API</span>Gate</span></a>
+          <p style="margin:0;font-size:14px;color:var(--ink-2);max-width:34ch;text-wrap:pretty">One governed gate between your databases and everything that asks them for data. Self-hosted: your data never leaves your infrastructure.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="ft-chip">Self-hosted</span><span class="ft-chip">Apache-2.0</span><span class="ft-chip">Signed releases + SBOM</span><span class="ft-chip">FIPS-approved crypto</span><span class="ft-chip">Python 3.11+</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            <a href="Docs.dc.html#install" class="ft-btn ft-btn-dark">Install →</a>
+            <a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases/latest" class="ft-btn">Latest release →</a>
+            <a href="Guide.dc.html?d=MCP" class="ft-btn">MCP server →</a>
+          </div>
+        </div>
+        <div class="ft-col"><span class="ft-h">Product</span><a href="Features.dc.html">Features</a><a href="Use Cases.dc.html">Use cases</a><a href="Integrations.dc.html">Integrations</a><a href="Playground.dc.html">Playground</a><a href="Deploy.dc.html">Deploy</a><a href="Compare.dc.html">Compare</a><a href="Roadmap.dc.html">Roadmap</a><a href="Changelog.dc.html">Changelog</a></div>
+        <div class="ft-col"><span class="ft-h">Resources</span><a href="Docs.dc.html">Docs</a><a href="FAQ.dc.html">FAQ</a><a href="Glossary.dc.html">Glossary</a><a href="Guides.dc.html">How-to guides</a><a href="Guide.dc.html?d=API">API reference</a><a href="Guide.dc.html?d=MCP">MCP server</a><a href="https://AnanthaRajuC.github.io/QueryAPIGate/">Full reference site</a><a href="Blog.dc.html">Blog</a></div>
+        <div class="ft-col"><span class="ft-h">Trust</span><a href="Trust.dc.html">Trust center</a><a href="Enterprise.dc.html">Enterprise</a><a href="Security.dc.html">Security</a><a href="Support.dc.html">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new">Report a vulnerability</a></div>
+        <div class="ft-col"><span class="ft-h">Project</span><a href="About.dc.html">About</a><a href="Stack.dc.html">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE">Licence (Apache-2.0)</a></div>
+      </div>
+      <div class="ft-bottom">
+        <span>© 2026 QueryAPIGate · Apache-2.0 · Experimental features are labelled in the product and the changelog.</span>
+        <span class="ft-badges">
+          <a href="https://github.com/AnanthaRajuC/QueryAPIGate/actions/workflows/ci.yml" aria-label="CI workflow status"><img src="https://github.com/AnanthaRajuC/QueryAPIGate/actions/workflows/ci.yml/badge.svg" alt="CI status" height="20"></a>
+          <a href="https://scorecard.dev/viewer/?uri=github.com/AnanthaRajuC/QueryAPIGate" aria-label="OpenSSF Scorecard"><img src="https://api.scorecard.dev/projects/github.com/AnanthaRajuC/QueryAPIGate/badge" alt="OpenSSF Scorecard score" height="20"></a>
+          <a href="https://github.com/AnanthaRajuC/QueryAPIGate" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" style="color:var(--ink-2);display:inline-flex"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg></a>
+        </span>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount() {
+    // The shape diagram animates with SMIL, which CSS cannot switch off; pause it for reduced motion.
+    const mq = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+    const apply = () => document.querySelectorAll('svg').forEach(s => mq && mq.matches ? s.pauseAnimations() : s.unpauseAnimations());
+    apply(); mq && mq.addEventListener && mq.addEventListener('change', apply);
+  }
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

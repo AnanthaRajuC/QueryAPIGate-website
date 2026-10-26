@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- site-meta -->
+<title>Playground - QueryAPIGate</title>
+<meta name="description" content="Call the QueryAPIGate example APIs from your browser: pick a saved query, a key and parameters, and see the governed response and where a refused call stops.">
+<meta name="theme-color" content="#10201b">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QueryAPIGate">
+<meta property="og:title" content="Playground - QueryAPIGate">
+<meta property="og:description" content="Call the QueryAPIGate example APIs from your browser: pick a saved query, a key and parameters, and see the governed response and where a refused call stops.">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:image" content="https://anantharajuc.github.io/QueryAPIGate-website/images/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="QueryAPIGate: one governed gate between your databases and everything that asks them for data.">
+<meta property="og:url" content="https://anantharajuc.github.io/QueryAPIGate-website/Playground.dc.html">
+<!-- /site-meta -->
+<script src="./support.js"></script>
+<script src="./theme.js?v=12"></script>
+<script src="./search.js?v=5" defer></script>
+<script>
+(function () {
+  // The example APIs, simulated with the same collections, keys, parameter rules, error codes and wording as the
+  // Home walkthrough. One saved query, three front doors, eight stages; click a stage to see what it checked.
+  var LU = 'https://unpkg.com/lucide-static@0.460.0/icons/';
+  var CATS = ['Action', 'Comedy', 'Documentary', 'Drama', 'Family', 'Sci-Fi'];
+  var A = ['Electric', 'Crimson', 'Silent', 'Golden', 'Midnight', 'Paper', 'Velvet', 'Hidden', 'Northern', 'Glass', 'Iron', 'Wild'];
+  var B = ['Signal', 'Garden', 'Harbor', 'Orbit', 'Letters', 'Frontier', 'Mirror', 'Summer', 'Engine', 'Echo', 'Valley', 'Tide'];
+  var seed = 7; function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  var FILMS = [];
+  for (var i = 0; i < 60; i++) FILMS.push({ film_id: i + 1, title: A[i % 12] + ' ' + B[(i * 7 + Math.floor(i / 12)) % 12], category: CATS[i % 6], rating: ['G', 'PG', 'PG-13', 'R'][Math.floor(rnd() * 4)], rentals: 120 + Math.floor(rnd() * 880) });
+  var QUERIES = {
+    example_top_films: { coll: 'examples-reporting', what: 'Most-rented films, optionally in one category', tables: 'film, film_category, category, inventory, rental',
+      sql: 'SELECT f.title, c.name AS category, f.rating, COUNT(*) AS rentals, …\n  FROM film f JOIN … WHERE (:category IS NULL OR c.name = :category)\n  GROUP BY … ORDER BY rentals DESC LIMIT :top_n',
+      params: [{ name: 'top_n', help: 'integer 1–50, default 10', def: '5', type: 'int' }, { name: 'category', help: 'optional; Nope is not a category, so it shows the 400', def: 'Comedy', type: 'str', options: [''].concat(CATS, ['Nope']) }] },
+    example_monthly_revenue: { coll: 'examples-reporting', what: 'Rentals and revenue per month', tables: 'rental, payment',
+      sql: 'SELECT strftime(\'%Y-%m\', r.rental_date) AS month, COUNT(*) AS rentals, SUM(p.amount) AS revenue\n  FROM rental r JOIN payment p … GROUP BY month ORDER BY month DESC LIMIT :months',
+      params: [{ name: 'months', help: 'integer 1–24, default 6', def: '6', type: 'int' }] },
+    example_kpi_active_rentals: { coll: 'examples-dashboard', what: 'Rentals currently out (cached)', tables: 'rental', cache: true,
+      sql: 'SELECT COUNT(*) AS active_rentals FROM rental WHERE return_date IS NULL', params: [] },
+    example_film_lookup: { coll: 'examples-partner', what: 'One film and how it is doing', tables: 'film, inventory, rental',
+      sql: 'SELECT f.film_id, f.title, … FROM film f … WHERE f.film_id = :film_id',
+      params: [{ name: 'film_id', help: 'required, integer ≥ 1', def: '7', type: 'int' }] },
+    example_film_search: { coll: 'examples-partner', what: 'Find films by part of a title', tables: 'film, film_category, category',
+      sql: 'SELECT f.film_id, f.title, c.name AS category FROM film f …\n  WHERE lower(f.title) LIKE \'%\' || lower(:text) || \'%\' LIMIT 10',
+      params: [{ name: 'text', help: 'required, 2–30 letters and spaces', def: 'garden', type: 'str' }] }
+  };
+  var KEYS = [
+    { id: 'finance-team', role: 'example-reporting', sub: 'example-reporting · read-only · 200/hour', colls: ['examples-reporting'], limit: '200/hour', used: 14, expires: null, tail: 'reporting' },
+    { id: 'exec-team', role: 'example-executive', sub: 'example-executive · reporting and dashboard', colls: ['examples-reporting', 'examples-dashboard'], limit: '500/hour', used: 3, expires: null, tail: 'executive' },
+    { id: 'acme-corp', role: 'example-partner', sub: 'example-partner · examples-partner only · 60/minute', colls: ['examples-partner'], limit: '60/minute', used: 3, expires: '2026-12-31', tail: 'partner' },
+    { id: 'acme-corp (expired)', role: 'example-partner', sub: 'the same partner key, after its expires_at', colls: ['examples-partner'], limit: '60/minute', used: 0, expires: '2026-10-01', expired: true, tail: 'partner' },
+    { id: 'no key', sub: 'no X-API-Key header at all', none: true }
+  ];
+  var STAGES = [
+    { layer: 'Identity', icon: 'key-round', title: 'Identify the caller', desc: 'The key, admin token, JWT or OAuth token is resolved to a named principal with roles and scopes.', links: [['Guide 13 · Set up a scoped API key', 'Guide.dc.html?g=13-set-up-a-scoped-api-key'], ['Reference · Authentication', 'Guide.dc.html?d=API#authentication-and-permissions']] },
+    { layer: 'Identity', icon: 'gauge', title: 'Apply its limits', desc: 'Per-key rate limit, IP allow-list, expiry, quota and concurrency cap are checked before any work is done.', links: [['Guide 17 · Rate-limit a key', 'Guide.dc.html?g=17-rate-limit-a-key'], ['Reference · Key expiry', 'Guide.dc.html?d=API#key-expiry']] },
+    { layer: 'Policy', icon: 'shield-check', title: 'Check the grant', desc: 'Is this query, on this connection, in this mode, granted to this principal? Directly or through a collection.', links: [['Guide 14 · One query for a partner', 'Guide.dc.html?g=14-give-a-partner-one-query-only'], ['Reference · Collections', 'Guide.dc.html?d=API#collections']] },
+    { layer: 'Policy', icon: 'braces', title: 'Validate parameters', desc: 'Each parameter is coerced to its declared type and checked against ranges and lengths. Values are bound, never spliced into SQL.', links: [['Guide 06 · Use bound parameters safely', 'Guide.dc.html?g=06-use-bound-parameters-safely'], ['Reference · Parameter rules', 'Guide.dc.html?d=API#parameter-rules']] },
+    { layer: 'Policy', icon: 'scan-search', title: 'Guard the SQL', desc: 'A guard classifies the statement: one statement, read-only unless writes are allowed. Tables are checked against the allow-list.', links: [['Guide 16 · Restrict a key to tables', 'Guide.dc.html?g=16-restrict-a-key-to-tables'], ['Reference · Execute SQL', 'Guide.dc.html?d=API#execute-sql']] },
+    { layer: 'Execution', icon: 'play', title: 'Run it', desc: 'A pooled connection runs the bound statement under a time limit and row limit.', links: [['Guide 37 · Tune the connection pool', 'Guide.dc.html?g=37-tune-the-connection-pool'], ['Reference · Run a saved query', 'Guide.dc.html?d=API#run-a-saved-query']] },
+    { layer: 'Execution', icon: 'eye-off', title: 'Mask and format', desc: 'Masking rules are traced to source columns through joins and aliases, then the result is serialised in the format asked for.', links: [['Guide 45 · Hide personal data', 'Guide.dc.html?g=45-hide-personal-data-from-a-partner-or-an-ai-agent'], ['Reference · Column masking', 'Guide.dc.html?d=API#column-masking']] },
+    { layer: 'Record', icon: 'scroll-text', title: 'Record it', desc: 'Run history, a metric and an event are written after the response. Changes to configuration go to the audit log.', links: [['Guide 20 · Read the audit log', 'Guide.dc.html?g=20-read-the-audit-log'], ['Reference · Run history', 'Guide.dc.html?d=API#run-history']] }
+  ];
+  var DOORS = [{ id: 'rest', label: 'REST', who: 'a reporting key', icon: 'globe' }, { id: 'mcp', label: 'MCP', who: 'an AI agent', icon: 'bot' }, { id: 'events', label: 'Live events', who: 'a dashboard', icon: 'radio' }, { id: 'export', label: 'Export', who: 'a cron job', icon: 'calendar-clock' }, { id: 'admin', label: 'Management API', who: 'an administrator', icon: 'sliders-horizontal' }];
+  var st = { door: 'rest', q: 'example_top_films', key: 'finance-team', akey: 'alice', ttl: '300', force: null, fmt: 'json', vals: {}, cache: {}, sel: null, run: 184200 };
+  function esc(t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+  function rid() { return Math.random().toString(16).slice(2, 14); }
+  function J(o) { return JSON.stringify(o).replace(/,"/g, ', "').replace(/":/g, '": '); }
+  function validate(q, v) {
+    var e = {}, has = function (k) { return v[k] !== undefined && String(v[k]).trim() !== ''; };
+    if (q === 'example_top_films') {
+      if (has('top_n')) { if (!/^-?\d+$/.test(v.top_n.trim())) e.top_n = 'must be an integer'; else if (+v.top_n < 1 || +v.top_n > 50) e.top_n = 'must be between 1 and 50'; }
+      if (has('category') && CATS.indexOf(v.category.trim()) < 0) e.category = 'must be one of ' + CATS.join(', ');
+    } else if (q === 'example_monthly_revenue') {
+      if (has('months')) { if (!/^-?\d+$/.test(v.months.trim())) e.months = 'must be an integer'; else if (+v.months < 1 || +v.months > 24) e.months = 'must be between 1 and 24'; }
+    } else if (q === 'example_film_lookup') {
+      if (!has('film_id')) e.film_id = 'is required'; else if (!/^-?\d+$/.test(v.film_id.trim())) e.film_id = 'must be an integer'; else if (+v.film_id < 1) e.film_id = 'must be at least 1';
+    } else if (q === 'example_film_search') {
+      if (!has('text')) e.text = 'is required'; else if (!/^[A-Za-z ]{2,30}$/.test(v.text.trim())) e.text = 'must be 2 to 30 letters and spaces';
+    }
+    return e;
+  }
+  function bound(Q, v) { var o = {}; Q.params.forEach(function (p) { var x = v[p.name]; if (x !== undefined && String(x).trim() !== '') o[p.name] = p.type === 'int' && /^-?\d+$/.test(String(x).trim()) ? +x : String(x).trim(); else if (p.def && p.name !== 'film_id' && p.name !== 'text') o[p.name] = null; }); return o; }
+  function rows(q, v) {
+    if (q === 'example_top_films') {
+      var n = +(v.top_n && v.top_n.trim() || 10), c = (v.category || '').trim();
+      return FILMS.filter(function (f) { return !c || f.category === c; }).slice().sort(function (a, b) { return b.rentals - a.rentals; }).slice(0, n)
+        .map(function (f, i) { return { title: f.title, category: f.category, rating: f.rating, rentals: f.rentals, rank: i + 1 }; });
+    }
+    if (q === 'example_monthly_revenue') {
+      var m = +(v.months && v.months.trim() || 6), d = new Date(), out = [];
+      for (var i = 0; i < m; i++) { var t = new Date(d.getFullYear(), d.getMonth() - i, 1), r = 900 + ((i * 137) % 420); out.push({ month: t.getFullYear() + '-' + String(t.getMonth() + 1).padStart(2, '0'), rentals: r, revenue: +(r * 3.99).toFixed(2) }); }
+      return out;
+    }
+    if (q === 'example_kpi_active_rentals') return [{ active_rentals: 183 }];
+    if (q === 'example_film_lookup') { var f = FILMS[+v.film_id - 1]; return f ? [{ film_id: f.film_id, title: f.title, category: f.category, rating: f.rating, rentals_last_30_days: Math.round(f.rentals / 12), in_stock: f.rentals % 3 !== 0 }] : []; }
+    if (q === 'example_film_search') { var t2 = v.text.trim().toLowerCase(); return FILMS.filter(function (f) { return f.title.toLowerCase().indexOf(t2) >= 0; }).slice(0, 10).map(function (f) { return { film_id: f.film_id, title: f.title, category: f.category }; }); }
+    return [];
+  }
+  function fmtBody(r, fmt) {
+    if (!r.length) return '{"message": "No results returned"}';
+    if (fmt === 'csv') { var k = Object.keys(r[0]); return [k.join(',')].concat(r.map(function (x) { return k.map(function (c) { return x[c]; }).join(','); })).join('\n'); }
+    if (fmt === 'ndjson') return r.map(function (x) { return JSON.stringify(x); }).join('\n');
+    return '[\n' + r.map(function (x) { return '  ' + J(x); }).join(',\n') + '\n]';
+  }
+  function daysTo(d) { return Math.round((new Date(d + 'T23:59:59') - new Date()) / 864e5); }
+  var ADMINS = [
+    { id: 'alice', role: 'owner', sub: 'owner · every capability' },
+    { id: 'dev-ci', role: 'developer', sub: 'developer · saved queries and collections' },
+    { id: 'audit-bot', role: 'auditor', sub: 'auditor · read only' },
+    { id: 'finance-team', scoped: true, sub: 'a scoped API key, not an administrator' },
+    { id: 'no key', none: true, sub: 'no X-API-Key header at all' }
+  ];
+  function nowStamp() { var d = new Date(), p = function (n) { return String(n).padStart(2, '0'); }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()); }
+  // Live events: a key's stream carries only its own runs (the admin key sees every run). Filters narrow, never widen.
+  function computeEvents() {
+    var q = st.q, Q = QUERIES[q], v = st.vals[q] || {}, K = KEYS.filter(function (k) { return k.id === st.key; })[0], id = rid(), errs = validate(q, v);
+    var stop = -1, fail = null, name = K.none ? '' : K.id.replace(' (expired)', '');
+    if (K.none) { stop = 0; fail = { http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Missing or wrong X-API-Key', rec: 'access log · 401 · no stream opened' }; }
+    else if (K.expired) { stop = 1; fail = { http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'API key expired on ' + K.expires, rec: 'access log · 401 · ' + name + ' · no stream opened' }; }
+    var canRun = !K.none && !K.expired && K.colls.indexOf(Q.coll) >= 0, bad = Object.keys(errs).length > 0;
+    var r = canRun && !bad ? rows(q, v) : [], runMs = +(1.4 + r.length * 0.35 + 4.5).toFixed(1);
+    var ms = [0.3, 0.1, 0.1, 0.1, 0.0, 1.6, 0.1, 0.1], S = [];
+    S[0] = K.none ? { rows: [['credential', 'none', '', 'bad'], ['principal', '—', '', '']], out: [] }
+      : { rows: [['credential', 'X-API-Key sk_…' + K.tail, '', ''], ['principal', name, '· role ' + K.role, 'ok'], ['feed', 'its own runs only', '· the admin key sees every run', '']], out: ['# a stream is opened with the same credential a query would be'] };
+    S[1] = K.none ? null : { rows: [['connections', '1 of 10,000', '· QUERYAPIGATE_EVENTS_MAX_CONNECTIONS', 'ok'], ['expires', K.expires || 'never', K.expires ? (K.expired ? '· passed' : '· ' + daysTo(K.expires) + ' days left') : '', K.expired ? 'bad' : 'ok']], out: [] };
+    S[2] = { desc: 'A stream needs no grant of its own: each key sees only the runs made with that same key, since it was created. The admin key sees every run.', rows: [['sees', 'runs made with ' + name, '· its own activity feed', 'ok'], ['filters', 'narrow what it sees', '· never widen it', '']], out: [] };
+    S[3] = { desc: 'A stream takes filters, not parameters: type, kind, query, connection and status, one value each. A query that does not exist simply matches nothing.', rows: [['query', q, '· a filter on its own feed', 'ok'], ['other filters', 'none', '', '']], out: ['GET /events?query=' + q] };
+    S[4] = { desc: 'A stream is a subscription, not a query: there is no statement to guard. Each run it reports was guarded when it ran.', rows: [['statements', 'none', '· a stream runs no query', ''], ['carries', 'run metadata', '· never a row', 'ok']], out: [] };
+    S[5] = { desc: 'The connection is held open; an event arrives as each matching run is written, and a keepalive comment every 15 seconds keeps proxies from closing it.', rows: [['stream', 'text/event-stream', '· held open', 'ok'], ['keepalive', 'every 15 s', '', ''], ['events', canRun ? '1' : '0', canRun ? '· when ' + name + ' ran the query' : '· this key made no run of it', canRun ? 'ok' : '']], out: [] };
+    S[6] = { desc: 'An event says a run happened and how it went: names, counts, timings and status. The rows stayed with the caller who ran it, so there is nothing to mask.', rows: [['payload', 'names, counts, timings', '· never a value', 'ok'], ['masking', 'not needed', '· no rows pass', '']], out: [] };
+    S[7] = { desc: 'Tracing records one span per stream, not one per event. Each run is recorded in run history by the call that made it.', rows: [['trace', 'GET /events', '· one span per stream', 'ok'], ['history', 'written by the run itself', '', '']], out: [] };
+    var hdr = K.none ? '' : ' \\\n     -H \'X-API-Key: <' + name + ' secret>\'';
+    var qs = Q.params.map(function (p) { var x = v[p.name]; return x !== undefined && String(x).trim() !== '' ? p.name + '=' + encodeURIComponent(String(x).trim()) : null; }).filter(Boolean);
+    var req = 'curl -N \'http://127.0.0.1:5002/events?query=' + q + '\'' + hdr + '\n\n# then, in another terminal, the same key runs the query:\ncurl \'http://127.0.0.1:5000/q/' + q + (qs.length ? '?' + qs.join('&') : '') + '\'' + hdr;
+    var resp, status, ok = stop < 0, rec, why;
+    if (!ok) { status = fail.http; resp = 'HTTP/1.1 ' + fail.http + '\nContent-Type: application/json\nX-Request-Id: ' + id + '\n\n{"error": "' + fail.msg + '", "code": "' + fail.code + '", "request_id": "' + id + '"}'; rec = [fail.rec];
+      why = stop === 0 ? 'A stream needs a real key, like a query does. No stream was opened.' : 'The key is real, but its expiry has passed, so no stream is opened. An open stream for a key that expires is closed within about a minute.'; }
+    else {
+      status = '200 OK · stream'; var t = nowStamp();
+      resp = 'HTTP/1.1 200 OK\nContent-Type: text/event-stream\nCache-Control: no-store\n\n: keepalive\n\n' + (canRun
+        ? 'id: 4813\ndata: {"type": "query.run", "source": "rest", "occurred_at": "' + t + '", "kind": "saved",\n       "query": "' + q + '", "version": 1, "connection_name": "examples",\n       "entry": {"executed_at": "' + t + '", "status": "' + (bad ? 'error' : 'success') + '", "rows": ' + r.length + ', "duration_ms": ' + (bad ? 0.9 : runMs) + ',\n                 "key_name": "' + name + '", "request_id": "' + rid() + '", "transport": "rest"}}'
+        : '# no event: ' + name + '’s own call to ' + q + ' is refused at its grant, so no run happens.\n# the stream stays open, sending a keepalive every 15 seconds.');
+      rec = ['stream · open on queryapigate events', canRun ? 'event · id 4813 · query.run · ' + (bad ? 'error' : 'success') : 'no event · this key made no run of it'];
+      why = canRun ? (bad ? 'The key’s own run failed validation, and the event says so: status "error", with no rows.' : 'The stream carries only this key’s own runs. When ' + name + ' ran the query, one query.run event arrived, with counts and timings but never a row.')
+        : 'A stream opens for any valid key, but it only ever carries that key’s own runs. ' + name + ' cannot run ' + q + ', so nothing arrives: a filter narrows a feed, it never widens it.';
+    }
+    return { stop: stop, ok: ok, ms: ms, S: S, req: req, resp: resp, status: status, rec: rec, why: why, links: [['Guide 28 · A client that watches queries run', 'Guide.dc.html?g=28-build-a-client-that-watches-queries-run'], ['Reference · Live events', 'Guide.dc.html?d=API#live-events-server-sent-events']] };
+  }
+  // Management API: administrators change the saved query's settings; scoped keys are refused outright.
+  function computeAdmin() {
+    var q = st.q, A = ADMINS.filter(function (a) { return a.id === st.akey; })[0], id = rid(), ttl = String(st.ttl).trim();
+    var stop = -1, fail = null, ttlBad = !/^\d+$/.test(ttl), cred = A.none ? '' : A.scoped ? 'X-API-Key: <finance-team secret>' : 'X-API-Key: <' + A.id + ' admin token>';
+    if (A.none) { stop = 0; fail = { http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Missing or wrong X-API-Key', extra: '', rec: 'access log · 401 · nothing changed' }; }
+    else if (A.scoped) { stop = 2; fail = { http: '403 FORBIDDEN', code: 'admin_only', msg: 'Only administrators may use the Management API', extra: '', rec: 'access log · 403 · finance-team · nothing changed' }; }
+    else if (A.role === 'auditor') { stop = 2; fail = { http: '403 FORBIDDEN', code: 'role_forbidden', msg: 'Role auditor cannot change saved queries', extra: ',\n "capability": "queries.write", "role": "auditor"', rec: 'access log · 403 · audit-bot · role_forbidden · nothing changed' }; }
+    else if (ttlBad) { stop = 3; fail = { http: '400 BAD REQUEST', code: 'invalid_body', msg: 'cache_ttl must be a whole number of seconds', extra: ',\n "errors": {"cache_ttl": "must be a whole number of seconds, 0 or more"}', rec: 'access log · 400 · ' + A.id + ' · nothing changed' }; }
+    var ms = [0.3, 0.2, 0.2, 0.3, 0.0, 2.1, 0.3, 0.4], S = [];
+    S[0] = A.none ? { rows: [['credential', 'none', '', 'bad'], ['principal', '—', '', '']], out: [] }
+      : A.scoped ? { rows: [['credential', 'X-API-Key sk_…reporting', '', ''], ['principal', 'finance-team', '· a scoped API key', 'ok']], out: ['# identified, but a scoped key is an application, not an administrator'] }
+      : { desc: 'The admin token, qagadm_…, is sent as X-API-Key like any key and resolved to a named administrator with one role.', rows: [['credential', 'X-API-Key qagadm_…', '· an admin token', ''], ['administrator', A.id, '· role ' + A.role, 'ok']], out: ['# the Console makes these same calls, with the same credential'] };
+    S[1] = A.none ? null : { rows: [[A.scoped ? 'key' : 'token', 'active · not expired', '', 'ok']], out: [] };
+    S[2] = { desc: 'Each /api/v1 operation needs one capability, held by the caller’s administrator role. Any other caller, such as a scoped key, is refused outright.', rows: A.scoped ? [['caller', 'a scoped key', '· not an administrator', 'bad']] : [['capability', 'queries.write', '· needed to change a saved query', ''], ['role', A.role || '—', A.role === 'auditor' ? '· read only: does not have it' : '· has it', A.role === 'auditor' ? 'bad' : 'ok']], out: [] };
+    S[3] = { desc: 'The body is checked field by field. Unknown fields are refused, not ignored, so a typo never silently does nothing.', rows: [['cache_ttl', ttl || '(empty)', ttlBad ? '· must be a whole number of seconds, 0 or more' : '· seconds; 0 turns caching off', ttlBad ? 'bad' : 'ok'], ['other fields', 'none', '· unknown fields are refused', '']], out: ['{"cache_ttl": ' + (ttlBad ? JSON.stringify(ttl) : +ttl) + '}'] };
+    S[4] = { desc: 'A settings change runs no SQL, so there is nothing to guard. cache_ttl changes the version in place rather than creating a new one.', rows: [['statements', 'none', '· a setting change runs no query', ''], ['version', 'v1, changed in place', '· not a new version', 'ok']], out: [] };
+    S[5] = { desc: 'The change is stored in one transaction, but only if the version has not changed since it was read: a stale If-Match answers 412 precondition_failed.', rows: [['If-Match', '"v1-7c2e"', '· matches the current version', 'ok'], ['store', 'SQLite · queryapigate.db', '', ''], ['transaction', 'committed', '', 'ok']], out: [] };
+    S[6] = { desc: 'The response is the version as it now stands, with a new ETag for the next change.', rows: [['response', 'the version, as JSON', '', 'ok'], ['ETag', '"v1-91ad"', '· for the next If-Match', 'ok']], out: [] };
+    S[7] = { desc: 'Every change to configuration is in the audit log, with the administrator who made it and the fields that changed, each entry chained to the one before.', rows: [['audit', 'actor ' + A.id + ' · ' + q + ' v1', '· cache_ttl changed', 'ok'], ['chain', 'linked to the entry before', '· an edit or deletion is detectable', 'ok']], out: [] };
+    var req = 'curl -X PATCH http://127.0.0.1:5000/api/v1/queries/' + q + '/versions/1' + (cred ? ' \\\n     -H \'' + cred + '\'' : '') + ' -H \'If-Match: "v1-7c2e"\' \\\n     -H \'Content-Type: application/json\' -d \'{"cache_ttl": ' + (ttlBad ? JSON.stringify(ttl) : +ttl) + '}\'';
+    var ok = stop < 0, resp, status, rec, why;
+    if (!ok) { status = fail.http; resp = 'HTTP/1.1 ' + fail.http + '\nContent-Type: application/json\nX-Request-Id: ' + id + '\n\n{"error": "' + fail.msg + '", "code": "' + fail.code + '"' + fail.extra + ',\n "request_id": "' + id + '"}'; rec = [fail.rec];
+      why = stop === 0 ? 'Only a named administrator, or the break-glass key, may call the Management API. Nothing changed.'
+        : A.scoped ? 'A scoped key reaches the saved queries it was granted, but it can never change configuration: admin_only.'
+        : A.role === 'auditor' ? 'An auditor reads everything and changes nothing. The error names the capability it lacked, queries.write.'
+        : 'The body was refused field by field, before anything was stored.'; }
+    else { status = '200 OK'; resp = 'HTTP/1.1 200 OK\nContent-Type: application/json\nETag: "v1-91ad"\nX-Request-Id: ' + id + '\n\n{"name": "' + q + '", "version": 1, "status": "published", "cache_ttl": ' + (+ttl) + '}';
+      rec = ['audit · actor ' + A.id + ' · ' + q + ' v1 · cache_ttl → ' + (+ttl), 'chained to the entry before'];
+      why = (+ttl === 0 ? 'Caching is now off for this version.' : 'Responses from this version are now cached for ' + (+ttl) + ' seconds.') + ' The change took effect at once, without a new version, and the audit log names ' + A.id + ' as the administrator who made it.'; }
+    return { stop: stop, ok: ok, ms: ms, S: S, req: req, resp: resp, status: status, rec: rec, why: why, links: [['Reference · Management API', 'Guide.dc.html?d=API#management-api-v1'], ['Reference · Administrators and roles', 'Guide.dc.html?d=API#administrators-and-admin-roles']] };
+  }
+  // Work out the whole call: where it stops, what each stage saw, the request, the response and what was recorded.
+  // "What if this stage refuses?": each door's real refusal at each stage, for the call on screen.
+  var PMSG = { top_n: 'must be between 1 and 50', category: 'must be one of ' + CATS.join(', '), months: 'must be between 1 and 24', film_id: 'must be an integer', text: 'must be 2 to 30 letters and spaces' };
+  function refusal(door, i) {
+    var q = st.q, Q = QUERIES[q], K = KEYS.filter(function (k) { return k.id === st.key; })[0] || {}, lim = K.limit || '200/hour';
+    var p0 = Q.params[0], errs = p0 ? {} : null; if (p0) errs[p0.name] = PMSG[p0.name];
+    var E = function (o) { return o; };
+    var noP = { never: 'This query takes no parameters, so there is nothing for this stage to refuse.' };
+    var T = {
+      rest: [
+        E({ kind: 'http', http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Missing or wrong X-API-Key', rec: 'access log · 401 · nothing else ran', why: 'Without a valid credential, nothing past the first stage runs.' }),
+        E({ kind: 'http', http: '429 TOO MANY REQUESTS', code: 'rate_limited', msg: 'Rate limit exceeded: ' + lim, extra: ',\n "retry_after": 840', hdr: 'Retry-After: 840', rec: 'metric requests_total{status="429"} +1', why: 'The key has used its budget. The response says how long to wait, and nothing reached the database.' }),
+        E({ kind: 'http', http: '403 FORBIDDEN', code: 'forbidden', msg: 'This key may not run ' + q, rec: 'access log · 403 · ' + q, why: 'The query exists, but this key is not granted it, directly or through a collection.' }),
+        p0 ? E({ kind: 'http', http: '400 BAD REQUEST', code: 'param_invalid', msg: 'Invalid parameters', extra: ',\n "errors": ' + J(errs), rec: 'run history · 400 · the database was not called', why: 'A value broke its rule. Every problem is listed at once, before anything reaches the database.' }) : noP,
+        E({ kind: 'http', http: '403 FORBIDDEN', code: 'read_only', msg: 'Statements that write are not allowed for this key', rec: 'run history · 403 · nothing reached the database', why: 'The guard refuses a statement that writes when the key has no write grant. The example queries only read, so for real they pass.' }),
+        E({ kind: 'http', http: '504 GATEWAY TIMEOUT', code: 'query_timeout', msg: 'Query ran past its time limit and was cancelled', rec: 'run history · 504 · cancelled on the database', why: 'The query ran past its time limit, the smallest of the key’s, the query’s and the server’s, and was cancelled on the database.' }),
+        E({ kind: 'http', http: '403 FORBIDDEN', code: 'mask_unresolvable', msg: 'A result column could not be traced to its source column; refused rather than served unmasked', rec: 'alert mask_unresolvable · nothing was sent', why: 'For a caller with masking rules, a column that cannot be traced to its source is refused, never sent unmasked.' }),
+        { never: 'Recording happens after the response is sent, so this stage never refuses a call.' }
+      ],
+      mcp: [
+        E({ kind: 'http', http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Missing or wrong X-API-Key', hdr: 'WWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/mcp"', rec: 'access log · 401 · no tool ran', why: 'A bad credential is refused at HTTP level, before the MCP session sees the request, with a pointer to where an AI client can sign in.' }),
+        E({ kind: 'tool', code: 'rate_limited', msg: 'Rate limit exceeded: ' + lim, extra: ', "retry_after": 840', rec: 'metric requests_total{status="429"} +1', why: 'Over the limit, the agent gets a tool error with retry_after, so it can wait rather than loop.' }),
+        E({ kind: 'tool', code: 'mcp_disabled', msg: q + ' is not exposed as an MCP tool', rec: 'access log · tools/call ' + q + ' · refused', why: 'This query’s mcp setting is off: it is hidden from tools/list and refused by name, while it still serves over REST.' }),
+        p0 ? E({ kind: 'tool', code: 'param_invalid', msg: 'Invalid parameters', extra: ', "errors": ' + J(errs), rec: 'run history · 400 · the database was not called', why: 'The agent gets the same field-by-field errors a REST caller would, as structured content it can act on.' }) : noP,
+        E({ kind: 'tool', code: 'read_only', msg: 'Writes are not allowed over MCP', rec: 'run history · 403 · nothing reached the database', why: 'Over MCP, ad-hoc SQL is always read-only; a write needs a tool marked for agents, and a person approving it.' }),
+        E({ kind: 'tool', code: 'query_timeout', msg: 'Query ran past its time limit and was cancelled', rec: 'run history · 504 · cancelled on the database', why: 'The query was cancelled on the database, and the agent is told so in a code it can branch on.' }),
+        E({ kind: 'tool', code: 'mask_unresolvable', msg: 'A result column could not be traced to its source column', rec: 'alert mask_unresolvable · nothing was sent', why: 'A column that cannot be traced is refused, never shown to the agent unmasked.' }),
+        { never: 'Recording happens after the response is sent, so this stage never refuses a call.' }
+      ],
+      events: [
+        E({ kind: 'http', http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Missing or wrong X-API-Key', rec: 'access log · 401 · no stream opened', why: 'A stream needs a real key, like a query does.' }),
+        E({ kind: 'http', http: '503 SERVICE UNAVAILABLE', code: 'too_many_streams', msg: 'Every live-event stream slot is taken; retry shortly', hdr: 'Retry-After: 5', rec: 'no stream opened · retry in 5 s', why: 'Every stream slot is in use. The client is told to retry shortly rather than being left hanging.' }),
+        { never: 'A stream has no grant to refuse: each key sees only its own runs, and filters can only narrow that.' },
+        E({ kind: 'http', http: '400 BAD REQUEST', code: 'invalid_filter', msg: 'status must be success or error', rec: 'access log · 400 · no stream opened', why: 'A filter that could never match, here ?status=done, is refused rather than left silently empty.' }),
+        { never: 'A stream runs no SQL, so there is nothing for the guard to refuse.' },
+        E({ kind: 'text', status: 'disconnected', text: '# the connection dropped mid-stream\n# reconnect to queryapigate events with Last-Event-ID:\n# events missed since then are sent, for up to 24 hours', rec: 'one span for the stream · the client resumes', why: 'A dropped stream is not lost: queryapigate events resends what was missed, from the id the client last saw.' }),
+        { never: 'Events carry no rows, so there is nothing to mask.' },
+        { never: 'Recording happens as each run is written, so this stage never refuses.' }
+      ],
+      export: [
+        { never: 'The CLI runs on the server as a local operator: there is no credential to refuse.' },
+        { never: 'No key, so no rate limit or quota applies to the local operator.' },
+        { never: 'Whoever can run the CLI can already read the store, so there is no grant to check.' },
+        p0 ? E({ kind: 'cli', code: 'param_invalid', msg: p0.name + ' ' + PMSG[p0.name], rec: 'run history · 400 · cli · nothing ran', why: 'A bad --param is refused before the query runs, and the command exits non-zero so cron sees the failure.' }) : noP,
+        E({ kind: 'cli', code: 'read_only', msg: 'Statements that write are not allowed', rec: 'run history · 403 · cli · nothing ran', why: 'The guard refuses a statement that writes; an export only ever reads.' }),
+        E({ kind: 'cli', code: 'connection_failed', msg: 'examples could not be reached', rec: 'run history · 502 · cli', why: 'The database could not be reached. The export stops with a non-zero exit, and no partial file is renamed into place.' }),
+        E({ kind: 'cli', code: 'mask_unresolvable', msg: 'A result column could not be traced to its source column', rec: 'run history · 403 · cli · nothing was written', why: 'A column that cannot be traced is refused, never written to the file unmasked.' }),
+        { never: 'Recording happens after the file is written, so this stage never refuses.' }
+      ],
+      admin: [
+        E({ kind: 'http', http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Missing or wrong X-API-Key', rec: 'access log · 401 · nothing changed', why: 'Only a named administrator, or the break-glass key, may call the Management API.' }),
+        E({ kind: 'http', http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Admin token expired', rec: 'access log · 401 · nothing changed', why: 'Admin tokens can carry an expiry; an expired one is refused like a missing one.' }),
+        E({ kind: 'http', http: '403 FORBIDDEN', code: 'role_forbidden', msg: 'Role auditor cannot change saved queries', extra: ',\n "capability": "queries.write", "role": "auditor"', rec: 'access log · 403 · role_forbidden · nothing changed', why: 'The administrator’s role lacks the capability; the error names the one it needed.' }),
+        E({ kind: 'http', http: '400 BAD REQUEST', code: 'unknown_field', msg: 'Unknown field: cache_tll', rec: 'access log · 400 · nothing changed', why: 'Unknown fields are refused, not ignored, so a typo never silently does nothing.' }),
+        { never: 'A settings change runs no SQL, so there is nothing for the guard to refuse.' },
+        E({ kind: 'http', http: '412 PRECONDITION FAILED', code: 'precondition_failed', msg: 'This version changed since it was read; read it again and retry', rec: 'access log · 412 · nothing changed', why: 'Someone changed this version after you read it. If-Match stops you overwriting their change.' }),
+        { never: 'The response is the stored version as JSON; this stage has nothing to refuse.' },
+        { never: 'The audit entry is written with the change, so this stage never refuses.' }
+      ]
+    };
+    return T[door][i];
+  }
+  function applyForce(c) {
+    if (st.force === null) return c;
+    var i = st.force, R = refusal(st.door, i);
+    if (!R || R.never || (c.stop >= 0 && c.stop <= i)) return c;
+    var id = rid(), c2 = {}; for (var k in c) c2[k] = c[k];
+    c2.S = c.S.slice(); c2.stop = i; c2.ok = false; c2.forced = true;
+    var base = c.S[i] || {}; c2.S[i] = { desc: base.desc, rows: [['refused', R.code || R.status, '', 'bad']].concat((base.rows || []).slice(0, 2)), out: [] };
+    if (R.kind === 'http') { c2.status = R.http; c2.resp = 'HTTP/1.1 ' + R.http + '\nContent-Type: application/json\nX-Request-Id: ' + id + (R.hdr ? '\n' + R.hdr : '') + '\n\n{"error": "' + R.msg + '", "code": "' + R.code + '"' + (R.extra || '') + ',\n "request_id": "' + id + '"}'; }
+    else if (R.kind === 'tool') { c2.status = 'tool error'; c2.resp = 'HTTP/1.1 200 OK\n\n{"jsonrpc": "2.0", "id": 7, "result": {"isError": true,\n "content": [{"type": "text", "text": "' + R.msg + '"}],\n "structuredContent": {"error": "' + R.msg + '", "code": "' + R.code + '"' + (R.extra || '') + '}}}'; }
+    else if (R.kind === 'cli') { c2.status = 'non-zero exit'; c2.resp = 'error: ' + R.msg + '\n# code ' + R.code + ' · nothing was written · the command exits non-zero, so cron or a CronJob sees the failure'; }
+    else { c2.status = R.status; c2.resp = R.text; }
+    c2.rec = [R.rec]; c2.why = R.why;
+    return c2;
+  }
+  // the refusal button sits in the card header, after the stage name; when it cannot be used, a short note says why
+  function refuseBtn(c, sel) {
+    var R = refusal(st.door, sel);
+    if (c.forced && st.force === sel) return { b: '<button type="button" class="pg-refuse on" data-force="' + sel + '">← Back to the call that passed</button>', n: '' };
+    if (c.stop >= 0 && !c.forced && c.stop === sel) return { b: '', n: '' };
+    if (c.stop >= 0 && c.stop < sel) return { b: '<button type="button" class="pg-refuse" disabled>What if this stage refuses?</button>', n: 'The call already stopped at stage ' + String(c.stop + 1).padStart(2, '0') + '.' };
+    if (!R || R.never) return { b: '<button type="button" class="pg-refuse" disabled>This stage never refuses</button>', n: R ? R.never : '' };
+    return { b: '<button type="button" class="pg-refuse" data-force="' + sel + '">What if this stage refuses?</button>', n: '' };
+  }
+  function compute() { return applyForce(computeBase()); }
+  function computeBase() {
+    if (st.door === 'events') return computeEvents();
+    if (st.door === 'admin') return computeAdmin();
+    var door = st.door, q = st.q, Q = QUERIES[q], v = st.vals[q] || {}, id = rid();
+    var K = door === 'export' ? { id: 'cli', cli: true } : KEYS.filter(function (k) { return k.id === st.key; })[0];
+    var errs = validate(q, v), b = bound(Q, v), stop = -1, fail = null;
+    if (!K.cli) {
+      if (K.none) { stop = 0; fail = { http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'Missing or wrong X-API-Key', rec: 'access log · 401 · no principal · nothing else ran' }; }
+      else if (K.expired) { stop = 1; fail = { http: '401 UNAUTHORIZED', code: 'unauthorized', msg: 'API key expired on ' + K.expires, rec: 'access log · 401 · acme-corp · alert key_expired' }; }
+      else if (K.colls.indexOf(Q.coll) < 0) { stop = 2; fail = { http: '403 FORBIDDEN', code: door === 'mcp' ? 'unauthorized' : 'forbidden', msg: 'This key may not run ' + q, rec: 'access log · ' + (door === 'mcp' ? '200 tool error' : '403') + ' · ' + K.id + ' · ' + q + ' · alert for a key reaching past its grants' }; }
+    }
+    if (stop < 0 && Object.keys(errs).length) { stop = 3; var req = Object.keys(errs).some(function (k) { return errs[k] === 'is required'; }); fail = { http: '400 BAD REQUEST', code: req ? 'param_required' : 'param_invalid', msg: 'Invalid parameters', errors: errs, rec: 'run history · 400 · ' + (K.cli ? 'cli' : K.id) + ' · ' + q + ' · the database was not called' }; }
+    var r = stop < 0 ? rows(q, v) : [], ms = [0.3, 0.2, 0.2, 0.2, 1.2, stop < 0 ? +(1.4 + r.length * 0.35).toFixed(1) : 0, 0.8, 0.3];
+    if (!K.cli && !K.none) K._used = (K._used || K.used) + (stop === 0 || stop === 1 ? 0 : 1);
+    var used = K._used || K.used || 0, hit = false;
+    if (stop < 0 && Q.cache && door === 'rest') { hit = !!st.cache[q + st.fmt]; st.cache[q + st.fmt] = true; if (hit) ms[5] = 0.1; }
+    // per-stage detail
+    var S = [];
+    var who = K.cli ? 'cli' : K.none ? '—' : K.id;
+    S[0] = K.cli ? { rows: [['caller', 'the CLI, on the server', '', 'ok'], ['key', 'none needed', '· whoever can run it can already read QUERYAPIGATE_HOME', '']], out: ['# the CLI reads the store directly; runs are recorded with key_name "cli"'] }
+      : K.none ? { rows: [['credential', 'none', '', 'bad'], ['principal', '—', '', ''], ['scope', '—', '', '']], out: [] }
+      : { rows: [['credential', (door === 'mcp' ? 'X-API-Key on POST /mcp ' : 'X-API-Key ') + 'sk_…' + K.tail, '', ''], ['principal', K.id, '· role ' + K.role, 'ok'], ['scope', K.colls.map(function (c) { return 'collection ' + c; }).join(' · ') + ' · read-only', '', '']],
+          out: ['{"principal": "' + K.id + '", "kind": "api_key", "role": "' + K.role + '",', ' "collections": ' + J(K.colls) + ', "connections": []}'] };
+    S[1] = K.cli ? { rows: [['limits', 'none apply to the local operator', '', '']], out: [] }
+      : K.none ? null
+      : { rows: [['rate limit', K.limit + ' · ' + used + ' used', '', 'ok'], ['client ip', 'no allow-list on this key', '', ''], ['expires', K.expires || 'never', K.expires ? (K.expired ? '· passed' : '· ' + daysTo(K.expires) + ' days left') : '', K.expired ? 'bad' : 'ok']],
+          out: ['{"name": "' + K.id.replace(' (expired)', '') + '", "role": "' + K.role + '", "rate_limit": "' + K.limit + '", "expires_at": ' + (K.expires ? '"' + K.expires + '"' : 'null') + '}'] };
+    S[2] = { rows: [['query', q + ' v1', '· in collection ' + Q.coll, stop === 2 ? '' : 'ok'], ['connection', 'examples', '· SQLite', 'ok'], ['key reaches', K.cli ? 'everything (local operator)' : K.colls ? K.colls.join(' · ') : '—', stop === 2 ? '· not this collection' : '', stop === 2 ? 'bad' : 'ok']], out: stop === 2 ? ['# the query exists; this key cannot reach it, so nothing else runs'] : ['# granted via collection ' + Q.coll] };
+    S[3] = { rows: Q.params.length ? Q.params.map(function (p) { var e = errs[p.name], x = v[p.name]; return [p.name, x === undefined || String(x).trim() === '' ? '(default)' : String(x).trim(), e ? '· ' + e : '· ' + p.help, e ? 'bad' : 'ok']; }) : [['parameters', 'none', '', 'ok']], out: Object.keys(errs).length ? ['{"errors": ' + J(errs) + '}', '# every problem listed at once; the database never saw the request'] : ['# bound values, sent to the database separately from the SQL', J(b)] };
+    S[4] = { rows: [['statements', '1', '· one statement only', 'ok'], ['kind', 'SELECT', '· read-only', 'ok'], ['tables', Q.tables, '', '']], out: Q.sql.split('\n') };
+    S[5] = { rows: [['connection', 'examples · pooled', '', 'ok'], ['time limit', '30 s', '· server default', ''], ['rows', hit ? 'from the cache' : String(r.length), hit ? '· the database was not called' : '', 'ok']], out: [hit ? '# X-Cache: HIT, the result came from the response cache' : '# ran in ' + ms[5] + ' ms'] };
+    var fmt = door === 'mcp' ? 'structuredContent' : st.fmt;
+    S[6] = { rows: [['masked columns', 'none for this key', '', 'ok'], ['format', fmt, '', ''], ['page', door === 'export' ? 'whole result, streamed' : (r.length > 10 ? '1 of ' + Math.ceil(r.length / 10) : '1 of 1') + ' · page_size 10', '', '']], out: [] };
+    var runNo = ++st.run;
+    S[7] = stop < 0 ? { rows: [['run', '#' + runNo + ' · 200 · ' + (ms.reduce(function (a, b) { return a + b; }, 0)).toFixed(1) + ' ms', '', 'ok'], ['metric', 'requests_total{key="' + who + '"} +1', '', ''], ['event', 'query.run → /events', door === 'mcp' ? '· transport "mcp"' : door === 'export' ? '· key_name "cli"' : '', '']], out: [] } : null;
+    // request text per door
+    var argsQ = Q.params.map(function (p) { var x = v[p.name]; return x !== undefined && String(x).trim() !== '' ? [p.name, String(x).trim()] : null; }).filter(Boolean), req;
+    if (door === 'rest') {
+      var qs = argsQ.map(function (a) { return a[0] + '=' + encodeURIComponent(a[1]); }); if (st.fmt !== 'json') qs.push('format=' + st.fmt);
+      req = 'curl -i \'http://127.0.0.1:5000/q/' + q + (qs.length ? '?' + qs.join('&') : '') + '\'' + (K.none ? '' : ' \\\n     -H \'X-API-Key: <' + K.id.replace(' (expired)', '') + ' secret>\'');
+    } else if (door === 'mcp') {
+      var args = {}; argsQ.forEach(function (a) { args[a[0]] = /^-?\d+$/.test(a[1]) && Q.params.filter(function (p) { return p.name === a[0]; })[0].type === 'int' ? +a[1] : a[1]; });
+      req = 'POST http://127.0.0.1:5001/mcp' + (K.none ? '' : '\nX-API-Key: <' + K.id.replace(' (expired)', '') + ' secret>') + '\n\n{"jsonrpc": "2.0", "id": 7, "method": "tools/call",\n "params": {"name": "' + q + '", "arguments": ' + J(args) + '}}';
+    } else {
+      req = 'queryapigate export ' + q + argsQ.map(function (a) { return ' \\\n    --param ' + a[0] + '=' + a[1]; }).join('') + ' \\\n    --format ' + st.fmt + ' --out \'/exports/{name}_{date}.' + st.fmt + '\'';
+    }
+    // response per door
+    var resp, ok = stop < 0, status;
+    if (door === 'rest') {
+      if (!ok) { status = fail.http; resp = 'HTTP/1.1 ' + fail.http + '\nContent-Type: application/json\nX-Request-Id: ' + id + '\n\n{"error": "' + fail.msg + '", "code": "' + fail.code + '"' + (fail.errors ? ',\n "errors": ' + J(fail.errors) : '') + ',\n "request_id": "' + id + '"}'; }
+      else { status = '200 OK'; var ct = { json: 'application/json', csv: 'text/csv; charset=utf-8', ndjson: 'application/x-ndjson' }[st.fmt];
+        resp = 'HTTP/1.1 200 OK\nContent-Type: ' + ct + '\nX-Request-Id: ' + id + '\nX-RateLimit-Limit: ' + K.limit.split('/')[0] + '\nX-Page: 1\nX-Page-Size: 10\nX-Has-More: ' + (r.length > 10) + (Q.cache ? '\nX-Cache: ' + (hit ? 'HIT' : 'MISS') + '\nETag: "a91f3c"' : '') + '\n\n' + fmtBody(r.slice(0, 10), st.fmt); }
+    } else if (door === 'mcp') {
+      if (!ok && stop <= 1) { status = fail.http; resp = 'HTTP/1.1 ' + fail.http + '\nWWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/mcp"\n\n{"error": "' + fail.msg + '", "code": "' + fail.code + '", "request_id": "' + id + '"}\n# refused before the MCP session sees the request'; }
+      else if (!ok) { status = 'tool error'; resp = 'HTTP/1.1 200 OK\n\n{"jsonrpc": "2.0", "id": 7, "result": {"isError": true,\n "content": [{"type": "text", "text": "' + fail.msg + '"}],\n "structuredContent": {"error": "' + fail.msg + '", "code": "' + fail.code + '"' + (fail.errors ? ', "errors": ' + J(fail.errors) : '') + '}}}\n# the agent can branch on code instead of parsing the message'; }
+      else { status = '200 OK'; resp = 'HTTP/1.1 200 OK\n\n{"jsonrpc": "2.0", "id": 7, "result": {\n "content": [{"type": "text", "text": "{\\"rows\\": […], \\"truncated\\": false}"}],\n "structuredContent": {"rows": [\n' + r.slice(0, 10).map(function (x) { return '   ' + J(x); }).join(',\n') + '\n ], "truncated": false}}}'; }
+    } else {
+      if (!ok) { status = 'non-zero exit'; resp = 'error: ' + Object.keys(fail.errors).map(function (k) { return k + ' ' + fail.errors[k]; }).join('; ') + '\n# code ' + fail.code + ' · nothing was written · the command exits non-zero, so cron or a CronJob sees the failure'; }
+      else { status = 'exit 0'; var d = new Date().toISOString().slice(0, 10); resp = '# wrote /exports/' + q + '_' + d + '.' + st.fmt + ' · ' + r.length + ' rows · renamed into place when complete\n\n' + fmtBody(r, st.fmt); }
+    }
+    var rec = ok ? S[7].rows.map(function (x) { return x[0] + ' · ' + x[1] + (x[2] ? ' ' + x[2] : ''); }) : [fail.rec];
+    var why = ok ? (hit ? 'The second answer came from the response cache: X-Cache: HIT, and the database was not called.' : door === 'export' ? 'The CLI is a local operator: no key and no grant apply, because whoever can run it can already read the store. The run is still recorded.' : 'Identified, within its limits, granted, parameters valid and bound, read-only SQL, recorded in run history.')
+      : stop === 0 ? 'With keys configured, every request must carry one. Nothing past the first stage ran.'
+      : stop === 1 ? 'The key is real, but its expiry has passed. Expiry is checked live on every request; nobody had to revoke it.'
+      : stop === 2 ? K.id + ' reaches ' + K.colls.join(' and ') + '; ' + q + ' is in ' + Q.coll + '. The query never ran.' + (door === 'mcp' ? ' Over MCP it would not even appear in tools/list.' : '')
+      : 'Every problem is listed at once, and the database never saw the request.';
+    return { stop: stop, ok: ok, ms: ms, S: S, req: req, resp: resp, status: status, rec: rec, why: why };
+  }
+  function markRow(x) { return '<div class="pg-kv"><span>' + esc(x[0]) + '</span><b class="' + (x[3] || '') + '">' + esc(x[1]) + (x[3] === 'ok' ? ' ✓' : x[3] === 'bad' ? ' ✕' : '') + '</b><i>' + esc(x[2] || '') + '</i></div>'; }
+  var last;
+  function stageState(c, i, upto) { if (upto !== null && i > upto) return 'pend'; return c.stop < 0 || i < c.stop ? 'pass' : i === c.stop ? 'stop' : 'skip'; }
+  function stageHtml(c, sel, upto) {
+    var S = STAGES[sel], D = c.S[sel], state = stageState(c, sel, upto), rb = refuseBtn(c, sel);
+    // the thin progress line along the top, as on Home: it fills over the stage's time while the call plays
+    var bar = '<div class="pg-sbar" aria-hidden="true"><i style="background:' + (state === 'stop' ? 'oklch(0.62 0.2 25)' : 'var(--accent-ink)') + ';' + (upto !== null && sel === upto ? 'animation:pg-sbar ' + (STEP - 220) + 'ms linear forwards' : 'transform:scaleX(1)') + '"></i></div>';
+    return bar + '<div class="pg-stage-in"><div class="pg-stage-h"><i class="pg-stage-ico" style="--ico:url(' + LU + S.icon + '.svg)"></i><div><small>' + String(sel + 1).padStart(2, '0') + ' · ' + S.layer + '</small><b>' + S.title + '</b></div><span class="pg-stage-act">' + rb.b + '<span class="pg-stage-s ' + state + '">' + (state === 'pass' ? 'passed' : state === 'stop' ? 'stopped here' : state === 'pend' ? 'waiting' : 'not reached') + '</span></span></div><p>' + ((D && D.desc) || S.desc) + '</p>' + (rb.n ? '<p class="pg-dim pg-refuse-note">' + rb.n + '</p>' : '') +
+      (state === 'pend' ? '<p class="pg-dim">The call has not reached this stage yet.</p>' : state === 'skip' || !D ? '<p class="pg-dim">The call stopped before this stage, so it did not run.</p>' : '<div class="pg-kvs">' + D.rows.map(markRow).join('') + '</div>' + (D.out && D.out.length ? '<pre class="pg-out">' + esc(D.out.join('\n')).replace(/^(#.*)$/gm, '<span class="pg-oc">$1</span>') + '</pre>' : '')) +
+      '<div class="pg-links">' + (c.links || S.links).map(function (l) { return '<a href="' + l[1] + '">' + l[0] + ' →</a>'; }).join('') + '</div></div>';
+  }
+  function resHtml(c) { return esc(c.resp).replace(/^((?:HTTP\/1\.1|[A-Z][A-Za-z-]+:)[^\n]*)$/gm, '<span class="pg-h">$1</span>').replace(/^(#.*)$/gm, '<span class="pg-c">$1</span>').replace(/(&quot;|")([^"\n]*)(")(: )/g, '<span class="pg-s">"$2"</span>$4'); }
+  function spanClass(c, i, upto) { var s = stageState(c, i, upto); return 'pg-span ' + s + (upto !== null && i === upto && s === 'pass' ? ' live' : '') + (st.sel === i ? ' sel' : ''); }
+  var built = null, shownKey = '';
+  function pulseRefuse() { var b = document.querySelector('#pg-stage .pg-refuse:not([disabled]):not(.on)'); if (b) { b.classList.remove('pg-pulse'); void b.offsetWidth; b.classList.add('pg-pulse'); } }
+  function draw(c, upto) {
+    last = c; if (upto === undefined) upto = null; lastUpto = upto;
+    var total = c.ms.reduce(function (a, b, i) { return a + (c.stop < 0 || i <= c.stop ? b : 0); }, 0), acc = 0;
+    var stageEl = document.getElementById('pg-stage');
+    if (built !== c) {
+      // a new call: lay out its spans once, so later steps only change classes and the bars can grow
+      var trace = STAGES.map(function (s, i) {
+        var st0 = stageState(c, i, null), w = st0 === 'skip' ? 0 : c.ms[i] / total * 100, left = acc / total * 100; if (st0 !== 'skip') acc += c.ms[i];
+        return '<button type="button" class="' + spanClass(c, i, upto) + '" data-stage="' + i + '"><span class="pg-span-n">' + String(i + 1).padStart(2, '0') + '</span><span class="pg-span-i" aria-hidden="true"><i style="--ico:url(' + LU + s.icon + '.svg)"></i></span><span class="pg-span-t">' + s.title + '</span><span class="pg-span-bar"><i style="left:' + left.toFixed(2) + '%;width:' + Math.max(w, st0 === 'skip' ? 0 : 1.2).toFixed(2) + '%"></i></span><span class="pg-span-ms" data-ms="' + (st0 === 'skip' ? '—' : c.ms[i].toFixed(1) + ' ms') + '"></span></button>';
+      }).join('');
+      document.getElementById('pg-trace').innerHTML = '<div class="pg-trace-h"><span>the call as a trace · one span per stage · click one to inspect it</span><span id="pg-total"></span></div>' + trace;
+      // reserve the inspector's tallest stage, so its height never changes while the call plays
+      stageEl.style.minHeight = ''; var max = 0;
+      for (var k = 0; k < STAGES.length; k++) { stageEl.innerHTML = stageHtml(c, k, null); max = Math.max(max, stageEl.offsetHeight); }
+      stageEl.style.minHeight = max + 'px'; shownKey = '';
+      document.getElementById('pg-req').innerHTML = '<span class="pg-h">' + (st.door === 'mcp' ? '' : '$ ') + '</span>' + esc(c.req).replace(/^(#.*)$/gm, '<span class="pg-c">$1</span>');
+      document.getElementById('pg-req-h').textContent = { rest: 'request · REST', mcp: 'request · MCP tools/call', events: 'request · live events stream', export: 'command · export CLI', admin: 'request · Management API' }[st.door];
+      built = c;
+    }
+    document.querySelectorAll('#pg-trace .pg-span').forEach(function (b, i) {
+      b.className = spanClass(c, i, upto); var m = b.querySelector('.pg-span-ms'); m.textContent = stageState(c, i, upto) === 'pend' ? '…' : m.getAttribute('data-ms');
+    });
+    document.getElementById('pg-total').textContent = upto === null ? total.toFixed(1) + ' ms' : 'running…';
+    var sel = st.sel !== null ? st.sel : upto !== null ? upto : (c.stop >= 0 ? c.stop : 3), key = sel + '|' + stageState(c, sel, upto) + '|' + st.force + '|' + (c.forced ? 1 : 0) + '|' + c.stop;
+    var fresh = key !== shownKey;
+    if (fresh) { stageEl.innerHTML = stageHtml(c, sel, upto); shownKey = key; }
+    stageEl.classList.toggle('stop', stageState(c, sel, upto) === 'stop');
+    // when a stage's card appears, and again when a call's answer is in, the refusal button pulses gently a few times
+    if (fresh) pulseRefuse();
+    var col = document.getElementById('pg-out-col'), badge = document.getElementById('pg-badge'), res = document.getElementById('pg-res');
+    if (upto !== null) { col.classList.add('pg-running'); badge.textContent = 'running…'; badge.className = 'pg-wait'; return; }
+    var was = col.classList.contains('pg-running');
+    if (was) pulseRefuse();
+    col.classList.remove('pg-running');
+    res.innerHTML = resHtml(c);
+    if (was) { res.classList.remove('pg-fresh'); void res.offsetWidth; res.classList.add('pg-fresh'); }
+    badge.textContent = c.status; badge.className = c.ok ? 'pg-ok' : 'pg-err';
+    document.getElementById('pg-rec').innerHTML = '<span class="pg-lab">recorded</span>' + c.rec.map(function (x) { return '<span class="pg-rec-i">' + esc(x) + '</span>'; }).join('');
+    document.getElementById('pg-why').textContent = c.why;
+  }
+  // Replay a call stage by stage, then show the answer. Typing updates at once; sending, or changing door, key,
+  // query or format, replays. Reduced motion shows the result straight away.
+  var lastUpto = null, timer = null, STEP = 3200;   // the same pace as Home's walkthrough (stepMs)
+  var still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function run(animate) {
+    var c = compute(); clearTimeout(timer);
+    if (!animate || still) return draw(c, null);
+    var end = c.stop >= 0 ? c.stop : STAGES.length - 1, i = 0;
+    (function step() { draw(c, i); if (i >= end) { timer = setTimeout(function () { draw(c, null); }, STEP); return; } i++; timer = setTimeout(step, STEP); })();
+  }
+  function paramsHtml() {
+    if (st.door === 'admin') return '<div class="pg-field"><label for="pg-ttl">cache_ttl</label><input id="pg-ttl" data-ttl value="' + esc(st.ttl) + '" spellcheck="false" autocomplete="off"><span class="pg-help">seconds; 0 turns caching off. The Management API changes the saved query’s settings; it does not run it.</span></div>';
+    var Q = QUERIES[st.q], v = st.vals[st.q] || (st.vals[st.q] = {});
+    if (!Q.params.length) return '<p class="pg-help">This query takes no parameters.</p>';
+    return Q.params.map(function (p) { if (v[p.name] === undefined) v[p.name] = p.def;
+      var ctl = p.options ? '<select id="pg-p-' + p.name + '" data-p="' + p.name + '">' + p.options.map(function (o) { return '<option value="' + esc(o) + '"' + (o === v[p.name] ? ' selected' : '') + '>' + (o === '' ? '(any category)' : esc(o)) + '</option>'; }).join('') + '</select>'
+        : '<input id="pg-p-' + p.name + '" data-p="' + p.name + '" value="' + esc(v[p.name]) + '" spellcheck="false" autocomplete="off">';
+      return '<div class="pg-field"><label for="pg-p-' + p.name + '">' + p.name + '</label>' + ctl + '<span class="pg-help">' + esc(p.help) + '</span></div>'; }).join('');
+  }
+  function sync() {
+    document.getElementById('pg-params').innerHTML = paramsHtml();
+    document.getElementById('pg-what').textContent = QUERIES[st.q].what + ' · in collection ' + QUERIES[st.q].coll;
+    var app = document.getElementById('pg-app');
+    app.querySelectorAll('[data-door]').forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-door') === st.door)); });
+    app.querySelector('.pg-keys-wrap').hidden = st.door === 'export' || st.door === 'admin';
+    app.querySelector('.pg-admins-wrap').hidden = st.door !== 'admin';
+    app.querySelector('.pg-cli-note').hidden = st.door !== 'export';
+    app.querySelector('.pg-fmt-wrap').hidden = st.door !== 'rest' && st.door !== 'export';
+    var note = app.querySelector('.pg-ev-note'); note.hidden = st.door !== 'events';
+  }
+  function render() {
+    var app = document.getElementById('pg-app');
+    app.innerHTML =
+      '<div class="pg-doors" role="tablist" aria-label="Front door">' + DOORS.map(function (d) { return '<button type="button" role="tab" data-door="' + d.id + '"><span class="pg-door-ico"><i style="--ico:url(' + LU + d.icon + '.svg)"></i></span>' + d.label + '<small>' + d.who + '</small></button>'; }).join('') + '<span class="pg-doors-note">the same saved query, the same eight stages, whichever door it comes through</span></div>' +
+      '<div class="pg-grid">' +
+        '<div class="pg-panel">' +
+          '<div class="pg-field"><label for="pg-q">Saved query</label><select id="pg-q">' + Object.keys(QUERIES).map(function (k) { return '<option value="' + k + '"' + (k === st.q ? ' selected' : '') + '>' + k + '</option>'; }).join('') + '</select><span class="pg-help" id="pg-what"></span></div>' +
+          '<div id="pg-params" style="display:grid;gap:12px"></div>' +
+          '<div class="pg-field pg-keys-wrap"><span class="pg-lab">Calling with</span><div class="pg-keys">' + KEYS.map(function (k) { return '<button type="button" class="pg-key" data-key="' + k.id + '" aria-pressed="' + (k.id === st.key) + '"><i></i><span><b>' + k.id + '</b><span>' + k.sub + '</span></span></button>'; }).join('') + '</div></div>' +
+          '<div class="pg-field pg-admins-wrap" hidden><span class="pg-lab">Calling as</span><div class="pg-keys">' + ADMINS.map(function (a) { return '<button type="button" class="pg-key" data-admin="' + a.id + '" aria-pressed="' + (a.id === st.akey) + '"><i></i><span><b>' + a.id + '</b><span>' + a.sub + '</span></span></button>'; }).join('') + '</div></div>' +
+          '<p class="pg-ev-note pg-help" hidden>The parameters above are the values the key’s own run uses. A stream takes only filters, and carries only that key’s runs.</p>' +
+          '<p class="pg-cli-note pg-help" hidden>The export CLI runs on the server as a local operator: there is no key to choose.</p>' +
+          '<div class="pg-field pg-fmt-wrap"><span class="pg-lab">Format</span><div class="pg-fmt">' + ['json', 'csv', 'ndjson'].map(function (f) { return '<button type="button" data-fmt="' + f + '" aria-pressed="' + (f === st.fmt) + '">' + f + '</button>'; }).join('') + '</div></div>' +
+          '<button type="button" class="pg-send" id="pg-send">Send again</button>' +
+          '<div class="pg-chips"><a href="Guide.dc.html?d=API#interactive-documentation">openapi.json</a><a href="Guide.dc.html?d=API#interactive-documentation">postman.json</a><a href="Guide.dc.html?d=API#client-sdks">typed client · ~50 languages</a></div>' +
+        '</div>' +
+        '<div class="pg-out-col" id="pg-out-col">' +
+          '<div class="pg-term"><div class="pg-term-h"><span class=\"pg-dots\" aria-hidden=\"true\"><i style=\"background:#ff5f57\"></i><i style=\"background:#febc2e\"></i><i style=\"background:#28c840\"></i></span><span id="pg-req-h">request</span><button type=\"button\" class=\"copy-btn pg-copy\" data-copy=\"pg-req\" aria-label=\"Copy the request\"><svg aria-hidden=\"true\" width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\"/><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"/></svg><span>Copy</span></button></div><pre id="pg-req"></pre></div>' +
+          '<div class="pg-mid"><div class="pg-trace" id="pg-trace"></div>' +
+          '<div class="pg-stage" id="pg-stage" aria-live="polite"></div></div>' +
+          '<div class="pg-term"><div class="pg-term-h"><span class=\"pg-dots\" aria-hidden=\"true\"><i style=\"background:#ff5f57\"></i><i style=\"background:#febc2e\"></i><i style=\"background:#28c840\"></i></span><span>response</span><b id="pg-badge"></b><button type=\"button\" class=\"copy-btn pg-copy\" data-copy=\"pg-res\" aria-label=\"Copy the response\"><svg aria-hidden=\"true\" width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\"/><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"/></svg><span>Copy</span></button></div><pre id="pg-res"></pre></div>' +
+          '<div class="pg-rec" id="pg-rec"></div>' +
+          '<p class="pg-why" id="pg-why"></p>' +
+        '</div>' +
+      '</div>';
+    sync(); run(true);
+  }
+  function wire() {
+    var app = document.getElementById('pg-app');
+    app.addEventListener('change', function (e) { if (e.target.id === 'pg-q') { st.q = e.target.value; st.sel = null; st.force = null; sync(); run(true); } });
+    app.addEventListener('input', function (e) { var p = e.target.getAttribute('data-p'); if (p) { st.vals[st.q][p] = e.target.value; st.sel = null; run(e.target.tagName === 'SELECT'); } if (e.target.hasAttribute('data-ttl')) { st.ttl = e.target.value; st.sel = null; run(); } });
+    app.addEventListener('click', function (e) {
+      var d = e.target.closest('[data-door]'), k = e.target.closest('[data-key]'), f = e.target.closest('[data-fmt]'), s = e.target.closest('[data-stage]');
+      if (d) { st.door = d.getAttribute('data-door'); st.sel = null; st.force = null; sync(); run(true); }
+      var ad = e.target.closest('[data-admin]'); if (ad) { st.akey = ad.getAttribute('data-admin'); st.sel = null; st.force = null; app.querySelectorAll('[data-admin]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === ad)); }); run(true); }
+      if (k) { st.key = k.getAttribute('data-key'); st.sel = null; st.force = null; app.querySelectorAll('[data-key]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === k)); }); run(true); }
+      if (f) { st.fmt = f.getAttribute('data-fmt'); app.querySelectorAll('[data-fmt]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === f)); }); run(true); }
+      var fz = e.target.closest('[data-force]'); if (fz) { var n = +fz.getAttribute('data-force'); st.force = st.force === n ? null : n; st.sel = n; run(false); return; }
+      if (s) { st.sel = +s.getAttribute('data-stage'); draw(last, lastUpto); }
+      if (e.target.closest('#pg-send')) { st.sel = null; run(true); }
+      var cp = e.target.closest('[data-copy]');
+      if (cp) {
+        var txt = document.getElementById(cp.getAttribute('data-copy')).textContent.replace(/^\$ /, '');
+        try { navigator.clipboard.writeText(txt); } catch (err) {}
+        var lab = cp.querySelector('span'); lab.textContent = 'Copied'; clearTimeout(cp._t); cp._t = setTimeout(function () { lab.textContent = 'Copy'; }, 1400);
+      }
+    });
+  }
+  var tries = 0, t = setInterval(function () { var app = document.getElementById('pg-app'); if (app) { clearInterval(t); render(); wire(); } else if (++tries > 80) clearInterval(t); }, 100);
+})();
+</script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+.rs-ghn svg{display:block}
+.rs-ghn-n{font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1;color:var(--ink-3);min-width:0}
+.rs-ghn-n:empty{display:none}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;font-size:16px;line-height:1.55}
+a{color:var(--accent-ink);text-decoration:none}a:hover{color:var(--accent-ink-2);text-decoration:underline}
+
+@media (max-width:1180px){
+  .rs-gh{display:none !important}
+  .rs-nav{gap:14px !important}
+}
+@media (max-width:1100px){
+  .rs-nav{gap:12px !important;font-size:14px !important}
+}
+@media (max-width:1024px){
+  .rs-cta{display:none !important}
+}
+@media (max-width:960px){
+  .rs-nav{flex:1 1 auto;min-width:0;flex-wrap:nowrap !important;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+  .rs-nav::-webkit-scrollbar{display:none}
+}
+@media (max-width:820px){
+  .rs-2col{grid-template-columns:minmax(0,1fr) !important}
+  .rs-2col > *{order:0 !important}
+  .rs-aside{position:static !important;max-height:none !important}
+  .rs-nav{gap:10px 16px !important;font-size:13.5px !important;flex-wrap:nowrap !important;overflow-x:auto;width:100%;scrollbar-width:none;white-space:nowrap;padding-bottom:2px}
+  .rs-nav::-webkit-scrollbar{display:none}
+  .rs-navbar{flex-wrap:wrap !important;gap:12px 20px !important;padding:12px 16px !important}
+  .rs-cta{display:none !important}
+  .rs-pad{padding-left:16px !important;padding-right:16px !important}
+  .rs-hero{padding-top:48px !important}
+  .rs-hide{display:none !important}
+}
+
+/* mobile menu + code wrapping */
+.rs-burger{display:none}
+.rs-menu-toggle{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-width:1180px){
+  .rs-burger{display:inline-grid;place-items:center;width:40px;height:40px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);cursor:pointer;margin-left:auto;flex:none}
+  .rs-burger span{display:block;width:16px;height:2px;background:var(--ink);border-radius:2px;box-shadow:0 -5px 0 var(--ink),0 5px 0 var(--ink)}
+  .rs-actions{margin-left:0 !important}
+  .rs-gh{display:inline-block !important}
+  .rs-cta{display:inline-block !important}
+  .rs-nav{display:none !important;flex-basis:100%;flex-direction:column;align-items:flex-start;gap:0 !important;font-size:16px !important;overflow:visible !important;white-space:normal !important;border-top:1px solid var(--line);padding:8px 0 4px !important;margin-top:4px}
+  .rs-nav a{display:block;width:100%;padding:11px 4px;border-bottom:1px solid var(--line-soft)}
+  .rs-nav a:last-child{border-bottom:0}
+  .rs-menu-toggle:checked ~ .rs-nav{display:flex !important}
+  .rs-menu-toggle:checked ~ .rs-burger span{background:transparent;box-shadow:none}
+  .rs-menu-toggle:checked ~ .rs-burger span::before,.rs-menu-toggle:checked ~ .rs-burger span::after{content:"";position:absolute;width:18px;height:2px;background:var(--ink);border-radius:2px}
+  .rs-menu-toggle:checked ~ .rs-burger span::before{transform:rotate(45deg)}
+  .rs-menu-toggle:checked ~ .rs-burger span::after{transform:rotate(-45deg)}
+  .rs-navbar{flex-wrap:wrap !important}
+}
+@media (max-width:820px){
+  .rs-cta{display:inline-block !important}
+  .rs-navbar{gap:12px !important}
+}
+@media (max-width:480px){
+  .rs-gh{display:none !important}
+}
+/* Use-cases dropdown in the top nav (desktop only; the burger menu keeps a plain link). */
+.rs-dd{position:relative}
+.rs-dd-panel{display:none;position:absolute;top:100%;left:-18px;padding-top:12px;z-index:30}
+.rs-dd-inner{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 30px 60px -30px rgba(16,32,27,0.35);padding:18px 20px 14px;display:grid;gap:14px;width:max-content;max-width:calc(100vw - 48px)}
+.rs-dd-grid{display:grid;grid-template-columns:repeat(5,max-content);gap:18px 28px}
+.rs-dd-grid>div{display:grid;gap:7px;align-content:start}
+.rs-dd-grid small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+.rs-dd-grid a{font-size:13.5px;font-weight:500;color:var(--ink);white-space:nowrap;text-decoration:none}
+.rs-dd-grid a:hover{color:var(--accent-ink)}
+.rs-dd-all{font-size:13px;font-weight:600;border-top:1px solid var(--line-soft);padding-top:12px;text-decoration:none}
+@media (max-width:1400px){.rs-dd-grid{grid-template-columns:repeat(3,max-content)}}
+@media (max-width:1180px){.rs-dd{width:100%}.rs-dd-panel{display:none !important}}
+/* Current page in the top nav: bold, ink-dark, with an accent underline (a left bar in the burger menu). */
+.rs-nav > a[aria-current="page"],.rs-nav > .rs-dd > a[aria-current="page"]{color:var(--ink) !important;font-weight:600;text-decoration:underline;text-decoration-color:var(--accent-ink);text-decoration-thickness:2px;text-underline-offset:7px}
+.rs-nav > a[aria-current="page"]:hover,.rs-nav > .rs-dd > a[aria-current="page"]:hover{text-decoration-color:var(--accent-ink-2)}
+.rs-mega-card[aria-current="page"]{background:var(--bg);box-shadow:inset 3px 0 0 oklch(0.52 0.11 170)}
+@media (max-width:1180px){.rs-nav > a[aria-current="page"]{text-decoration:none;box-shadow:inset 3px 0 0 oklch(0.52 0.11 170);padding-left:12px !important}}
+.rs-dd-right .rs-dd-panel{left:auto;right:-18px}
+/* Dropdown triggers: a caret that turns while open; the panel stays open for a moment after the pointer leaves,
+   and the trigger's hover area reaches down to the panel so crossing the gap never closes it. */
+.rs-dd>a{display:inline-flex;align-items:center;gap:5px;padding:14px 0;margin:-14px 0}
+.rs-caret{transition:transform 0.2s;flex:none}
+.rs-dd:hover>a .rs-caret,.rs-dd:focus-within>a .rs-caret{transform:rotate(180deg)}
+.rs-dd-panel{display:block;visibility:hidden;opacity:0;transition:opacity 0.15s,visibility 0s linear 0.25s}
+.rs-dd:hover .rs-dd-panel,.rs-dd:focus-within .rs-dd-panel,.rs-dd-panel:hover{visibility:visible;opacity:1;transition-delay:0s}
+@media (max-width:1180px){.rs-caret{display:none}.rs-dd>a{padding:11px 4px;margin:0}}
+/* Use-cases mega menu: the panel spans the whole nav bar, one card per use case. */
+.rs-navbar{position:relative}
+.rs-dd.rs-mega{position:static}
+.rs-mega .rs-dd-panel{left:24px;right:24px;padding-top:0;top:calc(100% - 1px)}
+.rs-mega-inner{width:auto !important;max-width:none !important;padding:22px 24px 20px !important;gap:18px !important}
+.rs-mega-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--line-soft)}
+.rs-mega-head>div{display:grid;gap:4px}
+.rs-mega-eyebrow{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)}
+.rs-mega-head b{font-family:'Schibsted Grotesk',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.01em;color:var(--ink)}
+.rs-mega-all{font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap}
+.rs-mega-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.rs-mega-card{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start;padding:12px;border-radius:10px;text-decoration:none;color:var(--ink);transition:background 0.15s}
+.rs-mega-card:hover{background:var(--bg);text-decoration:none}
+.rs-mega-ico{width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.1);position:relative}
+.rs-mega-ico::after{content:'';position:absolute;inset:9px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.rs-mega-txt{display:grid;gap:2px;min-width:0}
+.rs-mega-txt small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)}
+.rs-mega-txt b{font-size:14px;font-weight:600}
+.rs-mega-txt>span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+@media (max-width:1400px){.rs-mega-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+/* Guides mega menu: reading paths on the left, documentation grouped on the right. */
+.rs-mega-body{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1.3fr);gap:28px}
+.rs-mega-sub{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)}
+.rs-mega-paths{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px;align-content:start}
+.rs-mega-paths .rs-mega-sub{grid-column:1/-1;margin-bottom:4px}
+.rs-mega-path{display:grid;gap:2px;padding:10px 12px;border-radius:10px;text-decoration:none;color:var(--ink);transition:background 0.15s}
+.rs-mega-path:hover{background:var(--bg);text-decoration:none}
+.rs-mega-path small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.04em;color:var(--ink-3)}
+.rs-mega-path b{font-size:14px;font-weight:600}
+.rs-mega-path>span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+.rs-mega-paths .rs-mega-sub2{margin-top:10px;margin-bottom:2px}
+.rs-mega-arch{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:5px}
+.rs-mega-arch a{font-size:12px;font-weight:500;padding:4px 9px;white-space:nowrap;border:1px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;transition:background 0.15s,border-color 0.15s}
+.rs-mega-arch a:hover{border-color:#9fb3ac;background:var(--bg);text-decoration:none}
+.rs-mega-docs{display:grid;gap:12px;align-content:start;padding-left:28px;border-left:1px solid var(--line-soft)}
+.rs-mega-docgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.rs-mega-docgrid>div{display:grid;gap:6px;align-content:start}
+.rs-mega-docgrid small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);margin-bottom:2px}
+.rs-mega-docgrid a{font-size:13.5px;font-weight:500;color:var(--ink);text-decoration:none;line-height:1.35}
+.rs-mega-docgrid a:hover{color:var(--accent-ink)}
+.rs-mega-more{font-size:13px;font-weight:600;text-decoration:none;padding-top:8px;border-top:1px solid var(--line-soft)}
+.rs-mega-body-solo{grid-template-columns:minmax(0,1fr)}
+.rs-mega-body-solo .rs-mega-paths{grid-template-columns:repeat(3,minmax(0,1fr))}
+.rs-mega-docs-solo{padding-left:0;border-left:none}
+.rs-mega-docs-solo .rs-mega-docgrid{grid-template-columns:repeat(5,minmax(0,1fr)) !important}
+.rs-mega-docs-solo .rs-mega-docgrid{gap:20px 40px}
+.rs-mega-docs-solo .rs-mega-docgrid>div{gap:2px}
+.rs-mega-docs-solo .rs-mega-docgrid small{margin:0 0 6px 10px}
+.rs-mega-docs-solo .rs-mega-docgrid a.rs-doc{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink);text-decoration:none;transition:background 0.15s}
+.rs-mega-docs-solo .rs-mega-docgrid a.rs-doc:hover{background:var(--bg);color:var(--ink)}
+.rs-doc-ico{flex:none;width:28px;height:28px;border-radius:7px;background:oklch(0.52 0.11 170 / 0.09);position:relative}
+.rs-doc-ico::after{content:'';position:absolute;inset:7px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.rs-mega-docs-solo .rs-mega-more{margin-top:4px}
+@media (max-width:1400px){.rs-mega-docgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* MCP shortcut beside the GitHub icon: a tinted pill with the plug icon. */
+.rs-mcp{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;color:var(--accent-ink-2);background:oklch(0.52 0.11 170 / 0.1);border:1px solid oklch(0.52 0.11 170 / 0.45);border-radius:999px;padding:5px 11px 5px 9px;text-decoration:none;transition:background 0.2s,border-color 0.2s,color 0.2s}
+.rs-mcp:hover{background:oklch(0.52 0.11 170 / 0.18);border-color:var(--accent-ink);color:var(--accent-ink-2);text-decoration:none}
+.rs-mcp svg{display:block}
+/* Footer */
+.ft a{text-decoration:none}.ft a:hover{text-decoration:underline}
+.ft-grid{display:grid;grid-template-columns:minmax(0,1.7fr) repeat(4,minmax(0,1fr));gap:36px 28px}
+.ft-brand{display:grid;gap:16px;align-content:start;min-width:0}
+.ft-col{display:grid;gap:10px;align-content:start}
+.ft-col a{color:var(--ink-2);font-size:14px}.ft-col a:hover{color:var(--ink)}
+.ft-h{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);margin-bottom:2px}
+.ft-chip{font-size:11.5px;font-weight:500;color:var(--ink-2);background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.ft-btn{font-size:13.5px;font-weight:600;color:var(--ink);border:1px solid var(--line-2);border-radius:8px;padding:8px 13px;background:var(--surface)}
+.ft-btn:hover{border-color:var(--ink);text-decoration:none !important}
+.ft-btn-dark{background:#10201b;border-color:#10201b;color:#e6efeb}.ft-btn-dark:hover{background:#1b3a30;border-color:#1b3a30}
+.ft-bottom{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:center;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-3)}
+.ft-badges{display:inline-flex;align-items:center;gap:10px}.ft-badges img{display:block;height:20px}
+@media (max-width:1100px){.ft-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ft-brand{grid-column:1/-1}}
+@media (max-width:560px){.ft-grid{grid-template-columns:minmax(0,1fr)}}
+/* Evaluate menu: seven cards, four to a row; on narrow screens the trigger hides and plain links show in the burger. */
+.rs-mega-grid5{grid-template-columns:repeat(4,minmax(0,1fr)) !important}
+.rs-sub{display:none}
+@media (max-width:1400px){.rs-mega-grid5{grid-template-columns:repeat(4,minmax(0,1fr)) !important}}
+@media (max-width:1180px){.rs-dd.rs-mega-eval{display:none !important}.rs-sub{display:block}}
+/* MCP pill: a small menu of the MCP pages. */
+.rs-dd-mcp>a.rs-mcp{padding:5px 11px 5px 9px;margin:0}
+.rs-dd-mcp .rs-dd-panel{left:-6px}
+.rs-dd-mcp-inner{display:grid;gap:4px;width:340px !important;padding:12px !important}
+.rs-dd-mcp-inner small{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);padding:4px 10px 6px}
+.rs-dd-mcp-inner a{display:grid;gap:2px;padding:9px 10px;border-radius:8px;color:var(--ink);text-decoration:none;transition:background 0.15s}
+.rs-dd-mcp-inner a:hover{background:var(--bg);text-decoration:none}
+.rs-dd-mcp-inner a[aria-current="page"]{background:var(--bg);box-shadow:inset 3px 0 0 oklch(0.52 0.11 170)}
+.rs-dd-mcp-inner b{font-size:13.5px;font-weight:600}
+.rs-dd-mcp-inner span{font-size:12.5px;color:var(--ink-2);line-height:1.4}
+@media (max-width:1180px){.rs-dd-mcp .rs-dd-panel{display:none !important}.rs-dd-mcp .rs-caret{display:none}}
+
+.pg-hero{scroll-margin-top:72px;max-width:980px;margin:0 auto;padding:80px 24px 28px;display:grid;gap:16px;justify-items:center;text-align:center}
+.pg-kicker{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)}
+.pg-hero h1{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(34px,4.6vw,56px);line-height:1.04;font-weight:800;letter-spacing:-0.025em;text-wrap:balance}
+.pg-hero>p{margin:0;font-size:17px;color:var(--ink-2);max-width:66ch;text-wrap:pretty}
+.pg-main{max-width:1240px;margin:0 auto;padding:12px 24px 88px;display:grid;gap:18px}
+.pg-app{display:grid;grid-template-columns:minmax(0,0.9fr) minmax(0,1.3fr);gap:18px;align-items:start;min-height:560px}
+.pg-panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:16px}
+.pg-field{display:grid;gap:6px}
+.pg-field>label,.pg-lab{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)}
+.pg-field select,.pg-field input{font:inherit;font-size:14.5px;color:var(--ink);background:var(--surface-2);border:1px solid var(--line-2);border-radius:8px;padding:9px 11px;width:100%;box-sizing:border-box}
+.pg-field input.bad{border-color:var(--danger-ink)}
+.pg-help{font-size:12.5px;color:var(--ink-3)}
+.pg-keys{display:grid;gap:6px}
+.pg-key{display:grid;grid-template-columns:16px minmax(0,1fr);gap:10px;align-items:start;text-align:left;font:inherit;padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:var(--surface-2);cursor:pointer;color:var(--ink)}
+.pg-key[aria-pressed=true]{border-color:var(--accent-ink);background:oklch(0.52 0.11 170 / 0.08)}
+.pg-key i{width:12px;height:12px;border-radius:50%;border:2px solid var(--line-2);margin-top:3px}.pg-key[aria-pressed=true] i{border-color:var(--accent-ink);background:var(--accent-ink);box-shadow:inset 0 0 0 2px var(--surface)}
+.pg-key b{display:block;font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:500}.pg-key span{font-size:12.5px;color:var(--ink-3)}
+.pg-fmt{display:flex;gap:6px}.pg-fmt button{font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);cursor:pointer}
+.pg-fmt button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:var(--on-ink)}
+.pg-send{font:inherit;font-size:15px;font-weight:600;color:#fff;background:oklch(0.52 0.11 170);border:0;border-radius:9px;padding:11px 16px;cursor:pointer}
+.pg-send:hover{background:oklch(0.46 0.11 170)}
+.pg-out{display:grid;gap:12px;min-width:0}
+.pg-term{background:#10201b;color:#e6efeb;border-radius:12px;overflow:hidden;min-width:0}
+.pg-term-h{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #1b2f29;font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88}
+.pg-term-h b{margin-left:auto;font-weight:500;padding:2px 8px;border-radius:999px}
+.pg-term pre{margin:0;padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.65;white-space:pre-wrap;word-break:break-word;max-height:330px;overflow:auto}
+.pg-ok{background:oklch(0.62 0.13 170 / 0.18);color:oklch(0.8 0.11 170)}.pg-err{background:oklch(0.65 0.18 25 / 0.2);color:#f2b8b5}
+.pg-h{color:#9fb3ac}.pg-s{color:#a7d7c5}.pg-x{color:#f2b8a0}
+.pg-trace{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+.pg-st{display:grid;gap:4px;padding:9px 8px;border-radius:9px;border:1px solid var(--line);background:var(--surface);font-size:11.5px;line-height:1.3;color:var(--ink-3);min-width:0}
+.pg-st b{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:500}
+.pg-st.pass{border-color:oklch(0.52 0.11 170 / 0.45);background:oklch(0.52 0.11 170 / 0.07);color:var(--ink)}.pg-st.pass b{color:var(--accent-ink)}
+.pg-st.stop{border-color:var(--danger-ink);background:oklch(0.65 0.18 25 / 0.1);color:var(--ink)}.pg-st.stop b{color:var(--danger-ink)}
+.pg-why{font-size:14px;color:var(--ink-2);margin:0}
+.pg-note{margin:0;font-size:13.5px;color:var(--ink-3);text-wrap:pretty}
+@media (max-width:980px){.pg-app{grid-template-columns:minmax(0,1fr)}.pg-trace{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* Playground, enriched from the Home walkthrough: front-door tabs, a span trace, a stage inspector, a record strip. */
+.pg-app{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;min-height:0}
+.pg-doors{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.pg-doors button{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:14px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line-2);border-radius:999px;padding:8px 16px;cursor:pointer}
+.pg-doors button[aria-selected=true]{background:oklch(0.52 0.11 170 / 0.1);border-color:var(--accent-ink);color:var(--ink)}
+.pg-door-ico{width:16px;height:16px;position:relative;display:inline-block}.pg-door-ico::after{content:'';position:absolute;inset:0;background:var(--accent-ink);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.pg-doors-note{font-size:13px;color:var(--ink-3);margin-left:6px}
+.pg-grid{display:grid;grid-template-columns:minmax(0,0.85fr) minmax(0,1.4fr);gap:18px;align-items:start}
+.pg-out-col{display:grid;gap:12px;min-width:0}
+.pg-chips{display:flex;flex-wrap:wrap;gap:6px}.pg-chips a{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:4px 8px;text-decoration:none}.pg-chips a:hover{color:var(--accent-ink);border-color:var(--accent-ink)}
+.pg-trace{display:grid;gap:3px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;grid-template-columns:none}
+.pg-trace-h{display:flex;justify-content:space-between;gap:12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-3);margin-bottom:6px}
+.pg-span{display:grid;grid-template-columns:26px 150px minmax(0,1fr) 64px;align-items:center;gap:10px;font:inherit;text-align:left;background:none;border:0;border-radius:6px;padding:4px 6px;cursor:pointer;color:var(--ink-2)}
+.pg-span:hover{background:var(--surface-2)}.pg-span.sel{background:oklch(0.52 0.11 170 / 0.08)}
+.pg-span-n{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-4)}.pg-span-t{font-family:'JetBrains Mono',monospace;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-span-bar{position:relative;height:8px;border-radius:4px;background:var(--surface-3)}.pg-span-bar i{position:absolute;top:0;bottom:0;border-radius:4px;background:oklch(0.52 0.11 170 / 0.55)}
+.pg-span-ms{font-family:'JetBrains Mono',monospace;font-size:11.5px;text-align:right;color:var(--ink-3)}
+.pg-span.stop .pg-span-t,.pg-span.stop .pg-span-ms{color:var(--danger-ink)}.pg-span.stop .pg-span-bar i{background:var(--danger-ink)}
+.pg-span.skip{opacity:.45}
+.pg-stage{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:10px}
+.pg-stage-h{display:flex;align-items:center;gap:12px}.pg-stage-h small{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)}.pg-stage-h b{font-size:16px}
+.pg-stage-ico{flex:none;width:34px;height:34px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.1);position:relative}.pg-stage-ico::after{content:'';position:absolute;inset:8px;background:var(--accent-ink);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.pg-stage-s{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line-2);color:var(--ink-3)}
+.pg-stage-s.pass{color:var(--accent-ink);border-color:oklch(0.52 0.11 170 / 0.4)}.pg-stage-s.stop{color:var(--danger-ink);border-color:var(--danger-ink)}
+.pg-stage>p{margin:0;font-size:14px;color:var(--ink-2)}.pg-stage .pg-dim{color:var(--ink-3)}
+.pg-kvs{display:grid;gap:4px}
+.pg-kv{display:grid;grid-template-columns:120px auto minmax(0,1fr);gap:10px;align-items:baseline;font-size:13px;padding:5px 0;border-top:1px solid var(--line-soft)}
+.pg-kv span{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-3)}.pg-kv b{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:500;color:var(--ink);overflow-wrap:anywhere}
+.pg-kv b.ok{color:var(--accent-ink)}.pg-kv b.bad{color:var(--danger-ink)}.pg-kv i{font-style:normal;font-size:12.5px;color:var(--ink-3)}
+.pg-out{margin:0;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink-2)}
+.pg-links{display:flex;flex-wrap:wrap;gap:6px 16px}.pg-links a{font-size:13px;font-weight:600}
+.pg-rec{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.pg-rec .pg-lab{margin-right:4px}
+.pg-rec-i{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+@media (max-width:980px){.pg-grid{grid-template-columns:minmax(0,1fr)}.pg-span{grid-template-columns:24px minmax(0,1fr) 56px}.pg-span-bar{display:none}.pg-kv{grid-template-columns:100px minmax(0,1fr)}.pg-kv i{grid-column:2}}
+
+/* Controls as a bar across the top; the output below gets the full width. */
+.pg-grid{grid-template-columns:minmax(0,1fr) !important}
+.pg-panel{grid-template-columns:repeat(12,minmax(0,1fr));column-gap:18px;row-gap:16px;align-items:start}
+.pg-panel>.pg-field:first-child{grid-column:span 4}
+.pg-panel>#pg-params{grid-column:span 8;display:grid !important;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px !important;align-items:start}
+.pg-panel>#pg-params>.pg-help{align-self:center}
+.pg-panel>.pg-keys-wrap,.pg-panel>.pg-admins-wrap,.pg-panel>.pg-cli-note,.pg-panel>.pg-ev-note{grid-column:1/-1}
+.pg-keys{grid-template-columns:repeat(5,minmax(0,1fr)) !important}
+.pg-key{height:100%;box-sizing:border-box}
+.pg-panel>.pg-fmt-wrap{grid-column:span 3}
+.pg-panel>.pg-send{grid-column:span 3;align-self:end}
+.pg-panel>.pg-fmt-wrap,.pg-panel>.pg-chips{align-self:end}
+.pg-panel .pg-field{align-content:start}
+.pg-panel>.pg-chips{grid-column:span 6;justify-content:flex-end;align-self:center}
+.pg-mid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:stretch}
+.pg-mid>.pg-trace,.pg-mid>.pg-stage{align-content:start}
+@media (max-width:1100px){.pg-keys{grid-template-columns:repeat(3,minmax(0,1fr)) !important}.pg-mid{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:760px){.pg-panel{grid-template-columns:minmax(0,1fr)}.pg-panel>*{grid-column:1/-1 !important}.pg-keys{grid-template-columns:minmax(0,1fr) !important}.pg-panel>.pg-chips{justify-content:flex-start}}
+
+.pg-term-h{gap:10px}.pg-term-h b{margin-left:auto}.pg-term-h b+.pg-copy{margin-left:0}
+.pg-dots{display:flex;gap:5px;flex:none}.pg-dots i{display:block;width:9px;height:9px;border-radius:50%}
+.copy-btn{display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;color:#c5d3cd;background:#1b2f29;border:1px solid #2a3d37;border-radius:6px;padding:4px 9px;min-height:26px;cursor:pointer;transition:background 0.2s,color 0.2s}
+.copy-btn:hover{background:#24403a;color:#e6efeb}
+.pg-copy{margin-left:auto}
+
+.pg-app [hidden]{display:none !important}
+
+.pg-stage pre.pg-out{display:block}
+.pg-c{color:#9fb3ac;display:inline}.pg-oc{color:var(--ink-4);display:inline}
+
+/* The replay */
+.pg-span{transition:background .35s ease,opacity .35s ease}
+.pg-span-t,.pg-span-ms{transition:color .35s ease}
+.pg-span-bar i{transition:width .55s cubic-bezier(.3,.7,.3,1),background .35s ease}
+.pg-span.pend .pg-span-bar i{width:0 !important}.pg-span.pend{opacity:.45}
+.pg-span.live{background:oklch(0.52 0.11 170 / 0.1)}.pg-span.live .pg-span-t{color:var(--ink)}.pg-span.live .pg-span-bar i{background:oklch(0.52 0.11 170)}
+.pg-stage-in{display:grid;gap:10px;animation:pg-fade .35s ease}
+@keyframes pg-fade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+#pg-res{transition:opacity .35s ease;min-height:120px}
+.pg-running #pg-res{opacity:.28}
+.pg-fresh{animation:pg-fade .45s ease}
+.pg-rec,.pg-why{transition:opacity .35s ease}
+.pg-term-h b.pg-wait{background:#1b2f29;color:#9fb3ac}
+.pg-term-h b{line-height:16px;min-height:16px;display:inline-block}
+.pg-running .pg-rec,.pg-running .pg-why{opacity:0}
+@media (prefers-reduced-motion:reduce){.pg-span,.pg-span-bar i,#pg-res,.pg-rec,.pg-why{transition:none}.pg-stage-in,.pg-fresh{animation:none}}
+
+/* Front-door pills, as on Home */
+.pg-doors button{display:inline-flex;align-items:center;gap:8px;font:inherit;font-size:13.5px;font-weight:600;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px 6px 7px;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.pg-doors button small{font-weight:400;font-size:12px;color:#9fb3ac}
+.pg-doors button[aria-selected=true]{background:#10201b;border-color:#10201b;color:#e6efeb}
+.pg-door-ico{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;flex:none;background:var(--surface-3);transition:background .2s}
+.pg-door-ico i{display:block;width:13px;height:13px;background:var(--ink-2);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.pg-door-ico::after{content:none}
+.pg-doors button[aria-selected=true] .pg-door-ico{background:var(--accent-ink)}.pg-doors button[aria-selected=true] .pg-door-ico i{background:var(--surface)}
+
+.pg-refuse-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.pg-refuse-row span{font-size:12.5px;color:var(--ink-3)}
+.pg-refuse{font:inherit;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);cursor:pointer;transition:border-color .2s,color .2s,background .2s}
+.pg-refuse:hover:not([disabled]){border-color:var(--danger-ink);color:var(--danger-ink)}
+.pg-refuse.on{border-color:var(--danger-ink);color:var(--danger-ink);background:oklch(0.65 0.18 25 / 0.08)}
+.pg-refuse[disabled]{opacity:.55;cursor:default}
+
+.pg-stage{position:relative;overflow:hidden}
+.pg-sbar{position:absolute;left:0;right:0;top:0;height:2px;background:var(--line-soft)}
+.pg-sbar i{display:block;height:100%;transform-origin:left;transform:scaleX(0)}
+@keyframes pg-sbar{to{transform:scaleX(1)}}
+
+/* The soft glow at the top of the stage card, as on Home: green, or red with a red border where the call stops. */
+.pg-stage{background:radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.52 0.11 170 / 0.08), transparent 70%),var(--surface);transition:border-color .3s}
+.pg-stage.stop{background:radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.62 0.2 25 / 0.1), transparent 70%),var(--surface);border-color:oklch(0.62 0.2 25 / 0.5)}
+
+/* A stage icon before each span's name, as on Home's stage nodes */
+.pg-span{grid-template-columns:26px 24px 160px minmax(0,1fr) 64px !important}
+.pg-span-i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line-2);box-sizing:border-box;transition:background .35s,border-color .35s}
+.pg-span-i i{display:block;width:11px;height:11px;background:var(--ink-3);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat;transition:background .35s}
+.pg-span.pass .pg-span-i{background:#dcefe8;border-color:var(--accent-ink)}.pg-span.pass .pg-span-i i{background:var(--accent-ink)}
+.pg-span.live .pg-span-i,.pg-span.sel.pass .pg-span-i{background:var(--accent-ink)}.pg-span.live .pg-span-i i,.pg-span.sel.pass .pg-span-i i{background:var(--surface)}
+.pg-span.stop .pg-span-i{background:oklch(0.62 0.2 25);border-color:oklch(0.62 0.2 25)}.pg-span.stop .pg-span-i i{background:#fff}
+:root[data-theme=dark] .pg-span.pass .pg-span-i{background:oklch(0.52 0.11 170 / 0.2)}
+@media (max-width:980px){.pg-span{grid-template-columns:24px 24px minmax(0,1fr) 56px !important}}
+
+/* The vertical line joining the stage icons, as on Home: green up to where the call has reached, grey beyond. */
+.pg-span{position:relative}
+.pg-span-i{position:relative;z-index:1}
+.pg-span::before,.pg-span::after{content:'';position:absolute;left:52px;width:2px;background:var(--line-2);z-index:0;transition:background .35s}
+.pg-span::before{top:-2px;height:calc(50% - 9px)}
+.pg-span::after{top:calc(50% + 11px);bottom:-1px}
+.pg-trace button.pg-span:first-of-type::before,.pg-trace button.pg-span:last-of-type::after{display:none}
+.pg-span.pass::before,.pg-span.stop::before{background:var(--accent-ink)}
+.pg-span.pass:not(.live)::after{background:var(--accent-ink)}
+@media (max-width:980px){.pg-span::before,.pg-span::after{left:50px}}
+
+/* Guide and reference links pinned to the bottom of the stage card */
+.pg-mid>.pg-stage{align-content:stretch !important}
+.pg-stage-in{display:flex !important;flex-direction:column;gap:10px;min-height:100%}
+.pg-stage-in>.pg-links{margin-top:auto;padding-top:12px}
+
+.pg-stage-h{flex-wrap:wrap}
+.pg-stage-h .pg-refuse{padding:5px 10px;font-size:12px}
+.pg-refuse-note{margin:0;font-size:12.5px}
+
+.pg-refuse.pg-pulse{animation:pg-pulse 1.6s ease-out 0.3s 3}
+@keyframes pg-pulse{0%{box-shadow:0 0 0 0 oklch(0.62 0.2 25 / 0.45)}70%{box-shadow:0 0 0 9px oklch(0.62 0.2 25 / 0)}100%{box-shadow:0 0 0 0 oklch(0.62 0.2 25 / 0)}}
+@media (prefers-reduced-motion:reduce){.pg-refuse.pg-pulse{animation:none}}
+
+/* the refusal button and the status pill travel together, on the right of the header */
+.pg-stage-act{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.pg-stage-act .pg-stage-s{margin-left:0}
+</style>
+</helmet>
+<div data-screen-label="Playground" style="min-height:100vh;background:var(--bg);color:var(--ink);font-family:'Instrument Sans',system-ui,sans-serif">
+  <nav style="position:sticky;top:0;z-index:20;background:var(--bg-90);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)">
+    <div class="rs-navbar" style="max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:28px">
+      <a href="Home.dc.html" aria-label="QueryAPIGate home" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:17px;color:var(--ink);text-decoration:none;letter-spacing:-0.01em"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:var(--accent-ink)">API</span>Gate</span></a>
+      <div class="rs-actions" style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <button type="button" class="rs-search" data-search aria-label="Search the documentation (Ctrl+K)" title="Search · Ctrl+K"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><span>Search</span><kbd>Ctrl K</kbd></button>        <div class="rs-dd rs-dd-mcp"><a href="MCP.dc.html" class="rs-mcp" title="MCP server: saved queries as tools for AI agents"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5M9 8V2M15 8V2M18 8v5a6 6 0 0 1-12 0V8z"/></svg><span class="rs-mcp-t">MCP</span><svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-dd-mcp-inner"><small>MCP · AI agents</small><a href="MCP.dc.html"><b>MCP server for AI agents</b><span>What agents get, what they never get, and how to connect a client.</span></a><a href="Agent Checklist.dc.html"><b>Against Altinity's agent-safety checklist</b><span>Nineteen recommendations, point by point: 16 covered.</span></a><a href="Guide.dc.html?d=MCP"><b>MCP reference</b><span>Tools, resources, OAuth and every setting, from the documentation.</span></a><a href="Guide.dc.html?g=24-let-an-agent-call-your-queries-via-mcp"><b>Guide 24: let an agent call your queries</b><span>The ten-minute walkthrough, run against a real server.</span></a></div></div></div>
+      </div>
+      <input type="checkbox" id="rs-menu" class="rs-menu-toggle" aria-label="Open menu">
+      <label for="rs-menu" class="rs-burger" aria-hidden="true"><span></span></label>
+      <div class="rs-nav" style="display:flex;gap:20px;font-size:14.5px;font-weight:500;flex-wrap:wrap">
+        <div class="rs-dd rs-mega rs-mega-features"><a href="Features.dc.html" style="color:var(--ink-2)">Features<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Features</span><b>Everything it does, section by section</b></div><a href="Features.dc.html" class="rs-mega-all">All features →</a></div><div class="rs-mega-docs rs-mega-docs-solo"><div class="rs-mega-docgrid"><div><small>Connect and govern</small><a class="rs-doc" href="Features.dc.html#databases"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)"></span>Databases</a><a class="rs-doc" href="Features.dc.html#security"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield.svg)"></span>Security and access</a><a class="rs-doc" href="Features.dc.html#mcp"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span>MCP for AI agents</a></div><div><small>Build</small><a class="rs-doc" href="Features.dc.html#queries"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-code.svg)"></span>Saved queries</a><a class="rs-doc" href="Features.dc.html#parameters"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/list-checks.svg)"></span>Parameters</a><a class="rs-doc" href="Features.dc.html#formats"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-spreadsheet.svg)"></span>Response formats</a><a class="rs-doc" href="Features.dc.html#streaming"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/waves.svg)"></span>Paging and streaming</a></div><div><small>Serve and operate</small><a class="rs-doc" href="Features.dc.html#caching"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/zap.svg)"></span>Caching</a><a class="rs-doc" href="Features.dc.html#rate-limits"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/gauge.svg)"></span>Rate limiting</a><a class="rs-doc" href="Features.dc.html#observability"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/activity.svg)"></span>Observability</a><a class="rs-doc" href="Features.dc.html#openapi"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/braces.svg)"></span>OpenAPI</a></div><div><small>Console and proof</small><a class="rs-doc" href="Features.dc.html#console"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span>Administration UI</a><a class="rs-doc" href="Features.dc.html#testing"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/flask-conical.svg)"></span>Testing and quality</a><a class="rs-doc" href="Features.dc.html#request"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/route.svg)"></span>Every request</a></div></div><div class="rs-mega-foot"><a href="Features.dc.html" class="rs-mega-more">Features: one gate, every front door →</a><a href="Integrations.dc.html" class="rs-mega-more">Integrations</a><a href="Playground.dc.html" class="rs-mega-more">Playground</a></div></div></div></div></div>
+        <div class="rs-dd rs-mega"><a href="Use Cases.dc.html" style="color:var(--ink-2)">Use cases<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Use cases</span><b>Twelve jobs people hire QueryAPIGate for</b></div><a href="Use Cases.dc.html" class="rs-mega-all">All twelve, with the shape of each call →</a></div><div class="rs-mega-grid"><a class="rs-mega-card" href="use-cases/customer-analytics.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/chart-column.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Customer analytics</b><span>Analytics in your product, one tenant at a time</span></span></a><a class="rs-mega-card" href="use-cases/internal-tools.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Internal tools</b><span>Back an internal app without a backend team</span></span></a><a class="rs-mega-card" href="use-cases/controlled-writes.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/pencil-line.svg)"></span><span class="rs-mega-txt"><small>Product teams</small><b>Controlled writes</b><span>Let a partner or a form write, through one approved query</span></span></a><a class="rs-mega-card" href="use-cases/partner-data-api.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Partner data API</b><span>Hand a partner one query, not your schema</span></span></a><a class="rs-mega-card" href="use-cases/scheduled-deliveries.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/calendar-clock.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Scheduled deliveries</b><span>Deliver a daily file, incrementally, to someone else&#x27;s bucket</span></span></a><a class="rs-mega-card" href="use-cases/live-dashboards.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg)"></span><span class="rs-mega-txt"><small>Partners and pipelines</small><b>Live dashboards</b><span>A live view of what is being queried, by whom</span></span></a><a class="rs-mega-card" href="use-cases/self-serve-data.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/library.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Self-serve data</b><span>Data for every team, without handing out the database</span></span></a><a class="rs-mega-card" href="use-cases/files-as-an-api.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/folder-open.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Files as an API</b><span>Turn a bucket of Parquet into a queryable API</span></span></a><a class="rs-mega-card" href="use-cases/legacy-databases.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg)"></span><span class="rs-mega-txt"><small>Data teams</small><b>Legacy databases</b><span>A governed API in front of a database you can&#x27;t change</span></span></a><a class="rs-mega-card" href="use-cases/ai-agents.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span class="rs-mega-txt"><small>AI</small><b>AI agents</b><span>Let an agent query your data, governed like an app</span></span></a><a class="rs-mega-card" href="use-cases/compliance-and-audit.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-mega-txt"><small>Security and platform</small><b>Compliance and audit</b><span>Answer the auditor from the running system</span></span></a><a class="rs-mega-card" href="use-cases/platform-teams.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-pull-request.svg)"></span><span class="rs-mega-txt"><small>Security and platform</small><b>Platform teams</b><span>Run it like the rest of your platform</span></span></a></div></div></div></div>
+        <div class="rs-dd rs-mega rs-mega-deploy"><a href="Deploy.dc.html" style="color:var(--ink-2)">Deploy<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Deploy</span><b>Three reference architectures, each one tested in CI</b></div><a href="Deploy.dc.html" class="rs-mega-all">Overview and comparison →</a></div><div class="rs-mega-grid rs-mega-grid3"><a class="rs-mega-card" href="Deploy-Single.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/server.svg)"></span><span class="rs-mega-txt"><small>Start here</small><b>Single instance</b><span>One container or process; SQLite on a volume, or PostgreSQL.</span></span></a><a class="rs-mega-card" href="Deploy-HA.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layers.svg)"></span><span class="rs-mega-txt"><small>Several instances</small><b>High availability</b><span>A shared PostgreSQL store and Redis, so any instance answers any request.</span></span></a><a class="rs-mega-card" href="Deploy-Kubernetes.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/ship-wheel.svg)"></span><span class="rs-mega-txt"><small>Helm chart</small><b>Kubernetes</b><span>One pod on SQLite, or several behind a disruption budget.</span></span></a></div><div class="rs-mega-foot"><a class="rs-mega-more" href="Deploy.dc.html#compare">Side by side</a><a class="rs-mega-more" href="Deploy.dc.html#checklist">Production checklist</a><a class="rs-mega-more" href="Docs.dc.html#install">Install options</a><a class="rs-mega-more" href="Guide.dc.html?d=DEPLOYMENT">Deployment guide</a></div></div></div></div><a class="rs-sub" href="Deploy-Single.dc.html" style="color:var(--ink-2)">Single instance</a><a class="rs-sub" href="Deploy-HA.dc.html" style="color:var(--ink-2)">High availability</a><a class="rs-sub" href="Deploy-Kubernetes.dc.html" style="color:var(--ink-2)">Kubernetes</a>
+        <div class="rs-dd rs-mega rs-mega-docsmenu"><a href="Docs.dc.html" style="color:var(--ink-2)">Docs<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Documentation</span><b>Reference for every setting, endpoint and promise</b></div><a href="Docs.dc.html" class="rs-mega-all">All documentation →</a></div><div class="rs-mega-docs rs-mega-docs-solo"><div class="rs-mega-docgrid"><div><small>Run it</small><a class="rs-doc" href="Guide.dc.html?d=INSTALLATION_AND_SETUP"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/download.svg)"></span>Installation and setup</a><a class="rs-doc" href="Guide.dc.html?d=CONFIGURATION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/settings-2.svg)"></span>Configuration</a><a class="rs-doc" href="Guide.dc.html?d=DEPLOYMENT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/rocket.svg)"></span>Deployment</a><a class="rs-doc" href="Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)"></span>Database connections</a></div><div><small>Reference</small><a class="rs-doc" href="Guide.dc.html?d=API"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/braces.svg)"></span>API reference</a><a class="rs-doc" href="Guide.dc.html?d=MCP"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/plug.svg)"></span>MCP server</a><a class="rs-doc" href="Guide.dc.html?d=FEATURES"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/sparkles.svg)"></span>Features</a><a class="rs-doc" href="Guide.dc.html?d=EXAMPLES"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/flask-conical.svg)"></span>Example APIs</a><a class="rs-doc" href="Guide.dc.html?d=QUERY_METADATA_MANAGEMENT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/tags.svg)"></span>Query metadata</a><a class="rs-doc" href="Guide.dc.html?d=SCREENSHOTS"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg)"></span>A tour of the Console</a></div><div><small>Performance</small><a class="rs-doc" href="Performance.dc.html"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/gauge.svg)"></span>Performance and sizing</a><a class="rs-doc" href="Guide.dc.html?d=PERFORMANCE_V3"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/activity.svg)"></span>OLTP benchmark on PostgreSQL</a><a class="rs-doc" href="Guide.dc.html?p=what-a-governed-call-costs"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/newspaper.svg)"></span>What a governed call costs</a><a class="rs-doc" href="Guide.dc.html?p=one-mysql-six-services"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg)"></span>One MySQL server, six services</a></div><div><small>Security</small><a class="rs-doc" href="Guide.dc.html?d=THREAT_MODEL"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-alert.svg)"></span>Threat model</a><a class="rs-doc" href="Standards.dc.html"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/scroll-text.svg)"></span>Standards and specifications</a><a class="rs-doc" href="Guide.dc.html?d=DATA_PROTECTION"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/route.svg)"></span>Where data goes</a><a class="rs-doc" href="Guide.dc.html?d=SECURITY"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span>Security policy</a><a class="rs-doc" href="Guide.dc.html?d=ARCHITECTURE"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/network.svg)"></span>Architecture overview</a><a class="rs-doc" href="Guide.dc.html?d=QUESTIONNAIRE"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/clipboard-check.svg)"></span>Questionnaire answers</a><a class="rs-doc" href="Guide.dc.html?d=SBOM"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/package-check.svg)"></span>SBOM and verification</a></div><div><small>Project</small><a class="rs-doc" href="Guide.dc.html?d=WHY"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/lightbulb.svg)"></span>Why QueryAPIGate</a><a class="rs-doc" href="Guide.dc.html?d=TECHNOLOGY_STACK"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layers.svg)"></span>Technology stack</a><a class="rs-doc" href="Guide.dc.html?d=CONTRIBUTING"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-pull-request.svg)"></span>Contributing</a><a class="rs-doc" href="Guide.dc.html?d=CODE_OF_CONDUCT"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/heart-handshake.svg)"></span>Code of conduct</a></div></div><div class="rs-mega-foot"><a href="Docs.dc.html" class="rs-mega-more">Docs: how the pieces fit, and where to start →</a><a href="FAQ.dc.html" class="rs-mega-more">FAQ</a><a href="Glossary.dc.html" class="rs-mega-more">Glossary</a></div></div></div></div></div>
+        <a class="rs-sub" href="FAQ.dc.html" style="color:var(--ink-2)">FAQ</a><a class="rs-sub" href="Glossary.dc.html" style="color:var(--ink-2)">Glossary</a>
+        <div class="rs-dd rs-mega rs-mega-guides"><a href="Guides.dc.html" style="color:var(--ink-2)">Guides<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">How-to guides</span><b>62 how-to guides, each run against a real server</b></div><a href="Guides.dc.html" class="rs-mega-all">All 62 guides, with times and outcomes →</a></div><div class="rs-gm"><div class="rs-gm-col"><small class="rs-gm-h">Reading paths</small><a class="rs-gm-path" href="Guides.dc.html?path=start"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/rocket.svg)"></span><span><b>Start here</b><span>The first five, in order: a query, a database, an API key.</span><small>01 → 05 · 5 guides · ≈42 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=partner"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/handshake.svg)"></span><span><b>Give a partner an API</b><span>One query, hashed columns, limits, an expiry, a rotation plan.</span><small>13 → 50 · 7 guides · ≈53 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=agents"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span><b>Let agents in</b><span>MCP tools, what the data means, and writes a person approves.</span><small>24 → 49 · 5 guides · ≈85 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=data"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/send.svg)"></span><span><b>Ship data out</b><span>Files as an API, scheduled deliveries, a live feed of runs.</span><small>41 → 28 · 4 guides · ≈65 min</small></span></a><a class="rs-gm-path" href="Guides.dc.html?path=prod"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/server-cog.svg)"></span><span><b>Go to production</b><span>The Deploy page checklist, as guides.</span><small>23 → 59 · 8 guides · ≈135 min</small></span></a></div><div class="rs-gm-col rs-gm-topics"><small class="rs-gm-h">By topic</small><a class="rs-doc" href="Guides.dc.html?cat=Start"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/play.svg)"></span><span class="rs-gm-t">Start</span><em>6</em></a><a class="rs-doc" href="Guides.dc.html?cat=Queries"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-code.svg)"></span><span class="rs-gm-t">Queries</span><em>7</em></a><a class="rs-doc" href="Guides.dc.html?cat=Access"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/key-round.svg)"></span><span class="rs-gm-t">Access</span><em>13</em></a><a class="rs-doc" href="Guides.dc.html?cat=Agents"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><span class="rs-gm-t">Agents</span><em>7</em></a><a class="rs-doc" href="Guides.dc.html?cat=Events%20%26%20exports"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/radio.svg)"></span><span class="rs-gm-t">Events and exports</span><em>6</em></a><a class="rs-doc" href="Guides.dc.html?cat=Operate"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/server.svg)"></span><span class="rs-gm-t">Operate</span><em>15</em></a><a class="rs-doc" href="Guides.dc.html?cat=Govern"><span class="rs-doc-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-gm-t">Govern</span><em>8</em></a></div><div class="rs-gm-new"><small>New here? · Guide 01 · 10 min</small><b>Turn your first SQL query into a REST API</b><span>A real HTTP endpoint, backed by your own SQL, with typed parameters, and no controller code written by hand.</span><a href="Guide.dc.html?g=01-turn-your-first-sql-query-into-a-rest-api" class="rs-gm-go">Start guide 01 →</a><a href="Playground.dc.html" class="rs-gm-alt">Or try it in the Playground first →</a></div></div><div class="rs-mega-foot rs-gm-foot"><span class="rs-gm-fh">By part of the architecture</span><div class="rs-mega-arch"><a href="Guides.dc.html#arch-who-calls">Who calls</a><a href="Guides.dc.html#arch-front-doors">Front doors</a><a href="Guides.dc.html#arch-core">The governed core</a><a href="Guides.dc.html#arch-asks">Asks</a><a href="Guides.dc.html#arch-your-data">Your data</a><a href="Guides.dc.html#arch-reports-to">Reports to</a></div></div></div></div></div>
+        <div class="rs-dd rs-mega rs-mega-eval"><a href="Trust.dc.html" style="color:var(--ink-2)">Evaluate<svg class="rs-caret" aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></a><div class="rs-dd-panel"><div class="rs-dd-inner rs-mega-inner"><div class="rs-mega-head"><div><span class="rs-mega-eyebrow">Evaluate</span><b>What an evaluation asks for: fit, security and proof</b></div><a href="Trust.dc.html" class="rs-mega-all">Start at the Trust center →</a></div><div class="rs-mega-grid rs-mega-grid5"><a class="rs-mega-card" href="Integrations.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/puzzle.svg)"></span><span class="rs-mega-txt"><b>Integrations</b><span>The databases, identity providers, secret stores, clients and tools it works with, and how each is tested.</span></span></a><a class="rs-mega-card" href="Compare.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/git-compare.svg)"></span><span class="rs-mega-txt"><b>Compare</b><span>Against a hand-rolled API and the other ways to put a database behind an endpoint.</span></span></a><a class="rs-mega-card" href="Performance.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/gauge.svg)"></span><span class="rs-mega-txt"><b>Performance</b><span>What a governed call costs on PostgreSQL: throughput, latency under load, scale-out and a sizing rule.</span></span></a><a class="rs-mega-card" href="Performance-MySQL.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg)"></span><span class="rs-mega-txt"><b>Performance on MySQL</b><span>One server, a database per microservice, per-user queries across them: cost, sizing and isolation.</span></span></a><a class="rs-mega-card" href="Trust.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/shield-check.svg)"></span><span class="rs-mega-txt"><b>Trust center</b><span>Where data goes, what you can verify yourself, and how to report a vulnerability.</span></span></a><a class="rs-mega-card" href="Enterprise.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/building-2.svg)"></span><span class="rs-mega-txt"><b>Enterprise</b><span>Identity, audit, availability, cryptography and the downloadable security pack.</span></span></a><a class="rs-mega-card" href="Security.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg)"></span><span class="rs-mega-txt"><b>Security</b><span>What each layer defends against, and the hardening checklist before go-live.</span></span></a><a class="rs-mega-card" href="Standards.dc.html"><span class="rs-mega-ico" aria-hidden="true" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/file-badge.svg)"></span><span class="rs-mega-txt"><b>Standards and specifications</b><span>The twenty-five RFCs and specifications it is built on, each with what it is used for.</span></span></a></div></div></div></div>
+        <a class="rs-sub" href="Integrations.dc.html" style="color:var(--ink-2)">Integrations</a><a class="rs-sub" href="Compare.dc.html" style="color:var(--ink-2)">Compare</a><a class="rs-sub" href="Performance.dc.html" style="color:var(--ink-2)">Performance</a><a class="rs-sub" href="Performance-MySQL.dc.html" style="color:var(--ink-2)">Performance on MySQL</a><a class="rs-sub" href="Trust.dc.html" style="color:var(--ink-2)">Trust center</a><a class="rs-sub" href="Enterprise.dc.html" style="color:var(--ink-2)">Enterprise</a><a class="rs-sub" href="Security.dc.html" style="color:var(--ink-2)">Security</a><a class="rs-sub" href="Standards.dc.html" style="color:var(--ink-2)">Standards and specifications</a>
+        <a href="Blog.dc.html" style="color:var(--ink-2)">Blog</a>
+        <a href="About.dc.html" style="color:var(--ink-2)">About</a>
+        <a href="Playground.dc.html" class="rs-pg" title="Playground: call the example APIs in your browser" aria-label="Playground" aria-current="page"><svg class="rs-pg-ico" aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="16" rx="3"/><path d="M6.5 10l3 2.5-3 2.5"/><rect class="rs-pg-caret" x="11.5" y="14" width="5" height="1.6" rx="0.8" fill="currentColor" stroke="none"/><circle class="rs-pg-live" cx="20" cy="5" r="2.6" fill="oklch(0.62 0.13 170)" stroke="var(--bg)" stroke-width="1.4"/></svg><span class="rs-pg-t">Playground</span></a>
+        <a href="https://github.com/AnanthaRajuC/QueryAPIGate" class="rs-ghn" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" title="GitHub" style="color:var(--ink-2);display:inline-flex;align-items:center;gap:6px" style-hover="color:var(--ink)"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg><span class="rs-ghn-n" data-gh-stars aria-label="GitHub stars"></span></a>
+        <button type="button" class="rs-theme" data-theme-toggle aria-label="Switch between light and dark theme" title="Theme"><svg class="rs-sun" aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="rs-moon" aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span class="rs-theme-t">Light / dark</span></button>
+      </div>
+    </div>
+  </nav>
+  <header id="top" class="pg-hero">
+    <span class="pg-kicker">Playground</span>
+    <h1>Save a query once. Try all five doors, here.</h1>
+    <p>Pick a front door, a saved query, a key and some parameters. See the request each door takes, the answer it gets, and what each of the eight stages checked on the way, including where a refused call stops. These are the four example APIs <code>queryapigate examples load</code> installs, with their real rules, keys and error codes, simulated here on a generated film-rental dataset.</p>
+  </header>
+  <main class="pg-main">
+    <div id="pg-app" class="pg-app"></div>
+    <p class="pg-note">Simulated in the page: nothing is sent anywhere. Status codes, error <code>code</code> values, headers and parameter rules match the product; error messages are paraphrased and the rows are illustrative. To run it for real: <code>pip install queryapigate</code>, <code>queryapigate examples load</code>, <code>queryapigate serve</code>. <a href="Guide.dc.html?g=05-try-the-built-in-example-apis">Guide 05 →</a></p>
+  </main>
+
+  <footer class="ft" style="border-top:0;background:radial-gradient(circle,var(--dots) 0.4px,transparent 0.7px) 0 0/8px 1px repeat-x var(--bg)">
+    <div style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;gap:40px">
+      <div class="ft-grid">
+        <div class="ft-brand">
+          <a href="Home.dc.html" style="display:flex;gap:8px;align-items:center;font-family:'JetBrains Mono',monospace;font-weight:500;font-size:16px;color:var(--ink);text-decoration:none"><svg aria-hidden="true" width="22" height="22" viewBox="0 0 32 32" style="flex:none;display:block"><rect width="32" height="32" rx="7" fill="#10201b"/><path d="M9.5 24V10.5h13V24" fill="none" stroke="#22a58c" stroke-width="3" stroke-linejoin="round"/><path d="M13.5 17.5h5" stroke="#e6efeb" stroke-width="3" stroke-linecap="round"/></svg><span>Query<span style="color:var(--accent-ink)">API</span>Gate</span></a>
+          <p style="margin:0;font-size:14px;color:var(--ink-2);max-width:34ch;text-wrap:pretty">One governed gate between your databases and everything that asks them for data. Self-hosted: your data never leaves your infrastructure.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:6px"><span class="ft-chip">Self-hosted</span><span class="ft-chip">Apache-2.0</span><span class="ft-chip">Signed releases + SBOM</span><span class="ft-chip">FIPS-approved crypto</span><span class="ft-chip">Python 3.11+</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+            <a href="Docs.dc.html#install" class="ft-btn ft-btn-dark">Install →</a>
+            <a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases/latest" class="ft-btn">Latest release →</a>
+            <a href="Guide.dc.html?d=MCP" class="ft-btn">MCP server →</a>
+          </div>
+        </div>
+        <div class="ft-col"><span class="ft-h">Product</span><a href="Features.dc.html">Features</a><a href="Use Cases.dc.html">Use cases</a><a href="Integrations.dc.html">Integrations</a><a href="Playground.dc.html">Playground</a><a href="Deploy.dc.html">Deploy</a><a href="Compare.dc.html">Compare</a><a href="Roadmap.dc.html">Roadmap</a><a href="Changelog.dc.html">Changelog</a></div>
+        <div class="ft-col"><span class="ft-h">Resources</span><a href="Docs.dc.html">Docs</a><a href="FAQ.dc.html">FAQ</a><a href="Glossary.dc.html">Glossary</a><a href="Guides.dc.html">How-to guides</a><a href="Guide.dc.html?d=API">API reference</a><a href="Guide.dc.html?d=MCP">MCP server</a><a href="https://AnanthaRajuC.github.io/QueryAPIGate/">Full reference site</a><a href="Blog.dc.html">Blog</a></div>
+        <div class="ft-col"><span class="ft-h">Trust</span><a href="Trust.dc.html">Trust center</a><a href="Enterprise.dc.html">Enterprise</a><a href="Security.dc.html">Security</a><a href="Support.dc.html">Support and versions</a><a href="Guide.dc.html?d=DATA_PROTECTION">Where data goes</a><a href="Guide.dc.html?d=THREAT_MODEL">Threat model</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new">Report a vulnerability</a></div>
+        <div class="ft-col"><span class="ft-h">Project</span><a href="About.dc.html">About</a><a href="Stack.dc.html">Built with</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate">GitHub</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/releases">Releases</a><a href="Guide.dc.html?d=CONTRIBUTING">Contributing</a><a href="Guide.dc.html?d=CODE_OF_CONDUCT">Code of conduct</a><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/LICENSE">Licence (Apache-2.0)</a></div>
+      </div>
+      <div class="ft-bottom">
+        <span>© 2026 QueryAPIGate · Apache-2.0 · Experimental features are labelled in the product and the changelog.</span>
+        <span class="ft-badges">
+          <a href="https://github.com/AnanthaRajuC/QueryAPIGate/actions/workflows/ci.yml" aria-label="CI workflow status"><img src="https://github.com/AnanthaRajuC/QueryAPIGate/actions/workflows/ci.yml/badge.svg" alt="CI status" height="20"></a>
+          <a href="https://scorecard.dev/viewer/?uri=github.com/AnanthaRajuC/QueryAPIGate" aria-label="OpenSSF Scorecard"><img src="https://api.scorecard.dev/projects/github.com/AnanthaRajuC/QueryAPIGate/badge" alt="OpenSSF Scorecard score" height="20"></a>
+          <a href="https://github.com/AnanthaRajuC/QueryAPIGate" target="_blank" rel="noopener noreferrer" aria-label="QueryAPIGate on GitHub (opens in a new tab)" style="color:var(--ink-2);display:inline-flex"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:block"><path d="M12 .5C5.73.5.75 5.48.75 11.75c0 4.97 3.22 9.19 7.69 10.68.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.5-3.79-1.5-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.68.08-.68 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.56 0-1.23.44-2.23 1.16-3.02-.12-.28-.5-1.43.11-2.98 0 0 .95-.3 3.1 1.15a10.7 10.7 0 0 1 5.64 0c2.15-1.45 3.1-1.15 3.1-1.15.61 1.55.23 2.7.11 2.98.72.79 1.16 1.79 1.16 3.02 0 4.32-2.63 5.27-5.14 5.55.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54 4.46-1.49 7.68-5.71 7.68-10.68C23.25 5.48 18.27.5 12 .5z"/></svg></a>
+        </span>
+      </div>
+    </div>
+  </footer>
+</div>
+</x-dc>
+</body>
+</html>
