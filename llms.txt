@@ -22,6 +22,8 @@ Everything below in one file: https://anantharajuc.github.io/QueryAPIGate-websit
 - [Performance on MySQL, v1: microservice databases, per-user queries](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_MYSQL_V1): documentation, Performance
 - [Performance, v2: an OLTP benchmark on PostgreSQL](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V2): documentation, Performance
 - [Performance](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE): documentation, Performance
+- [Performance on MySQL, v2: what 0.43 changed](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_MYSQL_V2): documentation, Performance
+- [Performance, v4: what 0.43 changed on PostgreSQL](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V4): documentation, Performance
 - [Threat model](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=THREAT_MODEL): documentation, Security
 - [Where data goes](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=DATA_PROTECTION): documentation, Security
 - [Security policy](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=SECURITY): documentation, Security
