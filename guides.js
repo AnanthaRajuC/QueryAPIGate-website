@@ -681,18 +681,6 @@ export const docs = [
   "cat": "Performance"
  },
  {
-  "slug": "PERFORMANCE_MYSQL_V2",
-  "path": "documentation/PERFORMANCE_MYSQL_V2.md",
-  "title": "Performance on MySQL, v2: what 0.43 changed",
-  "cat": "Performance"
- },
- {
-  "slug": "PERFORMANCE_V4",
-  "path": "documentation/PERFORMANCE_V4.md",
-  "title": "Performance, v4: what 0.43 changed on PostgreSQL",
-  "cat": "Performance"
- },
- {
   "slug": "THREAT_MODEL",
   "path": "documentation/THREAT_MODEL.md",
   "title": "Threat model",
