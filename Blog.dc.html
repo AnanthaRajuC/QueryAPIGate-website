@@ -71,6 +71,22 @@
 .bl-card h2{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1.2;font-weight:700;letter-spacing:-0.01em;text-wrap:balance}
 .bl-card p{margin:0;color:var(--ink-2);font-size:15px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .bl-card-foot{display:flex;justify-content:space-between;gap:12px;align-items:center;padding-top:14px;border-top:1px solid var(--line-soft);font-size:13px;color:var(--ink-3)}
+.bl-bar{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+/* Cards or a compact list of titles; the choice is kept in the address and in this browser. */
+.bl-view{display:inline-flex;padding:3px;border-radius:999px;border:1px solid var(--line);background:var(--surface)}
+.bl-view button{font:inherit;font-family:'Instrument Sans',system-ui,sans-serif;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border:0;border-radius:999px;background:none;color:var(--ink-3);cursor:pointer;transition:background .2s,color .2s}
+.bl-view button:hover{color:var(--ink)}.bl-view svg{display:block}
+.bl-view button[aria-pressed="true"]{background:#10201b;color:#e6efeb}
+:root[data-theme=dark] .bl-view button[aria-pressed="true"]{background:#e6efeb;color:#10201b}
+.bl-list{display:grid;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+.bl-row{display:grid;grid-template-columns:104px minmax(0,1fr) auto 76px;gap:6px 24px;align-items:baseline;padding:15px 24px;color:var(--ink);border-top:1px solid var(--line-soft);transition:background .15s}
+.bl-row:first-child{border-top:0}
+.bl-row:hover{background:var(--tint);text-decoration:none}.bl-row:hover .bl-row-t{color:var(--accent-ink)}
+.bl-row-d,.bl-row-m{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-3);white-space:nowrap}
+.bl-row-m{text-align:right}
+.bl-row-t{font-family:'Schibsted Grotesk',sans-serif;font-size:17px;font-weight:700;line-height:1.3;letter-spacing:-0.005em;transition:color .15s}
+.bl-row .bl-meta{justify-content:flex-end;flex-wrap:nowrap;font-size:11.5px}
+@media (max-width:700px){.bl-row{grid-template-columns:auto minmax(0,1fr) auto;padding:14px 16px}.bl-row-t{grid-column:1 / -1;grid-row:2}.bl-row .bl-meta{justify-content:flex-start}}
 @media (max-width:900px){.bl-feat{grid-template-columns:minmax(0,1fr) !important;padding:28px 24px}.bl-feat-side{padding:18px 0 0;border-left:0;border-top:1px solid #24403a}.bl-grid{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:820px){.bl-head{padding:48px 16px 28px}.bl-main{padding:0 16px 72px}.bl-card{padding:22px 20px 20px}}
 @media (prefers-reduced-motion:reduce){.bl-feat,.bl-card,.bl-go b{transition:none}.bl-feat:hover,.bl-card:hover{transform:none}}
@@ -288,10 +304,16 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   </header>
 
   <main class="bl-main">
-    <div class="bl-filters" role="toolbar" aria-label="Filter posts by category">
-      <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
-        <button type="button" class="bl-chip" aria-pressed="{{ c.pressed }}" onClick="{{ c.go }}"><i style="background:{{ c.color }};display:{{ c.dot }}"></i>{{ c.label }}<span class="bl-n">{{ c.count }}</span></button>
-      </sc-for>
+    <div class="bl-bar">
+      <div class="bl-filters" role="toolbar" aria-label="Filter posts by category">
+        <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+          <button type="button" class="bl-chip" aria-pressed="{{ c.pressed }}" onClick="{{ c.go }}"><i style="background:{{ c.color }};display:{{ c.dot }}"></i>{{ c.label }}<span class="bl-n">{{ c.count }}</span></button>
+        </sc-for>
+      </div>
+      <div class="bl-view" role="group" aria-label="View">
+        <button type="button" aria-pressed="{{ cardsOn }}" onClick="{{ showCards }}"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Cards</button>
+        <button type="button" aria-pressed="{{ compactOn }}" onClick="{{ showCompact }}"><svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Compact</button>
+      </div>
     </div>
 
     <sc-if value="{{ featured }}" hint-placeholder-val="{{ false }}">
@@ -311,6 +333,20 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       </a>
     </sc-if>
 
+    <sc-if value="{{ compact }}" hint-placeholder-val="{{ false }}">
+      <div class="bl-list">
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+          <a class="bl-row" href="{{ r.href }}">
+            <span class="bl-row-d">{{ r.date }}</span>
+            <span class="bl-row-t">{{ r.title }}</span>
+            <span class="bl-meta"><span class="bl-cat"><i style="background:{{ r.color }}"></i>{{ r.cat }}</span><span class="bl-ver" style="display:{{ r.verShow }}">{{ r.version }}</span></span>
+            <span class="bl-row-m">{{ r.min }}</span>
+          </a>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ hasCards }}" hint-placeholder-val="{{ true }}">
     <div class="bl-grid">
       <sc-for list="{{ posts }}" as="p" hint-placeholder-count="4">
         <a class="bl-card" href="{{ p.href }}">
@@ -321,6 +357,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
         </a>
       </sc-for>
     </div>
+    </sc-if>
   </main>
 
   <footer class="ft" style="border-top:0;background:radial-gradient(circle,var(--dots) 0.4px,transparent 0.7px) 0 0/8px 1px repeat-x var(--bg)">
@@ -355,12 +392,15 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { posts: [], cat: 'All', info: {} };
+  state = { posts: [], cat: 'All', info: {}, view: 'cards' };
   // Filters appear in this order, each only once a post has that category; a category not listed here comes after them.
   order = ['Benchmark', 'Performance', 'Release', 'Design note', 'Migration'];
   colors = { Benchmark: 'oklch(0.66 0.17 40)', Performance: 'oklch(0.72 0.15 65)', Release: 'oklch(0.62 0.12 170)', 'Design note': 'oklch(0.62 0.13 255)', Migration: 'oklch(0.62 0.14 320)' };
   componentDidMount() {
-    try { const c = new URLSearchParams(location.search).get('cat'); if (c) this.setState({ cat: c }); } catch (e) {}
+    try { const q = new URLSearchParams(location.search), c = q.get('cat'); if (c) this.setState({ cat: c }); } catch (e) {}
+    let v = null;
+    try { v = new URLSearchParams(location.search).get('view') || localStorage.getItem('qag-blog-view'); } catch (e) {}
+    if (v === 'compact') this.setState({ view: 'compact' });
     import('./guides.js').then(m => {
       this.setState({ posts: m.posts || [] });
       // each post's length and sections, for its reading time and the featured card's outline
@@ -372,33 +412,52 @@ class Component extends DCLogic {
       }).catch(() => {}));
     });
   }
-  when(p) {
+  date(p) {
     const M = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     const d = (p.date || '').split('-').map(Number);
-    const date = d[2] ? d[2] + ' ' + M[d[1] - 1].slice(0, 3) + ' ' + d[0] : d[1] ? M[d[1] - 1] + ' ' + d[0] : '';
+    return d[2] ? d[2] + ' ' + M[d[1] - 1].slice(0, 3) + ' ' + d[0] : d[1] ? M[d[1] - 1] + ' ' + d[0] : '';
+  }
+  when(p) {
     const i = this.state.info[p.slug];
-    return date + (i ? ' · ' + i.min + ' min read' : '');
+    return this.date(p) + (i ? ' · ' + i.min + ' min read' : '');
+  }
+  // the address carries the category and the view, so either can be shared
+  sync(cat, view) {
+    const q = new URLSearchParams();
+    if (cat !== 'All') q.set('cat', cat);
+    if (view === 'compact') q.set('view', 'compact');
+    try { history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '')); } catch (e) {}
+  }
+  setView(view) {
+    this.setState({ view });
+    try { localStorage.setItem('qag-blog-view', view); } catch (e) {}
+    this.sync(this.state.cat, view);
   }
   card(p) {
     const i = this.state.info[p.slug];
     return { title: p.title, summary: p.summary || '', cat: p.cat, topic: p.topic || '', topicShow: p.topic ? 'inline' : 'none', version: p.version || '', verShow: p.version ? 'inline-block' : 'none',
       color: this.colors[p.cat] || 'var(--ink-4)', when: this.when(p), href: p.href || 'Guide.dc.html?p=' + p.slug,
       cta: p.cta || 'Read the post', heads: i ? i.heads.slice(0, 5) : [], sideShow: i && i.heads.length ? 'grid' : 'none',
-      cols: i && i.heads.length ? 'minmax(0,1.6fr) minmax(0,1fr)' : 'minmax(0,1fr)' };
+      cols: i && i.heads.length ? 'minmax(0,1.6fr) minmax(0,1fr)' : 'minmax(0,1fr)',
+      date: this.date(p), min: i ? i.min + ' min' : '' };
   }
   renderVals() {
-    const { posts, cat } = this.state;
+    const { posts, cat, view } = this.state;
+    const compact = view === 'compact';
     const present = [...new Set(posts.map(p => p.cat))];
     const cats = ['All'].concat(this.order.filter(c => present.includes(c)), present.filter(c => !this.order.includes(c)));
     const active = cats.includes(cat) ? cat : 'All';
     const shown = posts.filter(p => active === 'All' || p.cat === active);
-    const feat = active === 'All' ? (posts.find(p => p.featured) || posts[0]) : null;
+    const feat = active === 'All' && !compact ? (posts.find(p => p.featured) || posts[0]) : null;
     return {
       cats: cats.map(c => ({ label: c, count: String(c === 'All' ? posts.length : posts.filter(p => p.cat === c).length), pressed: String(c === active),
         color: this.colors[c] || 'var(--ink-4)', dot: c === 'All' ? 'none' : 'block',
-        go: () => { this.setState({ cat: c }); try { history.replaceState(null, '', c === 'All' ? location.pathname : '?cat=' + encodeURIComponent(c)); } catch (e) {} } })),
+        go: () => { this.setState({ cat: c }); this.sync(c, view); } })),
       featured: feat ? this.card(feat) : null,
-      posts: shown.filter(p => p !== feat).map(p => this.card(p)),
+      posts: compact ? [] : shown.filter(p => p !== feat).map(p => this.card(p)),
+      compact, hasCards: !compact, rows: compact ? shown.map(p => this.card(p)) : [],
+      cardsOn: String(!compact), compactOn: String(compact),
+      showCards: () => this.setView('cards'), showCompact: () => this.setView('compact'),
     };
   }
 }
