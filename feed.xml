@@ -5,8 +5,16 @@
   <link href="https://anantharajuc.github.io/QueryAPIGate-website/Blog.dc.html"/>
   <link rel="self" href="https://anantharajuc.github.io/QueryAPIGate-website/feed.xml"/>
   <id>https://anantharajuc.github.io/QueryAPIGate-website/Blog.dc.html</id>
-  <updated>2026-10-25T12:00:00Z</updated>
+  <updated>2026-10-28T12:00:00Z</updated>
   <author><name>QueryAPIGate</name></author>
+  <entry>
+    <title>Python decides, Rust serves</title>
+    <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=python-decides-rust-serves"/>
+    <id>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=python-decides-rust-serves</id>
+    <updated>2026-10-28T12:00:00Z</updated>
+    <category term="Benchmark"/>
+    <summary>A Rust data plane in front of QueryAPIGate&#x27;s saved queries, with every security decision left in Python: about 8 times the calls a second per core, p99 in single milliseconds, and the audit trail that almost didn&#x27;t keep up. A prototype, measured and decided go.</summary>
+  </entry>
   <entry>
     <title>One MySQL server, six services, one gateway</title>
     <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-mysql-six-services"/>

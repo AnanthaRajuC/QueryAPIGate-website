@@ -50,6 +50,9 @@
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=EXAMPLES</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=QUERY_METADATA_MANAGEMENT</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=SCREENSHOTS</loc></url>
+  <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V5</loc></url>
+  <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V4</loc></url>
+  <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_MYSQL_V2</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V3</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_MYSQL_V1</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V2</loc></url>
@@ -129,6 +132,8 @@
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=61-connect-to-trino</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=62-see-whats-being-used-from-the-console</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=63-tune-a-deployment-for-throughput</loc></url>
+  <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=64-try-the-rust-data-plane</loc></url>
+  <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=python-decides-rust-serves</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-mysql-six-services</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=what-a-governed-call-costs</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=agents-can-write-now</loc></url>

@@ -565,6 +565,15 @@ export const guides = [
   "time": "20 min",
   "timeMin": 20,
   "outcome": "Threads, CPU, logging, cache and disk settings chosen for your queries and your database's distance, a number of containers to start from, and the figures each one rests on."
+ },
+ {
+  "num": "64",
+  "slug": "64-try-the-rust-data-plane",
+  "title": "Try the Rust data plane in front of /q/",
+  "cat": "Operate",
+  "time": "20 min",
+  "timeMin": 20,
+  "outcome": "The data plane on your public port, serving your saved-query reads itself, Python behind it doing everything else, and a way to see which calls it served."
  }
 ];
 
@@ -628,6 +637,24 @@ export const docs = [
   "path": "documentation/SCREENSHOTS.md",
   "title": "A tour of the Console",
   "cat": "Reference"
+ },
+ {
+  "slug": "PERFORMANCE_V5",
+  "path": "documentation/PERFORMANCE_V5.md",
+  "title": "Performance, v5: a Rust data plane in front of /q/",
+  "cat": "Performance"
+ },
+ {
+  "slug": "PERFORMANCE_V4",
+  "path": "documentation/PERFORMANCE_V4.md",
+  "title": "Performance, v4: what 0.43 changed on PostgreSQL",
+  "cat": "Performance"
+ },
+ {
+  "slug": "PERFORMANCE_MYSQL_V2",
+  "path": "documentation/PERFORMANCE_MYSQL_V2.md",
+  "title": "Performance on MySQL, v2: what 0.43 changed",
+  "cat": "Performance"
  },
  {
   "slug": "PERFORMANCE_V3",
@@ -736,6 +763,14 @@ export const docs = [
    topic and version are optional labels. summary is the card text. featured: true puts a post in the large card at the top
    (otherwise the newest is). href sends the card somewhere other than blog/<slug>.md, such as the changelog. */
 export const posts = [
+ {
+  "slug": "python-decides-rust-serves",
+  "title": "Python decides, Rust serves",
+  "date": "2026-10-28",
+  "cat": "Benchmark",
+  "topic": "Operations",
+  "summary": "A Rust data plane in front of QueryAPIGate's saved queries, with every security decision left in Python: about 8 times the calls a second per core, p99 in single milliseconds, and the audit trail that almost didn't keep up. A prototype, measured and decided go."
+ },
  {
   "slug": "one-mysql-six-services",
   "title": "One MySQL server, six services, one gateway",

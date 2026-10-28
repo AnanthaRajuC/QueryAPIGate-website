@@ -756,6 +756,19 @@ Walkthrough, run on kind:
 Plain manifests of the PostgreSQL shape, kept in step with the chart by a test:
 [`deploy/kubernetes/`](https://github.com/AnanthaRajuC/QueryAPIGate/tree/main/deploy/kubernetes).
 
+## A Rust data plane in front of /q/ (prototype)
+
+> **Experimental** - outside the compatibility promise ([what that means](../CHANGELOG.md#versioning-and-compatibility)):
+> a prototype ([ADR 0028](adr/0028-rust-data-plane-prototype.md), decided go). It is built from the repository and
+> isn't in the image or the chart; what it serves, its settings and its headers may change before it ships.
+
+A second process, `dataplane/`, can take the public port and serve saved-query reads itself, from plans the Python
+server gives it, forwarding everything else to Python unchanged. For the calls it serves it measured 3-9x the calls a
+second per core, with every run still recorded by Python ([Performance, v5](PERFORMANCE_V5.md)). It needs
+`QUERYAPIGATE_DATAPLANE_SECRET` (at least 16 characters) set for both processes, and at least two gunicorn workers
+behind it. To build it, run it and see which calls it serves:
+[Try the Rust data plane](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/64-try-the-rust-data-plane.md).
+
 ## Upgrading
 
 1. Read the [Changelog](../CHANGELOG.md) entry for the target version, especially anything under a
@@ -4459,6 +4472,845 @@ SQL editor, the demo video and the architecture.
 </table>
 
 
+# Performance, v5: a Rust data plane in front of /q/
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V5
+
+# Performance, v5: a Rust data plane in front of `/q/`
+
+**The question** is [ADR 0028's](adr/0028-rust-data-plane-prototype.md): does a Rust data plane, applying the plans
+Python computes, serve saved-query calls at least 3 times as fast per gateway core, with p99 no worse and the
+differential gate clean? **The case** is v4's on PostgreSQL ([v4](PERFORMANCE_V4.md)) and the TPC-C estate on MySQL
+([MySQL v2](PERFORMANCE_MYSQL_V2.md)), with the data plane added in front.
+
+**The short answer: yes, on every lookup, on both databases, with every run recorded.**
+
+| | Python | Python + cache | Data plane | Data plane + cache |
+|---|---|---|---|---|
+| PostgreSQL lookup, 32 callers | 873/s | 1,043 | 12,689 | 20,000 at 2.97 cores* |
+| per gateway core | 747 | 925 | 2,361 (**3.2x**) | 6,734 (**7.3x**) |
+| p99 | 42.8 ms | 35.9 ms | 5.1 ms | 1.8 ms |
+| MySQL customer lookup, 32 callers | 794/s | 898 | 15,871 | 23,961 |
+| per gateway core | 616 | 769 | 2,144 (**3.5x**) | 3,253 (**4.2x**) |
+| p99 | 47.0 ms | 39.7 ms | 3.2 ms | 2.1 ms |
+| Both at their best on 8 cores, 64 callers (MySQL) | | 2,976/s, 8 workers | | 23,619/s, **7.9x per core** |
+
+\* At a fixed 20,000 calls a second; flat out, the data plane + cache served 27,500 calls a second on PostgreSQL, but
+only about half of their runs were recorded ([below](#keeping-every-run)). The multiples compare each data-plane build
+with the Python build behind it, cache with cache.
+
+| ADR 0028's criterion | Result |
+|---|---|
+| The differential gate: the same answer as Python, call for call | **Clean**: 0 response and 0 history differences in every run of it, over 13,500 calls on PostgreSQL and MySQL |
+| At least 3x calls a second per gateway core | **Met on every lookup**: 3.2-6.5x without the metadata cache, 4.0-9.4x with it, 7.8-8.1x on the same 8 cores. Paging on PostgreSQL 2.8x without the cache, 3.5x with it |
+| p99 no worse | **Lower in every cell:** 5-20x on the same host, 2x with the database 0.5 ms away |
+
+**The recommendation is go**, with three conditions this run found, in [What a go takes](#what-a-go-takes).
+
+## Contents
+
+- [Method](#method)
+- [Results on PostgreSQL](#results-on-postgresql)
+- [Results on MySQL](#results-on-mysql)
+- [Keeping every run](#keeping-every-run)
+- [The forwarded hop, and memory](#the-forwarded-hop-and-memory)
+- [Where the data plane doesn't help](#where-the-data-plane-doesnt-help)
+- [What a go takes](#what-a-go-takes)
+- [Limits](#limits)
+- [Run it yourself](#run-it-yourself)
+
+## Method
+
+[v3's](PERFORMANCE_V3.md#method), with the data plane added: the same laptop (an Intel i7-12700H on AC power, the
+`performance` profile and energy preference, a desk fan), the gateway on CPUs 0-7, the database on 8-11, the load
+generator on 12-19. Each cell is the median of 5 interleaved, rotated rounds (3 in the 64-caller block), with its
+min-max range in the result files. One session: PostgreSQL 2026-10-27 20:24-22:12, MySQL 22:12-00:25, the fixed-rate
+test 00:25-00:32.
+
+| Label | What runs |
+|---|---|
+| **v0.43.0** | `c57a546`, one gunicorn worker |
+| **Python** | `5844c0f` (the `feat/rust-data-plane` branch), one gunicorn worker |
+| **Python + cache** | the same, `QUERYAPIGATE_METADATA_CACHE_TTL=5` |
+| **Data plane** | the same, with the Rust data plane on the public port and **2** gunicorn workers behind it |
+| **Data plane + cache** | the same, with the metadata cache, in Python and in the data plane |
+
+- **Gateway cores** count everything on CPUs 0-7: the data plane and every gunicorn process. A data-plane cell
+  pays for Python's share too.
+- **Runs kept** is the share of a cell's calls that left a run in the store's event log, counted by event ids, so
+  it covers every worker. Python's builds keep 100%; a data-plane cell counts only when it does too.
+- **The store** is a PostgreSQL database on the same server for PostgreSQL, and SQLite for MySQL, as in v4 and MySQL
+  v2. Each cell starts with the event log and both server logs empty.
+- **Floors.** A `/health` floor before and after every block stayed between 2,190 and 2,261 requests a second on
+  PostgreSQL. On MySQL it read 2,177-2,253 for its first two blocks and 2,000-2,066 around the third and the start
+  of the fourth: the multiples are measured within each round, so they hold, but MySQL's absolute figures there may
+  be up to 10% low.
+- **A first run was discarded.** On 2026-10-27's afternoon the event log wasn't emptied between cells: at the data
+  plane's rates it grew by millions of rows a cell, slowed each later cell and filled the disk. The same run showed
+  that most of the data plane's runs went unrecorded, which [Keeping every run](#keeping-every-run) is about.
+
+## Results on PostgreSQL
+
+### 32 callers
+
+| Call | v0.43.0 | Python | Python + cache | Data plane | Data plane + cache |
+|---|---|---|---|---|---|
+| Lookup, plain key | 869 | 873 | 1,043 | 12,689 (12,622-17,597) | 27,519, runs kept 51-100% |
+| per gateway core | 743 | 747 | 925 | 2,361: **3.2x** | 3,904 |
+| Lookup, governed key | 829 | 832 | 991 | 12,358 (12,198-12,533) | 24,288, runs kept 50-100% |
+| per gateway core | 711 | 714 | 883 | 2,288: **3.2x** | 3,685 |
+| 100-row page | 737 | 739 | 868 | 6,776 (6,745-6,872) | 9,614 (9,507-9,678) |
+| per gateway core | 631 | 634 | 767 | 1,800: **2.8x** | 2,700: **3.5x** |
+| p99, plain lookup | 44.8 ms | 42.8 ms | 35.9 ms | 5.1 ms | 2.1 ms |
+
+- **The data plane alone is 3.2x per core on a lookup.** Every one of its runs was recorded, with 2 Python workers
+  behind it: their CPU is in the figure.
+- **Flat out, the data plane + cache outran recording.** At 24,000-25,700 calls a second it kept 95-100% of its runs;
+  at 27,000 and more, about half. The fixed-rate test below gives its figure with every run kept.
+- **The page is PostgreSQL-bound:** 3.9 of its 4 cores, with the gateway at 3.6-3.8 of 8.
+- **The first round after setup is fast:** 17,597 and 40,938 calls a second, against medians of 12,689 and 27,519.
+  The run history then fills with dead rows (each version keeps 50 runs, so most rows are deleted soon after they're
+  written), and the store's writes cost more. The medians leave that round out.
+
+### At a fixed rate
+
+The data plane + cache, the plain lookup, 64 connections, open loop with latency correction:
+
+| Offered | Served | Gateway cores | Per core | p50 | p99 | Runs kept, 2 workers | 3 workers |
+|---|---|---|---|---|---|---|---|
+| 16,000/s | 15,999 | 2.26 | 7,080 | 0.40 ms | 1.2 ms | 100% | 100% |
+| 20,000/s | 19,999 | 2.97 | 6,734 | 0.49 ms | 1.8 ms | 100% | 100% |
+| 24,000/s | 23,281 | 6.27 | - | 532 ms | 910 ms | 100% | 100% |
+| 28,000/s | 24,174 | 6.53 | - | 1.6 s | 4.1 s | 94% | 100% |
+
+- **About 23,300 calls a second is this PostgreSQL's ceiling** (3.4 of its 4 cores), not the gateway's.
+- **Below the ceiling, the gateway needs under 3 of its 8 cores for 20,000 calls a second, with every run kept:**
+  7.3x Python + cache per core. Run flat out against a saturated database, it spends twice the cores for the same
+  calls, waiting busily: the closed-loop figures above understate it.
+
+### One caller, and a database 0.5 ms away
+
+| Call | Python | Python + cache | Data plane | Data plane + cache |
+|---|---|---|---|---|
+| Plain lookup, one caller: calls/s, p50 | 745, 1.27 ms | 970, 1.01 ms | 4,785, 0.20 ms | 8,347, 0.11 ms |
+| per gateway core | 930 | 1,111 | 5,748: **6.2x** | 10,467: **9.4x** |
+| PostgreSQL 0.5 ms away, one caller: calls/s, p50 | 217, 4.60 ms | 602, 1.62 ms | 475, 2.07 ms | 1,317, 0.74 ms |
+| PostgreSQL 0.5 ms away, 32 callers | 885 | 1,031 | 4,956 | 14,234 |
+| per gateway core | 746 | 907 | 4,612: **6.2x** | 8,029: **8.9x** |
+
+The governed lookup is within 6% of the plain one in each cell. **Without the metadata cache, a distant store costs
+the data plane what it costs Python:** each call reads its three store rows across the network, one caller at a time.
+With the cache, one call is 0.74 ms against Python's 1.62.
+
+### Both at their best on 8 cores, 64 callers
+
+| Call | Python + cache, 8 workers | Data plane + cache, 2 workers behind it |
+|---|---|---|
+| Plain lookup | 3,537/s on 7.38 cores, p99 89.8 ms | 28,020/s on 7.19 cores, p99 3.4 ms, runs kept 54% |
+| Governed lookup | 3,353/s on 7.37 cores, p99 81.1 ms | 24,271/s on 6.63 cores, p99 4.7 ms, runs kept 49-97% |
+
+8.0x per core, but only partly recorded. MySQL's 64-caller block, below, is the same comparison with every run
+recorded.
+
+## Results on MySQL
+
+### 32 callers
+
+| Call | v0.43.0 | Python | Python + cache | Data plane | Data plane + cache |
+|---|---|---|---|---|---|
+| Customer lookup | 786 | 794 | 898 | 15,871 | 23,961 |
+| per gateway core | 599 | 616 | 769 | 2,144: **3.5x** | 3,253: **4.2x** |
+| `order_status` | 671 | 674 | 746 | 12,212 | 14,251 |
+| per gateway core | 513 | 522 | 633 | 1,661: **3.2x** | 2,515: **4.0x** |
+| `order_status`, governed key | 632 | 636 | 700 | 11,888 | 14,027 |
+| per gateway core | 488 | 498 | 597 | 1,612: **3.2x** | 2,395: **4.0x** |
+| `stock_level` | 760 | 770 | 862 | 4,340 | 4,588 |
+| per gateway core | 581 | 597 | 736 | 2,637: **4.4x** | 4,913: **6.7x** |
+| p99, customer lookup | 48.4 ms | 47.0 ms | 39.7 ms | 3.2 ms | 2.1 ms |
+
+Every run was recorded in every MySQL cell. With the cache, `order_status` and `stock_level` are MySQL-bound
+(3.7-3.9 of its 4 cores) while the gateway uses 0.9-5.9 of its 8; without it, the customer lookup and `order_status`
+use 7.4 gateway cores. The governed key, with a six-schema allow-list, a hash and a mask, costs 2-3% against the
+reader key.
+
+### One caller, MySQL 0.5 ms away, and 64 callers
+
+| Call | Python | Python + cache | Data plane | Data plane + cache |
+|---|---|---|---|---|
+| Customer lookup, one caller: calls/s | 865 | 908 | 5,519 | 7,722 |
+| per gateway core | 920 | 973 | 4,395: **4.8x** | 7,990: **8.2x** |
+| `order_status`, governed, one caller | 640 | 670 | 3,301 | 4,486 |
+| `order_status`, MySQL 0.5 ms away, one caller | 342 | 349 | 1,004 | 1,158 |
+| `order_status`, MySQL 0.5 ms away, 32 callers | 678 | 740 | 8,900 | 8,353 |
+
+| 64 callers, on 8 cores | Python + cache, 8 workers | Data plane + cache, 2 workers behind it | Per core |
+|---|---|---|---|
+| Customer lookup | 2,976/s on 7.34 cores, p99 93 ms | 23,619/s on 7.34 cores, p99 3.8 ms | **7.9x** |
+| `order_status`, governed | 2,252/s on 7.35 cores, p99 116 ms | 13,863/s on 5.82 cores, p99 6.4 ms | **7.8x** |
+
+**Each at its best, on the same 8 cores, with every run recorded, the data plane serves about 8 times as many calls
+a second.** Python's 8 workers can't use their cores: 2,976 calls a second is 405 per core, against 769 for one
+worker.
+
+## Keeping every run
+
+The data plane writes nothing to the store. It reports each run to Python, which records it: run history, the event
+log, the live feed, `/metrics` ([ADR 0028](adr/0028-rust-data-plane-prototype.md), section 3, item 8). The first full
+run showed Python couldn't keep up:
+
+| | Before | Now |
+|---|---|---|
+| Python's work per reported run | 27 µs | 6.9 µs |
+| Runs one Python process records a second | about 3,000 | about 17,000 |
+| Runs lost without being counted | most of them, above 8,600 a second | none: counted as `dropped` |
+| Data plane + cache, flat out, with every run recorded | - | about 24,000 a second, 2 workers |
+
+What changed:
+
+- **The data plane sends each run already serialized:** its history entry as `json.dumps` writes it, and its labels
+  and timings. Python queues a batch's history rows and events in one go, and counts each set of labels once.
+- **History inserts only what it keeps.** Each version keeps its newest 50 runs, so of a batch of 500 it now writes
+  50, not 500 to delete 450. Events go as one multi-row insert.
+- **Runs the data plane can't queue are counted** in `queryapigate_history_runs_total{outcome="dropped"}`, with the
+  next batch.
+- **Two Python workers behind it, not one:** one process's writer keeps up with about 17,000 runs a second.
+
+## The forwarded hop, and memory
+
+The two figures ADR 0028 also asked for, measured on 2026-10-28, 07:41-07:57: PostgreSQL, the metadata cache on in
+both builds, each latency the middle of 3 runs of 30 s.
+
+| | Python + cache, direct | Through the data plane |
+|---|---|---|
+| Write (forwarded), one caller: p50 / p99 | 1.43 / 2.28 ms | 1.78 / 3.52 ms |
+| Write (forwarded), 400 a second: p50 / p99 | 1.77 / 5.04 ms | 2.12 / 4.40 ms |
+| Lookup (served), one caller: p50 / p99 | 1.38 / 3.04 ms | 0.18 / 0.64 ms |
+| Lookup (served), 400 a second: p50 / p99 | 1.58 / 4.71 ms | 0.63 / 1.38 ms |
+| Memory (VmRSS) after the cells | master 48 MB, worker 52 MB | data plane 19 MB; master 48 MB, 2 workers 64 MB each |
+
+- **A forwarded call pays 0.35 ms at p50,** at both loads. At 400 a second its p99 is no worse.
+- **The data plane holds 19 MB.** Each Python worker behind it holds 12 MB more than a worker on its own.
+- One caller's lookup through Python + cache took 1.38 ms here, against 1.01 ms in the decision run's 1-caller block:
+  this was a separate session, so compare within the table, not across runs.
+
+## Where the data plane doesn't help
+
+- **Writes** are forwarded to Python: 1,653 calls a second through the data plane with its 2 workers, against 1,030
+  for one worker on its own: **0.8x per core,** and 0.35 ms more at p50 ([above](#the-forwarded-hop-and-memory)). The
+  forwarding hop costs CPU, and writes were never the data plane's to serve.
+- **A 100-row page on PostgreSQL without the cache: 2.8x per core,** below the bar. PostgreSQL sets the limit there
+  (3.9 of 4 cores); with the cache, 3.5x.
+- **The first call to each query, key and schema, and every call using a feature the data plane leaves to Python**
+  ([ADR 0028, section 4](adr/0028-rust-data-plane-prototype.md)), cost what Python costs, plus the hop. The figures
+  here are steady state: the same few queries, called again and again.
+
+## What a go takes
+
+1. **At least 2 Python workers behind the data plane.** With 1, about half its runs went unrecorded. 2 kept every
+   run to about 24,000 calls a second here; above that, runs are dropped and counted.
+2. **A store built for the run volume.** Every run recorded at 20,000 a second is 1.7 billion a day. The event log
+   keeps each for at least an hour, whatever the count; SQLite and a PostgreSQL store can't hold that for long. A
+   store for runs at this rate is ADR 0029's subject.
+3. **The pull request it promises:** the CI job that builds the data plane and runs the differential gate, cargo's
+   Dependabot ecosystem, the threat-model entries, and its documentation.
+
+## Limits
+
+[v3's](PERFORMANCE_V3.md#limits): one machine, a laptop's power limit, a simulated network (one-way delay, no jitter
+or loss), cheap queries on data that fits in memory, and no soak test. Also:
+
+- **Steady state only:** a few queries, called again and again. A deployment with many distinct queries and keys
+  spends more of its calls on Python's plan-giving first call.
+- **The recording ceiling is this machine's:** about 24,000 runs a second with 2 workers and a local store.
+- **The run history fills with dead rows** under the data plane's write rate, and later cells pay for it: see the
+  first-round outliers. A run longer than this one's 30 s cells would show how far that goes.
+
+## Run it yourself
+
+```bash
+pip install -e ".[server,postgres,mysql]"
+cargo build --release --manifest-path dataplane/Cargo.toml
+python benchmarks/oltp.py --out /tmp/qag-dp-pg --base v0.43.0 --head feat/rust-data-plane \
+    setup env d1 d2 d3 d4 env teardown                                                       # 1 h 50 min
+python benchmarks/tpcc_mysql.py --out /tmp/qag-dp-mysql --go-tpc /path/to/go-tpc --refs v0.43.0,feat/rust-data-plane \
+    setup env d1 d2 d3 d4 env teardown                                                       # 2 h 15 min
+python benchmarks/oltp_report.py /tmp/qag-dp-pg/results.jsonl
+python benchmarks/tpcc_mysql_report.py /tmp/qag-dp-mysql/results.jsonl
+```
+
+Pass `--out` as an absolute path, and benchmark committed code: each build is a `git archive` of its ref. The
+2026-10-27 runs are in
+[`benchmarks/results/dataplane-postgres-2026-10-27/`](https://github.com/AnanthaRajuC/QueryAPIGate/tree/main/benchmarks/results/dataplane-postgres-2026-10-27)
+(with `fixed-rate.jsonl`) and
+[`benchmarks/results/dataplane-mysql-2026-10-27/`](https://github.com/AnanthaRajuC/QueryAPIGate/tree/main/benchmarks/results/dataplane-mysql-2026-10-27).
+
+
+# Performance, v4: what 0.43 changed on PostgreSQL
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V4
+
+# Performance, v4: what 0.43 changed on PostgreSQL
+
+**The case** is [v3's](PERFORMANCE_V3.md): pgbench's tables at scale 100, saved queries by primary key, a 100-row
+page and a single-row write, with a plain key and a governed one (a table allow-list and a masking rule). v4 measures
+0.43 against 0.42 with v3's harness and method.
+
+**The short answer.** One gunicorn worker, as in the Docker image, 32 concurrent callers:
+
+| | v0.42.0 | 0.43 | 0.43 + metadata cache |
+|---|---|---|---|
+| Lookup, plain key | 786/s | 852 (+8%) | 1,012 (+29%) |
+| Lookup, governed key | 738 | 809 (+10%) | 964 (+31%) |
+| 100-row page | 682 | 725 (+6%) | 835 (+22%) |
+| Write | 793 | 850 (+7%) | 1,002 (+26%) |
+| One caller, lookup: p50 | 1.36 ms | 1.27 ms | 1.00 ms |
+| One caller, lookup, **PostgreSQL 0.5 ms away**: p50 | 6.58 ms | **4.39 ms** | **1.60 ms** |
+
+- **Across a network, a call is 2.2 ms faster on 0.43, and 5 ms faster with the cache:** 4 times as fast as 0.42.
+  The data query is one round trip instead of four ([ADR 0027](adr/0027-fewer-round-trips-per-query.md)); the cache
+  removes the store's three.
+- **On the same host, 0.43 gains 6-10%, and the cache 22-31%.** With the database next door, round trips are cheap and
+  the gateway's Python sets the limit.
+- **The 75 ms a governed key paid once a minute is gone:** the schema is now read again in the background, before it
+  expires.
+- **Every one of the 5.0 million requests returned 200** - or 201, for the writes.
+
+Each cell is the median of 5 interleaved rounds, with its min-max range in the tables below; a difference counts only
+when the ranges don't overlap ([v3's method](PERFORMANCE_V3.md#when-a-difference-counts)). For MySQL, see
+[Performance on MySQL, v2](PERFORMANCE_MYSQL_V2.md).
+
+## Contents
+
+- [Method](#method)
+- [Results](#results)
+- [Where the time goes](#where-the-time-goes)
+- [Sizing, updated](#sizing-updated)
+- [Limits](#limits)
+- [Run it yourself](#run-it-yourself)
+
+## Method
+
+[v3's](PERFORMANCE_V3.md#method), unchanged: the same laptop (an Intel i7-12700H, on AC power, the `performance`
+profile and energy preference, a desk fan on it this time), the gateway on CPUs 0-7 (four performance cores),
+PostgreSQL 16 on 8-11, the load generator on 12-19; QueryAPIGate's own store a separate database on the same
+PostgreSQL server. One session, 2026-10-26 22:00 to 2026-10-27 00:28, right after [the MySQL run](PERFORMANCE_MYSQL_V2.md).
+
+| Label | Commit |
+|---|---|
+| **v0.42.0** | `647ab6f` |
+| **0.43** | `fe603c0`: `main` with everything 0.43 ships but its version number |
+| **0.43 + cache** | the same, with `QUERYAPIGATE_METADATA_CACHE_TTL=5` |
+
+A `/health` floor before and after every block stayed between 1,978 and 2,323 requests a second. pgbench, straight
+to PostgreSQL: 39,579 lookups a second from one client, 130,738 from 32.
+
+**What v4 leaves out:** scale-out across workers, the access log, mixed and hot-row writes. Nothing 0.43 changed
+affects them on their own, and [v3's figures](PERFORMANCE_V3.md#results) stand; the
+[MySQL run](PERFORMANCE_MYSQL_V2.md#the-reviews-questions) measured scale-out on a PostgreSQL store and what logging
+costs with 0.43.
+
+## Results
+
+### One worker, 32 callers
+
+| Call | v0.42.0 | 0.43 | 0.43 + cache |
+|---|---|---|---|
+| Lookup, plain key | 786 (751-829) | 852 (827-892) | 1,012 (991-1,043) |
+| Lookup, governed key | 738 (713-771) | 809 (803-856) | 964 (956-992) |
+| 100-row page | 682 (661-694) | 725 (710-758) | 835 (833-873) |
+| Write | 793 (764-836) | 850 (832-887) | 1,002 (999-1,046) |
+
+- **0.43 over 0.42: +6-10%.** The governed lookup and the page are clear; the plain lookup and the write overlap at
+  their edges. What 0.43 saves here is CPU: the store-file check and the masking key's store read (#95),
+  `db._target()`, and three of the four round trips a PostgreSQL call made (its statements now go as one message).
+- **The governed key reads the store 3 times a call, not 4:** 0.42 also read the masking hash key every time.
+- **The cache adds +15-19% on top of 0.43,** as in v3.
+
+### One caller at a time
+
+| Call | v0.42.0 | 0.43 | 0.43 + cache |
+|---|---|---|---|
+| Lookup, plain key: p50 | 1.36 ms (1.34-1.41) | 1.27 ms (1.23-1.30) | 1.00 ms (0.99-1.01) |
+| Lookup, governed key: p50 | 1.49 ms (1.44-1.51) | 1.31 ms (1.27-1.35) | 1.05 ms (1.03-1.06) |
+
+**A governed call costs 0.05 ms more than a plain one** on 0.43 + cache: the table check and masking, both reused
+from cache.
+
+### Latency against offered load
+
+Open loop, latency corrected, the plain lookup at a share of each build's capacity (0.43: 892 a second; with the
+cache, 1,042):
+
+| Offered | 0.43: p50 / p99 / p99.9 | 0.43 + cache |
+|---|---|---|
+| 25% | 2.1 / 3.0 / 11.0 ms | 1.4 / 2.1 / 10.4 ms |
+| 50% | 1.5 / 2.8 / 7.5 ms | 1.1 / 2.1 / 9.3 ms |
+| 75% | 1.4 / 4.6 / 14.2 ms | 1.1 / 4.3 / 13.0 ms |
+| 90% | 1.6 / 15.9 / 20.5 ms | 1.1 / 13.3 / 19.0 ms |
+| 100% | 64 / 108 / 110 ms | 88 / 141 / 150 ms |
+
+As in v3: **p50 is flat to capacity, and p99 holds at about 4-5 ms to 75%,** then climbs. Plan at 75%.
+
+### The cold path
+
+One 150 s run of the lookup at 8 callers, each request's duration from gunicorn's access log, 0.43 - the test that
+found the once-a-minute spike in [v3](PERFORMANCE_V3.md#the-cold-path-every-60-seconds):
+
+| Key | Requests | p50 | p99 | p99.9 | p99.99 | Slowest |
+|---|---|---|---|---|---|---|
+| governed | 131,380 | 7.59 ms | 10.82 ms | 12.96 ms | **22.33 ms** (v3: 73.7) | 138.8 ms, the first call |
+| plain | 131,380 | 7.62 ms | 10.92 ms | 13.60 ms | 18.89 ms | 22.0 ms |
+
+**No second after the first stands out.** In v3 the governed key paid 76 and 74 ms at t=61 s and t=121 s, when its
+copy of the schema expired and the next call read it again and traced its statement again. 0.43 reads it again in
+the background after 45 s, and keeps the traces when the schema hasn't changed. The very first call still reads the
+schema itself: 139 ms, once, per connection and process.
+
+### A database across a network
+
+netem delays everything the PostgreSQL server sends by 0.5 ms - the data database and QueryAPIGate's store, which
+share it here, as a deployment with both in another zone would:
+
+| | v0.42.0 | 0.43 | 0.43 + cache |
+|---|---|---|---|
+| One caller: p50 | 6.58 ms (6.47-6.64) | 4.39 ms (4.32-4.51) | **1.60 ms** (1.57-1.78) |
+| One caller: calls/s | 153 (150-156) | 226 (220-233) | 604 (558-615) |
+| 32 callers: calls/s | 826 (770-832) | 888 (829-892) | 1,029 (999-1,033) |
+
+- **For one caller, every round trip shows:** 0.43 saves three of the seven (2.2 ms), and the cache the other three
+  that weren't the query (another 2.8 ms).
+- **With 32 callers, 0.43 gains less (+7%, at the edge of the range):** eight threads already hid most of the
+  waiting, and the worker's CPU was the limit. The cache, which also saves CPU, still adds 16%.
+
+### Threads per worker
+
+0.43, the plain lookup, 32 callers:
+
+| Threads | 1 | 2 | 4 | 8 (the default) |
+|---|---|---|---|---|
+| Calls/s | 904 (888-922) | **1,012** (960-1,016) | 928 (880-939) | 896 (839-903) |
+
+**Two threads are still best with the database on the same host** (13% faster than eight), as in v3. Set them with
+`QUERYAPIGATE_THREADS` (from 0.43).
+
+## Where the time goes
+
+### Round trips per call
+
+One caller's p50 against delay, calibrated by psycopg2 sending a known one statement (1.25 ms of p50 per ms of
+delay):
+
+| | p50 at +0 / 0.5 / 1 / 2 ms | Slope | Round trips |
+|---|---|---|---|
+| psycopg2, 1 statement | 0.02 / 0.67 / 1.23 / 2.53 ms | 1.25 | 1 |
+| psycopg2, 4 statements | 0.05 / 2.51 / 4.80 / 9.90 ms | 4.87 | 3.9 |
+| v0.42.0 | 1.38 / 6.62 / 10.22 / 19.44 ms | 8.90 | **7.1**: 4 to the data database, 3 to the store |
+| 0.43 | 1.26 / 4.54 / 6.86 / 11.92 ms | 5.25 | **4.2**: 1 and 3 |
+| 0.43 + cache | 0.98 / 1.67 / 2.36 / 3.46 ms | 1.24 | **1.0**: the query alone |
+
+**With the cache, a call on 0.43 makes one round trip:** the query, sent as one message that also sets its access
+mode and time limit, and resets whatever a previous query left on the connection.
+
+### The CPU
+
+py-spy on one worker, the plain lookup at 32 callers:
+
+| | 0.43 | 0.43 + cache |
+|---|---|---|
+| Store layer: the key, the query and the connection | 22.9% | 4.5% |
+| Logging | 21.2% | **25.2%** |
+| gunicorn, sockets, HTTP | 18.7% | 22.3% |
+| Flask and Werkzeug | 10.8% | 14.1% |
+| Data query: psycopg2 and the pool | 7.6% | 10.5% |
+| QueryAPIGate's request handling | 5.6% | 6.9% |
+| Everything else | 13.2% | 16.5% |
+
+**With the cache on, logging is the largest single cost of a call** - a quarter of the samples, much of it threads
+waiting for the logging module's lock. Turning off gunicorn's access log and QueryAPIGate's request lines
+(`QUERYAPIGATE_ACCESS_LOG=off`, `QUERYAPIGATE_LOG_REQUESTS=off`) was worth 21% on
+[MySQL](PERFORMANCE_MYSQL_V2.md#what-logging-costs).
+
+## Sizing, updated
+
+[v3's rule](PERFORMANCE_V3.md#sizing), with 0.43's figures:
+
+- **CPU:** about 670 fast calls a second per worker, or 780 with the metadata cache, at 75% of this run's capacity,
+  where p99 is 4-5 ms. (v3: 550 and 650.)
+- **Waiting:** threads ÷ (query time + round trips × network round-trip time), with **4 round trips** a call (1 to
+  the data database, 3 to the store) on 0.43, and **1** with the cache. (v3: 7 and 4.)
+- **Workers needed** = the larger of the two limits divided into your calls a second, plus one spare.
+
+At 0.5 ms away, one worker with 8 threads can wait on 8 ÷ (0.03 + 4 × 0.5 ms) = about 3,900 calls a second on 0.43,
+and 15,000 with the cache - neither near the CPU figure. **Across a network, 0.43 is CPU-bound where 0.42 was close
+to being bound by waiting.**
+[Tune a deployment for throughput](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/63-tune-a-deployment-for-throughput.md)
+puts these together with MySQL's.
+
+## Limits
+
+As [v3's](PERFORMANCE_V3.md#limits): one machine, a laptop's power limit, a simulated network (one-way delay, no
+jitter or loss), cheap queries on data that fits in memory, and no soak test. Scale-out, the access log and mixed
+writes weren't rerun.
+
+## Run it yourself
+
+```bash
+pip install -e ".[server,postgres]" py-spy
+python benchmarks/oltp.py --out /tmp/qag-oltp --base v0.42.0 setup
+python benchmarks/oltp.py --out /tmp/qag-oltp --base v0.42.0 env pgbench b1 b2 b3 b5 b7 b9 b10 b11 env   # 2.5 hours
+python benchmarks/oltp_report.py /tmp/qag-oltp/results.jsonl
+```
+
+The 2026-10-26 run is in
+[`benchmarks/results/oltp-postgres-2026-10-26/`](https://github.com/AnanthaRajuC/QueryAPIGate/tree/main/benchmarks/results/oltp-postgres-2026-10-26).
+
+
+# Performance on MySQL, v2: what 0.43 changed
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_MYSQL_V2
+
+# Performance on MySQL, v2: what 0.43 changed
+
+**The case** is [v1's](PERFORMANCE_MYSQL_V1.md): one MySQL server holding six databases, one per microservice, and
+read-only per-user queries that join across them, through one QueryAPIGate connection. v2 measures 0.43 against 0.42,
+and answers the questions the review of v1 left open.
+
+**The short answer.** One gunicorn worker, as in the Docker image, 32 concurrent callers:
+
+| | v0.42.0 | 0.43 | 0.43 + metadata cache |
+|---|---|---|---|
+| `customer` - one user's row | 647/s | 743 (+15%) | 875 (+35%) |
+| `order_status` - TPC-C Order-Status, 3 tables | 573 | 662 (+16%) | 727 (+27%) |
+| `stock_level` - TPC-C Stock-Level, a range and `COUNT(DISTINCT)` | 630 | 751 (+19%) | 833 (+32%) |
+| `order_status`, **MySQL 0.5 ms away** | 446 | **680 (+52%)** | **737 (+65%)** |
+| One caller, `order_status`, MySQL 0.5 ms away: p50 | 3.71 ms | 2.89 ms | 2.88 ms |
+
+- **0.43 is 15-19% faster with MySQL on the same host, and 52% faster across a network.** A call makes 2 round trips
+  to MySQL instead of 3, and none of them stalls the worker any more
+  ([ADR 0027](adr/0027-fewer-round-trips-per-query.md)).
+- **Threads help again across a network.** On 0.42, more than two threads lost throughput with MySQL 0.5 ms away; on
+  0.43, four threads serve 730 calls a second, against 0.42's best of 501.
+- **Logging is a fifth of a worker.** With gunicorn's access log and QueryAPIGate's request lines both off, one worker
+  served 21% more. Both are settings from 0.43.
+- **The laptop's ceiling:** 3,500 `order_status` and 4,400 single-row lookups a second, sustained, from twelve workers
+  on its six performance cores - about 50% more than v1's setting on the same machine.
+- **A hyperthread is worth about 0.6 of a core** for the gateway, so one worker per physical core does best.
+- **Every one of the 9.5 million requests returned 200.**
+
+Each cell is the median of 5 interleaved rounds, with its min-max range in the tables below. A difference counts as
+real only when the ranges don't overlap - the method of [Performance, v3](PERFORMANCE_V3.md#method).
+
+## Contents
+
+- [Method](#method)
+- [0.43 against 0.42](#043-against-042)
+- [A database across a network](#a-database-across-a-network)
+- [The review's questions](#the-reviews-questions)
+- [Sizing, updated](#sizing-updated)
+- [Limits](#limits)
+- [Run it yourself](#run-it-yourself)
+
+## Method
+
+As [v1](PERFORMANCE_MYSQL_V1.md#method): the same laptop (an Intel i7-12700H, on AC power, the `performance` profile
+and energy preference, a desk fan on it this time), the same TPC-C data at 20 warehouses moved into six databases, the
+same read-only user, the same queries and load files. One session, 2026-10-26 18:32 to 21:59. Each part on its own
+cores:
+
+| Part | CPUs |
+|---|---|
+| QueryAPIGate (gunicorn) | 0-7: four performance cores, both threads |
+| MySQL 8.4.13 | 8-11: two performance cores |
+| The load generator (oha) | 12-19: the efficiency cores |
+
+The laptop ceiling block moves them; it says how.
+
+| Label | Commit |
+|---|---|
+| **v0.42.0** | `647ab6f` |
+| **0.43** | `fe603c0`: `main` with everything 0.43 ships but its version number - ADR 0027, the schema-qualified allow-lists, `db._target()` cached, the metadata cache defaults, `QUERYAPIGATE_THREADS` |
+| **0.43 + cache** | the same, with `QUERYAPIGATE_METADATA_CACHE_TTL=5` |
+
+Each runs as the Docker image does - gunicorn's `gthread` worker, 8 threads, the access log on - except where a block
+varies that. The store is SQLite in the home directory, except where a block says PostgreSQL.
+
+**Software:** Python 3.12.3, gunicorn 26.2.0, mysql-connector-python 9.3.0, MySQL 8.4.13, oha 1.16.0 pinned by
+digest, go-tpc (snapshot `a9ca481`). Linux 6.8.0.
+
+**Steadiness.** A `/health` floor before and after every block stayed between 1,983 and 2,311 requests a second.
+The first rounds of the throughput block ran with some unrelated containers on the machine (about 0.2 of a core,
+unpinned); they were stopped ten minutes in, before the second query. The builds were interleaved within every
+query, so each comparison saw the same conditions.
+
+**What v2 leaves out.** MySQL on its own, the response cache under skewed traffic, the open-loop latency curve and
+local threads per worker: nothing 0.43 changed affects them, and [v1's figures](PERFORMANCE_MYSQL_V1.md#results)
+stand. Event-log pruning at steady state needs a run longer than the shortest retention (an hour), and is left to a
+soak test.
+
+## 0.43 against 0.42
+
+### One worker, 32 callers
+
+| Query | v0.42.0 | 0.43 | 0.43 + cache |
+|---|---|---|---|
+| `customer` | 647 (636-693) | 743 (726-795) | 875 (831-883) |
+| `order_status` | 573 (567-604) | 662 (644-670) | 727 (721-753) |
+| `stock_level` | 630 (628-677) | 751 (733-795) | 833 (829-902) |
+
+All the ranges are clear of each other. What 0.43 removed from every call: mysql-connector's ping on each `cursor()`
+(2.6-3.8% of the CPU in [v1's profile](PERFORMANCE_MYSQL_V1.md#the-cpu), and a stall of the whole worker - see below),
+`db._target()` re-reading the environment (3.6-3.8%), and #95's two store reads. v1's run had measured v0.42.0 at 643,
+558 and 613 for these three: this run agrees with it within 3%.
+
+The gateway still sets the limit: it used 1.2-1.3 cores, and MySQL 0.07-0.52.
+
+### One caller at a time
+
+| Query | v0.42.0 | 0.43 | 0.43 + cache | The gateway adds (0.43 + cache) |
+|---|---|---|---|---|
+| `customer` | 1.26 ms | 1.13 ms | 1.07 ms | +1.04 ms |
+| `order_status` | 1.47 ms | 1.41 ms | 1.35 ms | +1.27 ms |
+| `stock_level` | 1.71 ms | 1.76 ms | 1.65 ms | +1.23 ms |
+
+The p50 of a single call. "Adds" is against the same query sent straight to MySQL
+([v1](PERFORMANCE_MYSQL_V1.md#mysql-on-its-own)).
+With nothing else running, one caller gains less: 10% on `customer`, 4% on `order_status`; `stock_level`'s ranges
+overlap. **A call through the gateway costs 1.0-1.3 ms more than the query alone,** down from v1's 1.1-1.4.
+
+### Where the time goes now
+
+py-spy on one worker, `order_status` at 32 callers, as in [v1](PERFORMANCE_MYSQL_V1.md#the-cpu):
+
+| | 0.43 | 0.43 + cache |
+|---|---|---|
+| Store layer: the key, the query and the connection, from SQLite | 23.1% | 3.6% |
+| Data query: mysql-connector and the pool | 20.0% | 22.7% |
+| Logging | 14.9% | 19.2% |
+| gunicorn, sockets, HTTP | 13.8% | 16.3% |
+| Flask and Werkzeug | 7.0% | 9.9% |
+| SQL checks, parameters | 5.2% | 7.9% |
+| JSON | 5.1% | 7.3% |
+| History writer thread | 5.0% | 5.1% |
+| Everything else | 5.9% | 7.9% |
+
+The ping is gone from the profile, and `db._target()` is down from 3.8% of the samples to under 1%. With the cache
+on, **logging is now the largest share after the query itself** -
+[What logging costs](#what-logging-costs) measures turning it off.
+
+## A database across a network
+
+netem delays everything MySQL sends by 0.5 ms (about a same-zone cloud round trip), `order_status`:
+
+| | v0.42.0 | 0.43 | 0.43 + cache |
+|---|---|---|---|
+| One caller: p50 | 3.71 ms (3.63-3.74) | 2.89 ms (2.76-2.90) | 2.88 ms (2.84-2.89) |
+| One caller: calls/s | 271 (267-278) | 349 (347-362) | 349 (347-355) |
+| 32 callers: calls/s | 446 (445-449) | **680 (643-684)** | **737 (713-745)** |
+
+- **For one caller, 0.43 saves 0.8 ms a call:** one round trip fewer, about 0.6 ms at this delay, plus the work.
+- **For 32 callers, 0.43 serves 52% more** - more than one round trip explains. In 0.42 the round trip it saves was a
+  ping during which mysql-connector held Python's interpreter lock, so every thread waited for it, not just the one
+  calling ([v1](PERFORMANCE_MYSQL_V1.md#a-database-across-a-network)). 0.43's gateway used 1.31 cores here against
+  0.42's 0.98: threads that were stalled are working.
+
+### Round trips
+
+Counted in MySQL's general log over 100 calls, and measured as the slope of one caller's p50 against delay, calibrated
+by mysql-connector sending a known one statement (1.27 ms of p50 per ms of delay):
+
+| | Statements per call (log) | p50 at +0 / 0.5 / 1 / 2 ms | Slope | Round trips |
+|---|---|---|---|---|
+| v0.42.0 | 2: the query, `ROLLBACK` | 1.27 / 3.39 / 4.98 / 9.19 ms | 3.94 | 3.1 |
+| 0.43 | 2: the query with its time limit as a hint, `ROLLBACK AND CHAIN` | 1.12 / 2.60 / 3.65 / 6.47 ms | 2.65 | **2.1** |
+| 0.43 + cache | the same | 1.05 / 2.53 / 3.62 / 6.39 ms | 2.63 | 2.1 |
+
+The log shows the same two statements a call for both; 0.42's third round trip was the ping, which isn't a statement.
+
+### Threads per worker, across the network
+
+The block v1 couldn't explain: one worker, `order_status`, 32 callers, MySQL 0.5 ms away:
+
+| Threads | v0.42.0 | 0.43 | 0.43 over 0.42 |
+|---|---|---|---|
+| 1 | 316 (311-317) | 405 (403-408) | +28% |
+| 2 | **501** (499-507) | 648 (640-665) | +29% |
+| 4 | 469 (468-473) | **730** (729-730) | +55% |
+| 8 | 447 (445-449) | 685 (680-686) | +53% |
+
+- **On 0.42, threads beyond two cost throughput:** each added thread meant more pings, and each ping stopped every
+  thread.
+- **On 0.43, threads overlap the network's waiting, as they should:** four serve 46% more than 0.42's best. Eight are
+  a little slower than four on this query, for the reason fewer threads win on the same host
+  ([v1](PERFORMANCE_MYSQL_V1.md#threads-per-worker)): they compete for the interpreter lock.
+
+### The store across the network
+
+QueryAPIGate's own store on local SQLite, against PostgreSQL 0.5 ms away (what several instances share); MySQL 0.5 ms
+away in both; one caller:
+
+| Store | 0.43 | 0.43 + cache |
+|---|---|---|
+| SQLite, local | 2.86 ms (351/s) | 2.82 ms (359/s) |
+| PostgreSQL, 0.5 ms away | **5.70 ms (176/s)** | **2.87 ms (349/s)** |
+
+As in v1: **without the cache, a store across the network costs a call 2.8 ms; with it, nothing.**
+
+## The review's questions
+
+The review of v1 asked for each of these.
+
+### Scale-out on a PostgreSQL store
+
+v1 scaled workers on local SQLite, whose single writer was a suspect at 8 processes. Here the store is PostgreSQL (on
+the database cores, no delay), as several instances would share it; `order_status`, 64 callers:
+
+| Workers | 0.43 | 0.43 + cache | Calls/s per gateway core: 0.43 / cache | Store cores: 0.43 / cache |
+|---|---|---|---|---|
+| 1 | 625 (620-667) | 720 (716-760) | 522 / 619 | 0.24 / 0.07 |
+| 2 | 1,008 (1,001-1,008) | 1,198 (1,195-1,201) | 425 / 520 | 0.41 / 0.13 |
+| 4 | 1,426 (1,420-1,431) | 1,745 (1,735-1,753) | 305 / 383 | 0.74 / 0.24 |
+| 8 | 1,862 (1,831-1,865) | 2,270 (2,233-2,321) | 253 / 310 | 1.15 / 0.37 |
+
+- **The store wasn't what flattened v1's scale-out.** On PostgreSQL the curve has the same shape: per-core throughput
+  halves from 1 to 8 workers, with the store using at most 1.15 cores. What flattens it is the gateway's cores - next.
+- **The cache's lead holds at every size (+15% to +22%),** and it cuts the store's load to a third.
+
+### Is a hyperthread worth less than a core?
+
+v1 explained its flattening scale-out by eight workers sharing four cores' hyperthreads. Tested directly: 4 workers,
+cache on, `order_status`, 64 callers, on three sets of CPUs (CPUs come in sibling pairs, 0-1, 2-3, ...):
+
+| 4 workers on | CPUs | Calls/s | p99 |
+|---|---|---|---|
+| one thread of each of 4 cores | `0,2,4,6` | **2,250** (2,243-2,256) | 59 ms |
+| both threads of 2 cores | `0-3` | 1,807 (1,777-1,828) | 72 ms |
+| both threads of 4 cores | `0-7` | 1,756 (1,749-1,767) | 55 ms |
+
+- **Two cores with both hyperthreads did 80% of four cores' work:** a core's second hyperthread is worth about 0.6 of
+  a core here. So v1's explanation stands, with a number on it.
+- **Four workers on eight CPUs were slower than on four.** With twice the CPUs they need, the scheduler sometimes
+  puts two busy workers on one core's two hyperthreads. Pin one worker per physical core where you can.
+
+### What logging costs
+
+0.43 + cache, `order_status`, 32 callers:
+
+| Logging | Calls/s | vs the image |
+|---|---|---|
+| gunicorn's access log and QueryAPIGate's request lines (the image's default) | 722 (717-754) | |
+| request lines only (`QUERYAPIGATE_ACCESS_LOG=off`) | 765 (763-766) | +6% |
+| neither (and `QUERYAPIGATE_LOG_REQUESTS=off`) | **874** (873-903) | **+21%** |
+
+**Turning both off is worth a fifth of a worker** - where a proxy or load balancer logs requests already, they
+duplicate it. Errors, warnings, slow queries and agent writes are still logged with both off.
+
+### The light-load tail
+
+v1 saw a p99.9 of 10-30 ms even at a quarter of capacity, and asked whether it lines up with the history writer's
+flush, once a second. Every call's latency, at 150 calls a second for 60 s, measured from when each call was due:
+
+| History flush | p50 | p99 | p99.9 | Calls over 10 ms | In how many of the 60 seconds |
+|---|---|---|---|---|---|
+| every 1 s (the default) | 2.61 ms | 3.37 ms | 15.9-26.6 ms | 13-29 | 4-9 |
+| every 5 s | 2.62 ms | 3.36 ms | 21.3-26.5 ms | 16-25 | 5-7 |
+
+- **p99 is 3.4 ms at light load;** the p99.9 is a handful of slow moments, not a slow tail.
+- **The slow calls come in bursts:** four or five calls in a row (one every 6.7 ms at this rate) each take 25-35 ms,
+  every five seconds or so - so something stops the worker for about 30 ms at a time.
+- **It isn't the history writer.** Flushing every 5 s instead of every 1 s changed neither how often nor how long.
+
+- **It isn't the garbage collector either, mostly.** Run again with every collection the gateway's worker and the
+  load client made logged against the clock: in three runs, one burst each lined up with a 10 ms full collection in
+  the worker; the other two to five bursts per run had no collection near them, in the worker or the client. None of
+  QueryAPIGate's own timers runs every five seconds (the instance heartbeat is 30 s, the retention sweep 10 minutes).
+
+**So the light-load p99.9 is not yet explained.** What's ruled out: the history writer, the garbage collector for all
+but a third of it, and the server's timers. Left to look at: gunicorn's request loop (its main thread hands each
+keep-alive connection back to the worker threads) and MySQL's own background work. It costs a few calls in a thousand
+about 30 ms each; p99 is unaffected.
+
+### Round trips to a PostgreSQL store
+
+v1's store across the network cost 2.54 ms a call at 0.5 ms, which looked like 4 round trips for 3 reads. One
+caller, 0.43 without the cache, delay on the store only:
+
+| Store delay | 0 | 0.5 ms | 1 ms | 2 ms |
+|---|---|---|---|---|
+| p50 | 1.76 ms | 4.21 ms | 6.00 ms | 10.08 ms |
+
+The slope is 4.10 ms per ms of delay: 3.2 round trips at mysql-connector's calibration above, 3.6 at the 1.15 v3
+measured for PostgreSQL. **The store makes 3 reads, each one statement in autocommit** - the key, the saved query, the
+connection - **and so 3 round trips;** the first half-millisecond of delay costs more than the slope (2.45 ms, not
+2.05), which is what made v1's single point look like four. With the metadata cache, none of the three is made.
+
+### The laptop's ceiling
+
+What this laptop can serve, against v1's setting on the same machine. Both with the cache on, 64 callers:
+
+| | v1's setting | The ceiling |
+|---|---|---|
+| Gateway | 8 workers x 8 threads on CPUs 0-7 (four performance cores) | 12 workers x 2 threads on 0-11 (all six) |
+| Logging | both on | both off |
+| MySQL | 8-11 (two performance cores) | 12-17 (six efficiency cores) |
+| Load generator | 12-19 | 18-19 |
+
+| Query | v1's setting | The ceiling | |
+|---|---|---|---|
+| `customer` | 2,927 (2,876-4,029) | **4,382** (4,372-6,565) | +50% |
+| `order_status` | 2,376 (2,318-3,060) | **3,507** (3,490-3,935) | +48% |
+| `stock_level` | 2,532 (2,507-3,521) | **3,514** (3,382-3,522) | +39% |
+
+- **Sustained, the laptop serves about 3,500 multi-database joins and 4,400 single-row lookups a second.** The
+  gateway used 11 of its 12 hardware threads.
+- **`stock_level` is now MySQL-bound:** MySQL used 5.4 of its six efficiency cores.
+- **The highest value in each range is the first round, at boost clocks.** After a lighter block, the performance
+  cores ran at 3.3-3.7 GHz for the first few minutes, then settled at 2.1-2.6 GHz under the laptop's sustained power
+  limit; the four cells measured at the higher clocks came out 29-50% above the rest. The medians are the sustained
+  figures. A server without a laptop's power limit would hold the higher clocks.
+
+## Sizing, updated
+
+[v1's rule](PERFORMANCE_MYSQL_V1.md#sizing), with 0.43's figures:
+
+- **CPU:** plan on about 500 `order_status`-class calls a second per worker, or 545 with the metadata cache, and 650
+  with both request logs off as well. That's 75% of this run's capacity.
+- **Waiting:** a worker serves at most threads ÷ (query time + round trips × network round-trip time) calls a second,
+  with **2 round trips to MySQL** (3 before 0.43), plus 3 to a PostgreSQL store, none with the cache.
+- **Threads:** with MySQL on the same host, 1-2 for fast lookups ([v1](PERFORMANCE_MYSQL_V1.md#threads-per-worker));
+  with MySQL across a network, 4 - from 0.43, threads overlap that waiting.
+- **Workers needed** = the larger of the two limits divided into your calls a second, plus one spare; one worker per
+  physical core.
+
+[Tune a deployment for throughput](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/63-tune-a-deployment-for-throughput.md)
+puts these together with PostgreSQL's.
+
+## Limits
+
+- **One machine.** Several hosts are still unmeasured: the scale-out is workers sharing one laptop's cores.
+- **A laptop's power limit** shapes every multi-worker number here (see the ceiling). A server would sustain more.
+- **Every query is cheap,** as in v1: the data fits MySQL's buffer pool.
+- **The network is simulated:** one-way delay, no jitter or loss.
+- **Event-log pruning at steady state** wasn't reached; that needs a soak of more than an hour.
+- **The light-load p99.9** - bursts of about 30 ms every few seconds - is measured, not explained (see
+  [The light-load tail](#the-light-load-tail)).
+- **p99.99** wasn't measured.
+
+## Run it yourself
+
+As [v1](PERFORMANCE_MYSQL_V1.md#run-it-yourself), with session `C`:
+
+```bash
+pip install -e ".[server,mysql,postgres]" py-spy
+python benchmarks/tpcc_mysql.py --out /tmp/qag-tpcc --go-tpc ./go-tpc --refs v0.42.0,origin/main \
+    --m2-queries customer,order_status,stock_level setup C teardown   # about 3.5 hours
+python benchmarks/tpcc_mysql_report.py /tmp/qag-tpcc/results.jsonl
+```
+
+Session `C` runs the comparison (`m2`, `m3`, `m8`-`m11`) and the v2 blocks: `n1` threads across the network, `n2`
+scale-out on a PostgreSQL store, `n3` hyperthreads, `n4` logging, `n5` the light-load trace, `n6` the store's round
+trips, `n9` the ceiling.
+
+The 2026-10-26 run is in
+[`benchmarks/results/tpcc-mysql-2026-10-26/`](https://github.com/AnanthaRajuC/QueryAPIGate/tree/main/benchmarks/results/tpcc-mysql-2026-10-26).
+
+
 # Performance, v3: an OLTP benchmark on PostgreSQL
 Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V3
 
@@ -6043,6 +6895,8 @@ Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERF
 
 > **For 0.43's figures, read [Performance, v4](PERFORMANCE_V4.md) (PostgreSQL) and
 > [Performance on MySQL, v2](PERFORMANCE_MYSQL_V2.md).** For the method, [Performance, v3](PERFORMANCE_V3.md).
+> For the Rust data plane in front of `/q/` ([ADR 0028](adr/0028-rust-data-plane-prototype.md)), read
+> [Performance, v5](PERFORMANCE_V5.md).
 >
 > **For PostgreSQL, read [Performance, v3](PERFORMANCE_V3.md) instead.** It's a more careful run: pinned cores,
 > 5 interleaved rounds per comparison with their ranges, open-loop load, a simulated network, a measured round-trip
@@ -7365,6 +8219,58 @@ within one database must hold *across catalogs*. Reviewed for its introduction (
 
 What remains before tier 1 is a release of unchanged shape and real-deployment use; agent writes (ADR 0008) are not
 offered on Trino, and the schema browser not showing keys or DDL is a capability gap, not a security one.
+
+### The Rust data plane (ADR 0028, a prototype)
+
+A second process, `dataplane/`, can listen on the public port in front of the Python server. It serves `/q/<name>`
+reads itself from *plans* Python gives it, and forwards everything else unchanged
+([ADR 0028](adr/0028-rust-data-plane-prototype.md)). It isn't in the Docker image, the PyPI package or the Helm chart:
+nothing changes for a deployment that doesn't build and run it. Where it does run:
+
+- **It makes no security decision of its own.** The SQL guard, the table allow-list, masking and every refusal stay
+  in Python. A plan is Python's verdict for one key, one saved query version and one connection, made only on a call
+  that succeeded, and only for a scoped API key in the `default` workspace with no rate limit, quota, concurrency,
+  time or row limit of its own. Administrators, signed-in users (JWT, SSO, MCP OAuth), other workspaces, writes,
+  streams, other formats and every dialect but PostgreSQL and MySQL are always forwarded. With a server-wide rate
+  limit, a trusted proxy hop count or OpenTelemetry tracing configured, it forwards every call.
+- **A plan is checked against the store on every call.** It names digests of the key, query and connection rows it
+  was computed from. The data plane reads those rows for each call, with Python's own SELECTs, and serves only when
+  they digest the same. A revoked, expired or re-scoped key, an edited query or a changed connection doesn't match, and
+  the call goes to Python. With `QUERYAPIGATE_METADATA_CACHE_TTL` set, both processes reuse those rows for the same
+  number of seconds, so a change takes effect within that time, as it does on Python alone. A masked plan expires
+  with the schema its trace was made from. Plans live in the data plane's memory only.
+- **One shared secret ties the two processes together.** `QUERYAPIGATE_DATAPLANE_SECRET`, at least 16 characters,
+  goes in `X-QAG-Dataplane` on every request the data plane forwards; Python compares it in constant time. The data
+  plane removes `X-QAG-Dataplane`, `X-QAG-Peer` and `X-QAG-Plan` from anything a client sends, and Python's
+  outermost WSGI layer removes the first two again before anything else reads or logs a request. Without the secret, Python
+  gives no plan, ignores `X-QAG-Peer`, and answers 404 at `/internal/dataplane/runs`.
+- **The client's address is the client's.** With the secret, `X-QAG-Peer` carries the client's own socket address,
+  and Python takes it as the real peer before `ProxyFix`. So open-access mode's loopback rule, a key's `allowed_ips`
+  and `QUERYAPIGATE_TRUST_PROXY` judge the client, not the data plane's loopback connection. A peer that isn't an IP
+  address counts as remote.
+- **Parameter values go into the SQL as literals,** as psycopg2 and mysql-connector do, so the quoting is the
+  injection boundary. PostgreSQL strings are sent as pure-ASCII `E'...'` with `\u` escapes, and MySQL strings as
+  `_utf8mb4 X'...'`, so neither depends on a session setting a query could change (`standard_conforming_strings`,
+  `sql_mode`). Each PostgreSQL message ends with `RESET ALL`. The differential test sends hostile strings for exactly
+  this.
+- **Its runs are recorded by Python.** The data plane reports each served run to `/internal/dataplane/runs`, with the
+  secret, and Python writes its history, event and metrics. Python trusts those entries: whoever holds the secret
+  can write run history. Runs the data plane can't queue, and reports Python doesn't take, are counted as dropped in
+  `/metrics`, never lost silently. On SIGTERM it sends what it still holds before it exits, for up to 10 seconds, as
+  Python's own history writer flushes at exit; a hard kill loses up to one flush interval of runs, as Python's does.
+- **Resource use before the key is checked is bounded.** The data plane reads a request's body itself only when it
+  has a Content-Length of at most 64 KiB; anything larger, or chunked, streams through to Python unread. A connection
+  whose database can't be reached is left to Python for 30 seconds, rather than each call waiting on a connect.
+- **What the process holds:** the store's credentials (`QUERYAPIGATE_DATABASE_URL`, or the SQLite file) for reading,
+  each connection's credentials as the store keeps them, and the shared secret. A compromise of the data plane is a
+  compromise of what those reach, as for the Python process. Run it as the same user, with the same secrets, and never
+  expose Python's own port once the data plane is in front of it.
+
+*Reviewed for 0.44.* The gate is the differential test (`dataplane/tests/test_differential.py`): random calls sent to
+both processes, comparing whole responses and the history rows they leave, with expired and rotated keys, hostile
+parameters, and grants changed, a key revoked and a query given a new version while calls run. Every run of it was clean, over 13,500 calls on
+PostgreSQL and MySQL. The data plane's Rust dependencies are pinned in `dataplane/Cargo.lock` and updated by
+Dependabot.
 
 ### Secrets at rest
 
@@ -18865,6 +19771,266 @@ about 75% and triples by 90%.
 - **The light-load p99.9.** At a quarter of capacity, a few calls in a thousand take about 30 ms, in bursts every few
   seconds; p99 is 3.4 ms. The history writer and, mostly, the garbage collector are ruled out; the cause isn't found
   yet ([MySQL v2](../documentation/PERFORMANCE_MYSQL_V2.md#the-light-load-tail)).
+
+
+# Guide 64: Try the Rust data plane in front of /q/
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=64-try-the-rust-data-plane
+
+# How to try the Rust data plane in front of `/q/` (a prototype)
+
+**Time:** 20 minutes, plus a Rust toolchain. **You'll end up with:** the data plane on your public port, serving your
+saved-query reads itself, Python behind it doing everything else, and a way to see which calls it served.
+
+The data plane is a second process, built from `dataplane/` in the repository. For the calls it serves, it measured 3
+to 9 times the calls a second per core of Python on its own, with p99 2 to 20 times lower
+([Performance, v5](../documentation/PERFORMANCE_V5.md)). It is a **prototype**
+([ADR 0028](../documentation/adr/0028-rust-data-plane-prototype.md)): it isn't in the Docker image, the PyPI package
+or the Helm chart yet. Try it on a test deployment, not in production.
+
+## What it serves, and what it leaves to Python
+
+**On a server with `QUERYAPIGATE_RATE_LIMIT`, `QUERYAPIGATE_TRUST_PROXY` or OpenTelemetry tracing
+(`OTEL_EXPORTER_OTLP_ENDPOINT`) set, it serves nothing:** it forwards every call, since those need state or
+headers it doesn't handle yet. Otherwise it serves a call itself when all of these hold, and forwards it to Python,
+unchanged, when any doesn't:
+
+- a `GET` or `POST` to `/q/<name>`, answered as JSON (no `?format=`, no streaming);
+- with a **scoped API key** in the `default` workspace, with no rate limit, quota, concurrency, time or row limit of its
+  own. Administrators, signed-in users, MCP and other workspaces always go to Python;
+- on a **PostgreSQL or MySQL** connection, for a read-only saved query with bound parameters (no `{name}` text
+  placeholders, no `embed` parameters, no response cache of its own);
+- and Python has answered the **same call with the same key once already**. That first call gives the data plane its
+  plan: the SQL to send, the masking to apply, and digests of the key, query and connection rows it was made from.
+  Every later call reads those rows again and is served only while they're unchanged.
+
+Everything else - the Console, the Management API, writes, MCP, `/events`, `/metrics` - passes through to Python as if
+the data plane weren't there. Python still records every run the data plane serves in run history, the event log and
+`/metrics`.
+
+## 1. Build it
+
+You need Rust; `dataplane/rust-toolchain.toml` names the version, and `rustup` installs it on first use.
+
+```bash
+git clone https://github.com/AnanthaRajuC/QueryAPIGate && cd QueryAPIGate
+cargo build --release --manifest-path dataplane/Cargo.toml
+ls dataplane/target/release/queryapigate-dataplane
+```
+
+## 2. Move Python to an inner port, with a shared secret
+
+Python moves off the public port, to one only the data plane reaches, and gets a secret the two share. Use at least
+**two** gunicorn workers: one Python process records about 17,000 runs a second, and the data plane serves more than
+that.
+
+```bash
+export QUERYAPIGATE_DATAPLANE_SECRET="$(openssl rand -hex 32)"   # at least 16 characters; the same for both
+export QUERYAPIGATE_API_KEY=...                                  # and the rest of your settings, as before
+gunicorn --bind 127.0.0.1:5001 --workers 2 --worker-class gthread --threads 8 \
+    -c python:queryapigate.gunicorn_conf 'queryapigate.app:create_app()'
+```
+
+Keep `127.0.0.1:5001` unreachable from outside the host: a request that reaches Python directly skips the data plane,
+which is harmless, but the data plane should be the only way in.
+
+## 3. Start the data plane on the public port
+
+Same environment, same user, same store (`QUERYAPIGATE_HOME` or `QUERYAPIGATE_DATABASE_URL`), so it reads the rows
+Python reads:
+
+```bash
+QUERYAPIGATE_DATAPLANE_LISTEN=0.0.0.0:5000 \
+QUERYAPIGATE_DATAPLANE_UPSTREAM=http://127.0.0.1:5001 \
+    dataplane/target/release/queryapigate-dataplane
+```
+
+It logs `queryapigate-dataplane: listening on 0.0.0.0:5000, in front of http://127.0.0.1:5001/ (8 threads)`. It
+refuses to start without a secret of at least 16 characters.
+
+| Setting | Default | What it does |
+|---|---|---|
+| `QUERYAPIGATE_DATAPLANE_SECRET` | none: required | Shared with Python. Without it, Python gives no plans and the data plane can't start |
+| `QUERYAPIGATE_DATAPLANE_LISTEN` | `127.0.0.1:5000` | Where clients connect |
+| `QUERYAPIGATE_DATAPLANE_UPSTREAM` | `http://127.0.0.1:5001` | The Python server |
+| `QUERYAPIGATE_DATAPLANE_THREADS` | the machine's cores | Tokio worker threads |
+| `QUERYAPIGATE_DATAPLANE_POOL_SIZE` | 16 | Connections per database it serves from |
+
+It also reads Python's own settings that change an answer or a log line, and applies them as Python does:
+`QUERYAPIGATE_API_KEY`, `QUERYAPIGATE_SECRET_KEY`, `QUERYAPIGATE_MASK_KEY`, `QUERYAPIGATE_QUERY_TIMEOUT`,
+`QUERYAPIGATE_MAX_PAGE_SIZE`, `QUERYAPIGATE_METADATA_CACHE_TTL`, `QUERYAPIGATE_HISTORY_FLUSH_INTERVAL`,
+`QUERYAPIGATE_LOG_REQUESTS`, `QUERYAPIGATE_ACCESS_LOG`, `QUERYAPIGATE_JSON_LOGS`, `QUERYAPIGATE_SLOW_QUERY_THRESHOLD` and
+`QUERYAPIGATE_HISTORY_ADHOC_SQL`. The metadata cache is where much of its speed comes from: with
+`QUERYAPIGATE_METADATA_CACHE_TTL=5`, a call reuses the key, query and connection rows it read in the last 5 seconds
+instead of reading the store, and a revoked key keeps working for up to 5 seconds, as it does on Python alone.
+
+## 4. See it serving
+
+Call the same saved query twice with a scoped key:
+
+```bash
+curl -s -H "X-API-Key: $KEY" "http://localhost:5000/q/customer?id=7"   # Python answers, and gives a plan
+curl -s -H "X-API-Key: $KEY" "http://localhost:5000/q/customer?id=8"   # the data plane answers
+```
+
+The answers are byte for byte what Python would send. The second shows up in the **data plane's** log, not Python's:
+an `Executing on ...` line and the request line, in Python's format. Its run appears in run history and the Console's
+live feed within one flush interval (1 s by default), and `/metrics` counts it as Python would.
+
+If a call you expect to be served keeps going to Python, check it against the list above: an administrator's key, a
+key with a rate limit, `?format=csv` or a text placeholder are the usual reasons.
+
+## 5. To stop using it
+
+Point clients at Python's port again (or move gunicorn back to the public port) and stop the data plane. Nothing is
+stored on its side: plans live in its memory only.
+
+## What to watch for
+
+- **Runs it can't queue are dropped and counted** in `queryapigate_history_runs_total{outcome="dropped"}`. More than
+  zero means Python can't keep up with recording: add a gunicorn worker.
+- **The run history and event log grow with its rate.** The event log keeps every run for
+  `QUERYAPIGATE_EVENTS_RETENTION_HOURS`; at tens of thousands of calls a second, that is more than a SQLite store
+  should hold. Shorten it, or use a PostgreSQL store, and watch the disk.
+- **Writes and other forwarded calls pay one extra hop:** about 0.35 ms at p50 on the benchmark laptop.
+
+
+# Python decides, Rust serves
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=python-decides-rust-serves
+
+# Python decides, Rust serves
+
+QueryAPIGate puts governed REST endpoints in front of SQL databases: a saved query becomes `/q/<name>`, and every
+call is checked, run, masked where it has to be, and recorded. Our last two benchmarks
+([PostgreSQL](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/documentation/PERFORMANCE_V4.md),
+[MySQL](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/documentation/PERFORMANCE_MYSQL_V2.md)) gave the same
+answer: the database isn't the limit, the gateway is. MySQL answers a per-user lookup in 0.03 ms, and the gateway adds
+1.0-1.3 ms of Python around it. One worker serves 650-1,000 calls a second. Eight workers on eight cores serve about
+3,000-3,500, because Python's workers don't scale well on shared cores.
+
+The time is spread out. Logging, gunicorn and HTTP, Flask, the store reads and the driver each take 8-23% of a call.
+No single hot function would pay off rewriting. So we tried a different thing: a small Rust process in front of Python that
+serves the hot path itself, without taking any decisions away from Python.
+
+## The rule: Python decides, Rust applies
+
+Rewriting the governance in Rust would have meant two implementations of the most security-sensitive code we have:
+the SQL guard, table allow-lists, column masking. Two parsers that must agree, kept in agreement by a fuzz that can
+only sample. We didn't want that, so the data plane doesn't decide anything.
+
+It sits on the public port. The first time a scoped key calls a saved query, the data plane forwards the call to
+Python, which answers as it always does and adds a **plan** to a successful response: the statement to send, which
+columns to mask and how, and digests of the three rows the verdict was computed from (the key, the saved query and
+the connection). The data plane keeps the plan in memory and strips it from the response.
+
+On every later call it reads those three rows again, with the same SELECTs Python uses, and serves only if they still
+digest the same. A key that's revoked, expired or re-scoped, or a query that's edited, changes a digest, and the call
+goes to Python. So does anything the prototype doesn't handle: writes, CSV, streaming, administrators, signed-in
+users, rate-limited keys. The data plane never answers 401 or 403 on its own, so it can never disagree with Python
+about one.
+
+Python still records everything. The data plane reports each run it served in batches, and Python writes it into run
+history, the event log and `/metrics`, as if it had served it.
+
+## The gate: answer exactly as Python does
+
+"Exactly" means byte for byte: the JSON body (Python's float formatting, its dates and decimals, its escaping), the
+headers, the error bodies, and the history row each call leaves. The parameters go into SQL as literals, the way
+psycopg2 and mysql-connector do it, so the quoting is the injection boundary and gets its own care.
+
+The test that decided whether any of this counted is a **differential test**. Random calls from every kind of key
+(plain, masked, table-restricted, IP-restricted, rotated, expired), with valid, invalid and hostile parameters, are
+sent to Python directly and through the data plane, and the answers are compared whole. Partway through, grants change,
+a key is revoked and a query gets a new version. Any difference fails it, a refusal included. Over 22,500 calls on
+PostgreSQL and MySQL, it found none.
+
+## What the first benchmark found
+
+The first full run went wrong twice before it measured anything useful, and both failures were worth having.
+
+**It filled the disk.** At tens of thousands of calls a second, the request logs grow by about a gigabyte a cell,
+and the event log keeps every run for 24 hours: more than a million rows each cell. Each cell now starts with both empty, and the
+benchmark refuses to start one with less than 3 GB free.
+
+**Most of the runs went unrecorded.** The data plane served 16,000-39,000 calls a second, and Python recorded about
+3,000 runs a second of them. For each run reported, it parsed the entry, encoded it again, built the event and its
+JSON, and worked out every metric label one at a time: about 27 µs a run, under one interpreter lock. The rest were
+dropped from a full queue, and nothing counted them.
+
+The fix moved work to where it's cheap. The data plane now sends each run already serialized, exactly as Python's
+`json.dumps` writes it, with its labels and timings. Python queues a whole batch at once, writes only the history rows
+it will keep, and inserts a batch's events in one statement: about 7 µs a run. Any run the data plane can't queue is
+counted in `/metrics`. With two Python workers behind it, every run is recorded up to about 24,000 calls a second on
+this laptop.
+
+The lesson for the benchmark: a cell counts only if it recorded what it served. Every data-plane cell now reports the
+share of its calls that left a run in the event log. Flat out, the data plane outran that limit, so its headline
+figures below come from cells that kept every run.
+
+## The numbers
+
+Measured on one laptop, each part on its own CPUs: the gateway on 8 hardware threads, the database on 4, the load
+generator on 8.
+Each figure is the median of 5 rounds, with the builds taking turns. The multiples compare the data plane with the
+Python build behind it, metadata cache with cache, and count Python's cores in the data plane's figure. The full report is
+[Performance, v5](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/documentation/PERFORMANCE_V5.md).
+
+**Each side at its best on the same 8 cores** (MySQL, a customer lookup, 64 callers, every run recorded):
+
+| | Python, 8 workers + cache | Data plane + cache, 2 Python workers behind it |
+|---|---|---|
+| Calls a second | 2,976 | 23,619 |
+| Gateway cores used | 7.34 | 7.34 |
+| p99 | 93 ms | 3.8 ms |
+
+That's **7.9 times the calls a second per core.**
+
+**PostgreSQL**, at a fixed 20,000 calls a second, every run recorded: the data plane + cache used 2.97 of its 8
+cores, with p99 at 1.8 ms. That's 6,734 calls a second per core, against 925 for Python + cache: **7.3 times.**
+
+**One caller at a time**, a PostgreSQL lookup: 1.01 ms at p50 through Python + cache, and 0.11 ms through the data
+plane.
+
+**Without the metadata cache,** the data plane gets 3.2-4.4× per core on lookups. Each call then reads its three store rows from
+the database, and that read costs the data plane what it costs Python. The cache, which both processes honour the same
+way, is where much of the speed comes from.
+
+## Where it doesn't help
+
+- **Writes** are forwarded to Python, so they pay a hop: 0.35 ms more at p50, and 0.8× the calls a second per core.
+  Serving them was never the data plane's job.
+- **A 100-row page on PostgreSQL** without the cache gets 2.8× per core, because PostgreSQL itself is the limit
+  there.
+- **The first call** for each query and key goes through Python, as does every call using something the prototype
+  forwards. These are steady-state figures: the same queries, called again and again.
+
+## What the differential test couldn't see
+
+Before the pull request, a code review of the whole branch found real bugs the differential test missed, because it
+varies parameters and keys, not SQL text, sockets or failures. Two examples:
+
+- **MySQL's time-limit hint went in at the wrong place.** Python gave its position in characters, and Rust read it
+  in bytes, so non-ASCII text in a comment before `SELECT` could move the hint into the comment.
+- **IP allow-lists could disagree on a dual-stack socket.** Rust judged `::ffff:203.0.113.9`, while Python judged
+  `203.0.113.9`.
+
+Both are fixed and tested, along with seven more. The differential test is necessary, not sufficient.
+
+## What happens next
+
+It's a prototype. It's built from the repository, isn't in the Docker image or the Helm chart, and is marked
+experimental. The decision it was built to reach was go: it cleared the 3× bar we set in advance on every lookup,
+with p99 lower everywhere.
+
+Two things come before it ships:
+
+- **Shipping it**: the image, the chart, and which of what it forwards to serve next.
+- **A store for runs at its rate.** Every run recorded at 20,000 calls a second is 1.7 billion rows a day, more than
+  SQLite or the PostgreSQL store should hold. That's the next design question.
+
+To try it now:
+[Try the Rust data plane](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/64-try-the-rust-data-plane.md).
+The design and the decision are in
+[ADR 0028](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/documentation/adr/0028-rust-data-plane-prototype.md).
 
 
 # One MySQL server, six services, one gateway
