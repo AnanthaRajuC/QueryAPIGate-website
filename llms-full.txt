@@ -7613,7 +7613,7 @@ operation exists. Reviewed for its graduation to tier 1 in 0.37 ([ADR
 - **Column masking is refused** on MongoDB (`mask_unresolvable`) rather than applied to fields it can't trace.
 - **The refusals are properties under fuzzing**: `fuzz/fuzz_mongo.py` (ClusterFuzzLite, from 0.35.1) checks that no
   server-side JavaScript survives into what MongoDB is sent and no parameter becomes an operator; the CI integration
-  job sends them to a real MongoDB 8.0.
+  job sends them to a real MongoDB (7.0 while the CI runners' kernel stops 8.0 starting; see ci.yml).
 
 ### Trino: a federation engine behind one grant (ADR 0026, experimental)
 
@@ -14140,7 +14140,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: export
-              image: ghcr.io/anantharajuc/queryapigate:0.43.0
+              image: ghcr.io/anantharajuc/queryapigate:0.44.0
               command: ["queryapigate", "export", "example_rentals_since", "--out", "/exports/{name}_{date}.csv"]
               envFrom:
                 - secretRef:
@@ -14265,7 +14265,7 @@ queryapigate/
 ```yaml
 services:
   queryapigate:
-    image: ghcr.io/anantharajuc/queryapigate:0.43.0   # pin a version - upgrades should be deliberate
+    image: ghcr.io/anantharajuc/queryapigate:0.44.0   # pin a version - upgrades should be deliberate
     restart: unless-stopped
     env_file: .env
     environment:
@@ -14568,11 +14568,11 @@ From the changelog's [versioning policy](../CHANGELOG.md#versioning-and-compatib
 3. **Pin the target version** - never upgrade by accident:
 
    ```bash
-   pip install "queryapigate[server,postgres]==0.43.0"      # not just "queryapigate"
+   pip install "queryapigate[server,postgres]==0.44.0"      # not just "queryapigate"
    ```
 
    ```yaml
-   image: ghcr.io/anantharajuc/queryapigate:0.43.0           # not :latest
+   image: ghcr.io/anantharajuc/queryapigate:0.44.0           # not :latest
    ```
 
 ## During: just start it
