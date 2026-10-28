@@ -223,7 +223,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .g-toc a.h3{padding-left:26px;font-size:12.5px}
 .g-toc a:hover{color:var(--ink);text-decoration:none}
 .g-toc a.on{color:var(--ink);font-weight:600;border-left-color:var(--accent-ink)}
-#guide-body h2,#guide-body h3{scroll-margin-top:92px}
+#guide-body h2,#guide-body h3,#guide-body h4{scroll-margin-top:92px}
 @media (max-width:1100px){.g-layout{grid-template-columns:230px minmax(0,1fr) !important;gap:48px !important}.g-toc{display:none !important}}
 @media (max-width:820px){.g-layout{grid-template-columns:minmax(0,1fr) !important;gap:32px !important;padding-left:20px !important;padding-right:20px !important}}
 :root[data-theme=dark] #guide-body p,:root[data-theme=dark] #guide-body ul,:root[data-theme=dark] #guide-body ol{color:#c9d5d0}
@@ -460,7 +460,8 @@ class Component extends DCLogic {
       if (/^https?:/.test(h)) a.target = '_blank';
     });
     el.querySelectorAll('img[src^="../"]').forEach(img => img.src = 'https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/' + img.getAttribute('src').slice(3));
-    el.querySelectorAll('h2, h3').forEach(h => { if (!h.id) h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); });
+    const seenIds = {};
+    el.querySelectorAll('h2, h3, h4, h5, h6').forEach(h => { if (h.id) return; const base = h.textContent.trim().toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/\s/g, '-'); const n = seenIds[base] || 0; seenIds[base] = n + 1; h.id = n ? base + '-' + n : base; });
     this.buildToc(el);
   }
   // Extras for reports: callouts, right-aligned number columns, captioned figures, ```stats and ```bars blocks.
