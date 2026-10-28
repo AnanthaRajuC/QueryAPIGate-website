@@ -45,6 +45,38 @@
   var tries = 0, t = setInterval(function () { update(); if (++tries > 20) clearInterval(t); }, 250);
 })();
 </script>
+<script>
+(function () {
+  // The hero's "databases" names the supported databases one by one, once per page load, then settles on "databases".
+  // A mark from Simple Icons by its slug, or from a full URL; drawn as a mask in the given colour.
+  var M = function (src, colour, tile) { return '<span class="hm-ic' + (tile ? ' tile' : '') + '" style="--m:url(' + (src.indexOf('/') < 0 ? 'https://cdn.simpleicons.org/' + src : src) + ');--c:' + colour + '" aria-hidden="true"></span>'; };
+  var DOLPHIN = 'https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/mysql/mysql-original.svg';   // the dolphin alone; Simple Icons' mark includes lettering
+  var WORDS = [
+    { cls: 'pg', html: M('postgresql', '#336791') + '<span class="hm-nm">PostgreSQL</span>' },
+    { cls: 'my', html: M(DOLPHIN, '#00758F') + '<span class="hm-nm">My<b>SQL</b></span>' },
+    { cls: 'ch', html: M('clickhouse', '#FFCC01', true) + '<span class="hm-nm">ClickHouse</span>' },
+    { cls: 'sq', html: M('sqlite', '#0F80CC') + '<span class="hm-nm">SQLite</span>' },
+    { cls: 'du', html: M('duckdb', '#FFF000', true) + '<span class="hm-nm">DuckDB</span>' },
+    { cls: 'mo', html: M('mongodb', '#47A248') + '<span class="hm-nm">MongoDB</span>' },
+    { cls: '', html: 'databases' }
+  ], STEP = 900;
+  ['postgresql', 'clickhouse', 'sqlite', 'duckdb', 'mongodb'].forEach(function (s) { new Image().src = 'https://cdn.simpleicons.org/' + s; }); new Image().src = DOLPHIN;   // fetch the marks before they're needed
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var tries = 0, t = setInterval(function () {
+    // wait for the headline; the page can take a while to render
+    var slot = document.querySelector('.hm-flip'); if (!slot && ++tries < 300) return;
+    clearInterval(t); if (!slot) return;
+    var w = slot.querySelector('.hm-flip-w'), i = 0;
+    function show() {
+      var word = WORDS[i];
+      w.innerHTML = word.html; w.className = 'hm-flip-w' + (word.cls ? ' hm-db-' + word.cls : '');
+      w.classList.remove('in'); void w.offsetWidth; w.classList.add('in');
+      if (++i < WORDS.length) setTimeout(show, STEP);
+    }
+    setTimeout(show, 700);
+  }, 100);
+})();
+</script>
 </head>
 <body>
 <x-dc>
@@ -52,7 +84,28 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@900&family=Montserrat:wght@800&family=Inter:wght@800&family=Poppins:wght@700&display=swap&text=PostgreSQLMyClickHouseiteDuckDBMongo">
 <style>
+/* Hero headline: "databases" flips through the databases supported, once, then settles. It ends its line, and the headline wraps
+   plainly, not balanced, so a name of a different width never moves another word. */
+.hm-flip{display:inline-block;position:relative;vertical-align:bottom;overflow:hidden;white-space:nowrap;height:1.02em;line-height:1.02;padding-bottom:0.16em;margin-bottom:-0.16em}   /* a fixed height: the brand fonts' line metrics differ */
+.hm-flip-w{display:inline-block}
+.hm-flip-w.in{animation:hm-flip-in .5s cubic-bezier(.3,.7,.2,1) both}
+/* Each database in its own mark, colour and a close freely available font (the originals are custom or commercial). */
+.hm-flip-w .hm-ic{display:inline-block;position:relative;width:0.82em;height:0.82em;margin-right:0.18em;vertical-align:-0.06em}
+.hm-flip-w .hm-ic::after{content:'';position:absolute;inset:0;background:var(--c);-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}
+.hm-flip-w .hm-ic.tile{background:#111;border-radius:0.16em}.hm-flip-w .hm-ic.tile::after{inset:0.13em}
+.hm-flip-w .hm-nm{letter-spacing:-0.01em}
+.hm-db-pg{font-family:'Lato',sans-serif;font-weight:900;color:#336791}
+.hm-db-my{font-family:'Montserrat',sans-serif;font-weight:800;color:#00758F}.hm-db-my b{color:#F29111;font-weight:inherit}
+.hm-db-ch{font-family:'Inter',sans-serif;font-weight:800;color:var(--ink)}
+.hm-db-sq{font-family:'Inter',sans-serif;font-weight:800;color:#003B57}
+.hm-db-du{font-family:'Inter',sans-serif;font-weight:800;color:var(--ink)}
+.hm-db-mo{font-family:'Poppins',sans-serif;font-weight:700;color:#00684A}
+:root[data-theme=dark] .hm-db-pg{color:#6E9BC9}:root[data-theme=dark] .hm-db-pg .hm-ic{--c:#6E9BC9 !important}:root[data-theme=dark] .hm-db-my .hm-ic{--c:#3FA9C6 !important}:root[data-theme=dark] .hm-db-my{color:#3FA9C6}
+:root[data-theme=dark] .hm-db-sq{color:#7FB2D9}:root[data-theme=dark] .hm-db-mo{color:#00ED64}
+@keyframes hm-flip-in{from{transform:translateY(0.12em);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.hm-flip-w.in{animation:none}}
 /* Announcement above the hero pills: the latest important post, on a line of its own. */
 .hm-news{flex-basis:100%;max-width:1000px;box-sizing:border-box;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:16px;align-items:center;padding:10px 10px 10px 12px;margin-bottom:4px;border-radius:14px;background:var(--surface);border:1px solid color-mix(in oklch,oklch(0.66 0.17 40) 45%,var(--line));box-shadow:0 18px 40px -30px oklch(0.66 0.17 40 / 0.7);color:var(--ink);position:relative;overflow:hidden;transition:border-color .2s,transform .2s,box-shadow .2s}
 .hm-news::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,oklch(0.66 0.17 40 / 0.10),transparent 45%);pointer-events:none}
@@ -427,7 +480,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 
   <header id="top" class="rs-2col" style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;scroll-margin-top:72px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:40px 56px;align-items:center">
     <div style="display:grid;gap:22px;min-width:0">
-      <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(38px,5vw,64px);line-height:1.02;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">One governed gate between your databases and <span style="color:var(--accent-ink)">everything that asks them for data</span>.</h1>
+      <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(38px,5vw,64px);line-height:1.02;font-weight:800;letter-spacing:-0.02em">One governed gate between your <span class="hm-flip"><span class="hm-flip-w">databases</span></span><br><span style="color:var(--accent-ink)">and everything that asks them for data</span>.</h1>
       <p style="margin:0;font-size:18px;color:var(--ink-2);max-width:58ch;text-wrap:pretty">Write the SQL once. QueryAPIGate publishes it as a REST endpoint, an MCP tool for AI agents, a live event stream and a scheduled export. Each call checks who is asking and what they may see, and leaves a record.</p>
     </div>
     <div style="display:grid;gap:18px;min-width:0;align-content:center">
