@@ -5,8 +5,16 @@
   <link href="https://anantharajuc.github.io/QueryAPIGate-website/Blog.dc.html"/>
   <link rel="self" href="https://anantharajuc.github.io/QueryAPIGate-website/feed.xml"/>
   <id>https://anantharajuc.github.io/QueryAPIGate-website/Blog.dc.html</id>
-  <updated>2026-10-28T12:00:00Z</updated>
+  <updated>2026-10-29T12:00:00Z</updated>
   <author><name>QueryAPIGate</name></author>
+  <entry>
+    <title>Every run, recorded</title>
+    <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=every-run-recorded"/>
+    <id>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=every-run-recorded</id>
+    <updated>2026-10-29T12:00:00Z</updated>
+    <category term="Benchmark"/>
+    <summary>The Rust data plane served calls faster than QueryAPIGate could record them: at the peak, half the runs never reached the audit trail. An optional ClickHouse run store records every one, in about 13 bytes, with reads in milliseconds at 250 million runs. Experimental, measured, reviewed.</summary>
+  </entry>
   <entry>
     <title>Python decides, Rust serves</title>
     <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=python-decides-rust-serves"/>

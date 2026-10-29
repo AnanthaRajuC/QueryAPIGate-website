@@ -456,6 +456,43 @@ parameters, and grants changed, a key revoked and a query given a new version wh
 PostgreSQL and MySQL. The data plane's Rust dependencies are pinned in `dataplane/Cargo.lock` and updated by
 Dependabot.
 
+### The ClickHouse run store (ADR 0029, a prototype)
+
+With `QUERYAPIGATE_RUN_STORE_URL` set, run history, the event log and usage rollups are kept in ClickHouse rather than
+the metadata store ([ADR 0029](adr/0029-clickhouse-run-store.md)). Keys, queries, connections and the audit log stay
+in the metadata store, so the run store never decides who may do what. Where it is used:
+
+- **What its credentials reach.** The run store holds every run's history entry - who called, which query, when, how
+  many rows, the error message, an ad-hoc statement as `QUERYAPIGATE_HISTORY_ADHOC_SQL` keeps it - but never a result
+  row. A stolen credential reads those entries, and one that can insert can forge runs and events: history and live
+  events would show calls that didn't happen. It can't change a key, a query or a grant. Give the data plane a user that
+  can only insert into `events` (guide 65); its rows reach history and the rollups through views that run as the
+  user who made them. What such a writer puts in a row stays inside its own event: a frame's data is always one line
+  (a line break can't start a frame of the writer's own), and ids above 2^53 are refused by the table.
+- **In transit:** `https://` is required except to a loopback host, since the URL carries a password and every run.
+  It is a secret setting: it can be read from a file (`QUERYAPIGATE_RUN_STORE_URL_FILE`), is masked in Settings, and
+  only its host, port and database are written to the metadata store or the log.
+- **Queries are parameterised.** Every value a read compares against goes to ClickHouse as a typed query parameter
+  (`{key:String}`), never in the SQL text; table names are the module's own constants.
+- **Where runs are, recorded once.** The metadata store records which ClickHouse server and database hold its runs. An
+  instance configured otherwise refuses to start, so a misconfigured instance can't send a share of the runs elsewhere
+  or leave them out of an erasure. A data plane learns the location from its lease, and writes nothing while its own
+  differs.
+- **Erasure (ADR 0016)** reaches `events`, `history`, `history_counts` and both rollup tables, which hold key names. Rows are hidden at
+  once by a lightweight delete and gone from disk once ClickHouse has rewritten the parts that held them
+  (`APPLY DELETED MASK`). It deletes again once runs still in flight - a data plane's batch, another worker's queue -
+  would have landed. Ad-hoc statements, which may hold values, are kept as text no longer than the event log: the
+  hourly rollup, kept 400 days, holds their hash. A backup of the metadata store no longer holds runs; ClickHouse's own backups do, and an
+  erasure doesn't reach those.
+- **Event ids** come from blocks of each millisecond that writers lease in the metadata store, so two writers never
+  mint the same one; the data plane leases its block from Python, behind its secret, keeping its own store access
+  read-only. Delivery waits a settle window so a resume misses nothing; an event acknowledged later than that is counted
+  (`queryapigate_events_late_total`).
+
+*Reviewed* on 2026-10-28, part of what it needs to graduate (ADR 0017): six findings, fixed in schema version 2 of
+its tables ([ADR 0029 section 7](adr/0029-clickhouse-run-store.md#reviewed-2026-10-28-and-what-changed)). It stays
+experimental until a release unchanged (the 250-million-run measurement is done).
+
 ### Secrets at rest
 
 Connection passwords in the store can be a literal string, an

@@ -574,6 +574,15 @@ export const guides = [
   "time": "20 min",
   "timeMin": 20,
   "outcome": "The data plane on your public port, serving your saved-query reads itself, Python behind it doing everything else, and a way to see which calls it served."
+ },
+ {
+  "num": "65",
+  "slug": "65-keep-runs-in-clickhouse",
+  "title": "Keep run history and the event log in ClickHouse",
+  "cat": "Operate",
+  "time": "20 min",
+  "timeMin": 20,
+  "outcome": "Every run recorded in ClickHouse instead of the metadata store - history, the event log and usage rollups - written in batches by the Python server and by the Rust data plane, if you run one."
  }
 ];
 
@@ -751,6 +760,14 @@ export const docs = [
    topic and version are optional labels. summary is the card text. featured: true puts a post in the large card at the top
    (otherwise the newest is). href sends the card somewhere other than blog/<slug>.md, such as the changelog. */
 export const posts = [
+ {
+  "slug": "every-run-recorded",
+  "title": "Every run, recorded",
+  "date": "2026-10-29",
+  "cat": "Benchmark",
+  "topic": "Operations",
+  "summary": "The Rust data plane served calls faster than QueryAPIGate could record them: at the peak, half the runs never reached the audit trail. An optional ClickHouse run store records every one, in about 13 bytes, with reads in milliseconds at 250 million runs. Experimental, measured, reviewed."
+ },
  {
   "slug": "python-decides-rust-serves",
   "title": "Python decides, Rust serves",

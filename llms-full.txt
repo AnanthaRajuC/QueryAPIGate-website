@@ -546,6 +546,9 @@ The schema is recreated under its original name, so the URL's `search_path` (if 
   but a lost secret can't be recovered from a backup: issue a new key instead.
 - **The databases QueryAPIGate connects to** - back those up in their own right. The Redis response cache, if
   used, is disposable: it refills.
+- **Run history and the event log, with a run store** (`QUERYAPIGATE_RUN_STORE_URL`, ADR 0029): they're in
+  ClickHouse then, not the metadata store. Back it up with ClickHouse's own tools if history must survive; the store
+  restored without it starts with none.
 
 A restore from an older release's store is upgraded on first start, as any upgrade is; one from a newer release
 is refused rather than run on. `tests/test_backup_restore.py` does all of this on every CI run: it fills a store,
@@ -768,6 +771,21 @@ second per core, with every run still recorded by Python ([Performance, v5](PERF
 `QUERYAPIGATE_DATAPLANE_SECRET` (at least 16 characters) set for both processes, and at least two gunicorn workers
 behind it. To build it, run it and see which calls it serves:
 [Try the Rust data plane](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/64-try-the-rust-data-plane.md).
+
+## A ClickHouse run store (prototype)
+
+> **Experimental** - outside the compatibility promise ([what that means](../CHANGELOG.md#versioning-and-compatibility)):
+> a prototype ([ADR 0029](adr/0029-clickhouse-run-store.md), measured and decided go). Its tables, its event ids and
+> how it's switched on may change before it graduates.
+
+With `QUERYAPIGATE_RUN_STORE_URL=https://user:password@host:8443/database` set on every instance, run history, the
+event log and per-minute and per-hour usage rollups are kept in ClickHouse (24.8 or later) instead of the metadata
+store - for a data plane's rates, where every run recorded is billions of rows a day. Keys, queries and the audit log
+stay where they are. History is kept by time (`QUERYAPIGATE_HISTORY_RETENTION_DAYS`, 30 days unless set), and live
+events arrive about a second later than from the metadata store. Every instance must name the same server and
+database: the store records which one holds its runs, and an instance that disagrees refuses to start.
+The users, the data plane's own insert-only one, copying history across and switching back:
+[Keep run history and the event log in ClickHouse](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/65-keep-runs-in-clickhouse.md).
 
 ## Upgrading
 
@@ -7705,6 +7723,43 @@ parameters, and grants changed, a key revoked and a query given a new version wh
 PostgreSQL and MySQL. The data plane's Rust dependencies are pinned in `dataplane/Cargo.lock` and updated by
 Dependabot.
 
+### The ClickHouse run store (ADR 0029, a prototype)
+
+With `QUERYAPIGATE_RUN_STORE_URL` set, run history, the event log and usage rollups are kept in ClickHouse rather than
+the metadata store ([ADR 0029](adr/0029-clickhouse-run-store.md)). Keys, queries, connections and the audit log stay
+in the metadata store, so the run store never decides who may do what. Where it is used:
+
+- **What its credentials reach.** The run store holds every run's history entry - who called, which query, when, how
+  many rows, the error message, an ad-hoc statement as `QUERYAPIGATE_HISTORY_ADHOC_SQL` keeps it - but never a result
+  row. A stolen credential reads those entries, and one that can insert can forge runs and events: history and live
+  events would show calls that didn't happen. It can't change a key, a query or a grant. Give the data plane a user that
+  can only insert into `events` (guide 65); its rows reach history and the rollups through views that run as the
+  user who made them. What such a writer puts in a row stays inside its own event: a frame's data is always one line
+  (a line break can't start a frame of the writer's own), and ids above 2^53 are refused by the table.
+- **In transit:** `https://` is required except to a loopback host, since the URL carries a password and every run.
+  It is a secret setting: it can be read from a file (`QUERYAPIGATE_RUN_STORE_URL_FILE`), is masked in Settings, and
+  only its host, port and database are written to the metadata store or the log.
+- **Queries are parameterised.** Every value a read compares against goes to ClickHouse as a typed query parameter
+  (`{key:String}`), never in the SQL text; table names are the module's own constants.
+- **Where runs are, recorded once.** The metadata store records which ClickHouse server and database hold its runs. An
+  instance configured otherwise refuses to start, so a misconfigured instance can't send a share of the runs elsewhere
+  or leave them out of an erasure. A data plane learns the location from its lease, and writes nothing while its own
+  differs.
+- **Erasure (ADR 0016)** reaches `events`, `history`, `history_counts` and both rollup tables, which hold key names. Rows are hidden at
+  once by a lightweight delete and gone from disk once ClickHouse has rewritten the parts that held them
+  (`APPLY DELETED MASK`). It deletes again once runs still in flight - a data plane's batch, another worker's queue -
+  would have landed. Ad-hoc statements, which may hold values, are kept as text no longer than the event log: the
+  hourly rollup, kept 400 days, holds their hash. A backup of the metadata store no longer holds runs; ClickHouse's own backups do, and an
+  erasure doesn't reach those.
+- **Event ids** come from blocks of each millisecond that writers lease in the metadata store, so two writers never
+  mint the same one; the data plane leases its block from Python, behind its secret, keeping its own store access
+  read-only. Delivery waits a settle window so a resume misses nothing; an event acknowledged later than that is counted
+  (`queryapigate_events_late_total`).
+
+*Reviewed* on 2026-10-28, part of what it needs to graduate (ADR 0017): six findings, fixed in schema version 2 of
+its tables ([ADR 0029 section 7](adr/0029-clickhouse-run-store.md#reviewed-2026-10-28-and-what-changed)). It stays
+experimental until a release unchanged (the 250-million-run measurement is done).
+
 ### Secrets at rest
 
 Connection passwords in the store can be a literal string, an
@@ -8178,7 +8233,24 @@ role's capabilities allow ([Administrators and admin roles](API.md#administrator
 | `instances` | Each running process: host name, process id, version | - | 1 day after it stops | `observe` |
 | `config_managed`, `config_applied` | What a configuration file manages, and each file applied, by its hash (ADR 0014) | - | Until deleted | `observe` |
 | `server_secrets` | Keys the server makes for itself - masking's `hash` key, unless `QUERYAPIGATE_MASK_KEY` is set | - | For the store's life | - |
+| `run_store`, `run_writer_leases` | Where runs are kept, if not here ([ADR 0029](adr/0029-clickhouse-run-store.md)): the ClickHouse server and database, never its credentials; which process holds which block of event ids, by host name and process id | - | `run_store` until changed; a lease 60 seconds after its holder stops | - |
 | `schema_version` | The store's schema version | - | - | - |
+
+## The run store (ClickHouse, optional)
+
+With `QUERYAPIGATE_RUN_STORE_URL` set ([ADR 0029](adr/0029-clickhouse-run-store.md)), `execution_history` and `events`
+above stay empty: runs and events are kept in ClickHouse instead, with the same fields.
+
+| Table | Holds | Personal data | Kept for | Read by |
+|---|---|---|---|---|
+| `events` | The event log: every run, whatever the sample rate, and its history entry | Caller | `QUERYAPIGATE_EVENTS_RETENTION_HOURS` (24 by default) | As the event log above |
+| `history` | The runs history keeps (`QUERYAPIGATE_HISTORY_SAMPLE_RATE`) | Caller | `QUERYAPIGATE_HISTORY_RETENTION_DAYS` (30 by default here) | `observe` |
+| `history_counts` | Runs history holds and the last of them, per day, query, version and caller | Caller | As `history` | `observe` |
+| `run_minutes` | Runs, rows and query times per minute, by caller, query, version, connection, transport, status, error code and ad-hoc statement | Caller; a statement may hold values | As `events` | `observe` |
+| `run_hours` | The same per hour, with each ad-hoc statement as its SHA-256, not its text | Caller | 400 days | - (ClickHouse only) |
+
+`forget` erases a caller from all five: hidden at once, and gone from disk once ClickHouse has rewritten the parts that
+held them. It deletes a second time a few seconds later, for runs that were still on their way.
 
 ## The response cache and Redis
 
@@ -14140,7 +14212,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: export
-              image: ghcr.io/anantharajuc/queryapigate:0.44.0
+              image: ghcr.io/anantharajuc/queryapigate:0.45.0
               command: ["queryapigate", "export", "example_rentals_since", "--out", "/exports/{name}_{date}.csv"]
               envFrom:
                 - secretRef:
@@ -14265,7 +14337,7 @@ queryapigate/
 ```yaml
 services:
   queryapigate:
-    image: ghcr.io/anantharajuc/queryapigate:0.44.0   # pin a version - upgrades should be deliberate
+    image: ghcr.io/anantharajuc/queryapigate:0.45.0   # pin a version - upgrades should be deliberate
     restart: unless-stopped
     env_file: .env
     environment:
@@ -14568,11 +14640,11 @@ From the changelog's [versioning policy](../CHANGELOG.md#versioning-and-compatib
 3. **Pin the target version** - never upgrade by accident:
 
    ```bash
-   pip install "queryapigate[server,postgres]==0.44.0"      # not just "queryapigate"
+   pip install "queryapigate[server,postgres]==0.45.0"      # not just "queryapigate"
    ```
 
    ```yaml
-   image: ghcr.io/anantharajuc/queryapigate:0.44.0           # not :latest
+   image: ghcr.io/anantharajuc/queryapigate:0.45.0           # not :latest
    ```
 
 ## During: just start it
@@ -19323,8 +19395,255 @@ stored on its side: plans live in its memory only.
   zero means Python can't keep up with recording: add a gunicorn worker.
 - **The run history and event log grow with its rate.** The event log keeps every run for
   `QUERYAPIGATE_EVENTS_RETENTION_HOURS`; at tens of thousands of calls a second, that is more than a SQLite store
-  should hold. Shorten it, or use a PostgreSQL store, and watch the disk.
+  should hold. Shorten it, or keep runs in ClickHouse instead
+  ([guide 65](65-keep-runs-in-clickhouse.md)) - the data plane then writes its runs there itself.
 - **Writes and other forwarded calls pay one extra hop:** about 0.35 ms at p50 on the benchmark laptop.
+
+
+# Guide 65: Keep run history and the event log in ClickHouse
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=65-keep-runs-in-clickhouse
+
+# How to keep run history and the event log in ClickHouse (a prototype)
+
+**Time:** 20 minutes, with a ClickHouse server. **You'll end up with:** every run recorded in ClickHouse instead of the
+metadata store - history, the event log and usage rollups - written in batches by the Python server and by the Rust
+data plane, if you run one.
+
+The metadata store (SQLite or PostgreSQL) records two rows per run: one in history and one in the event log. At a few
+hundred calls a second that's fine. At the data plane's rates, 20,000 or more a second, it's 1.7 billion events a day.
+A ClickHouse run store keeps them in about 13 bytes a run, expires them by partition, and counts usage from all of them.
+It is a **prototype** ([ADR 0029](../documentation/adr/0029-clickhouse-run-store.md), measured and decided go): its
+tables, its event ids and how it's switched on may change before it graduates. Try it on a test deployment first.
+
+Keys, queries, connections and the audit log stay in the metadata store. `/metrics` doesn't change.
+
+## 1. A database, and two users
+
+ClickHouse 24.8 or later. On it, a database and a user for QueryAPIGate, which creates its tables at startup:
+
+```sql
+CREATE DATABASE queryapigate;
+CREATE USER queryapigate IDENTIFIED BY '...';
+GRANT SELECT, INSERT, CREATE TABLE, CREATE VIEW, ALTER TABLE, ALTER VIEW, ALTER DELETE
+    ON queryapigate.* TO queryapigate;
+```
+
+With a data plane, give it a user of its own that can only insert runs. It can't read anything, and the views
+QueryAPIGate made still fill history and the rollups from what it inserts:
+
+```sql
+CREATE USER queryapigate_dataplane IDENTIFIED BY '...';
+GRANT INSERT ON queryapigate.events TO queryapigate_dataplane;
+```
+
+## 2. Point every instance at it
+
+Set the same URL on **every** instance - the server, `queryapigate events`, MCP, exports and the CLI - and restart them
+all together. Use `https://` (port 8443 on ClickHouse Cloud); plain `http://` is refused except to this machine.
+
+```bash
+export QUERYAPIGATE_RUN_STORE_URL=https://queryapigate:...@clickhouse.internal:8443/queryapigate
+# or QUERYAPIGATE_RUN_STORE_URL_FILE=/run/secrets/run-store-url
+```
+
+The first instance to start logs:
+
+```
+Run store: runs, events and usage are kept in ClickHouse at clickhouse.internal:8443/queryapigate from now on (1234 events copied)
+```
+
+It copied the event log's last 24 hours with their ids, so a client that was connected to `/events` resumes as if
+nothing had happened. The metadata store now records where runs are kept: an instance started without the URL, or with
+a different one, refuses to start and says so, rather than recording runs somewhere else.
+
+**History from before the switch** is still in the metadata store. To bring it across, once:
+
+```bash
+queryapigate runs copy-to-clickhouse
+```
+
+## 3. The data plane
+
+Give it the same URL, or its own insert-only one - for the same server and database, named the same way:
+
+```bash
+QUERYAPIGATE_DATAPLANE_RUN_STORE_URL=https://queryapigate_dataplane:...@clickhouse.internal:8443/queryapigate \
+QUERYAPIGATE_DATAPLANE_LISTEN=0.0.0.0:5000 QUERYAPIGATE_DATAPLANE_UPSTREAM=http://127.0.0.1:5001 \
+    dataplane/target/release/queryapigate-dataplane
+```
+
+It logs `writing its runs to the run store (ADR 0029)`. It then writes the runs it serves straight to ClickHouse, with
+event ids from a block Python leases it, and Python only counts them for `/metrics`. The lease names where Python
+keeps runs: a data plane whose URL names another server or database writes none of them, and logs
+`Python keeps runs in ClickHouse at ..., not ...` until it's corrected. One gunicorn worker behind it is
+enough again: Python no longer queues every run.
+
+## 4. See it working
+
+Run a few queries, then ask ClickHouse:
+
+```sql
+SELECT count(), max(occurred_at) FROM queryapigate.events;
+SELECT key_name, sum(runs) FROM queryapigate.run_hours GROUP BY key_name;
+```
+
+The Console's history, `GET /api/v1/history` and `/events` read from it as they read from the metadata store.
+
+## What changes
+
+- **History is kept by time,** not by a count per version: `QUERYAPIGATE_HISTORY_RETENTION_DAYS`, 30 days unless set.
+  `QUERYAPIGATE_HISTORY_LIMIT` still sets how many runs per version the Console shows.
+- **Live events arrive about a second later.** An event is delivered once it's a second old, so a client resuming from
+  any id it was given misses nothing. `queryapigate_events_late_total` in `/metrics` counts the rare insert
+  acknowledged later than that; a client resuming from a newer id could miss one. Above zero, ClickHouse is too slow
+  for its inserts.
+- **Usage reports are exact** for any window within the event log's retention, 24 hours by default: every run counts,
+  whatever `QUERYAPIGATE_HISTORY_SAMPLE_RATE` keeps in history, and nothing is truncated. With these rates, the sample
+  rate can be set low: history becomes examples to look at, not the record.
+- **Backups:** a backup of the metadata store doesn't hold the runs any more. Back up ClickHouse with its own tools,
+  if you need history kept.
+- **`queryapigate history forget`** erases a person from all five tables in ClickHouse too.
+- **Ad-hoc statements** are kept as text, by minute, only as long as the event log; the hourly rollup keeps a year
+  of their SHA-256 hashes instead.
+
+## To stop using it
+
+```bash
+queryapigate runs leave-clickhouse   # with QUERYAPIGATE_RUN_STORE_URL still set
+```
+
+Then unset `QUERYAPIGATE_RUN_STORE_URL` on every instance and restart them. The metadata store's event ids continue
+above ClickHouse's, so clients still resume. The runs already in ClickHouse stay there; nothing is copied back.
+
+
+# Every run, recorded
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=every-run-recorded
+
+# Every run, recorded
+
+QueryAPIGate is a governed gateway: a saved query becomes `/q/<name>`, and every call is checked, run, masked where it
+has to be, and **recorded**. Who called, which query, when, how many rows, what was refused. That record is run
+history, the event log behind `/events`, and the usage reports. For a gateway that sits in front of production data,
+it's not a nice-to-have. It's half the point.
+
+In 0.44 we put a [Rust data plane](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/documentation/adr/0028-rust-data-plane-prototype.md)
+in front of the Python server: Python decides, Rust serves. It served about 8 times the calls a second per core. And
+it found the next limit straight away. The data plane reported every run back to Python, and Python wrote each one
+twice to the metadata store, SQLite or PostgreSQL: one row in history, one in the event log. At the 64-caller peak,
+the data plane served 34,240 calls a second and **52% of the runs were recorded**. The rest were counted as dropped.
+
+The gateway kept up. Its audit trail didn't.
+
+## Why ClickHouse
+
+At 20,000 calls a second, every run recorded is 1.7 billion events a day. That's more than SQLite or the PostgreSQL
+store should hold, and the metadata store has other work to do: keys, queries, connections, the audit log. What runs
+need is different. They're written once and never changed, read mostly by time, counted in aggregates, and dropped
+when they age out.
+
+That's what ClickHouse is built for. It compresses columns of similar values very well, takes large batched inserts
+cheaply, and can drop a whole partition when its time is up instead of deleting rows. So 0.45 adds an optional **run
+store**: set `QUERYAPIGATE_RUN_STORE_URL`, and run history, the event log and usage rollups are kept in ClickHouse.
+Everything that decides who may do what stays in the metadata store.
+
+## How it's built
+
+**One insert per batch.** A batch of runs is one insert into a table called `events`: up to 100,000 runs from the data
+plane. ClickHouse fills history, per-query run counts and per-minute and per-hour usage rollups from that one insert,
+through materialized views. Each table's retention is a TTL on its partitions.
+
+**The data plane writes its own runs.** It gets its own ClickHouse user that can only insert into `events`. It can't
+read anything. The views that fill the other tables run as the user who created them. Python is told only how many
+runs there were, for `/metrics`.
+
+**Event ids that clients can trust.** `/events` clients resume with `Last-Event-ID`, so ids must keep increasing and
+must never be handed out twice. Two kinds of writer now mint them, Python and the data plane, with no shared counter.
+So an id is the millisecond since 2026-01-01, times 4,096, plus a number from a block of each millisecond that the
+writer leases in the metadata store. Two writers never hold the same block. Ids stay below 2^53, so a JavaScript
+client holds them exactly.
+
+**Delivered once settled.** An insert that's acknowledged later than another can still carry the lower id. So the
+events server delivers an event only once it's a second old, and a client resuming from any id it was given misses
+nothing. A rare insert later than that is counted in `/metrics`.
+
+## What the first measurement found
+
+We measured it the way we measured the data plane: on a fixed laptop, against the store it replaces, with the go or
+no-go criteria written down first ([ADR 0029](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/documentation/adr/0029-clickhouse-run-store.md),
+section 9). It didn't pass at first.
+
+- **The data plane's batches were too small.** At 500 runs an insert, ClickHouse spent 1.6 cores merging parts. At up
+  to 100,000, it spent 0.20.
+- **The usage report took 4,991 ms.** It parsed every run's JSON entry to find its error code, masking and statement.
+  Those became columns written with the run, then whole minutes came from the per-minute rollup: 16 ms, and still
+  exact.
+- **The Console's version list took 723 ms.** It scanned a query's whole history for its run counts. A small table,
+  kept up by a view, now holds them: 6 ms.
+- **A filtered replay of the log took 41 seconds.** It read the large `entry` column for nearly every block to find 1
+  match in 2,400. It now finds a page's ids first, then reads only those rows.
+
+Each one came from ClickHouse's own query log, not from guessing.
+
+## The numbers
+
+| | 0.44's store | The run store |
+|---|---|---|
+| Runs recorded, 20,000 calls a second for 30 minutes | - | 35,999,897 of 35,999,897 |
+| Runs recorded, 64-caller peak | 52-54% | 100% |
+| Gateway cores at 20,000 calls a second | 3.40 | 3.02 (-11%) |
+| Of which Python | 0.49 | 0.13 |
+| A run, compressed | - | about 13 bytes |
+
+Clients that hung up every 3 to 10 seconds and resumed at random got 35 million events over 7,515 reconnects: none
+missing, none repeated, none out of order. That was the result we cared about most.
+
+## A security review, then 250 million runs
+
+A new store that holds every run's record needed a review before it could graduate. It found six things. The three
+that mattered:
+
+- **A forged row could split an event stream.** The events server copied a stored event into its frame as it was. A
+  line break in a row, written by anyone with an insert credential, could start frames of the writer's own, with an
+  id that moved every client's resume point. Frames are one line now, and the table refuses ids above 2^53.
+- **A data plane pointed at another ClickHouse would have written its runs there,** out of history and out of reach
+  of an erasure. Python's instances already refused to start in that case; the data plane didn't check. Now Python
+  tells it where runs belong, and it writes nothing until they agree.
+- **Ad-hoc SQL text lived longer than the retention settings said,** in the hourly rollups, for 400 days. They keep a
+  hash of each statement now.
+
+Then the measurement the laptop's disk hadn't allowed the first time: 250 million runs, from a 30-minute soak's real
+runs copied through the same views.
+
+| At 250 million runs | Result | The bar |
+|---|---|---|
+| A run in the event log, compressed | 13.8 bytes | 40 |
+| The newest page of history, p95 | 12.5 ms | 100 ms |
+| One key's newest page, p95 | 73.6 ms | 100 ms |
+| A 24-hour usage report, p95 | 66.7 ms | 500 ms |
+| One key's replay of the whole log | 11.8 s, then 6.2 s | 10 s |
+
+134 GB of raw entries became 6.9 GB. The replay missed its bar. Each page of 1,000 ids was its own read, and at this
+size a read costs 0.1-0.2 seconds of planning whatever it finds, where all 35,000 of the key's ids come back in one
+read in half a second. A replay now finds up to 100,000 ids at a time. On the same data, 12.0 seconds became 6.2.
+
+## Where it doesn't help, and what's left
+
+- **It's experimental.** It shipped in 0.45.0. The review's fixes and the faster replay are in the next release, and
+  it graduates once a release goes out unchanged.
+- **The data plane writing its own runs needs the data plane,** which is still built from the repository, not
+  shipped in the image.
+- **One laptop, one ClickHouse server.** On a replicated cluster, a read from a replica behind the one that took the
+  insert could miss the settle window. That's an open question.
+- **The events server is the next ceiling.** One `queryapigate events` process delivers about 6,500 to 10,000 events
+  a second per stream. Run several behind a load balancer, each reads the store on its own.
+- **Live events arrive about a second later,** by design, and history is kept by time, 30 days unless you set it.
+
+If you run the data plane, or record enough runs that the metadata store struggles, [guide
+65](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/65-keep-runs-in-clickhouse.md) switches it on. Try
+it on a test deployment first. All the figures are in the
+[first measurement](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/benchmarks/results/runstore-2026-10-28/README.md)
+and the [250-million-run one](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/benchmarks/results/runstore-250m-2026-10-29/README.md),
+with the harness to run them yourself.
 
 
 # Python decides, Rust serves

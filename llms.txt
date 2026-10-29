@@ -99,6 +99,8 @@ Everything below in one file: https://anantharajuc.github.io/QueryAPIGate-websit
 - [Guide 62: See what's being used, from the Console](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=62-see-whats-being-used-from-the-console): how-to, Operate
 - [Guide 63: Tune a deployment for throughput](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=63-tune-a-deployment-for-throughput): how-to, Operate
 - [Guide 64: Try the Rust data plane in front of /q/](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=64-try-the-rust-data-plane): how-to, Operate
+- [Guide 65: Keep run history and the event log in ClickHouse](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=65-keep-runs-in-clickhouse): how-to, Operate
+- [Every run, recorded](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=every-run-recorded): blog, Benchmark, 2026-10-29
 - [Python decides, Rust serves](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=python-decides-rust-serves): blog, Benchmark, 2026-10-28
 - [One MySQL server, six services, one gateway](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-mysql-six-services): blog, Benchmark, 2026-10-25
 - [What a governed call costs](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=what-a-governed-call-costs): blog, Benchmark, 2026-10-24
