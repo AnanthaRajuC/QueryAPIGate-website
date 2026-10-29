@@ -89,6 +89,15 @@ def page_entries():
         text = html.unescape(re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', body))).strip()
         out.append({'k': 'page', 't': title, 'h': '', 'u': name, 'c': 'Page',
                     'x': ((desc.group(1) + ' ') if desc else '') + ' · '.join(h for h in heads if h)[:400] + ' ' + text[:900]})
+        # One entry per section with an id, so what a page says further down can be found too: the section's heading, the
+        # headings and bold lead-ins inside it, then the start of its text.
+        for sid, sec in re.findall(r'<section\b[^>]*\bid="([^"]+)"[^>]*>(.*?)</section>', body, flags=re.S):
+            shs = [inline_text(h) for h in re.findall(r'<h[2-4][^>]*>(.*?)</h[2-4]>', sec, flags=re.S)]
+            if not shs: continue
+            leads = [inline_text(b) for b in re.findall(r'<b\b[^>]*>(.*?)</b>', sec, flags=re.S)]
+            keys = ' · '.join(dict.fromkeys(k for k in shs[1:] + leads if k and len(k) < 80))
+            stext = html.unescape(re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', sec))).strip()
+            out.append({'k': 'page', 't': title, 'h': shs[0], 'u': name + '#' + sid, 'c': 'Page', 'x': (keys[:400] + ' ' + stext[:300]).strip()})
     for f in sorted(os.listdir(os.path.join(ROOT, 'use-cases'))):
         if not f.endswith('.dc.html'): continue
         src = open(os.path.join(ROOT, 'use-cases', f), encoding='utf-8').read()

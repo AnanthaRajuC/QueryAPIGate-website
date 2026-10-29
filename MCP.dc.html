@@ -744,10 +744,11 @@ asyncio.run(main())</pre>
           </ul><a class="more" href="Guide.dc.html?g=26-mcp-structured-results">Structured results →</a></div>
       </div>
     </div>
-    <div class="fs-facts">
+    <div class="fs-facts fs-facts-2">
       <div class="fs-card"><h3><code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">list_tables</code> carries the meaning</h3><p>Each table's and column's <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">description</code>, the connection's <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">notes</code>, and <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">masked</code> on each column the caller gets masked.</p></div>
       <div class="fs-card"><h3>Output schemas name the columns</h3><p>A saved-query tool's output schema describes its result columns, from the query's <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">columns</code>.</p></div>
       <div class="fs-card"><h3>A dictionary per connection</h3><p>An MCP resource, <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate://connections/&lt;name&gt;/dictionary</code>, in Markdown: the notes, then every table the caller can reach, each column with its type, description and whether it is masked for this caller. <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">resources/list</code> lists them; <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">resources/read</code> returns one. Callers with saved queries only have none.</p></div>
+      <div class="fs-card"><h3 style="display:flex;align-items:center;gap:8px">Search by meaning <span style="font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:3px 6px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12);color:var(--warn-ink)">Exp</span></h3><p>'Tickets like this one', 'comfortable running shoes'. A saved query declares an <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">embed</code> parameter; QueryAPIGate turns the agent's words into a vector through any OpenAI-compatible embeddings endpoint, and <code class="qx">pgvector</code> ranks the rows. No vector store to run: the vectors stay in your <code class="qx">PostgreSQL</code>.</p><p style="font-size:13px;color:var(--ink-3)">PostgreSQL with pgvector only.</p><a href="https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/documentation/adr/0025-semantic-retrieval.md">ADR 0025 →</a></div>
     </div>
   </section>
 
