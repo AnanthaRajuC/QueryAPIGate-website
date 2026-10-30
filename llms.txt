@@ -89,7 +89,7 @@ Everything below in one file: https://anantharajuc.github.io/QueryAPIGate-websit
 - [Guide 52: Give a partner a quota and a concurrency cap](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=52-give-a-partner-a-quota-and-a-concurrency-cap): how-to, Access
 - [Guide 53: Send the audit log to your SIEM, and prove nobody edited it](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=53-send-the-audit-log-to-your-siem): how-to, Govern
 - [Guide 54: Install on Kubernetes with Helm](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=54-install-on-kubernetes-with-helm): how-to, Operate
-- [Guide 55: Promote a setup from dev to prod through a pull request](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request): how-to, Operate
+- [Guide 55: Manage your setup as code, and promote it from dev to prod through a pull request](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request): how-to, Operate
 - [Guide 56: Use short-lived database credentials from Vault](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=56-use-short-lived-database-credentials-from-vault): how-to, Access
 - [Guide 57: Answer a security questionnaire about data and cryptography](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=57-answer-a-security-questionnaire-about-data-and-cryptography): how-to, Govern
 - [Guide 58: Keep the server's own secrets, and its metrics, in](https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=58-keep-the-servers-own-secrets-and-metrics-in): how-to, Operate

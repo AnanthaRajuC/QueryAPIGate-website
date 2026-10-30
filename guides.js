@@ -488,7 +488,7 @@ export const guides = [
  {
   "num": "55",
   "slug": "55-promote-a-setup-from-dev-to-prod-through-a-pull-request",
-  "title": "Promote a setup from dev to prod through a pull request",
+  "title": "Manage your setup as code, and promote it from dev to prod through a pull request",
   "cat": "Operate",
   "time": "20 min",
   "timeMin": 20,
@@ -571,8 +571,8 @@ export const guides = [
   "slug": "64-try-the-rust-data-plane",
   "title": "Try the Rust data plane in front of /q/",
   "cat": "Operate",
-  "time": "20 min",
-  "timeMin": 20,
+  "time": "10 min",
+  "timeMin": 10,
   "outcome": "The data plane on your public port, serving your saved-query reads itself, Python behind it doing everything else, and a way to see which calls it served."
  },
  {

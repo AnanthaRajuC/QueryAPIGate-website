@@ -128,8 +128,8 @@ guide covers one scenario end to end, and every command and response in it was r
 37. [**Diagnose and tune the connection pool**](37-tune-the-connection-pool.md) - measured, with symptoms and fixes.
 63. [**Tune a deployment for throughput**](63-tune-a-deployment-for-throughput.md) - threads, CPU per container,
     logging, the metadata cache, the event log's disk, and how many containers - each from a measurement.
-64. [**Try the Rust data plane in front of `/q/`**](64-try-the-rust-data-plane.md) (prototype) - build it, put it on
-    the public port with Python behind it, and see which calls it serves.
+64. [**Try the Rust data plane in front of `/q/`**](64-try-the-rust-data-plane.md) (experimental) - turn it on in the
+    Helm chart or with Docker, Python behind it, and see which calls it serves.
 65. [**Keep run history and the event log in ClickHouse**](65-keep-runs-in-clickhouse.md) (prototype) - a run store
     for the data plane's rates: the users, the setting, and what changes.
 38. [**Allow a browser-based frontend to call the API directly**](38-allow-a-browser-frontend-cors.md) - CORS, and
@@ -153,7 +153,8 @@ guide covers one scenario end to end, and every command and response in it was r
     PostgreSQL and Redis shared, failover and rolling updates.
 54. [**Install on Kubernetes with Helm**](54-install-on-kubernetes-with-helm.md) - one pod on SQLite
     or several on PostgreSQL, what the chart refuses and keeps, changed while serving with no failed request.
-55. [**Promote a setup from dev to prod through a pull request**](55-promote-a-setup-from-dev-to-prod-through-a-pull-request.md)
-    - configuration as code: export, review the diff against prod, apply on merge, locked.
+55. [**Manage your setup as code, and promote it from dev to prod through a pull request**](55-promote-a-setup-from-dev-to-prod-through-a-pull-request.md)
+    - configuration as code: export, review the diff against prod, apply on merge, locked; drift; applied at
+    start-up for GitOps.
 56. [**Use short-lived database credentials from Vault**](56-use-short-lived-database-credentials-from-vault.md)
     (experimental) - no database password anywhere: a user per lease, rotated without a failed call, failing closed.
