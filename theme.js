@@ -58,7 +58,12 @@
     '.rs-pg:hover .rs-pg-ico{animation:rs-pg-nudge .5s ease}@keyframes rs-pg-nudge{40%{transform:translateY(-2px)}}',
     '@media (max-width:1180px){.rs-pg-t{display:inline}.rs-nav a.rs-pg{display:flex !important;align-items:center;gap:10px}}',
     '@media (prefers-reduced-motion:reduce){.rs-pg-caret,.rs-pg-live,.rs-pg:hover .rs-pg-ico{animation:none}}',
-    '.uc-back{display:inline-grid;place-items:center;width:24px;height:24px;margin-right:2px;color:var(--ink-2);text-decoration:none;flex:none;transition:color .2s,transform .2s}.uc-back:hover{color:var(--accent-ink);transform:translateX(-2px);text-decoration:none}.uc-back svg{display:block}'
+    '.uc-back{display:inline-grid;place-items:center;width:24px;height:24px;margin-right:2px;color:var(--ink-2);text-decoration:none;flex:none;transition:color .2s,transform .2s}.uc-back:hover{color:var(--accent-ink);transform:translateX(-2px);text-decoration:none}.uc-back svg{display:block}',
+    // The top nav spans the whole bar on desktop: the links centred between the brand and the icons. The menus keep the
+    // width of the page's content, centred, rather than stretching with the bar.
+    '@media (min-width:1181px){.rs-navbar{max-width:none !important;padding-left:clamp(24px,3vw,56px) !important;padding-right:clamp(24px,3vw,56px) !important}',
+    '.rs-nav{flex:1 1 auto}.rs-nav>:first-child{margin-left:auto}.rs-nav>.rs-pg{margin-left:auto}',
+    '.rs-mega .rs-dd-panel{left:max(24px,calc(50% - 620px)) !important;right:max(24px,calc(50% - 620px)) !important}}'
   ].join('');
   var style = document.createElement('style'); style.id = 'qag-theme'; style.textContent = css;
   (document.head || root).appendChild(style);
