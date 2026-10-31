@@ -5,8 +5,16 @@
   <link href="https://anantharajuc.github.io/QueryAPIGate-website/Blog.dc.html"/>
   <link rel="self" href="https://anantharajuc.github.io/QueryAPIGate-website/feed.xml"/>
   <id>https://anantharajuc.github.io/QueryAPIGate-website/Blog.dc.html</id>
-  <updated>2026-10-29T12:00:00Z</updated>
+  <updated>2026-10-31T12:00:00Z</updated>
   <author><name>QueryAPIGate</name></author>
+  <entry>
+    <title>The 30% that was in the build</title>
+    <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=the-30-percent-in-the-build"/>
+    <id>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=the-30-percent-in-the-build</id>
+    <updated>2026-10-31T12:00:00Z</updated>
+    <category term="Benchmark"/>
+    <summary>QueryAPIGate&#x27;s Docker image ran Python about 30% slower per CPU than other builds of the same Python. We found why, measured what fixing it is worth at the gateway (less than 30%), found that the obvious fix came with a security cost, and chose the one that didn&#x27;t.</summary>
+  </entry>
   <entry>
     <title>Every run, recorded</title>
     <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=every-run-recorded"/>

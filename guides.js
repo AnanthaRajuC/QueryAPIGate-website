@@ -761,6 +761,14 @@ export const docs = [
    (otherwise the newest is). href sends the card somewhere other than blog/<slug>.md, such as the changelog. */
 export const posts = [
  {
+  "slug": "the-30-percent-in-the-build",
+  "title": "The 30% that was in the build",
+  "date": "2026-10-31",
+  "cat": "Benchmark",
+  "topic": "Operations",
+  "summary": "QueryAPIGate's Docker image ran Python about 30% slower per CPU than other builds of the same Python. We found why, measured what fixing it is worth at the gateway (less than 30%), found that the obvious fix came with a security cost, and chose the one that didn't."
+ },
+ {
   "slug": "every-run-recorded",
   "title": "Every run, recorded",
   "date": "2026-10-29",
