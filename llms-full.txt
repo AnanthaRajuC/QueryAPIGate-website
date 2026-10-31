@@ -745,7 +745,7 @@ on the PostgreSQL store with Redis. They roll one at a time, and a new pod must 
 | Network | `networkPolicy.enabled`: in only from `networkPolicy.ingressFrom`, out only to `networkPolicy.egress` and DNS. List your databases, Redis and the SIEM there. |
 | Scale | `autoscaling.enabled`, CPU-based, PostgreSQL shape only. |
 | Secrets managers | `${vault:...}`, `${aws-sm:...}` and short-lived database credentials ([Secrets from files and secrets managers](API.md#secrets-from-files-and-secrets-managers); AWS's experimental): `vaultToken.enabled` for Vault's Kubernetes auth, `serviceAccount.annotations` for IRSA, and the `QUERYAPIGATE_VAULT_*` / `QUERYAPIGATE_AWS_*` settings through `config`. |
-| Configuration as code | `configAsCode.enabled` with `configAsCode.file` (or `existingConfigMap`): connections, queries, roles, keys and the rest as one file in git, applied by the first new API server pod as it starts, once per file ([Configuration as code](API.md#configuration-as-code), experimental). A change to it rolls the pods; a file that can't be applied stops the rollout at its first pod. `locked: true` keeps what it manages to the file. |
+| Configuration as code | `configAsCode.enabled` with `configAsCode.file` (or `existingConfigMap`): connections, queries, roles, keys and the rest as one file in git, applied by the first new API server pod as it starts, once per file ([Configuration as code](API.md#configuration-as-code)). A change to it rolls the pods; a file that can't be applied stops the rollout at its first pod. `locked: true` keeps what it manages to the file. |
 
 Two things to know:
 - **Changing a Secret you manage doesn't restart the pods**, since the chart can't see inside it. Run
@@ -3737,7 +3737,10 @@ when [signed-in users](API.md#signed-in-users-jwt) are enabled, an `Authorizatio
 acting for a user gets that user's role and its `from_claim` row filters. A call carrying an API key is judged on
 that key alone; a wrong key never falls back to the token. Send either as a request header, the way any
 HTTP-capable MCP client configuration allows - never as a URL parameter, which would leak it into logs. An unset
-server key means open access, same as the REST API.
+server key means open access, same as the REST API: local (loopback) clients only, and any other is refused with a
+`403 open_access_remote` before its session starts. That includes a client reaching `docker run -p`, which arrives
+from the container's network, not loopback: in Docker, set `QUERYAPIGATE_API_KEY`. Before 0.47 the MCP server let
+any client in, as an unrestricted admin.
 
 Every request to `/mcp` is checked before the MCP session sees it: a missing or wrong credential is an HTTP `401`
 with a `WWW-Authenticate` header (until 0.17 it was a tool error inside a `200`), a refused one a `403`, and
@@ -7367,6 +7370,15 @@ where standing up a key first would just be friction. It is still **not** how to
 the moment more than loopback should reach it, setting `QUERYAPIGATE_API_KEY` (or configuring administrators, JWT or
 MCP OAuth) stops being optional - SECURITY.md's first checklist item. Behind a reverse proxy or in a container, the
 peer is the proxy or the pod network, not loopback, so open-access mode is refused there too: set a key.
+
+The MCP server (`queryapigate mcp`) applies the same rule to every request to `/mcp`, before a session starts, and
+more strictly: a caller is local only if the connection's own address is loopback and so is the client a trusted
+proxy names, if one does. So a forged `X-Forwarded-For`, even with `FORWARDED_ALLOW_IPS` wide open, doesn't make a
+remote client local, and neither does a proxy on the same host passing a remote client on. *Fixed 2026-10-30:* until then
+it didn't apply it at all. With no key, administrator, JWT or OAuth configured, any client that could reach its port
+was the unrestricted caller - every saved query, read-only SQL on every connection, an agent's writes. Its default
+address is loopback, but the Docker image needs `--host 0.0.0.0`, so a container started without a key served the
+network. Found while drafting the MCP Registry entry, which is exactly that command.
 
 ### Authorization: what a scoped key can actually do
 
@@ -14250,7 +14262,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: export
-              image: ghcr.io/anantharajuc/queryapigate:0.46.0
+              image: ghcr.io/anantharajuc/queryapigate:0.47.0
               command: ["queryapigate", "export", "example_rentals_since", "--out", "/exports/{name}_{date}.csv"]
               envFrom:
                 - secretRef:
@@ -14375,7 +14387,7 @@ queryapigate/
 ```yaml
 services:
   queryapigate:
-    image: ghcr.io/anantharajuc/queryapigate:0.46.0   # pin a version - upgrades should be deliberate
+    image: ghcr.io/anantharajuc/queryapigate:0.47.0   # pin a version - upgrades should be deliberate
     restart: unless-stopped
     env_file: .env
     environment:
@@ -14678,11 +14690,11 @@ From the changelog's [versioning policy](../CHANGELOG.md#versioning-and-compatib
 3. **Pin the target version** - never upgrade by accident:
 
    ```bash
-   pip install "queryapigate[server,postgres]==0.46.0"      # not just "queryapigate"
+   pip install "queryapigate[server,postgres]==0.47.0"      # not just "queryapigate"
    ```
 
    ```yaml
-   image: ghcr.io/anantharajuc/queryapigate:0.46.0           # not :latest
+   image: ghcr.io/anantharajuc/queryapigate:0.47.0           # not :latest
    ```
 
 ## During: just start it
