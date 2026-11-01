@@ -22,6 +22,8 @@
 <script src="../support.js"></script>
 <script src="../theme.js?v=15"></script>
 <script src="../search.js?v=6" defer></script>
+<link rel="stylesheet" href="uc-diagram.css">
+<script src="uc-diagram.js" defer></script>
 </head>
 <body>
 <helmet>
@@ -257,6 +259,230 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   <header class="f-pad" style="max-width:1480px;margin:0 auto;padding:56px 24px 8px;display:grid;gap:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)"><a class="uc-back" href="../Use Cases.dc.html#g-security" aria-label="Back to use cases" title="Back to use cases"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a><a href="../Use Cases.dc.html" style="color:var(--ink-2);font-weight:500">Use cases</a><span aria-hidden="true">/</span><a href="../Use Cases.dc.html#g-security" style="color:var(--ink-2);font-weight:500">Security and platform</a><span aria-hidden="true">/</span><span style="color:var(--ink);font-weight:600">Platform teams</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9fb3ac">12 / 12</span></div>
   </header>
+  <section class="ucd-section" id="how-it-fits" aria-labelledby="ucd-h" style="padding-top:16px;padding-bottom:40px">
+    <span class="ucd-eyebrow">How it fits together</span>
+    <h2 class="ucd-h2" id="ucd-h">Changed through a pull request, with no password to keep</h2>
+    <p class="ucd-lede">The whole setup is one file in git with no secret in it. CI shows the diff on the pull request and applies it on merge, all or nothing, and prod refuses changes made by hand. Database users come from Vault for the length of a lease, so there is no password to rotate or leak.</p>
+    <div class="ucd-wrap" data-w="1440" data-h="640" id="ucd-platform">
+      <div class="ucd-canvas" role="group" aria-label="One YAML file in git, with no secret in it, describes the setup. Your CI runs config diff on the pull request and config apply on merge; the governed core, installed with the Helm chart in your cluster, applies it all or nothing and records one config_applied entry with the file's SHA-256. A change made by hand on prod is refused with 409 config_managed. When a connection opens, the core asks Vault for a database user for the length of a lease and renews it at 80 percent, so no password is kept in the file or the store.">
+
+        <div class="ucd-stats" style="right:40px;top:20px;gap:16px">
+          <div style="max-width:96px"><b>0</b><span style="font-size:11px">passwords in the file or the store</span></div>
+          <div style="max-width:92px"><b>1</b><span style="font-size:11px">file, applied all or nothing</span></div>
+          <div style="max-width:92px"><b>80&nbsp;%</b><span style="font-size:11px">of a lease, then a new user</span></div>
+        </div>
+
+        <div class="ucd-zone" style="left:40px;top:96px;width:220px">Your repo and people</div>
+        <div class="ucd-zone" style="left:300px;top:96px;width:140px">Your CI</div>
+        <div class="ucd-zone" style="left:480px;top:96px;width:600px">Your cluster · Helm chart</div>
+        <div class="ucd-zone" style="left:1120px;top:96px;width:280px">Your data and the record</div>
+
+        <!-- The Asks row, above the core -->
+        <div class="ucd-box" id="ucd-vault" style="left:500px;top:24px;width:270px;height:60px" title="Signs in with Kubernetes auth. Asks only for the roles you list, and a role bound to its host sends credentials to no other. Leases are revoked when a process exits cleanly.">
+          <div style="left:11px;right:11px;top:10px;display:flex;align-items:center;gap:6px"><span style="flex:none;display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/key-round.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/key-round.svg) center/contain no-repeat"></span><b style="font-size:12px;font-weight:600">Vault</b><span class="ucd-tag stable" style="font-size:9.5px;padding:3px 5px">Stable</span><span aria-hidden="true" style="margin-left:auto;font-size:11px;color:#9fb3ac">↕</span><a class="box-link" href="../Guides.dc.html?path=secrets" title="Guides for this part">↗</a></div>
+          <span class="ucd-mono" style="left:11px;top:37px;font-size:10.5px;color:var(--ink-3)">database engine · role bound to host</span>
+        </div>
+        <div class="ucd-box" style="left:790px;top:24px;width:270px;height:60px">
+          <div style="left:11px;right:11px;top:10px;display:flex;align-items:center;gap:6px"><span style="flex:none;display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/cloud.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/cloud.svg) center/contain no-repeat"></span><b style="font-size:12px;font-weight:600">AWS</b><span class="ucd-tag exp" style="font-size:9.5px;padding:3px 5px">Exp</span><span aria-hidden="true" style="margin-left:auto;font-size:11px;color:#9fb3ac">↕</span><a class="box-link" href="../Guides.dc.html?path=secrets" title="Guides for this part">↗</a></div>
+          <span class="ucd-mono" style="left:11px;top:37px;font-size:10.5px;color:var(--ink-3)">Secrets Manager · RDS IAM</span>
+        </div>
+
+        <!-- A · Your repo and people: outside QueryAPIGate, so dashed -->
+        <div class="ucd-box out" style="left:40px;top:136px;width:220px;height:120px">
+          <a class="box-link abs" href="../Guides.dc.html?path=management" title="Guides for this part">↗</a>
+          <span style="left:12px;top:7px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/file-code.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/file-code.svg) center/contain no-repeat"></span><b class="ucd-mono" style="font-size:12px;font-weight:600">queryapigate.yaml</b></span>
+          <span class="ucd-mono" style="left:12px;top:26px;font-size:10.5px;line-height:1.24;color:var(--ink-2);white-space:pre">connections:
+  - name: warehouse
+    credentials:
+      source: vault-database
+      role: reporting-ro</span>
+          <span class="ucd-chk lit" style="left:12px;top:94px;padding:1px 7px;font-size:10.5px;gap:8px">no secret in the file<b>✓</b></span>
+        </div>
+        <div class="ucd-box out" style="left:40px;top:280px;width:220px;height:80px" title="Helm values">
+          <a class="box-link abs" href="../Guides.dc.html?path=prod" title="Guides for this part">↗</a>
+          <span class="ucd-mono" style="left:12px;top:8px;font-size:10px;line-height:1.25;color:var(--ink-2);white-space:pre">configAsCode:
+  enabled: true
+  locked: true</span>
+          <span style="left:12px;right:10px;top:47px;font-size:10.5px;line-height:1.22;color:var(--ink-3)">or let the chart apply it: the first new pod applies the file, once.</span>
+        </div>
+        <div class="ucd-box out ucd-caller" style="left:40px;top:376px;width:220px;height:96px;padding-top:8px;padding-bottom:8px"><span class="ucd-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/mouse-pointer-click.svg)"></span><div style="display:grid;gap:3px;min-width:0"><h3 class="ucd-h" style="font-size:13.5px;line-height:1.25">Someone edits prod by hand</h3><span class="ucd-mono" style="font-size:10px;color:var(--ink-2)">Console → roles → partner</span><span class="ucd-resp" id="ucd-hand"></span></div></div>
+
+        <!-- B · Your CI: yours, outside QueryAPIGate -->
+        <div class="ucd-box out" style="left:300px;top:136px;width:140px;height:256px">
+          <a class="box-link abs" href="../Guides.dc.html?path=management" title="Guides for this part">↗</a>
+          <span class="ucd-chk" id="ucd-ci-pr" style="left:8px;right:8px;top:30px;display:grid;gap:2px;padding:5px 7px"><b style="font-size:9.5px;letter-spacing:0.05em;text-transform:uppercase;color:var(--ink-3)">On the pull request</b><span class="ucd-mono" style="font-size:10px;line-height:1.3;color:var(--ink)">config diff<br>--server prod</span><span style="font-size:10.5px;line-height:1.3">shows every change; changes nothing</span></span>
+          <span class="ucd-chk" id="ucd-ci-merge" style="left:8px;right:8px;top:132px;display:grid;gap:2px;padding:5px 7px"><b style="font-size:9.5px;letter-spacing:0.05em;text-transform:uppercase;color:var(--ink-3)">On merge</b><span class="ucd-mono" style="font-size:10px;line-height:1.3;color:var(--ink)">config apply<br>--server prod</span><span style="font-size:10.5px;line-height:1.3">all or nothing</span></span>
+          <span style="left:12px;right:8px;bottom:6px;font-size:10.5px;line-height:1.25;color:var(--ink-3)"><code class="ucd-mono" style="font-size:10px">QAG_API_KEY</code> from the CI's secrets, never an argument</span>
+        </div>
+
+        <!-- C · Your cluster: the namespace the Helm chart installs into, and the core inside it -->
+        <div style="left:480px;top:136px;width:600px;height:336px;border:1px solid var(--line);border-radius:14px"></div>
+        <span class="ucd-mono" style="left:494px;top:143px;font-size:11px;color:var(--ink-3)">namespace queryapigate</span>
+        <span style="left:918px;top:140px;display:flex;align-items:center;gap:6px"><span class="ucd-mono" style="font-size:11px;color:var(--ink-3)">helm chart</span><span class="ucd-tag stable" style="font-size:9.5px;padding:3px 5px">Stable</span><a class="box-link" href="../Guides.dc.html?path=prod" title="Guides for the Helm chart">↗</a></span>
+        <div class="ucd-core" style="left:500px;top:160px;width:560px;height:240px">
+          <div style="left:20px;right:12px;top:5px;display:flex;align-items:center;gap:8px"><span class="ucd-core-t">The governed core</span><span title="Non-root, read-only root filesystem, every capability dropped, no service-account token. Pods roll one at a time behind a PodDisruptionBudget." style="display:flex;gap:4px"><span class="ucd-pill lit" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:500;padding:2px 6px">pod-1</span><span class="ucd-pill lit" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:500;padding:2px 6px">pod-2</span><span class="ucd-pill lit" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:500;padding:2px 6px">pod-3</span></span><a class="box-link dark" href="../Guides.dc.html?path=core" title="Guides for this part" style="margin-left:auto">↗</a></div>
+          <div class="ucd-core-row" data-col="0" style="left:20px;width:168px;top:52px;bottom:8px;display:flex;flex-direction:column;gap:6px">
+            <h4 class="ucd-stage">01 · Apply</h4>
+            <p style="font-size:12.5px;line-height:1.38;color:#e6efeb">One transaction, under the store's write lock. Audited once: who, and the file's SHA-256.</p>
+            <span class="ucd-mono" id="ucd-note" style="font-size:10px;color:#9fb3ac;visibility:hidden">diff · nothing changed</span>
+            <span class="ucd-flag" style="margin-top:auto;font-size:10px">invalid_config · rolled back</span></div>
+          <div class="ucd-core-row" data-col="1" style="left:196px;width:168px;top:52px;bottom:8px;display:flex;flex-direction:column;gap:6px">
+            <h4 class="ucd-stage">02 · Lock</h4>
+            <p style="font-size:12.5px;line-height:1.38;color:#e6efeb">What the file manages changes only through a file.</p>
+            <span class="ucd-flag rest-lit" id="ucd-lock" style="margin-top:auto;font-size:10px">409 config_managed</span></div>
+          <div class="ucd-core-row" data-col="2" style="left:372px;width:168px;top:52px;bottom:8px;display:flex;flex-direction:column;gap:6px">
+            <h4 class="ucd-stage">03 · Credentials</h4>
+            <p style="font-size:12.5px;line-height:1.38;color:#e6efeb">A database user from Vault for each lease, renewed at 80&nbsp;%. Connections retire before it ends.</p>
+            <span class="ucd-flag" style="margin-top:auto;font-size:10px">503 secret_unavailable</span></div>
+        </div>
+        <div style="left:500px;top:414px;width:560px;display:flex;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-3);white-space:nowrap">
+          <span style="position:static;padding:5px 7px;background:var(--surface);border:1px solid var(--line);border-radius:8px">PodDisruptionBudget</span>
+          <span style="position:static;padding:5px 7px;background:var(--surface);border:1px solid var(--line);border-radius:8px">NetworkPolicy</span>
+          <span style="position:static;padding:5px 7px;background:var(--surface);border:1px solid var(--line);border-radius:8px">ServiceMonitor</span>
+          <span style="position:static;padding:5px 7px;background:var(--surface);border:1px solid var(--line);border-radius:8px">events · mcp</span>
+          <span style="position:static;padding:5px 7px;background:var(--surface);border:1px solid var(--line);border-radius:8px;display:flex;align-items:center;gap:6px">data plane<span class="ucd-tag exp" style="font-family:'Instrument Sans',sans-serif;font-size:9.5px;padding:2px 5px">Exp</span></span>
+        </div>
+
+        <!-- D · Your data and the record -->
+        <div class="ucd-box" id="ucd-db" style="left:1120px;top:136px;width:280px;height:150px">
+          <a class="box-link abs" href="../Guides.dc.html?path=databases" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:16px;top:10px;display:flex;align-items:center;gap:8px"><img src="https://cdn.simpleicons.org/postgresql" alt="" width="16" height="16">PostgreSQL</h3>
+          <span class="ucd-mono" style="left:16px;top:31px;font-size:11px;color:var(--ink-3)">warehouse.internal</span>
+          <span class="ucd-mono" style="left:16px;top:80px;font-size:12px;font-weight:500;color:var(--ink)">user v-reporting-ro-<span id="ucd-suffix" style="color:var(--accent-ink);transition:opacity 0.25s">q7mz</span></span>
+          <span style="left:16px;right:14px;top:102px;font-size:12px;line-height:1.35;color:var(--ink-3)">a user Vault made for this lease; none is stored</span>
+        </div>
+        <div class="ucd-box" id="ucd-store" style="left:1120px;top:312px;width:280px;height:160px">
+          <a class="box-link abs" href="../Guides.dc.html?path=audit" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:16px;top:12px">The store and the record</h3>
+          <div style="left:16px;right:14px;top:44px;display:grid;gap:8px;font-size:12px;line-height:1.35;color:var(--ink-2)">
+            <span><b style="color:var(--ink);font-weight:600">Store</b>: connections, queries, roles and keys, as the file says</span>
+            <span><b style="color:var(--ink);font-weight:600">Audit</b>: <span id="ucd-audit"><span class="ucd-mono" style="display:block;font-size:10.5px;color:var(--ink)">config_applied · sha256 9c1e…4b07<br>· ci-deployer</span>each change <code class="ucd-mono" style="font-size:10.5px">via: config</code></span></span>
+          </div>
+        </div>
+
+        <!-- What CI shows -->
+        <div class="ucd-side" style="left:40px;top:496px;width:240px;height:72px"><b>What CI shows</b><span>exit 2: changes to review</span></div>
+        <div class="ucd-code" id="ucd-diff" style="left:300px;top:496px;width:1100px;height:72px;display:grid;align-content:center;gap:4px;font-size:12px">
+          <span><i>$ </i>queryapigate config diff --server https://prod.example.com queryapigate.yaml</span>
+          <span><span class="id">+ queries[best_month]</span><i>        </i><span style="color:oklch(0.8 0.13 75)">~ roles[partner]</span><i>  rate_limit: </i>"60/minute" -&gt; "120/minute"</span>
+          <span>1 to create, 1 to change.</span>
+        </div>
+
+        <div class="ucd-legend" style="left:40px;right:40px;top:604px">
+          <span><span class="ucd-tag stable">Stable</span>compatibility promise</span>
+          <span><span class="ucd-tag exp">Exp</span>may change in a minor release</span>
+          <span>Not in the file: server settings, administrators, run history and the audit log.</span>
+        </div>
+
+        <svg class="ucd-fx" id="ucd-fx" width="1440" height="640" viewBox="0 0 1440 640" aria-hidden="true"></svg>
+      </div>
+    </div>
+
+    <div class="ucd-stack">
+      <div class="ucd-sbox out"><small>Your repo</small><b>One YAML file, no secret in it</b><span>Connections, roles, queries, keys' grants and exports. A password is a reference; a database user can come from Vault.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox out"><small>Your CI</small><b>config diff on the pull request, config apply on merge</b><span>Or the Helm chart applies the file as its first new pod starts.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox core"><small>The governed core, in your cluster</small><b>Apply → lock → credentials</b><span>All or nothing, audited with the file's SHA-256. A change made by hand on prod is refused with 409 config_managed.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↕</span>
+      <div class="ucd-sbox"><small>Asks</small><b>Vault (AWS experimental)</b><span>A database user for each lease, renewed at 80&nbsp;%, from a role bound to its host.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Your database</small><b>Reached as a user that lives as long as its lease</b></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>The record</small><b>One config_applied entry per file</b><span>Who applied it, the file's hash, and every change <code>via: config</code>.</span></div>
+    </div>
+
+    <p class="ucd-foot">The same governed core as the <a href="../Home.dc.html#architecture">full architecture</a>.</p>
+  </section>
+  <script>
+  // Platform teams: four moments a cycle. The pull request's diff, the merge's apply (all or nothing, audited), a hand
+  // edit on prod refused by the lock, and a Vault lease renewed: a new database user, then a query on it.
+  document.addEventListener('DOMContentLoaded', function () {
+    var U = window.UCD, svg = document.getElementById('ucd-fx'), wrap = document.getElementById('ucd-platform');
+    if (!U || !svg) return;
+    var NS = 'http://www.w3.org/2000/svg', P = 12, V = 340;   // the cycle, in seconds; px a second
+    var SPINE = 196, DOTS = [604, 780, 956], VAULT_X = 735;
+    var green = 'oklch(0.62 0.13 170)', red = 'oklch(0.65 0.2 25)';
+    function el(tag, attrs, kids) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); (kids || []).forEach(function (c) { e.appendChild(c); }); return e; }
+
+    var cols = [].slice.call(wrap.querySelectorAll('[data-col]'));
+    var ciPr = document.getElementById('ucd-ci-pr'), ciMerge = document.getElementById('ucd-ci-merge'), note = document.getElementById('ucd-note');
+    var lock = document.getElementById('ucd-lock'), hand = document.getElementById('ucd-hand'), vault = document.getElementById('ucd-vault');
+    var suffix = document.getElementById('ucd-suffix'), db = document.getElementById('ucd-db'), store = document.getElementById('ucd-store');
+    var audit = document.getElementById('ucd-audit'), diff = [].slice.call(document.querySelectorAll('#ucd-diff > span'));
+
+    // Lanes: the file into CI and CI into the core; the hand edit under CI, rising in the frame's margin to the core;
+    // the spine out to the database; the applied file down to the store; Vault and AWS down to the core's top.
+    var lane = function (d, cls) { var p = el('path', { d: d, class: 'ucd-lane' + (cls ? ' ' + cls : '') }); svg.appendChild(p); return p; };
+    lane('M260,' + SPINE + ' H300'); lane('M440,' + SPINE + ' H500');
+    lane('M260,424 H476 C492,424 484,' + SPINE + ' 500,' + SPINE);
+    lane('M500,' + SPINE + ' H1060', 'in-core'); lane('M1060,' + SPINE + ' H1120');
+    lane('M1060,360 C1090,360 1090,392 1120,392');
+    var vaultLane = lane('M' + VAULT_X + ',84 V160'); lane('M900,84 V160');
+    var dotEls = DOTS.map(function (x) {
+      var d = document.createElement('span'); d.className = 'ucd-dot'; d.style.left = x + 'px'; d.style.top = SPINE + 'px';
+      wrap.querySelector('.ucd-canvas').insertBefore(d, svg); return d;
+    });
+
+    if (U.reduced) {
+      wrap.classList.add('ucd-still');
+      hand.className = 'ucd-resp bad'; hand.textContent = '409 config_managed';
+      return;
+    }
+    lock.classList.remove('rest-lit'); suffix.textContent = '8f2k';
+
+    var f4 = function (v) { return v.toFixed(4); };
+    function pulseG(path, color, t0, t1, fade, keyPoints) {   // t0, t1 in seconds into the cycle
+      var a = t0 / P, b = t1 / P, c = fade ? (t1 + fade) / P : b, begin = -P + 's';
+      return el('g', {}, [
+        el('circle', { r: 10, fill: color, opacity: 0.2 }),
+        el('circle', { r: 4.5, fill: color }),
+        el('animateMotion', { dur: P + 's', begin: begin, repeatCount: 'indefinite', path: path, calcMode: 'linear', keyPoints: keyPoints || '0;0;1;1', keyTimes: '0;' + f4(a) + ';' + f4(b) + ';1' }),
+        el('animate', { attributeName: 'opacity', values: '0;0;1;1;0;0', keyTimes: '0;' + f4(a) + ';' + f4(a + 0.002) + ';' + f4(fade ? b : b - 0.002) + ';' + f4(c) + ';1', dur: P + 's', begin: begin, repeatCount: 'indefinite' })
+      ]);
+    }
+    var bezA = U.bez([604, SPINE], [640, SPINE], [620, 360], [660, 360]), bezB = U.bez([1060, 360], [1090, 360], [1090, 392], [1120, 392]);
+    var bezH = U.bez([476, 424], [492, 424], [484, SPINE], [500, SPINE]);
+    var IN = 'M260,' + SPINE + ' H300 M440,' + SPINE + ' H500';   // the file, through CI (the jump across its box is free), into the core
+    function toX(x) { return 40 + (x - 440); }
+
+    // 1 · the pull request: through CI's diff stage to Apply, and no further.
+    var m1 = 0.2, m1ci = m1 + 40 / V, m1apply = m1 + toX(DOTS[0]) / V;
+    svg.appendChild(pulseG(IN + ' H' + DOTS[0], green, m1, m1apply, 0.4));
+    // 2 · the merge: through CI's apply stage, to Apply, then down and out to the store.
+    var m2 = 3.2, m2ci = m2 + 40 / V, m2apply = m2 + toX(DOTS[0]) / V;
+    var m2len = toX(DOTS[0]) + bezA + (1060 - 660) + bezB, m2store = m2 + m2len / V;
+    svg.appendChild(pulseG(IN + ' H' + DOTS[0] + ' C640,' + SPINE + ' 620,360 660,360 H1060 C1090,360 1090,392 1120,392', green, m2, m2store));
+    // 3 · the hand edit: under CI, up into the core, past Apply without lighting it, refused at Lock.
+    var m3 = 6.0, m3len = 216 + bezH + (DOTS[1] - 500), m3lock = m3 + m3len / V;
+    svg.appendChild(pulseG('M260,424 H476 C492,424 484,' + SPINE + ' 500,' + SPINE + ' H' + DOTS[1], red, m3, m3lock, 0.4));
+    // 4 · a lease renews: Credentials lights, up to Vault and back, a new user, then a query on it.
+    var m4 = 8.4, up = 76 / V * 2, m4vault = m4 + 0.1 + up, m4back = m4vault + up, m4query = m4back + 0.15, m4db = m4query + (1120 - DOTS[2]) / V;
+    svg.appendChild(pulseG('M' + VAULT_X + ',160 V84', green, m4 + 0.1, m4vault));
+    svg.appendChild(pulseG('M' + VAULT_X + ',84 V160', green, m4vault, m4back));
+    svg.appendChild(pulseG('M' + DOTS[2] + ',' + SPINE + ' H1120', green, m4query, m4db));
+
+    var renew = [['8f2k', 'q7mz'], ['q7mz', '8f2k']], cycle = 0;
+    var T = { begin: -P, dur: P };
+    var EVENTS = [
+      [0.05, function () { diff.forEach(function (d) { d.style.visibility = 'hidden'; }); audit.style.visibility = 'hidden'; note.style.visibility = 'hidden'; hand.textContent = ''; }],
+      [m1ci, function () { U.flash(ciPr, 1300); }],
+      [m1apply, function () { U.flash(dotEls[0], 500); U.flash(cols[0], 900); note.style.visibility = 'visible'; setTimeout(function () { note.style.visibility = 'hidden'; }, 1600); }],
+      [m1apply + 0.1, function () { diff[0].style.visibility = 'visible'; }],
+      [m1apply + 0.5, function () { diff[1].style.visibility = 'visible'; }],
+      [m1apply + 0.9, function () { diff[2].style.visibility = 'visible'; }],
+      [m2ci, function () { U.flash(ciMerge, 1300); }],
+      [m2apply, function () { U.flash(dotEls[0], 500); U.flash(cols[0], 1200); }],
+      [m2store, function () { U.flash(store, 1000); audit.style.visibility = 'visible'; }],
+      [m3lock, function () { U.flash(dotEls[1], 500); U.flash(lock, 1500); hand.className = 'ucd-resp bad'; hand.textContent = '409 config_managed'; }],
+      [m4, function () { U.flash(dotEls[2], 500); U.flash(cols[2], 1600); }],
+      [m4vault, function () { U.flash(vault, 900); U.flash(vaultLane, 900); }],
+      [m4back, function () { var r = renew[cycle++ % 2]; suffix.style.opacity = 0; setTimeout(function () { suffix.textContent = r[1]; suffix.style.opacity = 1; }, 250); }],
+      [m4db, function () { U.flash(db, 900); }]
+    ];
+    U.loop(svg, [T], function (p, f, passed) { EVENTS.forEach(function (e) { if (passed(e[0] / P)) e[1](); }); });
+  });
+  </script>
   <section style="">
     <div class="f-pad" style="max-width:1480px;margin:0 auto;padding:16px 24px 64px;display:grid;gap:24px">
 <article id="platform" class="f-2col u-case u-flip" style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
