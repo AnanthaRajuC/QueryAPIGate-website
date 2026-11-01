@@ -22,6 +22,8 @@
 <script src="../support.js"></script>
 <script src="../theme.js?v=15"></script>
 <script src="../search.js?v=6" defer></script>
+<link rel="stylesheet" href="uc-diagram.css">
+<script src="uc-diagram.js" defer></script>
 </head>
 <body>
 <helmet>
@@ -257,6 +259,197 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   <header class="f-pad" style="max-width:1480px;margin:0 auto;padding:56px 24px 8px;display:grid;gap:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)"><a class="uc-back" href="../Use Cases.dc.html#g-product" aria-label="Back to use cases" title="Back to use cases"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a><a href="../Use Cases.dc.html" style="color:var(--ink-2);font-weight:500">Use cases</a><span aria-hidden="true">/</span><a href="../Use Cases.dc.html#g-product" style="color:var(--ink-2);font-weight:500">Product teams</a><span aria-hidden="true">/</span><span style="color:var(--ink);font-weight:600">Controlled writes</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9fb3ac">03 / 12</span></div>
   </header>
+  <section class="ucd-section" id="how-it-fits" aria-labelledby="ucd-h" style="padding-top:16px;padding-bottom:40px">
+    <span class="ucd-eyebrow">How it fits together</span>
+    <h2 class="ucd-h2" id="ucd-h">Every gate has to say yes</h2>
+    <p class="ucd-lede">A write reaches your database only when the server allows writes, the caller's grant allows this query, the values pass their checks, and the SQL is the kind of write the key may do. An agent's write also waits for a person to approve it. Any one of them can refuse, before the database is touched.</p>
+    <div class="ucd-wrap" data-w="1440" data-h="640" id="ucd-writes">
+      <div class="ucd-canvas" role="group" aria-label="Three callers write through the governed core: a partner's key, a signed-in support lead and an AI agent. Five gates sit on one lane: the server allows writes, the grant allows this query, the values pass their checks, the SQL guard allows this kind of write on these tables, and, for agents only, a person approves. Any one can refuse before the database is touched. A write that passes commits to your database and is kept in run history, write requests and the audit log.">
+
+        <div class="ucd-stats" style="right:40px;top:24px">
+          <div><b>Off</b><span>by default, at every level</span></div>
+          <div><b>1 row</b><span>an agent's write may change, unless raised</span></div>
+          <div><b>15 min</b><span>for a person to approve it</span></div>
+        </div>
+
+        <div class="ucd-zone" style="left:40px;top:96px;width:220px">Who writes</div>
+        <div class="ucd-zone" style="left:316px;top:96px;width:744px">The governed core: the write path</div>
+        <div class="ucd-zone" style="left:1116px;top:96px;width:284px">Your data</div>
+
+        <!-- A · Who writes: outside QueryAPIGate, so dashed -->
+        <div class="ucd-box out ucd-caller" style="left:40px;top:136px;width:220px;height:96px" title="key acme-orders"><a class="box-link abs" href="../Guides.dc.html?path=apps" title="Guides for this part">↗</a><span class="ucd-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-grid.svg)"></span><div style="display:grid;gap:3px;min-width:0"><h3 class="ucd-h">Partner backend</h3><span class="ucd-mono" style="font-size:10px;line-height:1.5;color:var(--ink-2)">POST /q/acme_submit_order</span><span class="ucd-resp" data-resp="0"></span></div></div>
+        <div class="ucd-box out ucd-caller" style="left:40px;top:256px;width:220px;height:96px;padding-top:8px;padding-bottom:8px" title="token · owner from sub"><a class="box-link abs" href="../Guides.dc.html?path=people" title="Guides for this part">↗</a><span class="ucd-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/users.svg)"></span><div style="display:grid;gap:3px;min-width:0"><h3 class="ucd-h" style="font-size:14px;line-height:1.25;padding-right:20px">Support lead, signed in</h3><span class="ucd-mono" style="font-size:10px;line-height:1.5;color:var(--ink-2)">POST /q/correct_address</span><span class="ucd-resp" data-resp="1"></span></div></div>
+        <div class="ucd-box out ucd-caller" style="left:40px;top:376px;width:220px;height:96px;padding-top:8px;padding-bottom:8px" title="key ops-agent"><a class="box-link abs" href="../Guides.dc.html?path=ai-agents" title="Guides for this part">↗</a><span class="ucd-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><div style="display:grid;gap:3px;min-width:0"><h3 class="ucd-h">AI agent</h3><span class="ucd-mono" style="font-size:10px;line-height:1.5;color:var(--ink-2)">tools/call close_ticket</span><span class="ucd-resp" data-resp="2"></span></div></div>
+
+        <!-- B · The governed core, as five gates on one lane -->
+        <div class="ucd-core" style="left:316px;top:136px;width:744px;height:336px" title="The same core as on Home. Writes always come here: the Rust data plane (experimental) serves only saved-query reads.">
+          <div style="left:20px;right:14px;top:12px;display:flex;align-items:center;gap:10px"><span class="ucd-core-t">The governed core</span><span class="ucd-core-badge">write path</span><a class="box-link dark" href="../Guides.dc.html?path=core" title="Guides for this part" style="margin-left:auto">↗</a></div>
+          <div data-gate="0" style="left:20px;top:84px;width:134.4px;bottom:16px;display:flex;flex-direction:column;gap:6px">
+            <h4 class="ucd-stage">01 · Server</h4><span class="ucd-mono" style="font-size:10.5px;color:#9fb3ac">ALLOW_WRITES=1</span><p style="font-size:13px;line-height:1.4;color:#e6efeb">The ceiling. Until it's set, nothing writes, whatever a key says.</p>
+            <span class="ucd-flag" style="margin-top:auto">403 read_only</span></div>
+          <div data-gate="1" style="left:162.4px;top:84px;width:134.4px;bottom:16px;display:flex;flex-direction:column;gap:6px">
+            <h4 class="ucd-stage">02 · Grant</h4><span class="ucd-mono" style="font-size:10.5px;color:#9fb3ac">allow_writes: true</span><p style="font-size:13px;line-height:1.4;color:#e6efeb">This key, through this one query. <code class="ucd-mono" style="font-size:12px">"*"</code> never carries a write.</p>
+            <span class="ucd-flag" style="margin-top:auto">403 read_only</span></div>
+          <div data-gate="2" style="left:304.8px;top:84px;width:134.4px;bottom:16px;display:flex;flex-direction:column;gap:6px">
+            <h4 class="ucd-stage">03 · Values</h4><span class="ucd-mono" id="ucd-g3-mono" style="font-size:10.5px;color:#9fb3ac;transition:color 0.3s">qty: integer 1–100</span><p style="font-size:13px;line-height:1.4;color:#e6efeb">Typed, checked, bound. A token's claim fills the owner, never the request.</p>
+            <span class="ucd-flag rest-lit" style="margin-top:auto">400 param_invalid</span></div>
+          <div data-gate="3" style="left:447.2px;top:84px;width:134.4px;bottom:16px;display:flex;flex-direction:column;gap:6px">
+            <h4 class="ucd-stage">04 · SQL guard</h4><span class="ucd-mono" style="font-size:10.5px;color:#9fb3ac">write_ops · tables</span><p style="font-size:13px;line-height:1.4;color:#e6efeb">One statement, a write of an allowed kind, on allowed tables.</p>
+            <span class="ucd-flag" style="margin-top:auto;font-size:10px">403 write_op_not_allowed</span></div>
+          <div data-gate="4" style="left:589.6px;top:84px;width:134.4px;bottom:16px;display:flex;flex-direction:column;gap:6px">
+            <h4 class="ucd-stage" style="display:flex;align-items:center;gap:6px">05 · A person <span class="ucd-tag neutral" style="font-size:9.5px;padding:3px 5px">MCP</span></h4><span class="ucd-mono" style="font-size:10.5px;color:#9fb3ac">agent_writes: approval</span><p style="font-size:13px;line-height:1.4;color:#e6efeb">Agents only. Someone else approves these exact arguments; it runs once.</p>
+            <span class="ucd-mono" style="font-size:10px;line-height:1.4;color:#9fb3ac">max_affected_rows: 1 · more is rolled back</span>
+            <span class="ucd-flag" style="margin-top:auto;font-size:10px">409 approval_pending</span></div>
+        </div>
+
+        <!-- C · Your data -->
+        <div class="ucd-box" id="ucd-db" style="left:1116px;top:136px;width:284px;height:150px">
+          <a class="box-link abs" href="../Guides.dc.html?path=databases" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:16px;top:14px">Your database</h3>
+          <span class="ucd-mono" style="left:16px;top:78px;font-size:11px;color:var(--ink-3)">PostgreSQL · shop</span>
+          <p class="ucd-p" style="left:16px;right:14px;top:96px;font-size:12px;line-height:1.4">The write commits only after every gate has passed. An agent's runs in a transaction, rolled back past its row ceiling.</p>
+        </div>
+        <div class="ucd-box" id="ucd-record" style="left:1116px;top:312px;width:284px;height:160px">
+          <a class="box-link abs" href="../Guides.dc.html?path=audit" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:16px;top:12px">The record</h3>
+          <div style="left:16px;right:14px;top:42px;display:grid;gap:7px;font-size:12px;line-height:1.35;color:var(--ink-2)">
+            <span><b style="color:var(--ink);font-weight:600">Run history</b>: every write, with its key, its rows, and for an agent <code class="ucd-mono" style="font-size:11px">approved_by</code></span>
+            <span><b style="color:var(--ink);font-weight:600">Write requests</b>: each agent request, kept 30 days</span>
+            <span><b style="color:var(--ink);font-weight:600">Audit log</b>: approvals, rejections and every grant change</span>
+          </div>
+        </div>
+
+        <!-- Under gate 05: the approver, a person outside QueryAPIGate -->
+        <div class="ucd-box out" id="ucd-approver" style="left:872.8px;top:500px;width:200px;height:72px" title="An owner or admin, never the credential that asked. The approval is for these exact arguments, for 15 minutes by default, and runs once.">
+          <a class="box-link abs" href="../Guides.dc.html?path=agents" title="Guides for this part">↗</a>
+          <span style="left:10px;top:10px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/user-check.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/user-check.svg) center/contain no-repeat"></span><b style="font-size:13px;font-weight:600">A person approves</b></span>
+          <span class="ucd-mono" style="left:10px;top:30px;font-size:10.5px;color:var(--ink-3)">Console · Approvals</span>
+          <span class="ucd-pill rest-lit" id="ucd-approve" style="left:10px;top:47px">Approve</span>
+        </div>
+
+        <!-- What's kept -->
+        <div class="ucd-side" style="left:40px;top:500px;width:260px;height:72px"><b>What's kept</b><span>every write, and who let an agent make it</span></div>
+        <div class="ucd-code" style="left:316px;top:500px;width:536px;height:72px;display:grid;align-content:center;gap:4px;padding:0 14px;font-size:11px;transition:border-color 0.3s">
+          <span id="ucd-kept-1" style="display:block;overflow:hidden;text-overflow:ellipsis"><i>history </i>acme_submit_order v1<i> key </i>acme-orders<i> </i>success<i> </i>1 row</span>
+          <span id="ucd-kept-2" style="display:block"><i>history </i>close_ticket v2<i> key </i>ops-agent<i> </i>success<i> </i>1 row<br><i>        request </i>wr_7f3<i> approved_by </i>ops-lead</span>
+        </div>
+
+        <div class="ucd-legend" style="left:40px;right:40px;top:596px">
+          <span><span class="ucd-tag stable">Stable</span>compatibility promise</span>
+          <span><span class="ucd-tag exp">Exp</span>may change in a minor release</span>
+          <span>Saving a write query needs no permission; running one does.</span>
+        </div>
+
+        <svg class="ucd-fx" id="ucd-fx" width="1440" height="640" viewBox="0 0 1440 640" aria-hidden="true"></svg>
+      </div>
+    </div>
+
+    <div class="ucd-stack">
+      <div class="ucd-sbox out"><small>Who writes</small><b>Partners, signed-in people, AI agents</b><span>A partner's key, a person's sign-in token, or an agent over MCP, each calling one saved write query.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox core"><small>The governed core</small><b>Server → grant → values → SQL guard</b><span>Writes are off until the server allows them. A grant opens one query for one caller, the values are checked and bound, and the SQL must be the kind of write the key may do. Any one refuses, before the database is touched.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox out"><small>Only for agents <span class="ucd-tag stable">Stable</span></small><b>A person approves</b><span>An agent's first call writes nothing. Someone else approves the exact arguments, within 15 minutes, and the write runs once, rolled back past its row ceiling.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Your database</small><b>The write commits</b></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>The record</small><b>Run history, write requests, audit</b><span>Every write with its key; an agent's with who approved it.</span></div>
+    </div>
+
+    <p class="ucd-foot">The same governed core as the <a href="../Home.dc.html#architecture">full architecture</a>.</p>
+  </section>
+  <script>
+  // Controlled writes: five calls a cycle along one lane of gates. Any gate can stop a call before the database; gate 05
+  // answers only to agents. A call that passes every gate it meets reaches the database, and the record lights.
+  document.addEventListener('DOMContentLoaded', function () {
+    var U = window.UCD, svg = document.getElementById('ucd-fx'), wrap = document.getElementById('ucd-writes');
+    if (!U || !svg) return;
+    var NS = 'http://www.w3.org/2000/svg', P = 10, V = 200;   // the cycle, in seconds; px a second
+    var SPINE = 196, SRC = [184, 304, 424], GATES = [403.2, 545.6, 688.0, 830.4, 972.8], DB = 1116;
+    var green = 'oklch(0.62 0.13 170)', red = 'oklch(0.65 0.2 25)', amber = 'oklch(0.75 0.14 75)';
+    function el(tag, attrs, kids) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); (kids || []).forEach(function (c) { e.appendChild(c); }); return e; }
+
+    // The calls: who, where each stops (a gate's index, or the database), and what its caller hears back.
+    var CALLS = [
+      { src: 0, stop: 'db', color: green, resp: ['ok', '✓ 1 row'], kept: 1 },
+      { src: 1, stop: 'db', color: green, resp: ['ok', '✓ 1 row'], claim: true },
+      { src: 0, stop: 2, color: red, resp: ['bad', '400 param_invalid'] },
+      { src: 2, stop: 4, color: amber, resp: ['wait', 'approval_required · wr_7f3'], park: true },
+      { src: 2, stop: 'db', color: green, resp: ['ok', '✓ 1 row · approved'], kept: 2 }
+    ];
+
+    // Lanes: three callers onto the spine, through the core's gates, into the database; the record's lane below it;
+    // the approver's lane down from gate 05.
+    var curveIn = SRC.map(function (y) { return 'M260,' + y + ' C290,' + y + ' 286,' + SPINE + ' 316,' + SPINE; });
+    curveIn.forEach(function (d) { svg.appendChild(el('path', { d: d, class: 'ucd-lane' })); });
+    svg.appendChild(el('path', { d: 'M316,' + SPINE + ' H1060', class: 'ucd-lane in-core' }));
+    svg.appendChild(el('path', { d: 'M1060,' + SPINE + ' H1116', class: 'ucd-lane' }));
+    svg.appendChild(el('path', { d: 'M1060,392 H1116', class: 'ucd-lane' }));
+    var down = el('path', { d: 'M972.8,472 V500', class: 'ucd-lane' }); svg.appendChild(down);
+    var bars = GATES.map(function (x) { var l = el('line', { x1: x, y1: 176, x2: x, y2: 216, class: 'ucd-gate' }); svg.appendChild(l); return l; });
+
+    var flags = [].map.call(document.querySelectorAll('#ucd-writes [data-gate] .ucd-flag'), function (f) { return f; });
+    var resp = [].slice.call(document.querySelectorAll('#ucd-writes [data-resp]'));
+    var db = document.getElementById('ucd-db'), record = document.getElementById('ucd-record');
+    var approve = document.getElementById('ucd-approve'), g3 = document.getElementById('ucd-g3-mono');
+    var kept = [null, document.getElementById('ucd-kept-1'), document.getElementById('ucd-kept-2')];
+
+    if (U.reduced) {
+      wrap.classList.add('ucd-still');
+      resp[0].className = 'ucd-resp bad'; resp[0].textContent = '400 param_invalid';
+      resp[1].className = 'ucd-resp ok'; resp[1].textContent = '✓ 1 row';
+      resp[2].className = 'ucd-resp ok'; resp[2].textContent = '✓ 1 row · approved';
+      return;
+    }
+    flags[2].classList.remove('rest-lit'); approve.classList.remove('rest-lit');
+
+    var lenIn = SRC.map(function (y) { return U.bez([260, y], [290, y], [286, SPINE], [316, SPINE]); });
+    function at(src, x) { return lenIn[src] + (x - 316); }
+    var f4 = function (v) { return v.toFixed(4); };
+    // A pulse along a path from t0 to t1 (fractions of the cycle); fade, if given, is how long it lingers, fading, at the end.
+    function pulseG(path, color, begin, t0, t1, fade, faint) {
+      var t2 = fade ? t1 + fade / P : t1, op = faint ? 0.45 : 1;
+      return el('g', {}, [
+        el('circle', { r: 10, fill: color, opacity: 0.2 }),
+        el('circle', { r: 4.5, fill: color }),
+        el('animateMotion', { dur: P + 's', begin: begin + 's', repeatCount: 'indefinite', path: path, calcMode: 'linear', keyPoints: '0;0;1;1', keyTimes: '0;' + f4(t0) + ';' + f4(t1) + ';1' }),
+        el('animate', { attributeName: 'opacity', values: '0;0;' + op + ';' + op + ';0;0', keyTimes: '0;' + f4(t0) + ';' + f4(t0 + 0.002) + ';' + f4(fade ? t1 : t1 - 0.002) + ';' + f4(t2) + ';1', dur: P + 's', begin: begin + 's', repeatCount: 'indefinite' })
+      ]);
+    }
+
+    var pulses = [];
+    CALLS.forEach(function (c, n) {
+      var s = n * 2, begin = s - P;   // one call every 2 s, already running on load
+      var endX = c.stop === 'db' ? DB : GATES[c.stop], tEnd = at(c.src, endX) / V / P;
+      svg.appendChild(pulseG(curveIn[c.src] + ' H' + endX, c.color, begin, 0.0005, tEnd, c.stop === 'db' ? 0 : 0.4));
+      // A faint copy runs along the record's lane while the call crosses from the core's edge into the database.
+      if (c.stop === 'db') svg.appendChild(pulseG('M1060,392 H1116', c.color, begin, at(c.src, 1060) / V / P, tEnd, 0, true));
+      var agent = c.src === 2, gates = [];
+      GATES.forEach(function (x, j) { if (x <= endX && (j < 4 || agent)) gates.push({ j: j, m: at(c.src, x) / V / P }); });
+      pulses.push({ begin: begin, dur: P, c: c, gates: gates, end: tEnd, approve: c.park ? tEnd + 1 / P : null });
+    });
+
+    function answer(c) { var r = resp[c.src]; r.className = 'ucd-resp ' + c.resp[0]; r.textContent = c.resp[1]; }
+    U.loop(svg, pulses, function (p, f, passed) {
+      var c = p.c;
+      p.gates.forEach(function (g) {
+        if (!passed(g.m)) return;
+        if (c.stop === g.j) {
+          if (c.park) { U.flash(down, 1600); }          // parked: the gate stays closed, the lane down to a person glows
+          else U.flash(flags[g.j], 1500);              // refused: this gate's flag turns red
+        } else {
+          U.flash(bars[g.j], 600);                     // the gate opens as the pulse goes through
+          if (c.claim && g.j === 2) { var was = g3.textContent; g3.textContent = 'owner ← token sub'; g3.style.color = 'oklch(0.8 0.11 170)'; setTimeout(function () { g3.textContent = was; g3.style.color = '#9fb3ac'; }, 1300); }
+        }
+      });
+      if (passed(p.end)) {
+        answer(c);
+        if (c.stop === 'db') { U.flash(db, 900); U.flash(record, 900); if (c.kept) U.flash(kept[c.kept].parentNode, 900); }
+      }
+      if (p.approve != null && passed(p.approve)) U.flash(approve, 2200);
+    });
+  });
+  </script>
   <section style="">
     <div class="f-pad" style="max-width:1480px;margin:0 auto;padding:16px 24px 64px;display:grid;gap:24px">
 <article id="writes" class="f-2col u-case" style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
