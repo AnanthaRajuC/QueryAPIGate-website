@@ -22,6 +22,8 @@
 <script src="../support.js"></script>
 <script src="../theme.js?v=15"></script>
 <script src="../search.js?v=6" defer></script>
+<link rel="stylesheet" href="uc-diagram.css">
+<script src="uc-diagram.js" defer></script>
 </head>
 <body>
 <helmet>
@@ -257,6 +259,226 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   <header class="f-pad" style="max-width:1480px;margin:0 auto;padding:56px 24px 8px;display:grid;gap:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)"><a class="uc-back" href="../Use Cases.dc.html#g-product" aria-label="Back to use cases" title="Back to use cases"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a><a href="../Use Cases.dc.html" style="color:var(--ink-2);font-weight:500">Use cases</a><span aria-hidden="true">/</span><a href="../Use Cases.dc.html#g-product" style="color:var(--ink-2);font-weight:500">Product teams</a><span aria-hidden="true">/</span><span style="color:var(--ink);font-weight:600">Internal tools</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9fb3ac">02 / 12</span></div>
   </header>
+  <section class="ucd-section" id="how-it-fits" aria-labelledby="ucd-h" style="padding-top:16px;padding-bottom:40px">
+    <span class="ucd-eyebrow">How it fits together</span>
+    <h2 class="ucd-h2" id="ucd-h">One URL for the whole app, and each person sees their own rows</h2>
+    <p class="ucd-lede">The browser calls QueryAPIGate with the token your users already sign in with. The token says who they are and which role they have, fills the query's filter, and picks the cache entry. Six saved queries across three databases replace the backend service you would otherwise write and run.</p>
+    <div class="ucd-wrap" data-w="1440" data-h="640" id="ucd-tools">
+      <div class="ucd-canvas" role="group" aria-label="An internal app in the browser calls QueryAPIGate's REST front door directly, with the user's own sign-in token and no API key. The governed core verifies the token, applies the user's role, fills the query's filter from the token, and either serves a cached answer kept per user's values or runs the query on PostgreSQL, ClickHouse or Parquet files through DuckDB. A user who sends the filter themselves is refused with 400 param_from_claim.">
+
+        <div class="ucd-stats" style="right:40px;top:24px;gap:22px;white-space:nowrap">
+          <div><b>3</b><span>databases, one base URL</span></div>
+          <div><b>8</b><span>output formats</span></div>
+          <div><b>0</b><span>keys in the page</span></div>
+        </div>
+
+        <div class="ucd-zone" style="left:40px;top:96px;width:200px">Your internal app</div>
+        <div class="ucd-zone" style="left:280px;top:96px;width:140px">Front door</div>
+        <div class="ucd-zone" style="left:460px;top:96px;width:540px">The governed core</div>
+        <div class="ucd-zone" style="left:1100px;top:96px;width:300px">Your data</div>
+
+        <!-- The Asks row, above the core -->
+        <div class="ucd-box" id="ucd-ask-idp" style="left:460px;top:24px;width:260px;height:60px">
+          <div style="left:11px;right:11px;top:10px;display:flex;align-items:center;gap:6px"><span style="flex:none;display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/fingerprint.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/fingerprint.svg) center/contain no-repeat"></span><b style="font-size:12px;font-weight:600;white-space:nowrap">Identity provider</b><span aria-hidden="true" style="margin-left:auto;font-size:11px;color:#9fb3ac">↕</span><a class="box-link" href="../Guides.dc.html?path=identity" title="Guides for this part">↗</a></div>
+          <span class="ucd-mono" id="ucd-idp-line" style="left:11px;top:36px;font-size:11px;color:var(--ink-3)">JWKS · keys cached</span>
+        </div>
+        <div class="ucd-box" id="ucd-ask-state" style="left:740px;top:24px;width:260px;height:60px" title="Optional: with QUERYAPIGATE_REDIS_URL, every instance shares the cache and the rate limits. Without it, each process keeps its own.">
+          <div style="left:11px;right:11px;top:10px;display:flex;align-items:center;gap:6px"><span style="flex:none;display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/layers.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/layers.svg) center/contain no-repeat"></span><b style="font-size:12px;font-weight:600;white-space:nowrap">Shared state</b><span aria-hidden="true" style="margin-left:auto;font-size:11px;color:#9fb3ac">↕</span><a class="box-link" href="../Guides.dc.html?path=state" title="Guides for this part">↗</a></div>
+          <span class="ucd-mono" style="left:11px;top:36px;font-size:11px;color:var(--ink-3)">Redis · cache · limits</span>
+        </div>
+
+        <!-- A · Your internal app: a browser, outside QueryAPIGate -->
+        <div class="ucd-box out" style="left:40px;top:136px;width:200px;height:336px" title="A static frontend, no backend service. It sends the user's own sign-in token, never an API key: any key in a page's JavaScript is public.">
+          <div class="ucd-chrome" style="left:0;right:0;top:0"><i></i><i></i><i></i><span class="ucd-mono" style="margin-left:6px;font-size:10.5px;color:var(--ink-3)">tools.internal</span></div>
+          <a class="box-link abs" href="../Guides.dc.html?path=apps" title="Guides for this part" style="top:5px;right:6px">↗</a>
+          <span class="ucd-avatar" style="left:12px;top:42px"><i id="ucd-av-i">b</i><span id="ucd-av">bob</span></span>
+          <b style="left:12px;top:80px;font-size:12px;font-weight:600;color:var(--ink)">My open tickets</b>
+          <div class="ucd-mono" id="ucd-table" style="left:12px;right:12px;top:100px;display:grid;font-size:10.5px;line-height:1.5;color:var(--ink-2)"></div>
+          <span class="ucd-btn" id="ucd-csv" style="left:12px;top:182px">Download CSV</span>
+          <span class="ucd-mono" style="left:12px;top:278px;font-size:9.5px;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-4)">last response</span>
+          <span class="ucd-resp ok" id="ucd-last" style="left:12px;right:10px;top:294px"></span>
+        </div>
+
+        <!-- B · Front door -->
+        <div class="ucd-box" id="ucd-door" style="left:280px;top:136px;width:140px;height:336px">
+          <a class="box-link abs" href="../Guides.dc.html?path=rest" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:14px;top:10px">REST</h3>
+          <span class="ucd-mono" style="left:14px;top:31px;font-size:10.5px;color:var(--ink-2)">GET /q/&lt;name&gt;</span>
+          <div style="left:10px;right:10px;top:96px;display:grid;gap:8px">
+            <span class="ucd-chk" data-chk>CORS: tools.internal<b>✓</b></span>
+            <span class="ucd-chk" data-chk>Bearer token, no key<b>✓</b></span>
+          </div>
+          <p class="ucd-p" style="left:14px;right:12px;bottom:14px;font-size:12px;color:var(--ink-3)">one base URL for every query</p>
+        </div>
+
+        <!-- C · The governed core -->
+        <div class="ucd-core" style="left:460px;top:136px;width:540px;height:336px">
+          <div style="left:20px;right:14px;top:12px;display:flex;align-items:center;gap:10px"><span class="ucd-core-t">The governed core</span><span class="ucd-core-badge" title="Signed-in users use their role live: editing it applies on their next request">role tools-staff · live</span><a class="box-link dark" href="../Guides.dc.html?path=core" title="Guides for this part" style="margin-left:auto">↗</a></div>
+          <div class="ucd-core-row" data-col="0" style="left:10px;width:168px;top:84px;bottom:14px;display:grid;align-content:start;gap:8px;color:#e6efeb">
+            <h4 class="ucd-stage">01 · Identity</h4>
+            <span style="font-size:13px;line-height:1.4"><b>Verify the token</b><br><span style="color:#9fb3ac">signature, expiry, issuer, audience; keys from your provider, cached</span></span>
+            <span style="font-size:13px;line-height:1.4"><b>Name the caller</b><br><span class="ucd-mono" id="ucd-caller" style="font-size:10.5px;color:oklch(0.8 0.11 170)">jwt:bob@tools.internal</span></span>
+          </div>
+          <div class="ucd-core-row" data-col="1" style="left:186px;width:168px;top:84px;bottom:14px;display:grid;align-content:start;gap:8px;color:#e6efeb">
+            <h4 class="ucd-stage">02 · Policy</h4>
+            <span style="font-size:13px;line-height:1.4"><b>Its role's grants</b><br><span style="color:#9fb3ac">these six queries; editing the role applies on the next request</span></span>
+            <span class="ucd-core-row" id="ucd-claim" style="position:static;margin:0 -6px;padding:4px 6px;font-size:13px;line-height:1.4" title="For a role whose users are customers, require_claim_binding holds every query to a token-filled parameter. Staff tools that read every row leave it off."><b>Fill <code class="ucd-mono" style="font-size:11.5px">:email</code> from the token</b><br><span style="color:#9fb3ac">never from the request</span><br><span class="ucd-mono" id="ucd-email" style="font-size:10.5px;color:oklch(0.8 0.11 170)">:email ← bob@…</span></span>
+          </div>
+          <div class="ucd-core-row" data-col="2" style="left:362px;width:168px;top:84px;bottom:14px;display:grid;align-content:start;gap:8px;color:#e6efeb">
+            <h4 class="ucd-stage">03 · Execution</h4>
+            <span style="font-size:13px;line-height:1.4"><b>Cache, or run</b><br><span style="color:#9fb3ac">one entry per query, version, values, format and page</span></span>
+            <span style="font-size:13px;line-height:1.4"><b>Page or stream</b><br><span style="color:#9fb3ac"><code class="ucd-mono" style="font-size:11px;white-space:nowrap">X-Has-More</code>, or <code class="ucd-mono" style="font-size:11px;white-space:nowrap">?stream=true</code> for the CSV button</span></span>
+          </div>
+        </div>
+        <span class="ucd-tag stable ucd-pop" id="ucd-hit" style="left:906px;top:166px">HIT</span>
+
+        <!-- D · Your data -->
+        <div class="ucd-box" data-db="0" style="left:1100px;top:136px;width:300px;height:96px"><a class="box-link abs" href="../Guides.dc.html?path=databases" title="Guides for this part">↗</a><h3 class="ucd-h" style="left:16px;top:16px;display:flex;align-items:center;gap:8px"><img src="https://cdn.simpleicons.org/postgresql" alt="" width="16" height="16">PostgreSQL</h3><span style="left:16px;top:52px;display:flex;align-items:center;gap:8px"><span class="ucd-chip">tickets</span><span class="ucd-mono" style="font-size:11.5px;color:var(--ink-2)">my_open_tickets</span></span></div>
+        <div class="ucd-box" data-db="1" style="left:1100px;top:256px;width:300px;height:96px"><a class="box-link abs" href="../Guides.dc.html?path=databases" title="Guides for this part">↗</a><h3 class="ucd-h" style="left:16px;top:16px;display:flex;align-items:center;gap:8px"><img src="https://cdn.simpleicons.org/clickhouse" alt="" width="16" height="16">ClickHouse</h3><span style="left:16px;top:52px;display:flex;align-items:center;gap:8px"><span class="ucd-chip">events</span><span class="ucd-mono" style="font-size:11.5px;color:var(--ink-2)">weekly_signups</span></span></div>
+        <div class="ucd-box" data-db="2" style="left:1100px;top:376px;width:300px;height:96px"><a class="box-link abs" href="../Guides.dc.html?path=files" title="Guides for this part">↗</a><h3 class="ucd-h" style="left:16px;top:16px;display:flex;align-items:center;gap:8px"><img src="https://cdn.simpleicons.org/duckdb" alt="" width="16" height="16">Files, through DuckDB</h3><span style="left:16px;top:52px;display:flex;align-items:center;gap:8px"><span class="ucd-chip">s3://finance/*.parquet</span><span class="ucd-mono" style="font-size:11.5px;color:var(--ink-2)">invoices_2025</span></span></div>
+
+        <!-- What a user can't change -->
+        <div class="ucd-side" style="left:40px;top:500px;width:220px;height:66px"><b>What a user can't change</b><span>the filter comes from the token</span></div>
+        <div class="ucd-code" style="left:280px;top:500px;width:1120px;height:66px;display:grid;align-content:center;gap:5px;font-size:12px">
+          <span>WHERE assignee_email = :email<i>      </i>"email": {"type": "str", "from_claim": "email"}</span>
+          <span>GET /q/my_open_tickets?email=carol@tools.internal<i>   →   </i><span id="ucd-refused" class="err" style="transition:color 0.3s">400 param_from_claim</span></span>
+        </div>
+
+        <div class="ucd-legend" style="left:40px;right:40px;top:596px">
+          <span><span class="ucd-tag stable">Stable</span>compatibility promise</span>
+          <span><span class="ucd-tag exp">Exp</span>may change in a minor release</span>
+          <span>Any key in a page's JavaScript is public: sign users in, or keep keys on a server.</span>
+        </div>
+
+        <svg class="ucd-fx" id="ucd-fx" width="1440" height="640" viewBox="0 0 1440 640" aria-hidden="true"></svg>
+      </div>
+    </div>
+
+    <div class="ucd-stack">
+      <div class="ucd-sbox out"><small>Your internal app</small><b>A browser, no backend</b><span>It calls with the user's own sign-in token; CORS allows its origin, and no API key is in the page.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Front door</small><b>REST · one base URL</b><span>Every query is <code>GET /q/&lt;name&gt;</code>, paged, or streamed for downloads, in eight formats.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Asks</small><b>Identity provider · Redis</b><span>Signing keys are fetched once and cached. Redis, if you run it, shares the cache and the rate limits across instances.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↕</span>
+      <div class="ucd-sbox core"><small>The governed core</small><b>Token → role → your own rows</b><span>The token is verified, the user's role grants the six queries, and the filter is filled from the token, never the request. A cached answer is kept per user's values.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Your data</small><b>PostgreSQL, ClickHouse, Parquet</b><span>Three sources behind one URL, through one key-free page.</span></div>
+    </div>
+
+    <p class="ucd-foot">The same governed core as the <a href="../Home.dc.html#architecture">full architecture</a>.</p>
+  </section>
+  <script>
+  // Internal tools: six calls a cycle from one browser, with the user's own token. The token names the caller, its role
+  // grants the queries, and it fills :email; a repeat of bob's call is a cache hit, and a call that sends the filter
+  // itself is refused at Policy.
+  document.addEventListener('DOMContentLoaded', function () {
+    var U = window.UCD, svg = document.getElementById('ucd-fx'), wrap = document.getElementById('ucd-tools');
+    if (!U || !svg) return;
+    var NS = 'http://www.w3.org/2000/svg', P = 12, V = 200;   // the cycle, in seconds; px a second
+    var SPINE = 196, LANES = [184, 304, 424], DOTS = [554, 730, 906];
+    var green = 'oklch(0.62 0.13 170)', red = 'oklch(0.65 0.2 25)';
+    function el(tag, attrs, kids) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); (kids || []).forEach(function (c) { e.appendChild(c); }); return e; }
+
+    var ROWS = {
+      bob: ['T-1042  printer offline', 'T-1057  VPN access', 'T-1063  laptop swap'],
+      alice: ['T-1038  badge reader', 'T-1049  shared drive', 'T-1071  new hire setup']
+    };
+    // The calls: who, which database lane, where it stops, and what the page hears back.
+    var CALLS = [
+      { user: 'bob', db: 0, stop: 'db', email: true, resp: ['ok', '200 · X-Cache: MISS'], table: true },
+      { user: 'alice', db: 0, stop: 'db', email: true, resp: ['ok', '200 · X-Cache: MISS'], table: true },
+      { user: 'bob', db: 0, stop: 2, email: true, resp: ['ok', '200 · X-Cache: HIT'], table: true, hit: true },
+      { user: 'bob', db: 1, stop: 'db', resp: ['ok', '200 · X-Has-More: false'] },
+      { user: 'bob', db: 2, stop: 'db', resp: ['ok', '200 · text/csv · streamed'], stream: true },
+      { user: 'bob', db: 0, stop: 1, email: true, resp: ['bad', '400 param_from_claim'], refused: true }
+    ];
+
+    var table = document.getElementById('ucd-table'), av = document.getElementById('ucd-av'), avI = document.getElementById('ucd-av-i');
+    var last = document.getElementById('ucd-last'), caller = document.getElementById('ucd-caller'), email = document.getElementById('ucd-email');
+    var claim = document.getElementById('ucd-claim'), refusedTxt = document.getElementById('ucd-refused'), hit = document.getElementById('ucd-hit');
+    var csv = document.getElementById('ucd-csv'), idp = document.getElementById('ucd-ask-idp'), idpLine = document.getElementById('ucd-idp-line');
+    var state = document.getElementById('ucd-ask-state'), checks = [].slice.call(document.querySelectorAll('#ucd-door [data-chk]'));
+    var cols = [].slice.call(document.querySelectorAll('#ucd-tools [data-col]')), dbs = [].slice.call(document.querySelectorAll('#ucd-tools [data-db]'));
+    function signIn(user) { av.textContent = user; avI.textContent = user[0]; }
+    function showRows(user) { table.innerHTML = ''; ROWS[user].forEach(function (r) { var s = document.createElement('span'); s.textContent = r; s.style.whiteSpace = 'pre'; table.appendChild(s); }); }
+
+    // Lanes: browser to the door, the door into the core, the spine, out to each database; the Asks lanes down to the core.
+    var lane = function (d, cls) { var p = el('path', { d: d, class: 'ucd-lane' + (cls ? ' ' + cls : '') }); svg.appendChild(p); return p; };
+    LANES.forEach(function (y) { lane('M240,' + y + ' H280'); lane('M420,' + y + ' C440,' + y + ' 440,' + SPINE + ' 460,' + SPINE); lane('M1000,' + SPINE + ' C1050,' + SPINE + ' 1050,' + y + ' 1100,' + y); });
+    lane('M460,' + SPINE + ' H1000', 'in-core');
+    var idpLane = lane('M590,84 V136'), stateLane = lane('M870,84 V136');
+    var dotEls = DOTS.map(function (x) {
+      var d = document.createElement('span'); d.className = 'ucd-dot'; d.style.left = x + 'px'; d.style.top = SPINE + 'px';
+      wrap.querySelector('.ucd-canvas').insertBefore(d, svg); return d;
+    });
+
+    signIn('bob'); showRows('bob');
+    if (U.reduced) {
+      wrap.classList.add('ucd-still');
+      last.textContent = '200 · X-Cache: HIT'; idpLine.textContent = 'JWKS · cached';
+      return;
+    }
+    refusedTxt.className = ''; refusedTxt.style.color = '#e6efeb';
+
+    var lenB = LANES.map(function (y) { return U.bez([420, y], [440, y], [440, SPINE], [460, SPINE]); });
+    var lenOut = LANES.map(function (y) { return U.bez([1000, SPINE], [1050, SPINE], [1050, y], [1100, y]); });
+    function at(k, x) { return x <= 280 ? x - 240 : 40 + lenB[k] + (x - 460); }
+    function arrive(k) { return 40 + lenB[k] + 540 + lenOut[k]; }
+    var f4 = function (v) { return v.toFixed(4); };
+    function pulseG(path, color, begin, t0, t1, fade, r, op) {
+      var t2 = fade ? t1 + fade / P : t1; r = r || 1; op = op == null ? 1 : op;
+      return el('g', {}, [
+        el('circle', { r: 10 * r, fill: color, opacity: 0.2 }),
+        el('circle', { r: 4.5 * r, fill: color }),
+        el('animateMotion', { dur: P + 's', begin: begin + 's', repeatCount: 'indefinite', path: path, calcMode: 'linear', keyPoints: '0;0;1;1', keyTimes: '0;' + f4(t0) + ';' + f4(t1) + ';1' }),
+        el('animate', { attributeName: 'opacity', values: '0;0;' + op + ';' + op + ';0;0', keyTimes: '0;' + f4(t0) + ';' + f4(t0 + 0.002) + ';' + f4(fade ? t1 : t1 - 0.002) + ';' + f4(t2) + ';1', dur: P + 's', begin: begin + 's', repeatCount: 'indefinite' })
+      ]);
+    }
+
+    var pulses = [];
+    CALLS.forEach(function (c, n) {
+      var k = c.db, y = LANES[k], s = n * 2, begin = s - P;   // one call every 2 s, already running on load
+      var head = 'M240,' + y + ' H280 M420,' + y + ' C440,' + y + ' 440,' + SPINE + ' 460,' + SPINE;
+      var path = c.stop === 'db' ? head + ' H1000 C1050,' + SPINE + ' 1050,' + y + ' 1100,' + y : head + ' H' + DOTS[c.stop];
+      var tEnd = (c.stop === 'db' ? arrive(k) : at(k, DOTS[c.stop])) / V / P;
+      var color = c.refused ? red : green, fade = c.stop === 'db' ? 0 : 0.4;
+      // A stream gets a trail: smaller copies a moment behind.
+      if (c.stream) for (var g = 4; g >= 1; g--) svg.appendChild(pulseG(path, color, +(begin + g * 0.07).toFixed(3), 0.0005, tEnd, 0, 1 - g * 0.15, 0.55 - g * 0.1));
+      svg.appendChild(pulseG(path, color, begin, 0.0005, tEnd, fade));
+      var reach = c.stop === 'db' ? 3 : c.stop + 1;
+      pulses.push({ begin: begin, dur: P, c: c, door: at(k, 280) / V / P, dots: DOTS.slice(0, reach).map(function (x) { return at(k, x) / V / P; }), end: tEnd, first: n === 0 });
+    });
+
+    var idpDone = false;
+    function flashClass(e, cls, ms) { var n = (e['_' + cls] = (e['_' + cls] || 0) + 1); e.classList.add(cls); setTimeout(function () { if (e['_' + cls] === n) e.classList.remove(cls); }, ms); }
+    U.loop(svg, pulses, function (p, f, passed) {
+      var c = p.c;
+      if (passed(0.001) && c.stream) U.flash(csv, 600);                  // the Download CSV button presses as call 5 leaves
+      if (passed(p.door)) checks.forEach(function (ch, i) { setTimeout(function () { U.flash(ch, 900); }, i * 120); });
+      p.dots.forEach(function (m, j) {
+        if (!passed(m)) return;
+        U.flash(dotEls[j], 500);
+        if (j === 0) {
+          caller.textContent = 'jwt:' + c.user + '@tools.internal';
+          if (p.first && !idpDone) { idpDone = true; U.flash(idp, 1200); U.flash(idpLane, 1200); setTimeout(function () { idpLine.textContent = 'JWKS · cached'; }, 1200); }
+        }
+        if (j === 1) {
+          if (c.refused) { flashClass(claim, 'bad', 1500); var was = email.textContent; email.textContent = '?email=carol@… refused'; email.style.color = 'oklch(0.72 0.18 25)'; setTimeout(function () { email.textContent = was; email.style.color = 'oklch(0.8 0.11 170)'; }, 1500); return; }
+          if (c.email) { email.textContent = ':email ← ' + c.user + '@…'; email.style.color = 'oklch(0.8 0.11 170)'; }
+        }
+        if (j === 2) { U.flash(state, 900); U.flash(stateLane, 900); if (c.hit) U.flash(hit, 1300); }
+        if (!(c.refused && j === 1)) U.flash(cols[j], 700);
+      });
+      if (passed(p.end)) {
+        signIn(c.user); last.className = 'ucd-resp ' + c.resp[0]; last.textContent = c.resp[1];
+        if (c.table) showRows(c.user);
+        if (c.stop === 'db') U.flash(dbs[c.db], 900);
+        if (c.refused) { refusedTxt.style.color = 'oklch(0.72 0.18 25)'; setTimeout(function () { refusedTxt.style.color = '#e6efeb'; }, 2500); }
+      }
+    });
+  });
+  </script>
   <section style="">
     <div class="f-pad" style="max-width:1480px;margin:0 auto;padding:16px 24px 64px;display:grid;gap:24px">
 <article id="internal" class="f-2col u-case u-flip" style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">

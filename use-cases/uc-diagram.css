@@ -114,6 +114,18 @@
 .ucd-resp.ok{color:var(--accent-ink)}.ucd-resp.bad{color:var(--danger-ink)}.ucd-resp.wait{color:var(--warn-ink)}
 .ucd-code.lit{border-color:oklch(0.62 0.13 170 / 0.8)}
 
+/* A core row refusing a call; a small badge that pops in for a moment */
+.ucd-core-row.bad,.ucd-still .ucd-core-row.rest-bad{background:oklch(0.65 0.2 25 / 0.16);border-color:oklch(0.65 0.2 25 / 0.6)}
+.ucd-pop{opacity:0;transform:translate(-50%,-4px);transition:opacity 0.25s,transform 0.25s}
+.ucd-pop.lit{opacity:1;transform:translate(-50%,0)}
+/* A small app window: its chrome, who is signed in, and a button */
+.ucd-chrome{display:flex;align-items:center;gap:5px;padding:0 10px;height:30px;border-bottom:1px dashed var(--line-2)}
+.ucd-chrome>i{width:7px;height:7px;border-radius:50%;background:var(--line-2)}
+.ucd-avatar{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 4px;border-radius:999px;background:oklch(0.52 0.11 170 / 0.09);font-size:12px;font-weight:600;color:var(--ink)}
+.ucd-avatar>i{width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-style:normal;font-size:10px;display:grid;place-items:center}
+.ucd-btn{display:inline-block;font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:7px;border:1px solid oklch(0.52 0.11 170 / 0.6);color:var(--accent-ink);background:var(--surface);transition:box-shadow 0.15s,background 0.15s}
+.ucd-btn.lit{box-shadow:inset 0 2px 4px rgba(16,32,27,0.25);background:oklch(0.52 0.11 170 / 0.12)}
+
 /* Phones: the canvas gives way to a stack of boxes */
 .ucd-stack{display:none;gap:8px}
 .ucd-sbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:6px}
@@ -132,4 +144,4 @@
 /* Reduced motion: no pulses; whatever lights up shows lit, at rest */
 .ucd-still .ucd-core-row.rest-lit{background:oklch(0.62 0.13 170 / 0.14);border-color:oklch(0.62 0.13 170 / 0.5)}
 .ucd-still .ucd-chk{border-color:oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08);color:var(--ink)}
-@media (prefers-reduced-motion:reduce){.ucd-box,.ucd-core-row,.ucd-dot,.ucd-chk,.ucd-gate,.ucd-flag,.ucd-pill{transition:none}}
+@media (prefers-reduced-motion:reduce){.ucd-box,.ucd-core-row,.ucd-dot,.ucd-chk,.ucd-gate,.ucd-flag,.ucd-pill,.ucd-pop,.ucd-btn{transition:none}}
