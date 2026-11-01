@@ -22,6 +22,8 @@
 <script src="../support.js"></script>
 <script src="../theme.js?v=15"></script>
 <script src="../search.js?v=6" defer></script>
+<link rel="stylesheet" href="uc-diagram.css">
+<script src="uc-diagram.js" defer></script>
 </head>
 <body>
 <helmet>
@@ -257,6 +259,271 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   <header class="f-pad" style="max-width:1480px;margin:0 auto;padding:56px 24px 8px;display:grid;gap:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)"><a class="uc-back" href="../Use Cases.dc.html#g-product" aria-label="Back to use cases" title="Back to use cases"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a><a href="../Use Cases.dc.html" style="color:var(--ink-2);font-weight:500">Use cases</a><span aria-hidden="true">/</span><a href="../Use Cases.dc.html#g-product" style="color:var(--ink-2);font-weight:500">Product teams</a><span aria-hidden="true">/</span><span style="color:var(--ink);font-weight:600">Customer analytics</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9fb3ac">01 / 12</span></div>
   </header>
+  <section class="ucd-section" id="how-it-fits" aria-labelledby="ucd-h" style="padding-top:16px;padding-bottom:40px">
+    <span class="ucd-eyebrow">How it fits together</span>
+    <h2 class="ucd-h2" id="ucd-h">One query for every tenant, and each sees only its own</h2>
+    <p class="ucd-lede">Your users call with the token they already sign in with. Its plan picks a role, with that plan's queries, rate limit and quota, counted per user. Its tenant fills the query's filter, so the request has nothing to change. The cache keeps one entry per tenant, and tenants never share one.</p>
+    <div class="ucd-wrap" data-w="1440" data-h="640" id="ucd-tenants">
+      <div class="ucd-canvas" role="group" aria-label="Your product's page calls one saved query, revenue_by_month, with each user's sign-in token. The governed core verifies the token with your identity provider's signing keys, fetched once; the token's plan claim picks a role, pro or free, each with its own queries, rate limit and quota, counted per user; its tenant_id claim fills the query's filter, and a request that sends tenant_id itself gets 400 param_from_claim. The response cache keeps one entry per query, tenant, format and page, so two users of one tenant share an entry and two tenants never do. ClickHouse returns only the caller's tenant's rows. A free user whose quota is used up gets 429 quota_exceeded.">
+
+        <div class="ucd-stats" style="left:1040px;top:22px;gap:20px">
+          <div style="max-width:104px"><b>1</b><span style="font-size:11px">saved query for every tenant</span></div>
+          <div style="max-width:104px"><b>0</b><span style="font-size:11px">tenant ids in the request</span></div>
+          <div style="max-width:96px"><b>2</b><span style="font-size:11px">plans, each a role</span></div>
+        </div>
+
+        <div class="ucd-zone" style="left:40px;top:96px;width:220px">Your product</div>
+        <div class="ucd-zone" style="left:300px;top:96px;width:700px">The governed core</div>
+        <div class="ucd-zone" style="left:1040px;top:96px;width:360px">Your data</div>
+
+        <!-- The Asks row, above the core -->
+        <div class="ucd-box" id="ucd-idp" style="left:300px;top:24px;width:200px;height:60px" title="Auth0, Cognito, Keycloak, Azure AD… Fetched again only for a key id not seen before.">
+          <div style="left:11px;right:9px;top:10px;display:flex;align-items:center;gap:6px"><span style="flex:none;display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/fingerprint.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/fingerprint.svg) center/contain no-repeat"></span><b style="font-size:12px;font-weight:600;white-space:nowrap">Identity provider</b><span aria-hidden="true" style="margin-left:auto;font-size:11px;color:#9fb3ac">↕</span><a class="box-link" href="../Guides.dc.html?path=identity" title="Guides for this part">↗</a></div>
+          <span class="ucd-mono" style="left:11px;top:37px;font-size:10.5px;color:var(--ink-3);white-space:nowrap">signing keys · fetched once</span>
+        </div>
+        <div class="ucd-box" id="ucd-redis" style="left:800px;top:24px;width:200px;height:60px" title="With several instances: one cache, one quota count, one rate-limit count for all of them.">
+          <div style="left:11px;right:9px;top:10px;display:flex;align-items:center;gap:6px"><img src="https://cdn.simpleicons.org/redis" alt="" width="14" height="14" style="display:block"><b style="font-size:12px;font-weight:600">Redis</b><span aria-hidden="true" style="margin-left:auto;font-size:11px;color:#9fb3ac">↕</span><a class="box-link" href="../Guides.dc.html?path=state" title="Guides for this part">↗</a></div>
+          <span class="ucd-mono" style="left:11px;top:37px;font-size:10.5px;color:var(--ink-3);white-space:nowrap">cache · quota counts</span>
+        </div>
+
+        <!-- A · Your product: a small browser window, outside QueryAPIGate, so dashed -->
+        <div class="ucd-box out" id="ucd-app" style="left:40px;top:136px;width:220px;height:336px" title="Your SaaS frontend. It calls with the token your users already sign in with: CORS lets the page call, and no key sits in it.">
+          <div class="ucd-chrome" style="left:0;right:0;top:0"><i></i><i></i><i></i><span class="ucd-mono" style="margin-left:6px;font-size:10px;color:var(--ink-3);white-space:nowrap">app.example.com/analytics</span></div>
+          <div style="left:12px;right:10px;top:40px;display:flex;align-items:center;gap:8px"><span class="ucd-avatar" style="font-size:11px"><i id="ucd-who-i">a</i><span id="ucd-who">alice@acme · pro</span></span><a class="box-link" href="../Guides.dc.html?path=apps" title="Guides for this part" style="margin-left:auto">↗</a></div>
+          <span style="left:14px;top:78px;font-size:11px;font-weight:600;color:var(--ink-2)">Revenue by month</span>
+          <div id="ucd-bars" style="left:14px;right:14px;top:98px;height:80px;display:flex;align-items:flex-end;gap:12px;border-bottom:1px solid var(--line-2)">
+            <i style="flex:1;height:40%;border-radius:3px 3px 0 0;background:oklch(0.52 0.11 170 / 0.75);transition:height 0.45s"></i><i style="flex:1;height:52%;border-radius:3px 3px 0 0;background:oklch(0.52 0.11 170 / 0.75);transition:height 0.45s"></i><i style="flex:1;height:48%;border-radius:3px 3px 0 0;background:oklch(0.52 0.11 170 / 0.75);transition:height 0.45s"></i><i style="flex:1;height:66%;border-radius:3px 3px 0 0;background:oklch(0.52 0.11 170 / 0.75);transition:height 0.45s"></i><i style="flex:1;height:72%;border-radius:3px 3px 0 0;background:oklch(0.52 0.11 170 / 0.75);transition:height 0.45s"></i><i style="flex:1;height:88%;border-radius:3px 3px 0 0;background:oklch(0.52 0.11 170 / 0.75);transition:height 0.45s"></i>
+          </div>
+          <span class="ucd-mono" id="ucd-bars-t" style="left:14px;top:183px;font-size:9.5px;color:var(--ink-3)">tenant acme</span>
+          <span class="ucd-btn" id="ucd-csv" style="left:14px;top:210px">Download CSV</span>
+          <span style="left:14px;top:268px;font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)">Last response</span>
+          <span class="ucd-resp ok" id="ucd-resp" style="left:14px;right:8px;top:284px;font-size:9.5px">200 · X-Cache: HIT<br>X-Quota-Remaining-Calls: 99,411</span>
+        </div>
+
+        <!-- B · The governed core: four columns -->
+        <div class="ucd-core" style="left:300px;top:136px;width:700px;height:240px">
+          <div style="left:20px;right:14px;top:12px;display:flex;align-items:center;gap:10px"><span class="ucd-core-t">The governed core</span><span class="ucd-core-badge">GET /q/revenue_by_month</span><a class="box-link dark" href="../Guides.dc.html?path=rest" title="Guides for this part" style="margin-left:auto">↗</a></div>
+          <div class="ucd-core-row" data-col="0" style="left:20px;width:159px;top:72px;bottom:6px;display:flex;flex-direction:column;gap:3px;padding:4px 9px">
+            <h4 class="ucd-stage">01 · Token</h4>
+            <p style="font-size:12px;line-height:1.35;color:#e6efeb">Verified with your provider's keys: signature, expiry, issuer, audience.</p>
+            <span class="ucd-mono" data-live style="min-height:14px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">jwt:alice@acme</span>
+            <span class="ucd-flag" style="margin-top:auto;font-size:10px;align-self:flex-start">401</span></div>
+          <div class="ucd-core-row" data-col="1" style="left:187px;width:159px;top:72px;bottom:6px;display:flex;flex-direction:column;gap:3px;padding:4px 9px">
+            <h4 class="ucd-stage">02 · Plan</h4>
+            <p style="font-size:12px;line-height:1.35;color:#e6efeb">The <code class="ucd-mono" style="font-size:11px;padding:0;background:none;border:0;color:inherit">plan</code> claim picks the role: its queries, rate limit and quota, per user.</p>
+            <span class="ucd-mono" data-live style="min-height:14px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">pro · 99,412 left</span>
+            <span class="ucd-flag" id="ucd-f-plan" style="margin-top:auto;font-size:10px;align-self:flex-start;white-space:nowrap">429 quota_exceeded</span></div>
+          <div class="ucd-core-row" data-col="2" style="left:354px;width:159px;top:72px;bottom:6px;display:flex;flex-direction:column;gap:3px;padding:4px 9px">
+            <h4 class="ucd-stage">03 · Tenant</h4>
+            <p style="font-size:12px;line-height:1.35;color:#e6efeb"><code class="ucd-mono" style="font-size:11px;padding:0;background:none;border:0;color:inherit">tenant_id</code> comes from the token. A request can't send it.</p>
+            <span class="ucd-mono" data-live style="min-height:14px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">tenant_id = acme</span>
+            <span class="ucd-flag" id="ucd-f-tenant" style="margin-top:auto;font-size:10px;align-self:flex-start;white-space:nowrap">400 param_from_claim</span></div>
+          <div class="ucd-core-row" data-col="3" style="left:521px;width:159px;top:72px;bottom:6px;display:flex;flex-direction:column;gap:3px;padding:4px 9px" title="Keyed on the resolved values, not the caller: two users of one tenant share an entry, two tenants never do. A hit doesn't touch the database.">
+            <h4 class="ucd-stage">04 · Cache</h4>
+            <p style="font-size:12px;line-height:1.35;color:#e6efeb">One entry per query, tenant, format and page.</p>
+            <span class="ucd-mono" data-live style="min-height:27px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">acme · json · HIT</span>
+            <span style="display:grid">
+              <span class="ucd-entry" data-entry="0" style="height:auto;padding:1px 4px;font-size:10.5px;line-height:1.3" title="revenue_by_month, version 3, tenant_id acme, json, page 1">v3 · acme · json</span>
+              <span class="ucd-entry" data-entry="1" style="height:auto;padding:1px 4px;font-size:10.5px;line-height:1.3" title="revenue_by_month, version 3, tenant_id globex, json, page 1">v3 · globex · json</span>
+              <span class="ucd-entry" data-entry="2" style="height:auto;padding:1px 4px;font-size:10.5px;line-height:1.3" title="revenue_by_month, version 3, tenant_id acme, csv">v3 · acme · csv</span>
+            </span>
+            <span class="ucd-flag" id="ucd-f-cache" style="margin-top:auto;font-size:10px;align-self:flex-start;white-space:nowrap">X-Cache: HIT</span></div>
+        </div>
+
+        <!-- The plans: one role each -->
+        <div class="ucd-box" data-plan="free" style="left:300px;top:392px;width:340px;height:80px">
+          <span class="ucd-mono" style="left:12px;top:8px;font-size:11px;font-weight:600;color:var(--ink)">plan: free → role free</span>
+          <span class="ucd-mono" style="right:10px;top:9px;font-size:9.5px;color:var(--accent-ink);cursor:help" title="Every query this role is granted must take a value from the token. No ad-hoc SQL, no schema browsing.">require_claim_binding ✓</span>
+          <div style="left:12px;right:10px;top:29px;display:grid;gap:2px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.35;color:var(--ink-2)">
+            <span>queries: revenue_by_month</span>
+            <span style="display:flex;align-items:center;gap:6px"><span id="ucd-free-quota" style="padding:0 4px;margin-left:-4px;border-radius:3px;color:var(--danger-ink);background:oklch(0.65 0.2 25 / 0.12);transition:color 0.3s,background 0.3s">quota: 1,000 calls / month</span><span class="ucd-tag stable" style="font-family:'Instrument Sans',sans-serif;font-size:9px;padding:2px 4px">Stable</span></span>
+            <span>rate_limit: 30/minute</span>
+          </div>
+        </div>
+        <div class="ucd-box lit" data-plan="pro" style="left:660px;top:392px;width:340px;height:80px">
+          <span class="ucd-mono" style="left:12px;top:8px;font-size:11px;font-weight:600;color:var(--ink)">plan: pro → role pro</span>
+          <span class="ucd-mono" style="right:10px;top:9px;font-size:9.5px;color:var(--accent-ink);cursor:help" title="Every query this role is granted must take a value from the token. No ad-hoc SQL, no schema browsing.">require_claim_binding ✓</span>
+          <div style="left:12px;right:10px;top:29px;display:grid;gap:2px;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.35;color:var(--ink-2)">
+            <span>queries: revenue_by_month, cohort_retention</span>
+            <span style="display:flex;align-items:center;gap:6px"><span>quota: 100,000 calls / month</span><span class="ucd-tag stable" style="font-family:'Instrument Sans',sans-serif;font-size:9px;padding:2px 4px">Stable</span></span>
+            <span>rate_limit: 300/minute</span>
+          </div>
+        </div>
+
+        <!-- C · Your data -->
+        <div class="ucd-box" id="ucd-ch" style="left:1040px;top:136px;width:360px;height:260px">
+          <a class="box-link abs" href="../Guides.dc.html?path=databases" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:16px;top:10px;display:flex;align-items:center;gap:8px"><img src="https://cdn.simpleicons.org/clickhouse" alt="" width="16" height="16">ClickHouse</h3>
+          <span class="ucd-mono" style="left:16px;top:31px;font-size:11px;color:var(--ink-3)">analytics</span>
+          <span class="ucd-mono" style="left:16px;top:72px;font-size:10.5px;font-weight:600;color:var(--ink-2)">tenant_revenue</span>
+          <div style="left:16px;right:16px;top:90px;display:grid;gap:3px">
+            <span class="ucd-tile rest-lit" data-tenant="acme" style="display:flex;justify-content:space-between;align-items:center;height:26px;padding:0 9px">tenant_id = acme<small>12 rows</small></span>
+            <span class="ucd-tile" data-tenant="globex" style="display:flex;justify-content:space-between;align-items:center;height:26px;padding:0 9px">tenant_id = globex<small>12 rows</small></span>
+            <span class="ucd-tile" data-tenant="initech" style="display:flex;justify-content:space-between;align-items:center;height:26px;padding:0 9px">tenant_id = initech<small>12 rows</small></span>
+            <span class="ucd-tile" data-tenant="umbrella" style="display:flex;justify-content:space-between;align-items:center;height:26px;padding:0 9px">tenant_id = umbrella<small>12 rows</small></span>
+          </div>
+          <span style="left:16px;top:206px;font-size:11.5px;color:var(--ink-3)">+ 1,204 more tenants</span>
+          <span class="ucd-mono" style="left:16px;bottom:12px;font-size:10.5px;color:var(--ink)">WHERE tenant_id = :tenant_id</span>
+        </div>
+        <span style="left:1040px;top:412px;display:flex;align-items:center;gap:8px;padding:5px 7px 5px 10px;background:var(--surface);border:1px solid var(--line);border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-3);white-space:nowrap">or DuckDB · Parquet in your bucket<a class="box-link" href="../Guides.dc.html?path=files" title="Guides for this part">↗</a></span>
+
+        <!-- What the token carries -->
+        <div class="ucd-side" style="left:40px;top:496px;width:220px;height:90px"><b>What the token carries</b><span>verified before any of it is used</span></div>
+        <div class="ucd-code" id="ucd-claims" style="left:300px;top:496px;width:1100px;height:90px;display:grid;align-content:center;gap:4px;font-size:12px">
+          <span id="ucd-claims-1"></span>
+          <span><i> "iss": "https://login.example.com/", "aud": "analytics-api", "exp": 1793522400}</i></span>
+          <span class="err" id="ucd-req" style="visibility:hidden">request: ?tenant_id=globex   ← refused, the token decides</span>
+        </div>
+
+        <div class="ucd-legend" style="left:40px;right:40px;top:604px">
+          <span><span class="ucd-tag stable">Stable</span>compatibility promise</span>
+          <span>Every run is recorded as <code style="padding:0;background:none;border:0">jwt:&lt;user&gt;</code>. A cache hit isn't, because nothing ran, but it counts toward the quota.</span>
+        </div>
+
+        <svg class="ucd-fx" id="ucd-fx" width="1440" height="640" viewBox="0 0 1440 640" aria-hidden="true"></svg>
+      </div>
+    </div>
+
+    <div class="ucd-stack">
+      <div class="ucd-sbox out"><small>Your product</small><b>Each user calls with the token they sign in with</b><span>The page calls directly. No key sits in it.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox out"><small>The token</small><b>It carries the tenant and the plan</b><span>Verified with your identity provider's keys before anything in it is used.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox core"><small>The governed core</small><b>Token → plan → tenant → cache</b><span>The plan picks a role: queries, rate limit, quota, per user. The tenant fills the query's filter, and a request that sends one gets 400. One cache entry per tenant; tenants never share one.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↕</span>
+      <div class="ucd-sbox"><small>Asks</small><b>Identity provider, Redis</b><span>Signing keys fetched once; the cache and quota counts shared across instances.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Your data</small><b>ClickHouse or DuckDB: only the caller's tenant</b><span>One saved query, <code>WHERE tenant_id = :tenant_id</code>, for every tenant.</span></div>
+    </div>
+
+    <p class="ucd-foot">The same governed core as the <a href="../Home.dc.html#architecture">full architecture</a>.</p>
+  </section>
+  <script>
+  // Customer analytics: six calls a cycle to one saved query. Two users of acme and one of globex; the token's plan
+  // picks the role and its tenant fills the filter. A cache hit for a second user of the same tenant, a request that
+  // tries to send tenant_id, and a free user whose quota is used up. The HTML is the state at rest.
+  document.addEventListener('DOMContentLoaded', function () {
+    var U = window.UCD, svg = document.getElementById('ucd-fx'), wrap = document.getElementById('ucd-tenants');
+    if (!U || !svg) return;
+    var NS = 'http://www.w3.org/2000/svg', P = 18, V = 560, SLOT = 3;   // the cycle and each call, in seconds; px a second
+    var SPINE = 196, APP = 260, DOTS = [399.5, 566.5, 733.5, 900.5], DATA = 1040;
+    var green = 'oklch(0.62 0.13 170)', red = 'oklch(0.65 0.2 25)';
+    function el(tag, attrs, kids) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); (kids || []).forEach(function (c) { e.appendChild(c); }); return e; }
+    function $(id) { return document.getElementById(id); }
+    function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+    var cols = [].slice.call(wrap.querySelectorAll('[data-col]')), live = [].slice.call(wrap.querySelectorAll('[data-live]'));
+    var entries = [].slice.call(wrap.querySelectorAll('[data-entry]')), plans = {}, tenants = {};
+    [].forEach.call(wrap.querySelectorAll('[data-plan]'), function (e) { plans[e.dataset.plan] = e; });
+    [].forEach.call(wrap.querySelectorAll('[data-tenant]'), function (e) { tenants[e.dataset.tenant] = e; });
+    var idp = $('ucd-idp'), redis = $('ucd-redis'), who = $('ucd-who'), whoI = $('ucd-who-i'), resp = $('ucd-resp'), csv = $('ucd-csv');
+    var bars = [].slice.call($('ucd-bars').children), barsT = $('ucd-bars-t'), freeQuota = $('ucd-free-quota');
+    var fPlan = $('ucd-f-plan'), fTenant = $('ucd-f-tenant'), fCache = $('ucd-f-cache'), claims1 = $('ucd-claims-1'), req = $('ucd-req');
+
+    var lane = function (d, cls) { var p = el('path', { d: d, class: 'ucd-lane' + (cls ? ' ' + cls : '') }); svg.appendChild(p); return p; };
+    lane('M' + APP + ',' + SPINE + ' H300'); lane('M300,' + SPINE + ' H1000', 'in-core'); lane('M1000,' + SPINE + ' H' + DATA);
+    var idpLane = lane('M' + DOTS[0] + ',84 V136'), redisLane = lane('M' + DOTS[3] + ',84 V136');
+    var dotEls = DOTS.map(function (x) {
+      var d = document.createElement('span'); d.className = 'ucd-dot'; d.style.left = x + 'px'; d.style.top = SPINE + 'px';
+      wrap.querySelector('.ucd-canvas').insertBefore(d, svg); return d;
+    });
+
+    function claimsFor(c) {
+      return '{"sub": "' + c.sub + '", <span data-claim="tenant_id" class="id" style="border-radius:3px;transition:background 0.3s">"tenant_id": "' + c.tenant + '"</span>, <span data-claim="plan" class="id" style="border-radius:3px;transition:background 0.3s">"plan": "' + c.plan + '"</span>,';
+    }
+    var ALICE = { sub: 'alice@acme', tenant: 'acme', plan: 'pro' };
+    claims1.innerHTML = claimsFor(ALICE);
+    if (U.reduced) { wrap.classList.add('ucd-still'); return; }   // at rest: the HTML's own state
+
+    var BARS = { acme: [40, 52, 48, 66, 72, 88], globex: [74, 60, 64, 46, 52, 38] };
+    var BEN = { sub: 'ben@globex', tenant: 'globex', plan: 'free' }, DAN = { sub: 'dan@acme', tenant: 'acme', plan: 'pro' };
+    // Each call: who, how far it gets (stop: 'data', 'cache' for a hit, 'tenant' or 'plan' for a refusal), and what
+    // each column shows. Quota counts are the caller's own: checked before the call, counted before the response.
+    var CALLS = [
+      { u: ALICE, left: '99,412', stop: 'data', entry: 0, cache: 'acme · json · MISS', resp: '200 · X-Cache: MISS<br>X-Quota-Remaining-Calls: 99,411' },
+      { u: BEN, left: '1', stop: 'data', entry: 1, cache: 'globex · json · MISS', resp: '200 · X-Cache: MISS<br>X-Quota-Remaining-Calls: 0' },
+      { u: DAN, left: '97,180', stop: 'cache', entry: 0, cache: 'acme · json · HIT<br>(same tenant)', resp: '200 · X-Cache: HIT<br>X-Quota-Remaining-Calls: 97,179' },
+      { u: ALICE, left: '99,411', stop: 'tenant', resp: '400 param_from_claim', bad: true },
+      { u: ALICE, left: '99,411', stop: 'data', entry: 2, csv: true, cache: 'acme · csv · MISS', resp: '200 · text/csv<br>X-Quota-Remaining-Calls: 99,410' },
+      { u: BEN, left: '0', stop: 'plan', resp: '429 quota_exceeded<br>resets 2026-12-01', bad: true }
+    ];
+
+    function reset() {
+      entries.forEach(function (e) { e.style.visibility = 'hidden'; });
+      freeQuota.style.color = ''; freeQuota.style.background = '';
+      plans.pro.classList.remove('lit'); plans.free.classList.remove('lit');
+      tenants.acme.classList.remove('rest-lit');
+    }
+    reset();
+
+    var f4 = function (v) { return v.toFixed(4); };
+    function pulseG(path, color, t0, t1, fade) {   // t0, t1 in seconds into the cycle
+      var a = t0 / P, b = t1 / P, c = fade ? (t1 + fade) / P : b, begin = -P + 's';
+      return el('g', {}, [
+        el('circle', { r: 10, fill: color, opacity: 0.2 }),
+        el('circle', { r: 4.5, fill: color }),
+        el('animateMotion', { dur: P + 's', begin: begin, repeatCount: 'indefinite', path: path, calcMode: 'linear', keyPoints: '0;0;1;1', keyTimes: '0;' + f4(a) + ';' + f4(b) + ';1' }),
+        el('animate', { attributeName: 'opacity', values: '0;0;1;1;0;0', keyTimes: '0;' + f4(a) + ';' + f4(a + 0.002) + ';' + f4(fade ? b : b - 0.002) + ';' + f4(c) + ';1', dur: P + 's', begin: begin, repeatCount: 'indefinite' })
+      ]);
+    }
+    function redDot(d) { d.style.borderColor = red; d.style.boxShadow = '0 0 0 5px oklch(0.65 0.2 25 / 0.3),0 0 14px oklch(0.65 0.2 25 / 0.7)'; setTimeout(function () { d.style.borderColor = d.style.boxShadow = ''; }, 700); }
+    function pulseClaim(name) { var c = claims1.querySelector('[data-claim="' + name + '"]'); if (!c) return; c.style.background = 'oklch(0.62 0.13 170 / 0.3)'; setTimeout(function () { c.style.background = ''; }, 700); }
+    function flashRed(f, ms) { U.flash(f, ms); }
+    function setResp(c) { resp.className = 'ucd-resp ' + (c.bad ? 'bad' : 'ok'); resp.innerHTML = c.resp; }
+    var keysFetched = false;
+
+    var EVENTS = [[0.05, reset]];
+    CALLS.forEach(function (c, k) {
+      var s = k * SLOT + 0.1, at = function (x) { return s + (x - APP) / V; };
+      var stopX = c.stop === 'data' ? DATA : c.stop === 'cache' ? DOTS[3] : c.stop === 'tenant' ? DOTS[2] : DOTS[1];
+      var arrive = at(stopX);
+      svg.appendChild(pulseG('M' + APP + ',' + SPINE + ' H' + stopX, c.bad ? red : green, s, arrive, c.bad ? 0.35 : 0));
+      if (!c.bad) svg.appendChild(pulseG('M' + stopX + ',' + SPINE + ' H' + APP, green, arrive + 0.05, arrive + 0.05 + (stopX - APP) / V, 0.2));
+      var back = arrive + 0.05 + (stopX - APP) / V;
+      EVENTS.push([s, function () {
+        who.textContent = c.u.sub + ' · ' + c.u.plan; whoI.textContent = c.u.sub[0];
+        claims1.innerHTML = claimsFor(c.u); req.style.visibility = 'hidden';
+        live.forEach(function (l) { l.innerHTML = ''; l.style.color = ''; });
+        plans.pro.classList.remove('lit'); plans.free.classList.remove('lit');
+        if (c.csv) U.flash(csv, 600);
+      }]);
+      EVENTS.push([at(DOTS[0]), function () {
+        U.flash(dotEls[0], 500); U.flash(cols[0], 700); live[0].textContent = 'jwt:' + c.u.sub;
+        if (!keysFetched) { keysFetched = true; U.flash(idp, 900); U.flash(idpLane, 900); }
+      }]);
+      EVENTS.push([at(DOTS[1]), function () {
+        var plan = plans[c.u.plan]; plan.classList.add('lit'); pulseClaim('plan');
+        live[1].textContent = c.u.plan + ' · ' + c.left + ' left';
+        if (c.stop === 'plan') {
+          redDot(dotEls[1]); flashRed(fPlan, 1600); live[1].style.color = red;
+          freeQuota.style.color = 'var(--danger-ink)'; freeQuota.style.background = 'oklch(0.65 0.2 25 / 0.12)';
+          setTimeout(function () { setResp(c); }, 250);
+        } else { U.flash(dotEls[1], 500); U.flash(cols[1], 700); }
+      }]);
+      if (c.stop === 'plan') return;
+      EVENTS.push([at(DOTS[2]), function () {
+        pulseClaim('tenant_id');
+        if (c.stop === 'tenant') {
+          redDot(dotEls[2]); flashRed(fTenant, 1600); live[2].textContent = '?tenant_id=globex'; live[2].style.color = red;
+          req.style.visibility = 'visible'; setTimeout(function () { setResp(c); }, 250);
+        } else { U.flash(dotEls[2], 500); U.flash(cols[2], 700); live[2].textContent = 'tenant_id = ' + c.u.tenant; }
+      }]);
+      if (c.stop === 'tenant') return;
+      EVENTS.push([at(DOTS[3]), function () {
+        U.flash(dotEls[3], 500); U.flash(cols[3], 700); U.flash(redis, 700); U.flash(redisLane, 700);
+        live[3].innerHTML = c.cache; var e = entries[c.entry];
+        if (c.stop === 'cache') { U.flash(e, 1000); fCache.style.color = green; fCache.style.borderColor = green; setTimeout(function () { fCache.style.color = fCache.style.borderColor = ''; }, 1000); }
+        else { e.style.visibility = 'visible'; U.flash(e, 700); }
+      }]);
+      if (c.stop === 'data') EVENTS.push([arrive, function () { U.flash(tenants[c.u.tenant], 1200); U.flash($('ucd-ch'), 700); }]);
+      EVENTS.push([back, function () {
+        setResp(c); U.flash($('ucd-app'), 500);
+        BARS[c.u.tenant].forEach(function (h, i) { bars[i].style.height = h + '%'; }); barsT.textContent = 'tenant ' + c.u.tenant;
+      }]);
+    });
+    U.loop(svg, [{ begin: -P, dur: P }], function (p, f, passed) { EVENTS.forEach(function (e) { if (passed(e[0] / P)) e[1](); }); });
+  });
+  </script>
   <section style="">
     <div class="f-pad" style="max-width:1480px;margin:0 auto;padding:16px 24px 64px;display:grid;gap:24px">
 <article id="saas" class="f-2col u-case" style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
