@@ -137,6 +137,19 @@
 .ucd-tile.lit,.ucd-still .ucd-tile.rest-lit{opacity:1;border-color:oklch(0.52 0.11 170 / 0.5)}
 .ucd-tile.lit small,.ucd-still .ucd-tile.rest-lit small{display:block}
 
+/* A run of repeated jobs: one cell per run, muted until its outcome is known, then a green or red top edge; and a pin
+   that marks how far something has got along them */
+.ucd-cell{display:grid;align-content:center;gap:2px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);border-top:3px solid var(--line);background:var(--surface);color:var(--ink-4);transition:border-color 0.3s,color 0.3s}
+.ucd-cell b{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500}
+.ucd-cell span{font-size:11px;line-height:1.3}
+.ucd-cell.ok,.ucd-still .ucd-cell.rest-ok{border-top-color:oklch(0.62 0.13 170);color:var(--ink-2)}
+.ucd-cell.ok b,.ucd-cell.bad b,.ucd-still .ucd-cell b{color:var(--ink)}
+.ucd-cell.bad,.ucd-still .ucd-cell.rest-bad{border-top-color:oklch(0.65 0.2 25);color:var(--ink-2)}
+.ucd-pin{display:flex;align-items:center;gap:6px;transform:translate(-5px,-50%);transition:left 0.4s ease-in-out;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-3)}
+.ucd-pin>i{width:10px;height:10px;border-radius:50%;background:oklch(0.52 0.11 170);box-shadow:0 0 0 3px var(--bg)}
+.ucd-pin>span{padding:0 4px;background:var(--bg)}
+.ucd-rule{height:1px;background:var(--line-2)}
+
 /* Phones: the canvas gives way to a stack of boxes */
 .ucd-stack{display:none;gap:8px}
 .ucd-sbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:6px}
@@ -155,4 +168,4 @@
 /* Reduced motion: no pulses; whatever lights up shows lit, at rest */
 .ucd-still .ucd-core-row.rest-lit{background:oklch(0.62 0.13 170 / 0.14);border-color:oklch(0.62 0.13 170 / 0.5)}
 .ucd-still .ucd-chk{border-color:oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08);color:var(--ink)}
-@media (prefers-reduced-motion:reduce){.ucd-box,.ucd-core-row,.ucd-dot,.ucd-chk,.ucd-gate,.ucd-flag,.ucd-pill,.ucd-pop,.ucd-btn,.ucd-seg,.ucd-tile{transition:none}}
+@media (prefers-reduced-motion:reduce){.ucd-box,.ucd-core-row,.ucd-dot,.ucd-chk,.ucd-gate,.ucd-flag,.ucd-pill,.ucd-pop,.ucd-btn,.ucd-seg,.ucd-tile,.ucd-cell,.ucd-pin{transition:none}}

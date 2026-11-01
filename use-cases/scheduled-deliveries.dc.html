@@ -22,6 +22,8 @@
 <script src="../support.js"></script>
 <script src="../theme.js?v=15"></script>
 <script src="../search.js?v=6" defer></script>
+<link rel="stylesheet" href="uc-diagram.css">
+<script src="uc-diagram.js" defer></script>
 </head>
 <body>
 <helmet>
@@ -257,6 +259,243 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   <header class="f-pad" style="max-width:1480px;margin:0 auto;padding:56px 24px 8px;display:grid;gap:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)"><a class="uc-back" href="../Use Cases.dc.html#g-partners" aria-label="Back to use cases" title="Back to use cases"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a><a href="../Use Cases.dc.html" style="color:var(--ink-2);font-weight:500">Use cases</a><span aria-hidden="true">/</span><a href="../Use Cases.dc.html#g-partners" style="color:var(--ink-2);font-weight:500">Partners and pipelines</a><span aria-hidden="true">/</span><span style="color:var(--ink);font-weight:600">Scheduled deliveries</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9fb3ac">05 / 12</span></div>
   </header>
+  <section class="ucd-section" id="how-it-fits" aria-labelledby="ucd-h" style="padding-top:16px;padding-bottom:40px">
+    <span class="ucd-eyebrow">How it fits together</span>
+    <h2 class="ucd-h2" id="ucd-h">Every night, only what changed, and nothing lost when a night fails</h2>
+    <p class="ucd-lede">Your scheduler starts the run. QueryAPIGate takes a lease so two runs never overlap, asks the database for what changed since the last file that landed, and writes it under the one prefix the destination allows. The watermark moves only after the file is written, so a failed night is sent again the next.</p>
+    <div class="ucd-wrap" data-w="1440" data-h="640" id="ucd-deliv">
+      <div class="ucd-canvas" role="group" aria-label="Your scheduler starts an export each night through the Exports front door. The governed core takes the export's lease, binds the watermark, streams the published query, writes the file under the destination's prefix in the partner's bucket, and records the run. Over four nights: the first writes a file and moves the watermark; on the second, a second run started by hand is refused with 409 export_running while the first is still running; the third night's write fails, the watermark stays and export_failing fires; the fourth night sends both nights' rows and the watermark moves on.">
+
+        <div class="ucd-stats" style="right:40px;top:24px;gap:28px;white-space:nowrap">
+          <div><b>1</b><span>run at a time, on any instance</span></div>
+          <div><b>0</b><span>rows lost when a night fails</span></div>
+          <div><b>≤ 300 MB</b><span>to write 6 M rows to S3, measured</span></div>
+        </div>
+
+        <div class="ucd-zone" style="left:40px;top:96px;width:200px">Who starts it</div>
+        <div class="ucd-zone" style="left:280px;top:96px;width:140px">Front door</div>
+        <div class="ucd-zone" style="left:460px;top:96px;width:620px">The governed core: one run</div>
+        <div class="ucd-zone" style="left:1120px;top:96px;width:280px">Reads from · writes to</div>
+
+        <!-- A · Who starts it: yours, but outside QueryAPIGate -->
+        <div class="ucd-box out" style="left:40px;top:136px;width:200px;height:120px">
+          <a class="box-link abs" href="../Guides.dc.html?path=pipelines" title="Guides for this part">↗</a>
+          <span style="left:12px;top:12px;display:flex;align-items:center;gap:7px"><span style="display:block;width:16px;height:16px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/alarm-clock.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/alarm-clock.svg) center/contain no-repeat"></span><b class="ucd-h" style="font-size:14.5px">Your scheduler</b></span>
+          <span class="ucd-mono" style="left:12px;top:37px;font-size:11px;color:var(--ink-2)">0 2 * * *</span>
+          <span style="left:12px;top:57px;display:flex;gap:4px"><span class="ucd-chip" style="font-size:10.5px">cron</span><span class="ucd-chip" style="font-size:10.5px">CronJob</span><span class="ucd-chip" style="font-size:10.5px">Airflow</span></span>
+          <span class="ucd-mono" id="ucd-clock" style="left:12px;top:88px;font-size:13px;font-weight:600;color:var(--ink)">2026-10-11 02:00</span>
+        </div>
+        <div class="ucd-box out" style="left:40px;top:280px;width:200px;height:80px">
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:7px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/user.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/user.svg) center/contain no-repeat"></span><b style="font-size:13px;font-weight:600">Someone runs it by hand</b></span>
+          <span class="ucd-mono" style="left:12px;top:30px;font-size:10px;color:var(--ink-2)">POST …/orders_daily/runs</span>
+          <span class="ucd-resp" id="ucd-hand" style="left:12px;right:10px;top:47px"></span>
+        </div>
+
+        <!-- B · Front door -->
+        <div class="ucd-box" style="left:280px;top:136px;width:140px;height:336px">
+          <a class="box-link abs" href="../Guides.dc.html?path=exports" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:14px;top:10px">Exports</h3>
+          <span class="ucd-tag stable" style="left:14px;top:33px;font-size:10px;padding:3px 6px">Stable</span>
+          <span class="ucd-mono" style="left:14px;right:10px;top:78px;font-size:10px;line-height:1.45;color:var(--ink-2)">queryapigate exports run orders_daily</span>
+          <span class="ucd-mono" style="left:14px;right:10px;top:138px;font-size:10px;line-height:1.45;color:var(--ink-2)">POST /api/v1/<wbr>exports/<wbr>{name}/runs</span>
+          <p class="ucd-p" style="left:14px;right:12px;bottom:14px;font-size:12px;color:var(--ink-3)">the published version of one saved query, to one destination</p>
+        </div>
+
+        <!-- C · The governed core: one run, five steps -->
+        <div class="ucd-core" style="left:460px;top:136px;width:620px;height:336px">
+          <div style="left:20px;right:14px;top:12px;display:flex;align-items:center;gap:10px"><span class="ucd-core-t">The governed core</span><span class="ucd-core-badge">export orders_daily</span><a class="box-link dark" href="../Guides.dc.html?path=core" title="Guides for this part" style="margin-left:auto">↗</a></div>
+          <div class="ucd-core-row" data-col="0" style="left:20px;width:109.6px;top:84px;bottom:12px;display:flex;flex-direction:column;gap:7px;padding:5px 6px">
+            <h4 class="ucd-stage" style="font-size:11.5px;letter-spacing:0.05em">1 · Lease</h4>
+            <p style="font-size:12.5px;line-height:1.38;color:#e6efeb">One run at a time, on any instance. A crashed run's lease expires.</p>
+            <span class="ucd-flag" data-flag="lease" style="margin-top:auto;font-size:10px;padding:3px 4px">409 export_running</span></div>
+          <div class="ucd-core-row" data-col="1" style="left:137.6px;width:109.6px;top:84px;bottom:12px;display:flex;flex-direction:column;gap:7px;padding:5px 6px">
+            <h4 class="ucd-stage" style="font-size:11.5px;letter-spacing:0.05em">2 · Watermark</h4>
+            <p style="font-size:12.5px;line-height:1.38;color:#e6efeb">Binds <code class="ucd-mono" style="font-size:11px">:since</code> to the last <code class="ucd-mono" style="font-size:11px">updated_at</code> delivered.</p>
+            <span class="ucd-mono" id="ucd-since" style="margin-top:auto;font-size:10px;color:oklch(0.8 0.11 170)">since 10-13 23:57</span></div>
+          <div class="ucd-core-row" data-col="2" style="left:255.2px;width:109.6px;top:84px;bottom:12px;display:flex;flex-direction:column;gap:7px;padding:5px 6px">
+            <h4 class="ucd-stage" style="font-size:11.5px;letter-spacing:0.05em">3 · Stream</h4>
+            <p style="font-size:12.5px;line-height:1.38;color:#e6efeb">The published version, once, through a temporary file. The export's mask applies.</p></div>
+          <div class="ucd-core-row" data-col="3" style="left:372.8px;width:109.6px;top:84px;bottom:12px;display:flex;flex-direction:column;gap:7px;padding:5px 6px" title="Every write goes through a DuckDB connection locked to the destination's prefix. If a run fails after the file is written but before the watermark moves, those rows are sent again: at least once, never lost. Have the partner de-duplicate on a key.">
+            <h4 class="ucd-stage" style="font-size:11.5px;letter-spacing:0.05em">4 · Write</h4>
+            <p style="font-size:12.5px;line-height:1.38;color:#e6efeb">Only under the destination's prefix. Then, and only then, the watermark moves.</p>
+            <span class="ucd-flag" data-flag="write" style="margin-top:auto;font-size:10px;padding:3px 4px">write failed</span></div>
+          <div class="ucd-core-row" data-col="4" style="left:490.4px;width:109.6px;top:84px;bottom:12px;display:flex;flex-direction:column;gap:7px;padding:5px 6px">
+            <h4 class="ucd-stage" style="font-size:11.5px;letter-spacing:0.05em">5 · Record</h4>
+            <p style="font-size:12.5px;line-height:1.38;color:#e6efeb">History: object, rows, watermark from → to.</p>
+            <span class="ucd-flag" data-flag="failing" title="An alert, while the export's newest run failed" style="margin-top:auto;font-size:10px;padding:3px 4px">export_failing</span></div>
+        </div>
+
+        <!-- D · Reads from: your database -->
+        <div class="ucd-box" id="ucd-db" style="left:1120px;top:136px;width:280px;height:150px">
+          <a class="box-link abs" href="../Guides.dc.html?path=databases" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:16px;top:10px;display:flex;align-items:center;gap:8px"><img src="https://cdn.simpleicons.org/postgresql" alt="" width="16" height="16">PostgreSQL</h3>
+          <span class="ucd-mono" style="left:16px;top:31px;font-size:11px;color:var(--ink-3)">shop</span>
+          <span class="ucd-mono" style="left:16px;top:80px;font-size:11px;color:var(--ink-2)">WHERE updated_at &gt; :since</span>
+          <span class="ucd-mono" id="ucd-changed" style="left:16px;top:102px;font-size:12px;font-weight:500;color:var(--ink)">4,214 rows changed</span>
+        </div>
+        <!-- Writes to: the partner's bucket, outside your infrastructure, so dashed -->
+        <div class="ucd-box out" id="ucd-bucket" style="left:1120px;top:312px;width:280px;height:160px" title="Credentials are stored like a connection password: masked, a ${VAR} reference, or encrypted. They're given, not taken from an AWS instance role.">
+          <a class="box-link abs" href="../Guides.dc.html?path=deliveries" title="Guides for this part">↗</a>
+          <span style="left:16px;top:12px;display:flex;align-items:center;gap:7px"><b class="ucd-h">Acme's bucket</b><span style="display:block;width:13px;height:13px;background:var(--ink-3);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg) center/contain no-repeat"></span></span>
+          <span class="ucd-mono" style="left:16px;top:36px;font-size:11px;color:var(--ink-3)">s3://acme-inbound/orders/</span>
+          <div class="ucd-mono" id="ucd-files" style="left:16px;right:10px;top:62px;display:grid;gap:2px;font-size:10px;line-height:1.45;color:var(--ink-2)"></div>
+          <p class="ucd-p" style="left:16px;right:14px;bottom:12px;font-size:12px;color:var(--ink-3)">Writes are locked to this prefix.</p>
+        </div>
+
+        <!-- The nights strip -->
+        <div class="ucd-side" style="left:40px;top:496px;width:200px;height:56px"><b>Four nights</b><span>the watermark moves only when a file lands</span></div>
+        <div class="ucd-cell rest-ok" data-night="0" style="left:280px;top:496px;width:274px;height:56px"><b>run 184 · 2026-10-11 02:00</b><span>2,310 rows · watermark → 10-10 23:58</span></div>
+        <div class="ucd-cell rest-ok" data-night="1" style="left:562px;top:496px;width:274px;height:56px"><b>run 185 · 2026-10-12 02:00</b><span>1,904 rows · a second run refused</span></div>
+        <div class="ucd-cell rest-bad" data-night="2" style="left:844px;top:496px;width:274px;height:56px"><b>run 186 · 2026-10-13 02:00</b><span>write failed · watermark stays</span></div>
+        <div class="ucd-cell rest-ok" data-night="3" style="left:1126px;top:496px;width:274px;height:56px"><b>run 187 · 2026-10-14 02:00</b><span>4,214 rows · nights 3 and 4 · watermark → 10-13 23:57</span></div>
+        <div class="ucd-rule" style="left:280px;top:572px;width:1120px"></div>
+        <div class="ucd-pin" id="ucd-pin" style="left:1263px;top:572px"><i></i><span>watermark</span></div>
+
+        <div class="ucd-legend" style="left:40px;right:40px;top:604px">
+          <span><span class="ucd-tag stable">Stable</span>compatibility promise</span>
+          <span><span class="ucd-tag exp">Exp</span>may change in a minor release</span>
+          <span>Test a destination first: one small probe object, written under its prefix.</span>
+        </div>
+
+        <svg class="ucd-fx" id="ucd-fx" width="1440" height="640" viewBox="0 0 1440 640" aria-hidden="true"></svg>
+      </div>
+    </div>
+
+    <div class="ucd-stack">
+      <div class="ucd-sbox out"><small>Who starts it</small><b>Your cron, CronJob or Airflow</b><span>QueryAPIGate doesn't keep a clock; your scheduler runs the export.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Front door <span class="ucd-tag stable">Stable</span></small><b>Exports</b><span>One command or one API call runs the published version of a saved query.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox core"><small>The governed core</small><b>Lease → watermark → stream → write → record</b><span>One run at a time. Only what changed since the last file that landed. Written under the destination's prefix, and only then does the watermark move.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Reads from</small><b>Your database</b><span><code>WHERE updated_at &gt; :since</code></span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox out"><small>Writes to</small><b>Their bucket</b><span>An s3://, gs:// or r2:// prefix; nothing can be written anywhere else.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Nights</small><b>A failed night is sent again</b><span>The watermark stays where it was, and the next run delivers both nights' rows: at least once, never lost.</span></div>
+    </div>
+
+    <p class="ucd-foot">The same governed core as the <a href="../Home.dc.html#architecture">full architecture</a>.</p>
+  </section>
+  <script>
+  // Scheduled deliveries: four nights a cycle. Each night your scheduler starts a run through five steps; at step 3 a read
+  // goes to the database, at step 4 a write goes to the partner's bucket. Night 2 a second run is refused while the first
+  // holds the lease; night 3 the write fails and the watermark stays; night 4 sends both nights' rows.
+  document.addEventListener('DOMContentLoaded', function () {
+    var U = window.UCD, svg = document.getElementById('ucd-fx'), wrap = document.getElementById('ucd-deliv');
+    if (!U || !svg) return;
+    var NS = 'http://www.w3.org/2000/svg', NIGHT = 3, P = 4 * NIGHT, V = 340;   // seconds a night; four nights a cycle; px a second, so each run lands within its night
+    var SPINE = 196, DOTS = [534.8, 652.4, 770, 887.6, 1005.2];
+    var green = 'oklch(0.62 0.13 170)', red = 'oklch(0.65 0.2 25)';
+    function el(tag, attrs, kids) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); (kids || []).forEach(function (c) { e.appendChild(c); }); return e; }
+
+    var NIGHTS = [
+      { run: 184, date: '2026-10-11', since: '10-09 23:59', rows: '2,310', after: '10-10 23:58' },
+      { run: 185, date: '2026-10-12', since: '10-10 23:58', rows: '1,904', after: '10-11 23:59', hand: true },
+      { run: 186, date: '2026-10-13', since: '10-11 23:59', rows: '2,310', fail: true },
+      { run: 187, date: '2026-10-14', since: '10-11 23:59', rows: '4,214', after: '10-13 23:57' }
+    ];
+    var cells = [].slice.call(wrap.querySelectorAll('[data-night]')), cols = [].slice.call(wrap.querySelectorAll('[data-col]'));
+    var flags = {}; [].forEach.call(wrap.querySelectorAll('[data-flag]'), function (f) { flags[f.getAttribute('data-flag')] = f; });
+    var clock = document.getElementById('ucd-clock'), since = document.getElementById('ucd-since'), changed = document.getElementById('ucd-changed');
+    var files = document.getElementById('ucd-files'), pin = document.getElementById('ucd-pin'), hand = document.getElementById('ucd-hand');
+    var dbBox = document.getElementById('ucd-db'), bucket = document.getElementById('ucd-bucket');
+    var CELL_X = [417, 699, 981, 1263], PIN_START = 285;   // each cell's centre; the rule's left end
+    function fileLine(n) { return n.date + '/orders_' + n.run + '.parquet  ' + n.rows + ' rows'; }
+    function addFile(n) { var s = document.createElement('span'); s.textContent = fileLine(n); s.style.whiteSpace = 'pre'; files.insertBefore(s, files.firstChild); while (files.children.length > 3) files.removeChild(files.lastChild); }
+
+    // Lanes: the scheduler and the by-hand caller to the door, the door into the core, the spine out to the database
+    // (the read), and from the core's right edge to the bucket (the write).
+    var lane = function (d, cls) { var p = el('path', { d: d, class: 'ucd-lane' + (cls ? ' ' + cls : '') }); svg.appendChild(p); return p; };
+    lane('M240,' + SPINE + ' H280'); lane('M240,320 C260,320 260,' + SPINE + ' 280,' + SPINE); lane('M420,' + SPINE + ' H460');
+    lane('M460,' + SPINE + ' H1080', 'in-core'); lane('M1080,' + SPINE + ' H1120');
+    var WRITE = 'M887.6,' + SPINE + ' H1040 C1066,' + SPINE + ' 1054,392 1080,392';
+    lane(WRITE, 'in-core'); lane('M1080,392 H1120');
+    var dotEls = DOTS.map(function (x) {
+      var d = document.createElement('span'); d.className = 'ucd-dot'; d.style.left = x + 'px'; d.style.top = SPINE + 'px';
+      wrap.querySelector('.ucd-canvas').insertBefore(d, svg); return d;
+    });
+
+    if (U.reduced) {
+      wrap.classList.add('ucd-still');
+      [NIGHTS[0], NIGHTS[1], NIGHTS[3]].forEach(addFile);
+      clock.textContent = '2026-10-14 02:00'; hand.className = 'ucd-resp bad'; hand.textContent = '409 export_running · retry_after';
+      return;
+    }
+    since.textContent = 'since ' + NIGHTS[0].since; changed.textContent = '';
+
+    // Lengths: the scheduler's run, the by-hand call, the read along the spine, and the write down to the bucket.
+    var lenHand = U.bez([240, 320], [260, 320], [260, SPINE], [280, SPINE]);
+    var lenCurve = U.bez([1040, SPINE], [1066, SPINE], [1054, 392], [1080, 392]);
+    function at(x) { return 40 + (x - 420); }                                  // scheduler → door (the jump across it is free) → x
+    var lenWrite = (1040 - 887.6) + lenCurve + 40;
+    var f4 = function (v) { return v.toFixed(4); };
+    function pulseG(path, color, begin, t0, t1, fade, keep) {
+      var t2 = fade ? t1 + fade / P : t1;
+      return el('g', {}, [
+        el('circle', { r: 10, fill: color, opacity: 0.2 }),
+        el('circle', { r: 4.5, fill: color }),
+        el('animateMotion', { dur: P + 's', begin: begin + 's', repeatCount: 'indefinite', path: path, calcMode: 'linear', keyPoints: '0;0;1;1', keyTimes: '0;' + f4(t0) + ';' + f4(t1) + ';1' }),
+        el('animate', { attributeName: 'opacity', values: '0;0;1;1;0;0', keyTimes: '0;' + f4(t0) + ';' + f4(t0 + 0.002) + ';' + f4(fade ? t1 : t1 - 0.002) + ';' + f4(t2) + ';1', dur: P + 's', begin: begin + 's', repeatCount: 'indefinite' })
+      ]);
+    }
+    // A point part-way along the write path, for where night 3's write gives up.
+    function writePoint(len) {
+      if (len <= 1040 - 887.6) return [887.6 + len, SPINE];
+      var t = 0, acc = 0, px = 1040, py = SPINE, p0 = [1040, SPINE], p1 = [1066, SPINE], p2 = [1054, 392], p3 = [1080, 392];
+      for (var j = 1; j <= 80; j++) { t = j / 80; var u = 1 - t; var x = u*u*u*p0[0] + 3*u*u*t*p1[0] + 3*u*t*t*p2[0] + t*t*t*p3[0], y = u*u*u*p0[1] + 3*u*u*t*p1[1] + 3*u*t*t*p2[1] + t*t*t*p3[1]; acc += Math.hypot(x - px, y - py); px = x; py = y; if (acc >= len - 152.4) return [x, y]; }
+      return [1080, 392];
+    }
+
+    var MAIN = 'M240,' + SPINE + ' H280 M420,' + SPINE + ' H' + DOTS[4];
+    var pulses = [];
+    NIGHTS.forEach(function (n, i) {
+      var s = i * NIGHT, begin = s - P, toDot = DOTS.map(function (x) { return at(x) / V; });
+      svg.appendChild(pulseG(MAIN, green, begin, 0.0005, toDot[4] / P, 0.4));
+      svg.appendChild(pulseG('M770,' + SPINE + ' H1120', green, begin, toDot[2] / P, toDot[3] / P));   // the read: from step 3, back before step 4 writes
+      var w0 = toDot[3], w1 = w0 + lenWrite / V, fail = null;
+      if (n.fail) {   // night 3: the write turns red half way, and fades there
+        var half = lenWrite / 2, pt = writePoint(half), wm = w0 + half / V;
+        var g = pulseG(WRITE + ' H1120', green, begin, w0 / P, wm / P);
+        g.querySelector('animateMotion').setAttribute('keyPoints', '0;0;0.5;0.5');   // half way along, by then
+        svg.appendChild(g);
+        svg.appendChild(pulseG('M' + pt[0].toFixed(1) + ',' + pt[1].toFixed(1) + ' l0.1,0', red, begin, wm / P, (wm + 0.05) / P, 0.45));
+        fail = wm / P;
+      } else svg.appendChild(pulseG(WRITE + ' H1120', green, begin, w0 / P, w1 / P));
+      pulses.push({ begin: begin, dur: P, n: n, i: i, dots: toDot.map(function (t) { return t / P; }), read: toDot[3] / P, land: n.fail ? null : w1 / P, fail: fail });
+      if (n.hand) {   // a second run, by hand, reaching step 1 while this night's run is at step 3: refused by the lease
+        var hTo = (lenHand + (DOTS[0] - 420)) / V, hs = s + toDot[2] - hTo, hb = hs - P;
+        svg.appendChild(pulseG('M240,320 C260,320 260,' + SPINE + ' 280,' + SPINE + ' M420,' + SPINE + ' H' + DOTS[0], red, +hb.toFixed(3), 0.0005, hTo / P, 0.4));
+        pulses.push({ begin: +hb.toFixed(3), dur: P, hand: true, end: hTo / P });
+      }
+    });
+
+    function setPin(k) { pin.style.left = (k < 0 ? PIN_START : CELL_X[k]) + 'px'; }
+    function reset() { cells.forEach(function (c) { c.classList.remove('ok', 'bad'); }); setPin(-1); files.innerHTML = ''; flags.failing.classList.remove('lit'); }
+    reset();
+    U.loop(svg, pulses, function (p, f, passed) {
+      if (p.hand) {
+        if (passed(p.end)) { U.flash(flags.lease, 1500); hand.className = 'ucd-resp bad'; hand.textContent = '409 export_running · retry_after'; }
+        return;
+      }
+      var n = p.n;
+      if (passed(0.0005)) { if (p.i === 0) reset(); clock.textContent = n.date + ' 02:00'; }
+      p.dots.forEach(function (m, j) {
+        if (!passed(m)) return;
+        U.flash(dotEls[j], 500); U.flash(cols[j], 700);
+        if (j === 1) since.textContent = 'since ' + n.since;
+      });
+      if (passed(p.read)) { U.flash(dbBox, 800); changed.textContent = n.rows + ' rows changed'; }
+      if (p.land != null && passed(p.land)) {
+        U.flash(bucket, 900); addFile(n); setPin(p.i); cells[p.i].classList.add('ok');
+        flags.failing.classList.remove('lit');
+      }
+      if (p.fail != null && passed(p.fail)) {
+        U.flash(flags.write, 1500); flags.failing.classList.add('lit'); cells[p.i].classList.add('bad');
+      }
+    });
+  });
+  </script>
   <section style="">
     <div class="f-pad" style="max-width:1480px;margin:0 auto;padding:16px 24px 64px;display:grid;gap:24px">
 <article id="pipelines" class="f-2col u-case" style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
