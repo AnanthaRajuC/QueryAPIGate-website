@@ -22,6 +22,8 @@
 <script src="../support.js"></script>
 <script src="../theme.js?v=15"></script>
 <script src="../search.js?v=6" defer></script>
+<link rel="stylesheet" href="uc-diagram.css">
+<script src="uc-diagram.js" defer></script>
 </head>
 <body>
 <helmet>
@@ -257,6 +259,279 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   <header class="f-pad" style="max-width:1480px;margin:0 auto;padding:56px 24px 8px;display:grid;gap:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)"><a class="uc-back" href="../Use Cases.dc.html#g-data" aria-label="Back to use cases" title="Back to use cases"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a><a href="../Use Cases.dc.html" style="color:var(--ink-2);font-weight:500">Use cases</a><span aria-hidden="true">/</span><a href="../Use Cases.dc.html#g-data" style="color:var(--ink-2);font-weight:500">Data teams</a><span aria-hidden="true">/</span><span style="color:var(--ink);font-weight:600">Self-serve data</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9fb3ac">07 / 12</span></div>
   </header>
+  <section class="ucd-section" id="how-it-fits" aria-labelledby="ucd-h" style="padding-top:16px;padding-bottom:40px">
+    <span class="ucd-eyebrow">How it fits together</span>
+    <h2 class="ucd-h2" id="ucd-h">Each team finds what it can use, and nothing else on the database</h2>
+    <p class="ucd-lede">The data team publishes saved queries into collections. Each team's role grants its collections, read-only, with its own rate limit, so a key reaches exactly those queries and never the tables behind them. <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">/catalog</code> shows each team what it can call and on what terms, and a query filed into a collection is there on the next call.</p>
+    <div class="ucd-wrap" data-w="1440" data-h="640" id="ucd-selfserve">
+      <div class="ucd-canvas" role="group" aria-label="Three teams call one governed core: finance with a key made from its role, marketing as people signing in whose team claim names the role, and ops with a dashboard key. The core checks the caller, then reach: only the saved queries in the role's collections, read-only, never ad-hoc SQL, which is refused with 403 connection_forbidden. Then the role's rate limit and quota and the query's cache. Every call passes through the collection its query belongs to, finance, marketing or ops, before the warehouse; tables in no published query, such as payroll and raw_events, are on the same connection and no team reaches them. GET /catalog shows each team only what it can run. Your data team files queries into collections, and each move is audited with the keys that gained access.">
+
+        <div class="ucd-stats" style="right:40px;top:20px;gap:12px">
+          <div style="max-width:108px"><b>0</b><span style="font-size:10.5px;line-height:1.3">database passwords handed out</span></div>
+          <div style="max-width:64px"><b>1</b><span style="font-size:10.5px;line-height:1.3">role per team</span></div>
+          <div style="max-width:100px"><b>1</b><span style="font-size:10.5px;line-height:1.3">call to see what you can use</span></div>
+        </div>
+
+        <div class="ucd-zone" style="left:40px;top:96px;width:200px">Your teams</div>
+        <div class="ucd-zone" style="left:280px;top:96px;width:480px">The governed core</div>
+        <div class="ucd-zone" style="left:800px;top:96px;width:280px;display:flex;align-items:center;justify-content:space-between">Collections<a class="box-link" href="../Guides.dc.html?path=management" title="Guides for collections" style="margin-bottom:-2px">↗</a></div>
+        <div class="ucd-zone" style="left:1120px;top:96px;width:280px">Your warehouse</div>
+
+        <!-- The Asks row: your data team, above the collections -->
+        <div class="ucd-box out" id="ucd-team" style="left:800px;top:24px;width:280px;height:60px" title="Also describes the warehouse: comments imported from the database, and notes on which joins to use. Every move into a collection is audited with the keys that gained access.">
+          <div style="left:11px;right:9px;top:10px;display:flex;align-items:center;gap:6px"><span style="flex:none;display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/library.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/library.svg) center/contain no-repeat"></span><b style="font-size:12px;font-weight:600">Your data team</b><a class="box-link" href="../Guide.dc.html?g=07-group-queries-into-a-collection" title="Guide 7: Group queries into a collection" style="margin-left:auto">↗</a></div>
+          <span class="ucd-mono" id="ucd-team-line" style="left:11px;top:37px;font-size:10px;color:var(--ink-3);white-space:nowrap">saves queries into collections</span>
+        </div>
+
+        <!-- A · Your teams: outside QueryAPIGate, so dashed -->
+        <div class="ucd-box out" data-team="0" style="left:40px;top:136px;width:200px;height:96px" title="A key made from the finance role: collections finance, 600/hour.">
+          <a class="box-link abs" href="../Guides.dc.html?path=apps" title="Guides for this part">↗</a>
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/chart-column.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/chart-column.svg) center/contain no-repeat"></span><b style="font-size:13px;font-weight:600">Finance</b><span style="font-size:12px;color:var(--ink-3)">· BI tool</span></span>
+          <span class="ucd-mono" style="left:12px;top:32px;font-size:10px;color:var(--ink)">key finance-reporting</span>
+          <span class="ucd-resp ok" data-resp style="left:12px;right:8px;top:70px">200 · /catalog: 2 queries</span>
+        </div>
+        <div class="ucd-box out" data-team="1" style="left:40px;top:256px;width:200px;height:96px" title="People sign in with your identity provider; their team claim names the role, used live.">
+          <a class="box-link abs" href="../Guides.dc.html?path=identity" title="Guides for this part">↗</a>
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/users.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/users.svg) center/contain no-repeat"></span><b style="font-size:13px;font-weight:600">Marketing</b><span style="font-size:12px;color:var(--ink-3)">· people</span></span>
+          <span class="ucd-mono" style="left:12px;top:32px;font-size:10px;line-height:1.35;color:var(--ink)">jwt:maria@example.com<br>→ marketing</span>
+          <span class="ucd-resp bad" data-resp style="left:12px;right:8px;top:70px">403 connection_forbidden</span>
+        </div>
+        <div class="ucd-box out" data-team="2" style="left:40px;top:376px;width:200px;height:96px" title="A key made from the ops role: collections ops, no connections.">
+          <a class="box-link abs" href="../Guides.dc.html?path=apps" title="Guides for this part">↗</a>
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/monitor.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/monitor.svg) center/contain no-repeat"></span><b style="font-size:13px;font-weight:600">Ops</b><span style="font-size:12px;color:var(--ink-3)">· dashboard</span></span>
+          <span class="ucd-mono" style="left:12px;top:32px;font-size:10px;color:var(--ink)">key ops-dashboard</span>
+          <span class="ucd-resp bad" data-resp style="left:12px;right:8px;top:70px">403 connection_forbidden</span>
+        </div>
+
+        <!-- B · The governed core -->
+        <div class="ucd-core" style="left:280px;top:136px;width:480px;height:240px">
+          <div style="left:20px;right:14px;top:12px;display:flex;align-items:center;gap:10px"><span class="ucd-core-t">The governed core</span><span class="ucd-core-badge">GET /catalog · GET /q/&lt;name&gt;</span><a class="box-link dark" href="../Guides.dc.html?path=rest" title="Guides for this part" style="margin-left:auto">↗</a></div>
+          <div class="ucd-core-row" data-col="0" style="left:20px;width:141.33px;top:72px;bottom:6px;display:flex;flex-direction:column;gap:3px;padding:4px 7px">
+            <h4 class="ucd-stage">01 · Caller</h4>
+            <p style="font-size:12px;line-height:1.35;color:#e6efeb">A key, or a person's token. Either way, a team's role.</p>
+            <span class="ucd-mono" data-live style="min-height:27px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">finance-reporting · finance</span>
+            <span class="ucd-flag" style="margin-top:auto;font-size:10px;align-self:flex-start">401</span></div>
+          <div class="ucd-core-row" data-col="1" style="left:169.33px;width:141.33px;top:72px;bottom:6px;display:flex;flex-direction:column;gap:3px;padding:4px 7px" title="One rule decides what a caller can reach, for /catalog, /openapi.json and /q alike, so the catalog never lists what you can't run.">
+            <h4 class="ucd-stage">02 · Reach</h4>
+            <p style="font-size:12px;line-height:1.35;color:#e6efeb">Only the queries in the role's collections. Read-only, never ad-hoc SQL.</p>
+            <span class="ucd-mono" data-live style="min-height:27px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">collection finance ✓</span>
+            <span class="ucd-flag rest-lit" id="ucd-f-reach" style="margin-top:auto;font-size:9.5px;padding:3px 5px">403 connection_forbidden</span></div>
+          <div class="ucd-core-row" data-col="2" style="left:318.67px;width:141.33px;top:72px;bottom:6px;display:flex;flex-direction:column;gap:3px;padding:4px 7px">
+            <h4 class="ucd-stage">03 · Terms</h4>
+            <p style="font-size:12px;line-height:1.35;color:#e6efeb">The role's rate limit and quota, and the query's cache.</p>
+            <span class="ucd-mono" data-live style="min-height:27px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">600/hour · cache 300 s · MISS</span>
+            <span class="ucd-flag" style="margin-top:auto;font-size:10px;align-self:flex-start;white-space:nowrap">429 rate_limited</span></div>
+        </div>
+
+        <!-- Who ran what: run history, under the core -->
+        <div class="ucd-box" style="left:280px;top:392px;width:480px;height:80px">
+          <a class="box-link abs" href="../Guides.dc.html?path=log" title="Guides for this part">↗</a>
+          <span style="left:14px;top:7px;font-size:11px;font-weight:600;letter-spacing:0.04em;color:var(--ink-3)">Who ran what</span>
+          <div style="left:8px;right:36px;top:24px;display:grid">
+            <span class="ucd-entry" id="ucd-run-new" style="position:static;height:16px;overflow:hidden;transition:height 0.4s,opacity 0.4s,background 0.3s,color 0.3s">14:05  finance-reporting      revenue_by_region</span>
+            <span class="ucd-entry" style="position:static;height:16px">14:03  ops-dashboard          open_tickets</span>
+            <span class="ucd-entry" style="position:static;height:16px">14:02  jwt:maria@example.com  campaign_spend</span>
+          </div>
+        </div>
+
+        <!-- C · Collections: what the data team published -->
+        <div class="ucd-box" data-card="finance" style="left:800px;top:136px;width:280px;height:96px">
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/folder.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/folder.svg) center/contain no-repeat"></span><b class="ucd-mono" style="font-size:12px;font-weight:600">finance</b></span>
+          <span class="ucd-entry" data-row="revenue_by_region" style="left:6px;right:6px;top:30px;height:17px">revenue_by_region · cache 300 s</span>
+          <span class="ucd-entry" data-row="margin_by_product" style="left:6px;right:6px;top:48px;height:17px">margin_by_product</span>
+          <span style="left:12px;bottom:8px;font-size:11px;color:var(--ink-3)">granted: role finance</span>
+        </div>
+        <div class="ucd-box" data-card="marketing" style="left:800px;top:256px;width:280px;height:96px">
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/folder.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/folder.svg) center/contain no-repeat"></span><b class="ucd-mono" style="font-size:12px;font-weight:600">marketing</b></span>
+          <span class="ucd-entry" style="left:6px;right:6px;top:30px;height:17px">campaign_spend</span>
+          <span class="ucd-entry" style="left:6px;right:6px;top:48px;height:17px">signups_by_channel</span>
+          <span style="left:12px;bottom:8px;font-size:11px;color:var(--ink-3)">granted: role marketing</span>
+        </div>
+        <div class="ucd-box" data-card="ops" style="left:800px;top:376px;width:280px;height:96px">
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/folder.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/folder.svg) center/contain no-repeat"></span><b class="ucd-mono" style="font-size:12px;font-weight:600">ops</b></span>
+          <span class="ucd-entry" style="left:6px;right:6px;top:30px;height:17px">open_tickets</span>
+          <span class="ucd-entry" style="left:6px;right:6px;top:48px;height:17px">sla_breaches</span>
+          <span style="left:12px;bottom:8px;font-size:11px;color:var(--ink-3)">granted: role ops</span>
+        </div>
+
+        <!-- D · Your warehouse -->
+        <div class="ucd-box" id="ucd-wh" style="left:1120px;top:136px;width:280px;height:336px">
+          <a class="box-link abs" href="../Guides.dc.html?path=databases" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:16px;top:10px;display:flex;align-items:center;gap:8px"><img src="https://cdn.simpleicons.org/postgresql" alt="" width="16" height="16">PostgreSQL</h3>
+          <span class="ucd-mono" style="left:16px;top:31px;font-size:11px;color:var(--ink-3)">warehouse</span>
+          <div style="left:16px;right:16px;top:76px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <span class="ucd-tile rest-lit" data-table="orders" style="height:28px;font-size:10.5px">orders</span>
+            <span class="ucd-tile" data-table="products" style="height:28px;font-size:10.5px">products</span>
+            <span class="ucd-tile" data-table="campaigns" style="height:28px;font-size:10.5px">campaigns</span>
+            <span class="ucd-tile" data-table="tickets" style="height:28px;font-size:10.5px">tickets</span>
+            <span id="ucd-payroll" style="display:flex;align-items:center;gap:6px;height:28px;padding:0 9px;border-radius:6px;border:1px dashed var(--line-2);font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-4);transition:color 0.3s,border-color 0.3s,background 0.3s"><span style="flex:none;display:block;width:11px;height:11px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg) center/contain no-repeat"></span>payroll</span>
+            <span style="display:flex;align-items:center;gap:6px;height:28px;padding:0 9px;border-radius:6px;border:1px dashed var(--line-2);font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-4)"><span style="flex:none;display:block;width:11px;height:11px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg) center/contain no-repeat"></span>raw_events</span>
+          </div>
+          <span style="left:16px;right:16px;top:182px;font-size:11px;line-height:1.35;color:var(--ink-3)">On the same connection, in no published query: no team reaches them.</span>
+          <span class="ucd-rule" style="left:16px;right:16px;top:226px"></span>
+          <span class="ucd-mono" style="left:16px;right:16px;top:236px;font-size:10px;line-height:1.4;color:var(--ink)">orders.amt: Net revenue in EUR, refunds excluded</span>
+          <span style="left:16px;right:16px;top:272px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span class="ucd-tag stable" style="font-family:'JetBrains Mono',monospace;text-transform:none;letter-spacing:0;font-size:9.5px;padding:3px 5px">source: database</span><span style="font-size:11px;color:var(--ink-3)">imported from the database's comments</span></span>
+        </div>
+
+        <!-- What finance's /catalog says -->
+        <div class="ucd-side" style="left:40px;top:496px;width:200px;height:90px"><b>What finance's /catalog says</b><span>only what this key can run</span></div>
+        <div class="ucd-code" id="ucd-cat" style="left:280px;top:496px;width:1120px;height:90px;display:grid;align-content:center;gap:4px;font-size:12px">
+          <span data-cat="1"><i>{"queries": [</i>{"name": "revenue_by_region", "collection": "finance", "cache_ttl": 300, "can_write": false}<i id="ucd-cat-end">,</i></span>
+          <span data-cat="2"><i>             </i><span class="id" id="ucd-cat-new" style="border-radius:3px;transition:background 0.4s">{"name": "margin_by_product", "collection": "finance", "cache_ttl": null, "can_write": false}</span><i>],</i></span>
+          <span data-cat="3"><i> "caller": {"name": "finance-reporting", "rate_limit": "600/hour"}}</i></span>
+        </div>
+
+        <div class="ucd-legend" style="left:40px;right:40px;top:604px">
+          <span><i style="display:block;width:22px;height:14px;border:1px dashed var(--line-2);border-radius:4px"></i>yours, outside QueryAPIGate</span>
+          <span><i style="display:block;width:22px;height:14px;border:1px solid var(--line);background:var(--surface);border-radius:4px"></i>yours</span>
+          <span><i style="display:block;width:9px;height:9px;border-radius:50%;background:oklch(0.62 0.13 170)"></i>served</span>
+          <span><i style="display:block;width:9px;height:9px;border-radius:50%;background:oklch(0.65 0.2 25)"></i>refused</span>
+          <span>A key made from a role copies it once; people who sign in use the role live.</span>
+        </div>
+
+        <svg class="ucd-fx" id="ucd-fx" width="1440" height="640" viewBox="0 0 1440 640" aria-hidden="true"></svg>
+      </div>
+    </div>
+
+    <div class="ucd-stack">
+      <div class="ucd-sbox out"><small>Your teams</small><b>A key per team, or people signing in</b><span>Each one a team's role: its collections, rate limit and quota.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox core"><small>The governed core</small><b>Caller → reach → terms</b><span>Only the queries in the role's collections, read-only. Anything else, a query outside them or ad-hoc SQL, is 403.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Collections</small><b>What the data team published</b><span>Filing a query into a collection puts it in every granted team's catalog at once, and the move is audited.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Your warehouse</small><b>Reached only through published queries</b><span>Tables in none of them stay out of reach on the same connection.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox out"><small>/catalog</small><b>What can I use, and on what terms</b><span>Each query's description, parameters and cache, and the caller's own rate limit.</span></div>
+    </div>
+
+    <p class="ucd-foot">The same governed core as the <a href="../Home.dc.html#architecture">full architecture</a>.</p>
+  </section>
+  <script>
+  // Self-serve data: six events a cycle. Finance reads its catalog and runs a published query; marketing asks for
+  // finance's query and ops sends ad-hoc SQL, both refused at Reach; the data team files a new query into finance,
+  // and finance's catalog has it on the next call. The HTML is the state at rest.
+  document.addEventListener('DOMContentLoaded', function () {
+    var U = window.UCD, svg = document.getElementById('ucd-fx'), wrap = document.getElementById('ucd-selfserve');
+    if (!U || !svg) return;
+    var NS = 'http://www.w3.org/2000/svg', P = 18, V = 520, SLOT = 3;   // the cycle and each event, in seconds; px a second
+    var SPINE = 196, ROWS = [184, 304, 424], DOTS = [370.67, 520, 669.33];
+    var green = 'oklch(0.62 0.13 170)', red = 'oklch(0.65 0.2 25)';
+    function el(tag, attrs, kids) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); (kids || []).forEach(function (c) { e.appendChild(c); }); return e; }
+    function $(id) { return document.getElementById(id); }
+    function q(sel) { return wrap.querySelector(sel); }
+
+    var cols = [].slice.call(wrap.querySelectorAll('[data-col]')), live = [].slice.call(wrap.querySelectorAll('[data-live]'));
+    var teams = [].slice.call(wrap.querySelectorAll('[data-team]')), resps = teams.map(function (t) { return t.querySelector('[data-resp]'); });
+    var finance = q('[data-card=finance]'), rowRev = q('[data-row=revenue_by_region]'), rowMargin = q('[data-row=margin_by_product]');
+    var fReach = $('ucd-f-reach'), runNew = $('ucd-run-new'), team = $('ucd-team'), teamLine = $('ucd-team-line'), payroll = $('ucd-payroll');
+    var orders = q('[data-table=orders]'), wh = $('ucd-wh'), cat = [].slice.call(wrap.querySelectorAll('[data-cat]')), catEnd = $('ucd-cat-end'), catNew = $('ucd-cat-new');
+
+    // Lanes: the three teams converging into the core, the core fanning out to the three collections, the
+    // collections converging into the warehouse, and the data team down into finance.
+    var IN = ['M240,184 C260,184 260,196 280,196', 'M240,304 C262,304 258,196 280,196', 'M240,424 C262,424 258,196 280,196'];
+    var OUT = ['M760,196 C780,196 780,184 800,184', 'M760,196 C782,196 778,304 800,304', 'M760,196 C782,196 778,424 800,424'];
+    var WH = ['M1080,184 C1100,184 1100,196 1120,196', 'M1080,304 C1102,304 1098,196 1120,196', 'M1080,424 C1102,424 1098,196 1120,196'];
+    var lane = function (d, cls) { var p = el('path', { d: d, class: 'ucd-lane' + (cls ? ' ' + cls : '') }); svg.appendChild(p); return p; };
+    IN.forEach(function (d) { lane(d); }); lane('M280,' + SPINE + ' H760', 'in-core'); OUT.forEach(function (d) { lane(d); }); WH.forEach(function (d) { lane(d); });
+    var teamLane = lane('M940,84 V136');
+    var dotEls = DOTS.map(function (x) {
+      var d = document.createElement('span'); d.className = 'ucd-dot'; d.style.left = x + 'px'; d.style.top = SPINE + 'px';
+      wrap.querySelector('.ucd-canvas').insertBefore(d, svg); return d;
+    });
+
+    if (U.reduced) { wrap.classList.add('ucd-still'); return; }   // at rest: the HTML's own state
+    fReach.classList.remove('rest-lit');
+
+    function reset() {
+      rowMargin.style.visibility = 'hidden';
+      cat.forEach(function (c) { c.style.visibility = 'hidden'; }); catEnd.textContent = '],';
+      runNew.style.height = '0px'; runNew.style.opacity = 0;
+      orders.classList.remove('rest-lit');
+    }
+    reset();
+
+    var f4 = function (v) { return v.toFixed(4); };
+    function pulseG(path, color, t0, t1, fade) {   // t0, t1 in seconds into the cycle
+      var a = t0 / P, b = t1 / P, c = fade ? (t1 + fade) / P : b, begin = -P + 's';
+      return el('g', {}, [
+        el('circle', { r: 10, fill: color, opacity: 0.2 }),
+        el('circle', { r: 4.5, fill: color }),
+        el('animateMotion', { dur: P + 's', begin: begin, repeatCount: 'indefinite', path: path, calcMode: 'linear', keyPoints: '0;0;1;1', keyTimes: '0;' + f4(a) + ';' + f4(b) + ';1' }),
+        el('animate', { attributeName: 'opacity', values: '0;0;1;1;0;0', keyTimes: '0;' + f4(a) + ';' + f4(a + 0.002) + ';' + f4(fade ? b : b - 0.002) + ';' + f4(c) + ';1', dur: P + 's', begin: begin, repeatCount: 'indefinite' })
+      ]);
+    }
+    function redDot(d) { d.style.borderColor = red; d.style.boxShadow = '0 0 0 5px oklch(0.65 0.2 25 / 0.3),0 0 14px oklch(0.65 0.2 25 / 0.7)'; setTimeout(function () { d.style.borderColor = d.style.boxShadow = ''; }, 700); }
+    function resp(k, text, bad) { resps[k].className = 'ucd-resp ' + (bad ? 'bad' : 'ok'); resps[k].textContent = text; }
+
+    // Lengths: a team's lane in, the spine to each dot, the fan out to the finance card, and its lane on to the
+    // warehouse. Pulses jump across the card (the M in the path costs no time), as the call is inside it.
+    var inLen = IN.map(function (d, i) { return U.bez([240, ROWS[i]], [i ? 262 : 260, ROWS[i]], [i ? 258 : 260, SPINE], [280, SPINE]); });
+    var outLen = U.bez([760, SPINE], [780, SPINE], [780, 184], [800, 184]), whLen = U.bez([1080, 184], [1100, 184], [1100, SPINE], [1120, SPINE]);
+    function call(k, s, stop, color) {   // team k, starting at s; stop: 'reach', 'card' or 'wh'. Returns arrival times.
+      var t = { s: s }, d0 = inLen[k];
+      DOTS.forEach(function (x, i) { t['d' + i] = s + (d0 + x - 280) / V; });
+      t.card = s + (d0 + 480 + outLen) / V; t.wh = t.card + whLen / V;
+      var path = IN[k], end;
+      if (stop === 'reach') { path += ' H' + DOTS[1]; end = t.d1; }
+      else { path += ' H760 C780,' + SPINE + ' 780,184 800,184'; end = t.card; if (stop === 'wh') { path += ' M1080,184 C1100,184 1100,' + SPINE + ' 1120,' + SPINE; end = t.wh; } }
+      svg.appendChild(pulseG(path, color, s, end, stop === 'reach' ? 0.35 : 0));
+      if (stop !== 'reach') {   // back the way it came, to the team's box
+        var back = (stop === 'wh' ? 'M1120,' + SPINE + ' C1100,' + SPINE + ' 1100,184 1080,184 M800,184' : 'M800,184') + ' C780,184 780,' + SPINE + ' 760,' + SPINE + ' H280 C260,' + SPINE + ' 260,184 240,184';
+        t.home = end + 0.05 + (end - s);
+        svg.appendChild(pulseG(back, green, end + 0.05, t.home, 0.2));
+      }
+      return t;
+    }
+    function begin(k, caller) { live.forEach(function (l) { l.textContent = ''; l.style.color = ''; }); live[0].textContent = caller; U.flash(teams[k], 500); }
+    function at(t, ms) { return function () { U.flash(dotEls[t], 500); U.flash(cols[t], ms || 700); }; }
+
+    var EVENTS = [[0.05, reset]], s;
+    // 1 · finance reads its catalog: to the finance card and back; the warehouse isn't touched.
+    s = 0.1; var c1 = call(0, s, 'card', green);
+    EVENTS.push([s, function () { begin(0, 'finance-reporting · finance'); }], [c1.d0, at(0)], [c1.d1, function () { at(1)(); live[1].textContent = 'collection finance ✓'; }],
+      [c1.card, function () { U.flash(finance, 900); }],
+      [c1.home, function () { resp(0, '200 · /catalog: 1 query'); cat[0].style.visibility = 'visible'; }], [c1.home + 0.3, function () { cat[2].style.visibility = 'visible'; }]);
+    // 2 · finance runs revenue_by_region: every column, the card's row, orders in the warehouse; recorded.
+    s = SLOT + 0.1; var c2 = call(0, s, 'wh', green);
+    EVENTS.push([s, function () { begin(0, 'finance-reporting · finance'); }], [c2.d0, at(0)], [c2.d1, function () { at(1)(); live[1].textContent = 'collection finance ✓'; }],
+      [c2.d2, function () { at(2)(); live[2].textContent = '600/hour · cache 300 s · MISS'; }],
+      [c2.card, function () { U.flash(finance, 900); U.flash(rowRev, 900); }],
+      [c2.wh, function () { U.flash(wh, 600); U.flash(orders, 1300); runNew.style.height = '16px'; runNew.style.opacity = 1; U.flash(runNew, 1200); }],
+      [c2.home, function () { resp(0, '200 · X-Cache: MISS'); }]);
+    // 3 · maria, signed in as marketing, asks for finance's query: refused at Reach.
+    s = 2 * SLOT + 0.1; var c3 = call(1, s, 'reach', red);
+    EVENTS.push([s, function () { begin(1, 'jwt:maria@example.com · marketing'); }], [c3.d0, at(0)],
+      [c3.d1, function () { redDot(dotEls[1]); U.flash(fReach, 1500); live[1].textContent = 'collection finance ✗'; live[1].style.color = red; setTimeout(function () { resp(1, '403 connection_forbidden', true); }, 250); }]);
+    // 4 · ops sends SELECT * FROM payroll to /execute_sql: refused at Reach. payroll flashes as what was asked for.
+    s = 3 * SLOT + 0.1; var c4 = call(2, s, 'reach', red);
+    EVENTS.push([s, function () { begin(2, 'ops-dashboard · ops'); }], [c4.d0, at(0)],
+      [c4.d1, function () {
+        redDot(dotEls[1]); U.flash(fReach, 1500); live[1].textContent = 'no ad-hoc SQL'; live[1].style.color = red;
+        payroll.style.color = 'var(--danger-ink)'; payroll.style.borderColor = red; payroll.style.background = 'oklch(0.65 0.2 25 / 0.1)';
+        setTimeout(function () { payroll.style.color = payroll.style.borderColor = payroll.style.background = ''; }, 800);
+        setTimeout(function () { resp(2, '403 connection_forbidden', true); }, 250);
+      }]);
+    // 5 · the data team files margin_by_product into finance: audited with the keys that gained access.
+    s = 4 * SLOT + 0.1; var c5 = s + 52 / V;
+    svg.appendChild(pulseG('M940,84 V136', green, s, c5, 0.2));
+    EVENTS.push([s, function () { U.flash(team, 900); U.flash(teamLane, 700); live.forEach(function (l) { l.textContent = ''; l.style.color = ''; }); }],
+      [c5, function () {
+        U.flash(finance, 900); rowMargin.style.visibility = 'visible'; U.flash(rowMargin, 1200);
+        teamLine.textContent = 'audited: move_query · +finance-reporting'; teamLine.style.color = 'var(--accent-ink)';
+        setTimeout(function () { teamLine.textContent = 'saves queries into collections'; teamLine.style.color = ''; }, 1500);
+      }]);
+    // 6 · finance reads its catalog again: margin_by_product is in it.
+    s = 5 * SLOT + 0.1; var c6 = call(0, s, 'card', green);
+    EVENTS.push([s, function () { begin(0, 'finance-reporting · finance'); }], [c6.d0, at(0)], [c6.d1, function () { at(1)(); live[1].textContent = 'collection finance ✓'; }],
+      [c6.card, function () { U.flash(finance, 900); }],
+      [c6.home, function () {
+        resp(0, '200 · /catalog: 2 queries'); catEnd.textContent = ','; cat[1].style.visibility = 'visible';
+        catNew.style.background = 'oklch(0.62 0.13 170 / 0.3)'; setTimeout(function () { catNew.style.background = ''; }, 1400);
+      }]);
+    U.loop(svg, [{ begin: -P, dur: P }], function (p, f, passed) { EVENTS.forEach(function (e) { if (passed(e[0] / P)) e[1](); }); });
+  });
+  </script>
   <section style="">
     <div class="f-pad" style="max-width:1480px;margin:0 auto;padding:16px 24px 64px;display:grid;gap:24px">
 <article id="selfserve" class="f-2col u-case" style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
