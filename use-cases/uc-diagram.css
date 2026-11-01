@@ -150,6 +150,21 @@
 .ucd-pin>span{padding:0 4px;background:var(--bg)}
 .ucd-rule{height:1px;background:var(--line-2)}
 
+/* Rows of a log or a list: a row lights when it's acted on, is .off until it's written, and turns red when it no longer
+   matches what was written; .chain joins each row to the one before it, as a hash chain does. A chip that lights. */
+.ucd-entry{display:flex;align-items:center;gap:10px;height:20px;padding:0 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-2);white-space:pre;transition:opacity 0.4s,color 0.3s,background 0.3s}
+.ucd-box>.ucd-entry>*{position:static}
+.ucd-entry b{font-weight:500;color:var(--ink-3)}
+.ucd-entry.lit{background:oklch(0.52 0.11 170 / 0.1);color:var(--ink)}
+.ucd-entry.off{opacity:0}
+.ucd-entry.bad,.ucd-entry.bad b{color:var(--danger-ink)}
+.ucd-entry.bad{background:oklch(0.65 0.2 25 / 0.1)}
+.ucd-entry.chain{padding-left:24px}
+.ucd-entry.chain::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:1px;background:var(--line-2)}
+.ucd-entry.chain.first::before{top:50%}
+.ucd-entry.chain:not(.first)::after{content:'';position:absolute;left:7px;top:-3px;width:7px;height:6px;border:1.5px solid var(--ink-4);border-radius:3px;background:var(--surface)}
+.ucd-chip.lit{box-shadow:0 0 0 2px oklch(0.52 0.11 170 / 0.55)}
+
 /* Phones: the canvas gives way to a stack of boxes */
 .ucd-stack{display:none;gap:8px}
 .ucd-sbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:6px}
@@ -168,4 +183,4 @@
 /* Reduced motion: no pulses; whatever lights up shows lit, at rest */
 .ucd-still .ucd-core-row.rest-lit{background:oklch(0.62 0.13 170 / 0.14);border-color:oklch(0.62 0.13 170 / 0.5)}
 .ucd-still .ucd-chk{border-color:oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08);color:var(--ink)}
-@media (prefers-reduced-motion:reduce){.ucd-box,.ucd-core-row,.ucd-dot,.ucd-chk,.ucd-gate,.ucd-flag,.ucd-pill,.ucd-pop,.ucd-btn,.ucd-seg,.ucd-tile,.ucd-cell,.ucd-pin{transition:none}}
+@media (prefers-reduced-motion:reduce){.ucd-box,.ucd-core-row,.ucd-dot,.ucd-chk,.ucd-gate,.ucd-flag,.ucd-pill,.ucd-pop,.ucd-btn,.ucd-seg,.ucd-tile,.ucd-cell,.ucd-pin,.ucd-entry{transition:none}}
