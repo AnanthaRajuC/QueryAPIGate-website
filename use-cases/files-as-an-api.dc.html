@@ -22,6 +22,8 @@
 <script src="../support.js"></script>
 <script src="../theme.js?v=15"></script>
 <script src="../search.js?v=6" defer></script>
+<link rel="stylesheet" href="uc-diagram.css">
+<script src="uc-diagram.js" defer></script>
 </head>
 <body>
 <helmet>
@@ -257,6 +259,264 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   <header class="f-pad" style="max-width:1480px;margin:0 auto;padding:56px 24px 8px;display:grid;gap:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)"><a class="uc-back" href="../Use Cases.dc.html#g-data" aria-label="Back to use cases" title="Back to use cases"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a><a href="../Use Cases.dc.html" style="color:var(--ink-2);font-weight:500">Use cases</a><span aria-hidden="true">/</span><a href="../Use Cases.dc.html#g-data" style="color:var(--ink-2);font-weight:500">Data teams</a><span aria-hidden="true">/</span><span style="color:var(--ink);font-weight:600">Files as an API</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9fb3ac">08 / 12</span></div>
   </header>
+  <section class="ucd-section" id="how-it-fits" aria-labelledby="ucd-h" style="padding-top:16px;padding-bottom:40px">
+    <span class="ucd-eyebrow">How it fits together</span>
+    <h2 class="ucd-h2" id="ucd-h">A bucket of files, served as an API, with no copy in between</h2>
+    <p class="ucd-lede">A DuckDB connection lists the folders you allow and makes each one a view, with partitions as a column. Every read is checked twice: by DuckDB against the paths you listed, and by your storage against the credentials you gave it. Apps run saved queries, analysts write SQL over the views, and nobody, not even the admin key, reads outside those paths.</p>
+    <div class="ucd-wrap" data-w="1440" data-h="640" id="ucd-files">
+      <div class="ucd-canvas" role="group" aria-label="A finance dashboard runs a saved query, an analyst writes SQL over named views, and the admin key holds every grant. The governed core checks the grant, the cache and the format as for any database. The DuckDB connection, inside the server's process, holds no tables of its own: as it opens it lists the allowed bucket prefixes and makes each folder a view, with hive-style date folders as one view with a date column. Every read leaves DuckDB through its allowed_paths, which DuckDB enforces and a query can't change: a read of hr/salaries.parquet is refused with 403 path_not_allowed, even for the admin key. Your bucket's own policy on the connection's credentials is the second lock. The files are read where they are, with no copy.">
+
+        <div class="ucd-stats" style="right:40px;top:20px;gap:12px">
+          <div style="max-width:76px"><b>0</b><span style="font-size:10.5px;line-height:1.3">copies of the data</span></div>
+          <div style="max-width:118px"><b>1</b><span style="font-size:10.5px;line-height:1.3">view per folder, partitions as a column</span></div>
+          <div style="max-width:72px"><b>2</b><span style="font-size:10.5px;line-height:1.3">locks on every read</span></div>
+        </div>
+
+        <div class="ucd-zone" style="left:40px;top:96px;width:200px">Who asks</div>
+        <div class="ucd-zone" style="left:280px;top:96px;width:440px">The governed core</div>
+        <div class="ucd-zone" style="left:760px;top:96px;width:300px;white-space:nowrap">DuckDB, in the server's process</div>
+        <div class="ucd-zone" style="left:1100px;top:96px;width:300px">Your bucket</div>
+
+        <!-- A · Who asks: outside QueryAPIGate, so dashed -->
+        <div class="ucd-box out" data-who="0" style="left:40px;top:136px;width:200px;height:96px" title="A saved query only, no SQL of its own: connections: [].">
+          <a class="box-link abs" href="../Guides.dc.html?path=apps" title="Guides for this part">↗</a>
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-dashboard.svg) center/contain no-repeat"></span><b style="font-size:13px;font-weight:600">Finance dashboard</b></span>
+          <span class="ucd-mono" style="left:12px;top:32px;font-size:10px;color:var(--ink)">queries: daily_events</span>
+          <span class="ucd-resp ok" data-resp style="left:12px;right:8px;top:54px">200 · X-Cache: HIT</span>
+        </div>
+        <div class="ucd-box out" data-who="1" style="left:40px;top:256px;width:200px;height:96px" title="Writes SQL over the views, never over file paths.">
+          <a class="box-link abs" href="../Guides.dc.html?path=data" title="Guides for this part">↗</a>
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/terminal.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/terminal.svg) center/contain no-repeat"></span><b style="font-size:13px;font-weight:600">An analyst</b></span>
+          <span class="ucd-mono" style="left:12px;top:32px;font-size:10px;color:var(--ink)">allowed_tables: events</span>
+          <span class="ucd-resp ok" data-resp style="left:12px;right:8px;top:54px">200 · application/vnd.apache.parquet</span>
+        </div>
+        <div class="ucd-box out" data-who="2" style="left:40px;top:376px;width:200px;height:96px" title="Every grant there is, and still only the allowed paths.">
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/shield.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/shield.svg) center/contain no-repeat"></span><b style="font-size:13px;font-weight:600">Even the admin key</b></span>
+          <span class="ucd-mono" style="left:12px;top:32px;font-size:10px;color:var(--ink)">admin</span>
+          <span class="ucd-resp bad" data-resp style="left:12px;right:8px;top:54px">403 path_not_allowed</span>
+        </div>
+
+        <!-- B · The governed core -->
+        <div class="ucd-core" style="left:280px;top:136px;width:440px;height:240px">
+          <div style="left:20px;right:14px;top:9px;display:flex;align-items:center;gap:10px"><span class="ucd-core-t">The governed core</span><a class="box-link dark" href="../Guides.dc.html?path=rest" title="Guides for this part" style="margin-left:auto">↗</a></div>
+          <span class="ucd-core-badge" style="left:20px;top:31px">GET /q/daily_events · POST /execute_sql</span>
+          <div class="ucd-core-row" data-col="0" style="left:20px;width:128px;top:72px;bottom:6px;display:flex;flex-direction:column;gap:3px;padding:4px 7px">
+            <h4 class="ucd-stage">01 · Grant</h4>
+            <p style="font-size:12px;line-height:1.35;color:#e6efeb">A saved query, or SQL over named views. Never a file function.</p>
+            <span class="ucd-mono" data-live style="min-height:27px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">admin ✓</span>
+            <span class="ucd-flag" id="ucd-f-grant" style="margin-top:auto;font-size:9.5px;padding:3px 5px">403 table_not_allowed</span></div>
+          <div class="ucd-core-row" data-col="1" style="left:156px;width:128px;top:72px;bottom:6px;display:flex;flex-direction:column;gap:3px;padding:4px 7px">
+            <h4 class="ucd-stage">02 · Cache</h4>
+            <p style="font-size:12px;line-height:1.35;color:#e6efeb">Masking as for any database. Cached, the files are read once per TTL.</p>
+            <span class="ucd-mono" data-live style="min-height:27px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">not cached</span>
+            <span class="ucd-flag" id="ucd-f-cache" style="margin-top:auto;font-size:10px;align-self:flex-start;white-space:nowrap">X-Cache: HIT</span></div>
+          <div class="ucd-core-row" data-col="2" style="left:292px;width:128px;top:72px;bottom:6px;display:flex;flex-direction:column;gap:3px;padding:4px 7px">
+            <h4 class="ucd-stage">03 · Format</h4>
+            <p style="font-size:12px;line-height:1.35;color:#e6efeb">JSON, CSV, Parquet and five more. Streamed Parquet in steady memory.</p>
+            <span class="ucd-mono" data-live style="min-height:27px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">json</span>
+            <span class="ucd-flag" id="ucd-f-format" style="margin-top:auto;font-size:10px;align-self:flex-start;white-space:nowrap">parquet · stream</span></div>
+        </div>
+
+        <!-- The connection, under the core -->
+        <div class="ucd-code" style="left:280px;top:392px;width:440px;height:80px;display:block;padding:0;font-size:10px">
+          <span style="position:absolute;left:14px;top:6px;font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.04em;color:#7c8f88">The connection</span>
+          <a class="box-link dark" href="../Guide.dc.html?g=41-publish-files-in-s3-as-an-api" title="Guide 41: Publish files in S3 as an API" style="position:absolute;top:6px;right:8px">↗</a>
+          <span style="position:absolute;left:14px;top:25px;line-height:15px">"db": "duckdb", "database": ":memory:", <span class="id">"auto_views": true</span>,
+<span class="id">"allowed_paths": ["s3://acme-lake/events/", "s3://acme-lake/dim/"]</span>,
+"user": "${LAKE_ACCESS_KEY}", "password": "${LAKE_SECRET}"</span>
+        </div>
+
+        <!-- C · DuckDB, inside the server's process: solid -->
+        <div class="ucd-box" id="ucd-duck" style="left:760px;top:136px;width:300px;height:336px;border-color:var(--line-2)">
+          <a class="box-link abs" href="../Guides.dc.html?path=files" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:14px;top:10px;display:flex;align-items:center;gap:8px"><img src="https://cdn.simpleicons.org/duckdb" alt="" width="16" height="16">DuckDB<span class="ucd-tag stable" style="font-size:9.5px;padding:3px 5px">Stable</span></h3>
+          <span class="ucd-mono" style="left:14px;top:32px;font-size:10.5px;color:var(--ink-3)">lake · no tables of its own</span>
+          <span style="left:14px;top:76px;font-size:11px;font-weight:600;color:var(--ink-2)">Views, made as it opens</span>
+          <span class="ucd-mono" id="ucd-autoviews" style="right:12px;top:77px;font-size:10px;color:var(--accent-ink);visibility:hidden">auto_views: 3 views</span>
+          <span class="ucd-entry lit" data-view="events" style="left:8px;right:8px;top:93px;height:18px">events    ← events/date=*/*.parquet + date</span>
+          <span class="ucd-entry" data-view="customers" style="left:8px;right:8px;top:111px;height:18px">customers ← dim/customers.parquet</span>
+          <span class="ucd-entry" data-view="regions" style="left:8px;right:8px;top:129px;height:18px">regions   ← dim/regions.csv</span>
+          <span class="ucd-rule" style="left:14px;right:14px;top:164px"></span>
+          <span style="left:14px;top:171px;font-size:10.5px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">Lock 1 · allowed_paths</span>
+          <span class="ucd-mono" style="left:14px;top:189px;font-size:10.5px;line-height:1.55;color:var(--ink)">s3://acme-lake/events/<br>s3://acme-lake/dim/</span>
+          <span style="left:14px;right:14px;top:228px;font-size:11px;line-height:1.35;color:var(--ink-3)">Enforced by DuckDB, locked as the connection opens: a query can't change it back.</span>
+          <span class="ucd-mono" id="ucd-f-path" style="left:14px;bottom:10px;font-size:10px;padding:3px 6px;border-radius:5px;border:1px solid oklch(0.65 0.2 25);color:var(--danger-ink);background:oklch(0.65 0.2 25 / 0.1);transition:color 0.3s,border-color 0.3s,background 0.3s">403 path_not_allowed</span>
+        </div>
+        <!-- The gate: every read leaves DuckDB through it -->
+        <span id="ucd-gate" title="allowed_paths: every read leaves DuckDB through it" style="left:1043px;top:187px;width:18px;height:18px;display:grid;place-items:center;border-radius:5px;border:1px solid var(--line-2);background:var(--surface);transition:border-color 0.25s,box-shadow 0.25s"><span style="display:block;width:11px;height:11px;background:var(--ink-2);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg) center/contain no-repeat"></span></span>
+
+        <!-- D · Your bucket: outside, dashed -->
+        <div class="ucd-box out" style="left:1100px;top:136px;width:300px;height:336px" title="Or GCS, R2, a web file, or a local folder.">
+          <h3 class="ucd-h" style="left:14px;top:10px">Your bucket</h3>
+          <span class="ucd-mono" style="left:14px;top:32px;font-size:10.5px;color:var(--ink-3)">s3://acme-lake/</span>
+          <div class="ucd-entry lit" data-folder="events" style="left:6px;right:6px;top:107px;height:auto;display:block;padding:2px 8px;line-height:16px">events/
+  date=2026-10-08/part-0.parquet
+  date=2026-10-09/part-0.parquet
+  date=2026-10-10/part-0.parquet</div>
+          <div class="ucd-entry" data-folder="dim" style="left:6px;right:6px;top:195px;height:auto;display:block;padding:2px 8px;line-height:16px">dim/
+  customers.parquet
+  regions.csv</div>
+          <span class="ucd-mono" id="ucd-hr" style="left:6px;right:6px;top:258px;display:flex;align-items:center;gap:6px;padding:2px 8px;border-radius:4px;font-size:10.5px;line-height:16px;color:var(--ink-4);transition:color 0.3s,background 0.3s">hr/salaries.parquet<span style="flex:none;display:block;width:11px;height:11px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg) center/contain no-repeat"></span></span>
+          <span style="left:14px;right:10px;top:278px;font-size:10.5px;line-height:1.3;color:var(--ink-3)">Not in allowed_paths, nor in the credentials' policy.</span>
+          <span style="left:14px;top:298px;font-size:10.5px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">Lock 2 · your bucket policy</span>
+          <span class="ucd-mono" style="left:14px;top:315px;font-size:10px;color:var(--ink)">credentials read events/ and dim/ only</span>
+        </div>
+
+        <!-- What can be read -->
+        <div class="ucd-side" style="left:40px;top:496px;width:200px;height:90px"><b>What can be read</b><span>checked by grant, then by DuckDB</span></div>
+        <div class="ucd-code" id="ucd-reads" style="left:280px;top:496px;width:1120px;height:90px;display:grid;align-content:center;gap:5px;font-size:12px">
+          <span style="display:flex"><i>analyst  </i>SELECT date, count(*) FROM events GROUP BY 1<span class="id" style="margin-left:auto">200 · 7 rows</span></span>
+          <span style="display:flex"><i>analyst  </i>SELECT * FROM read_parquet('s3://acme-lake/events/…')<span class="err" style="margin-left:auto">403 table_not_allowed</span></span>
+          <span style="display:flex"><i>admin    </i>SELECT * FROM read_parquet('s3://acme-lake/hr/salaries.parquet')<span class="err" style="margin-left:auto">403 path_not_allowed</span></span>
+        </div>
+
+        <div class="ucd-legend" style="left:40px;right:40px;top:604px">
+          <span><span class="ucd-tag stable">Stable</span>compatibility promise</span>
+          <span>Each read is requests and egress on your bucket: cache what's polled.</span>
+        </div>
+
+        <svg class="ucd-fx" id="ucd-fx" width="1440" height="640" viewBox="0 0 1440 640" aria-hidden="true"></svg>
+      </div>
+    </div>
+
+    <div class="ucd-stack">
+      <div class="ucd-sbox out"><small>Who asks</small><b>An app, an analyst, even the admin</b><span>Apps run saved queries; analysts write SQL over the views, never over file paths.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox core"><small>The governed core</small><b>Grant → cache → format</b><span>Grants and masking as for any database. Cached, the files are read once per TTL.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>DuckDB</small><b>Folders become views</b><span>Listed as the connection opens; <code>date=…/</code> partitions become one view with a date column.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Lock 1, allowed_paths</small><b>Nothing else can be read</b><span>Enforced by DuckDB, even for the admin key: 403 path_not_allowed.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox out"><small>Your bucket, behind lock 2</small><b>Read where the files are, no copy</b><span>Give the connection credentials that read only those prefixes.</span></div>
+    </div>
+
+    <p class="ucd-foot">The same governed core as the <a href="../Home.dc.html#architecture">full architecture</a>.</p>
+  </section>
+  <script>
+  // Files as an API: seven events a cycle. The connection opens and lists the allowed prefixes into views; the
+  // dashboard's saved query reads events/, then hits the cache; the analyst's SQL over the view works, a file function
+  // doesn't; the admin key passes every core check and is stopped by DuckDB's allowed_paths; a Parquet stream.
+  // The HTML is the state at rest.
+  document.addEventListener('DOMContentLoaded', function () {
+    var U = window.UCD, svg = document.getElementById('ucd-fx'), wrap = document.getElementById('ucd-files');
+    if (!U || !svg) return;
+    var NS = 'http://www.w3.org/2000/svg', P = 17, V = 640;   // the cycle, in seconds; px a second
+    var SPINE = 196, ROWS = [184, 304, 424], DOTS = [364, 500, 636], VIEW = 860, GATE = 1052, EDGE = 1060, EV = 252, DIM = 340;
+    var green = 'oklch(0.62 0.13 170)', red = 'oklch(0.65 0.2 25)';
+    function el(tag, attrs, kids) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); (kids || []).forEach(function (c) { e.appendChild(c); }); return e; }
+    function $(id) { return document.getElementById(id); }
+    function q(sel) { return wrap.querySelector(sel); }
+
+    var cols = [].slice.call(wrap.querySelectorAll('[data-col]')), live = [].slice.call(wrap.querySelectorAll('[data-live]'));
+    var who = [].slice.call(wrap.querySelectorAll('[data-who]')), resps = who.map(function (b) { return b.querySelector('[data-resp]'); });
+    var views = [].slice.call(wrap.querySelectorAll('[data-view]')), evFolder = q('[data-folder=events]'), dimFolder = q('[data-folder=dim]');
+    var fGrant = $('ucd-f-grant'), fCache = $('ucd-f-cache'), fFormat = $('ucd-f-format'), fPath = $('ucd-f-path'), gate = $('ucd-gate'), hr = $('ucd-hr');
+    var autoNote = $('ucd-autoviews'), duck = $('ucd-duck'), reads = [].slice.call(document.querySelectorAll('#ucd-reads > span'));
+
+    // Lanes: the three callers converging into the core, the spine through the core and along DuckDB's band to the
+    // gate, and out of the gate to events/ and dim/ only. No lane goes to hr/.
+    var IN = ['M240,184 C260,184 260,196 280,196', 'M240,304 C262,304 258,196 280,196', 'M240,424 C262,424 258,196 280,196'];
+    var BACK = [' C260,196 260,184 240,184', ' C258,196 262,304 240,304', ' C258,196 262,424 240,424'];
+    var lane = function (d, cls) { var p = el('path', { d: d, class: 'ucd-lane' + (cls ? ' ' + cls : '') }); svg.appendChild(p); return p; };
+    IN.forEach(function (d) { lane(d); }); lane('M280,' + SPINE + ' H720', 'in-core'); lane('M720,' + SPINE + ' H' + GATE);
+    lane('M' + EDGE + ',' + SPINE + ' C1080,' + SPINE + ' 1080,' + EV + ' 1100,' + EV); lane('M' + EDGE + ',' + SPINE + ' C1080,' + SPINE + ' 1080,' + DIM + ' 1100,' + DIM);
+    var canvas = wrap.querySelector('.ucd-canvas');
+    var dotEls = DOTS.concat([VIEW]).map(function (x) {
+      var d = document.createElement('span'); d.className = 'ucd-dot'; d.style.left = x + 'px'; d.style.top = SPINE + 'px';
+      canvas.insertBefore(d, svg); return d;
+    });
+    canvas.appendChild(gate);   // the gate sits over the lane: reads pass through it
+
+    if (U.reduced) { wrap.classList.add('ucd-still'); return; }   // at rest: the HTML's own state
+
+    function setRed(e, on) { e.style.color = on ? 'var(--danger-ink)' : ''; e.style.borderColor = on ? red : ''; e.style.background = on ? 'oklch(0.65 0.2 25 / 0.1)' : ''; }
+    function reset() {
+      views.forEach(function (v) { v.classList.add('off'); v.classList.remove('lit'); }); evFolder.classList.remove('lit');
+      reads.forEach(function (r) { r.style.visibility = 'hidden'; });
+      fGrant.classList.remove('lit'); fPath.style.color = 'var(--ink-3)'; fPath.style.borderColor = 'var(--line-2)'; fPath.style.background = 'transparent';
+    }
+    reset();
+
+    var f4 = function (v) { return v.toFixed(4); };
+    function pulseG(path, color, t0, t1, fade) {   // t0, t1 in seconds into the cycle
+      var a = t0 / P, b = t1 / P, c = fade ? (t1 + fade) / P : b, begin = -P + 's';
+      return el('g', {}, [
+        el('circle', { r: 10, fill: color, opacity: 0.2 }),
+        el('circle', { r: 4.5, fill: color }),
+        el('animateMotion', { dur: P + 's', begin: begin, repeatCount: 'indefinite', path: path, calcMode: 'linear', keyPoints: '0;0;1;1', keyTimes: '0;' + f4(a) + ';' + f4(b) + ';1' }),
+        el('animate', { attributeName: 'opacity', values: '0;0;1;1;0;0', keyTimes: '0;' + f4(a) + ';' + f4(a + 0.002) + ';' + f4(fade ? b : b - 0.002) + ';' + f4(c) + ';1', dur: P + 's', begin: begin, repeatCount: 'indefinite' })
+      ]);
+    }
+    function redDot(d) { d.style.borderColor = red; d.style.boxShadow = '0 0 0 5px oklch(0.65 0.2 25 / 0.3),0 0 14px oklch(0.65 0.2 25 / 0.7)'; setTimeout(function () { d.style.borderColor = d.style.boxShadow = ''; }, 700); }
+    function gateFlash(color) { gate.style.borderColor = color; gate.style.boxShadow = '0 0 0 4px ' + color.replace(')', ' / 0.25)'); setTimeout(function () { gate.style.borderColor = gate.style.boxShadow = ''; }, 600); }
+    function chipFlash(e, ms) { e.style.color = green; e.style.borderColor = green; setTimeout(function () { e.style.color = e.style.borderColor = ''; }, ms || 1000); }
+    function resp(k, text, bad) { resps[k].className = 'ucd-resp ' + (bad ? 'bad' : 'ok'); resps[k].textContent = text; }
+    var inLen = IN.map(function (d, i) { return U.bez([240, ROWS[i]], [i ? 262 : 260, ROWS[i]], [i ? 258 : 260, SPINE], [280, SPINE]); });
+    var evLen = U.bez([EDGE, SPINE], [1080, SPINE], [1080, EV], [1100, EV]), dimLen = U.bez([EDGE, SPINE], [1080, SPINE], [1080, DIM], [1100, DIM]);
+
+    // A call from caller k starting at s, to stop: 'cache' (a hit), 'grant' or 'gate' (refused), or 'events' (a read).
+    function call(k, s, stop) {
+      var t = {}, at = function (x) { return s + (inLen[k] + x - 280) / V; };
+      t.d = DOTS.map(at); t.view = at(VIEW); t.gate = at(GATE); t.events = at(EDGE) + evLen / V;
+      var bad = stop === 'grant' || stop === 'gate', x = { cache: DOTS[1], grant: DOTS[0], gate: GATE }[stop];
+      var path = IN[k] + (stop === 'events' ? ' H' + EDGE + ' C1080,' + SPINE + ' 1080,' + EV + ' 1100,' + EV : ' H' + x);
+      var end = stop === 'events' ? t.events : at(x);
+      svg.appendChild(pulseG(path, bad ? red : green, s, end, bad ? 0.35 : 0));
+      if (!bad) {
+        var back = (stop === 'events' ? 'M1100,' + EV + ' C1080,' + EV + ' 1080,' + SPINE + ' ' + EDGE + ',' + SPINE : 'M' + x + ',' + SPINE) + ' H280' + BACK[k];
+        t.home = end + 0.05 + (end - s);
+        svg.appendChild(pulseG(back, green, end + 0.05, t.home, 0.2));
+      }
+      t.end = end; return t;
+    }
+    function begin(k, caller) { live.forEach(function (l) { l.textContent = ''; l.style.color = ''; }); live[0].textContent = caller; U.flash(who[k], 500); }
+    function pass(i, text) { return function () { U.flash(dotEls[i], 500); U.flash(cols[i], 700); live[i].textContent = text; }; }
+    function read(t) {   // the view resolves, the read leaves through the gate, and events/ lights as a whole folder
+      return [[t.view, function () { U.flash(dotEls[3], 500); U.flash(views[0], 900); }], [t.gate, function () { gateFlash(green); }],
+              [t.events, function () { U.flash(evFolder, 1100); }]];
+    }
+
+    var EVENTS = [[0.05, reset]];
+    // 0 · the connection opens: the gate lists events/ and dim/, and each folder becomes a view.
+    var o = 0.1, oEv = o + evLen / V, oDim = o + dimLen / V;
+    svg.appendChild(pulseG('M' + EDGE + ',' + SPINE + ' C1080,' + SPINE + ' 1080,' + EV + ' 1100,' + EV + ' C1080,' + EV + ' 1080,' + SPINE + ' ' + EDGE + ',' + SPINE, green, o, o + 2 * evLen / V, 0.15));
+    svg.appendChild(pulseG('M' + EDGE + ',' + SPINE + ' C1080,' + SPINE + ' 1080,' + DIM + ' 1100,' + DIM + ' C1080,' + DIM + ' 1080,' + SPINE + ' ' + EDGE + ',' + SPINE, green, o, o + 2 * dimLen / V, 0.15));
+    var oBack = o + 2 * dimLen / V;
+    EVENTS.push([o, function () { live.forEach(function (l) { l.textContent = ''; l.style.color = ''; }); gateFlash(green); }],
+      [oBack, function () { views[0].classList.remove('off'); autoNote.style.visibility = 'visible'; setTimeout(function () { autoNote.style.visibility = 'hidden'; }, 1000); }],
+      [oBack + 0.3, function () { views[1].classList.remove('off'); }], [oBack + 0.6, function () { views[2].classList.remove('off'); }]);
+    // 1 · the dashboard's saved query: a miss, so the files are read.
+    var c1 = call(0, 1.9, 'events');
+    EVENTS.push([1.9, function () { begin(0, ''); }], [c1.d[0], pass(0, 'query daily_events ✓')], [c1.d[1], pass(1, 'cache 60 s · MISS')], [c1.d[2], pass(2, 'json · 7 rows')]);
+    EVENTS.push.apply(EVENTS, read(c1)); EVENTS.push([c1.home, function () { resp(0, '200 · 7 rows · X-Cache: MISS'); }]);
+    // 2 · the same again: a hit, which turns back at Cache. DuckDB and the bucket stay dark.
+    var c2 = call(0, 4.9, 'cache');
+    EVENTS.push([4.9, function () { begin(0, ''); }], [c2.d[0], pass(0, 'query daily_events ✓')],
+      [c2.d[1], function () { pass(1, 'files read once per TTL')(); chipFlash(fCache); }], [c2.home, function () { resp(0, '200 · X-Cache: HIT'); }]);
+    // 3 · the analyst's SQL over the view.
+    var c3 = call(1, 6.6, 'events');
+    EVENTS.push([6.6, function () { begin(1, ''); }], [c3.d[0], pass(0, 'allowed_tables: events ✓')], [c3.d[1], pass(1, 'not cached')], [c3.d[2], pass(2, 'json · 7 rows')]);
+    EVENTS.push.apply(EVENTS, read(c3)); EVENTS.push([c3.home, function () { resp(1, '200 · 7 rows'); reads[0].style.visibility = 'visible'; }]);
+    // 4 · the analyst calls read_parquet itself: a table-restricted key can't call file functions.
+    var c4 = call(1, 9.7, 'grant');
+    EVENTS.push([9.7, function () { begin(1, ''); }],
+      [c4.end, function () { redDot(dotEls[0]); fGrant.classList.add('lit'); live[0].textContent = 'read_parquet ✗'; live[0].style.color = red; setTimeout(function () { resp(1, '403 table_not_allowed', true); reads[1].style.visibility = 'visible'; }, 250); }]);
+    // 5 · the admin key: every core check passes, past the view dot unlit, and DuckDB stops it at the gate.
+    var c5 = call(2, 11.0, 'gate');
+    EVENTS.push([11.0, function () { begin(2, ''); }], [c5.d[0], pass(0, 'admin ✓')], [c5.d[1], pass(1, 'not cached')], [c5.d[2], pass(2, 'json')],
+      [c5.gate, function () {
+        gateFlash(red); setRed(fPath, true); setRed(hr, true); setTimeout(function () { setRed(hr, false); }, 800);
+        setTimeout(function () { resp(2, '403 path_not_allowed', true); reads[2].style.visibility = 'visible'; }, 250);
+      }]);
+    // 6 · the analyst streams Parquet out of the view.
+    var c6 = call(1, 13.6, 'events');
+    EVENTS.push([13.6, function () { begin(1, ''); }], [c6.d[0], pass(0, 'allowed_tables: events ✓')], [c6.d[1], pass(1, 'not cached')],
+      [c6.d[2], function () { pass(2, 'parquet · stream')(); chipFlash(fFormat, 1200); }]);
+    EVENTS.push.apply(EVENTS, read(c6)); EVENTS.push([c6.home, function () { resp(1, '200 · application/vnd.apache.parquet'); }]);
+    U.loop(svg, [{ begin: -P, dur: P }], function (p, f, passed) { EVENTS.forEach(function (e) { if (passed(e[0] / P)) e[1](); }); });
+  });
+  </script>
   <section style="">
     <div class="f-pad" style="max-width:1480px;margin:0 auto;padding:16px 24px 64px;display:grid;gap:24px">
 <article id="files" class="f-2col u-case u-flip" style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
