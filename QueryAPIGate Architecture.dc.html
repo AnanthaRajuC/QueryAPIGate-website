@@ -228,11 +228,24 @@ class Component extends DCLogic {
         // Step 8 fans out to the log, traces, metrics, audit and the run store.
         rx.forEach((x, j) => seg(`r${i}-${k}-${j}`, `M${x},866 V896`, tEnd, tEnd + 0.045));
         ax.forEach((x, j) => { const t = ask[j]; seg(`au${i}-${k}-${j}`, `M${x},270 V236`, t - 0.03, t); seg(`ad${i}-${k}-${j}`, `M${x},236 V270`, t, t + 0.03); });
+        // The call itself: from its caller, through its front door and the core's three checkpoints, out to the data.
+        dots.forEach((x, j) => {
+          const t = tj[j];
+          const kt = [0, Math.max(0, t - w), t, Math.min(1, t + w * 1.6), 1].map(f4).join(';');
+          glows.push(h('circle', { key: `g${i}-${k}-${j}`, cx: x, cy: 346, r: 13, fill: c, opacity: 0 },
+            h('animate', { attributeName: 'opacity', values: '0;0;0.7;0;0', keyTimes: kt, dur: speed + 's', begin, repeatCount: 'indefinite' }),
+            h('animate', { attributeName: 'r', values: '6;6;14;20;20', keyTimes: kt, dur: speed + 's', begin, repeatCount: 'indefinite' })));
+        });
+        kids.push(h('g', { key: `p${i}-${k}` },
+          h('circle', { r: 10, fill: c, opacity: 0.2 }),
+          h('circle', { r: 4.5, fill: c }),
+          h('animateMotion', { dur: speed + 's', begin, repeatCount: 'indefinite', path: d, calcMode: 'linear' })));
       }
       if (showDenied && i === 0) {
         const dd = `M320,${y} H436 M720,${y} C780,${y} 760,346 820,346 H1130`;
         const len = STRAIGHT + l1 + 310, frac = len / total;
-        const beginN = -(i * 0.9 + speed * 0.5), begin = beginN.toFixed(2) + 's';
+        // Halfway between this row's own calls, so the refused one never rides on top of one.
+        const beginN = -(i * 0.9 + speed / (2 * n)), begin = beginN.toFixed(2) + 's';
         const hold = Math.min(0.98, frac + 1.6 / speed);
         pulses.push({ i, begin: beginN, speed, tj: [0, frac, 0], denied: true });
         const ktO = `0;${frac.toFixed(4)};${(hold - 0.02).toFixed(4)};${hold.toFixed(4)};1`;
