@@ -22,6 +22,8 @@
 <script src="../support.js"></script>
 <script src="../theme.js?v=15"></script>
 <script src="../search.js?v=6" defer></script>
+<link rel="stylesheet" href="uc-diagram.css">
+<script src="uc-diagram.js" defer></script>
 </head>
 <body>
 <helmet>
@@ -257,6 +259,290 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   <header class="f-pad" style="max-width:1480px;margin:0 auto;padding:56px 24px 8px;display:grid;gap:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)"><a class="uc-back" href="../Use Cases.dc.html#g-ai" aria-label="Back to use cases" title="Back to use cases"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a><a href="../Use Cases.dc.html" style="color:var(--ink-2);font-weight:500">Use cases</a><span aria-hidden="true">/</span><a href="../Use Cases.dc.html#g-ai" style="color:var(--ink-2);font-weight:500">AI</a><span aria-hidden="true">/</span><span style="color:var(--ink);font-weight:600">AI agents</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9fb3ac">10 / 12</span></div>
   </header>
+  <section class="ucd-section" id="how-it-fits" aria-labelledby="ucd-h" style="padding-top:16px;padding-bottom:40px">
+    <span class="ucd-eyebrow">How it fits together</span>
+    <h2 class="ucd-h2" id="ucd-h">One core, two doors: the agent gets what the app gets, and no more</h2>
+    <p class="ucd-lede">An agent connects to the MCP server with a key or by signing in through your identity provider. It sees only the tools its grant allows, and a dictionary of what the columns mean, with masked ones marked. Its calls run through the same checks as a REST call. Ad-hoc SQL is read-only and capped, and a write waits for a person. Every call is in its usage, by agent.</p>
+    <div class="ucd-wrap" data-w="1440" data-h="640" id="ucd-agents">
+      <div class="ucd-canvas" role="group" aria-label="An AI agent calls the MCP server and your app calls the REST API; both doors enter one governed core that runs the same checks in the same order: the rate limit, sign-in and grants, then for ad-hoc SQL read-only on allowed tables, then masking, then writes, which only run through queries marked for agents, each approved by a person. The agent sees only the tools its key grants and a dictionary of what each column means, with masked columns marked. Ad-hoc SQL returns at most 200 rows, with a note to narrow the query; a table outside the grant is refused with table_not_allowed. Every run is recorded with its transport, and what each agent did is summed up per agent: calls, rows, errors, masked calls, refusals and writes.">
+
+        <div class="ucd-stats" style="right:40px;top:18px;gap:12px">
+          <div style="max-width:92px"><b>1</b><span style="font-size:10.5px;line-height:1.3">core behind REST and MCP</span></div>
+          <div style="max-width:92px"><b>200</b><span style="font-size:10.5px;line-height:1.3">rows at most per tool call</span></div>
+          <div style="max-width:108px"><b>0</b><span style="font-size:10.5px;line-height:1.3">database passwords given to the agent</span></div>
+        </div>
+
+        <div class="ucd-zone" style="left:40px;top:96px;width:180px">Who asks</div>
+        <div class="ucd-zone" style="left:260px;top:96px;width:140px">Two doors</div>
+        <div class="ucd-zone" style="left:440px;top:96px;width:560px">The governed core</div>
+        <div class="ucd-zone" style="left:1040px;top:96px;width:360px;white-space:nowrap">Your data, and what agents did</div>
+
+        <!-- The Asks row -->
+        <div class="ucd-box" id="ucd-idp" style="left:225px;top:24px;width:210px;height:60px" title="QueryAPIGate checks tokens and issues none. A token for REST isn't accepted on /mcp, and one for /mcp isn't accepted by REST.">
+          <div style="left:11px;right:9px;top:10px;display:flex;align-items:center;gap:6px"><span style="flex:none;display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/fingerprint.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/fingerprint.svg) center/contain no-repeat"></span><b style="font-size:12px;font-weight:600;white-space:nowrap">Your identity provider</b><span aria-hidden="true" style="margin-left:auto;font-size:11px;color:#9fb3ac">↕</span><a class="box-link" href="../Guides.dc.html?path=identity" title="Guides for this part">↗</a></div>
+          <span class="ucd-mono" style="left:11px;top:37px;font-size:10px;color:var(--ink-3);white-space:nowrap">OAuth 2.1 · issues the tokens</span>
+        </div>
+        <div class="ucd-box" id="ucd-approver" style="left:810px;top:24px;width:216px;height:60px" title="An administrator with writes.approve sees the SQL and the exact arguments. Never the credential that asked.">
+          <div style="left:11px;right:9px;top:10px;display:flex;align-items:center;gap:6px"><span style="flex:none;display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/user-check.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/user-check.svg) center/contain no-repeat"></span><b style="font-size:11.5px;font-weight:600;white-space:nowrap">A person approves</b><span class="ucd-tag stable" style="font-size:9px;padding:3px 4px">Stable</span><a class="box-link" href="../Guides.dc.html?path=agents" title="Guides for this part" style="margin-left:auto">↗</a></div>
+          <span class="ucd-mono" style="left:11px;top:37px;font-size:10px;color:var(--ink-3);white-space:nowrap">Console → Approvals</span>
+        </div>
+
+        <!-- A · Who asks: outside QueryAPIGate, so dashed -->
+        <div class="ucd-box out" id="ucd-agent" style="left:40px;top:136px;width:180px;height:200px" title="Connects with an API key, or signs in through your identity provider with OAuth 2.1. Its runs are named after its key, or jwt:<sub>.">
+          <a class="box-link abs" href="../Guides.dc.html?path=ai-agents" title="Guides for this part">↗</a>
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg) center/contain no-repeat"></span><b style="font-size:13px;font-weight:600">An AI agent</b></span>
+          <span class="ucd-mono" style="left:12px;top:31px;font-size:10px;color:var(--ink)">support-agent</span>
+          <span style="left:12px;top:46px;font-size:11px;color:var(--ink-3)">Claude, or any MCP client</span>
+          <span class="ucd-mono" id="ucd-transcript" style="left:8px;right:8px;top:76px;height:112px;padding:6px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--line);font-size:10px;line-height:14px;color:var(--ink-2);white-space:pre-wrap;overflow:hidden"><span style="color:var(--ink-3)">close_ticket →</span>
+<span style="color:var(--accent-ink)">done · 1 row</span></span>
+        </div>
+        <div class="ucd-box out" id="ucd-app" style="left:40px;top:360px;width:180px;height:112px">
+          <a class="box-link abs" href="../Guides.dc.html?path=apps" title="Guides for this part">↗</a>
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/app-window.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/app-window.svg) center/contain no-repeat"></span><b style="font-size:13px;font-weight:600">Your app</b></span>
+          <span class="ucd-mono" style="left:12px;top:31px;font-size:10px;color:var(--ink)">orders-app</span>
+          <span class="ucd-resp ok" id="ucd-app-resp" style="left:12px;right:8px;top:54px">200 · 12 rows</span>
+        </div>
+
+        <!-- B · Two doors -->
+        <div class="ucd-box" id="ucd-mcp" style="left:260px;top:136px;width:140px;height:200px">
+          <a class="box-link abs" href="../Guides.dc.html?path=mcp" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:12px;top:9px">MCP</h3>
+          <span class="ucd-mono" style="left:12px;top:31px;font-size:10px;color:var(--ink-3)">/mcp · :5001</span>
+          <span class="ucd-chk" data-chk="0" style="left:8px;right:8px;top:76px;font-size:11px;display:grid;gap:3px"><span style="display:flex;justify-content:space-between;gap:4px">key or OAuth 2.1<b>✓</b></span><span class="ucd-tag stable" style="justify-self:start;font-size:9px;padding:2px 4px">Stable</span></span>
+          <span class="ucd-chk" data-chk="1" style="left:8px;right:8px;top:126px;font-size:11px">tools: only what's granted<b>✓</b></span>
+          <span style="left:12px;bottom:9px;font-size:10.5px;color:var(--ink-3)">a wrong credential: 401</span>
+        </div>
+        <div class="ucd-box" id="ucd-rest" style="left:260px;top:360px;width:140px;height:112px">
+          <a class="box-link abs" href="../Guides.dc.html?path=rest" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:12px;top:9px">REST</h3>
+          <span class="ucd-mono" style="left:12px;top:31px;font-size:10px;color:var(--ink-3)">/q/&lt;name&gt; · :5000</span>
+          <span style="left:12px;right:10px;top:56px;font-size:10.5px;line-height:1.35;color:var(--ink-3)">the same checks, in the same order</span>
+        </div>
+
+        <!-- C · The governed core -->
+        <div class="ucd-core" style="left:440px;top:136px;width:560px;height:336px">
+          <div style="left:20px;right:14px;top:12px;display:flex;align-items:center;gap:10px"><span class="ucd-core-t">The governed core</span><span class="ucd-core-badge">the same code for both doors</span><a class="box-link dark" href="../Guides.dc.html?path=core" title="Guides for this part" style="margin-left:auto">↗</a></div>
+          <div class="ucd-core-row" data-col="0" style="left:20px;width:124px;top:72px;height:142px;display:flex;flex-direction:column;gap:3px;padding:3px 7px">
+            <h4 class="ucd-stage">01 · Same rules</h4>
+            <p style="font-size:11.5px;line-height:1.3;color:#e6efeb">Rate limit, sign-in, grants: in REST's order.</p>
+            <span class="ucd-mono" data-live style="min-height:27px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">support-agent ✓</span>
+            <span class="ucd-flag" style="margin-top:auto;font-size:9.5px;padding:3px 5px;align-self:flex-start;white-space:nowrap">429 rate_limited</span></div>
+          <div class="ucd-core-row" data-col="1" style="left:152px;width:124px;top:72px;height:142px;display:flex;flex-direction:column;gap:3px;padding:3px 7px">
+            <h4 class="ucd-stage">02 · Tables</h4>
+            <p style="font-size:11.5px;line-height:1.3;color:#e6efeb">Ad-hoc SQL: read-only, only allowed tables.</p>
+            <span class="ucd-mono" data-live style="min-height:27px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">payroll ✗</span>
+            <span class="ucd-flag rest-lit" id="ucd-f-tables" style="margin-top:auto;font-size:9.5px;padding:3px 5px;align-self:flex-start;white-space:nowrap">table_not_allowed</span></div>
+          <div class="ucd-core-row" data-col="2" style="left:284px;width:124px;top:72px;height:142px;display:flex;flex-direction:column;gap:3px;padding:3px 7px">
+            <h4 class="ucd-stage">03 · Masking</h4>
+            <p style="font-size:11.5px;line-height:1.3;color:#e6efeb">As over REST. Masked columns are marked for the agent.</p>
+            <span class="ucd-mono" data-live style="min-height:27px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">email → hash</span>
+            <span class="ucd-flag" style="margin-top:auto;font-size:9.5px;padding:3px 5px;align-self:flex-start;white-space:nowrap">mask_unresolvable</span></div>
+          <div class="ucd-core-row" data-col="3" style="left:416px;width:124px;top:72px;height:142px;display:flex;flex-direction:column;gap:3px;padding:3px 7px">
+            <h4 class="ucd-stage">04 · Writes</h4>
+            <p style="font-size:11.5px;line-height:1.3;color:#e6efeb">Only queries marked for agents, each approved by a person.</p>
+            <span class="ucd-mono" data-live style="min-height:27px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">approved ✓</span>
+            <span class="ucd-flag" style="margin-top:auto;font-size:9.5px;padding:3px 5px;align-self:flex-start;white-space:nowrap">own_write</span></div>
+          <div style="left:20px;right:20px;top:224px;height:96px;border:1px solid #2f463f;border-radius:10px;background:rgba(0,0,0,0.12)">
+            <span style="position:absolute;left:14px;top:10px;font-family:'Schibsted Grotesk',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#7c8f88">Recorded</span>
+            <span class="ucd-mono" id="ucd-recorded" style="position:absolute;left:14px;right:14px;top:34px;font-size:11px;color:#e6efeb;white-space:nowrap;transition:opacity 0.2s">transport: mcp · support-agent · close_ticket · approved</span>
+            <span style="position:absolute;left:14px;right:14px;top:58px;font-size:11px;line-height:1.35;color:#7c8f88">Every run in run history, as for REST: the caller, the transport, the rows.</span>
+          </div>
+        </div>
+
+        <!-- D · Your data, and what agents did -->
+        <div class="ucd-box" id="ucd-wh" style="left:1040px;top:136px;width:360px;height:200px">
+          <a class="box-link abs" href="../Guides.dc.html?path=databases" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:16px;top:10px;display:flex;align-items:center;gap:8px"><img src="https://cdn.simpleicons.org/postgresql" alt="" width="16" height="16">PostgreSQL</h3>
+          <span class="ucd-mono" style="left:16px;top:31px;font-size:11px;color:var(--ink-3)">warehouse</span>
+          <div style="left:16px;right:16px;top:76px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <span class="ucd-tile rest-lit" data-table="orders" style="height:26px;font-size:10.5px">orders</span>
+            <span class="ucd-tile rest-lit" data-table="customers" style="height:26px;font-size:10.5px">customers</span>
+            <span class="ucd-tile rest-lit" data-table="tickets" style="height:26px;font-size:10.5px">tickets</span>
+            <span id="ucd-payroll" title="Not in support-agent's allowed_tables." style="display:flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:6px;border:1px dashed var(--line-2);font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-4);transition:color 0.3s,border-color 0.3s,background 0.3s"><span style="flex:none;display:block;width:11px;height:11px;background:currentColor;-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/lock.svg) center/contain no-repeat"></span>payroll</span>
+          </div>
+          <span class="ucd-rule" style="left:16px;right:16px;top:146px"></span>
+          <span style="left:16px;right:16px;top:153px;display:flex;align-items:center;gap:8px"><span class="ucd-mono" style="font-size:10.5px;color:var(--ink)">customers.ltv_90d</span><span class="ucd-tag stable" style="font-family:'JetBrains Mono',monospace;text-transform:none;letter-spacing:0;font-size:9px;padding:2px 5px">source: database</span></span>
+          <span style="left:16px;right:16px;top:172px;font-size:11px;color:var(--ink-3)">"Revenue in the customer's first 90 days, EUR"</span>
+        </div>
+        <div class="ucd-box" id="ucd-usage" style="left:1040px;top:360px;width:360px;height:112px">
+          <a class="box-link abs" href="../Guides.dc.html?path=audit" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:16px;top:9px;font-size:14px">What agents did</h3>
+          <span class="ucd-mono" style="left:16px;top:31px;font-size:10px;color:var(--ink-3)">GET /api/v1/usage/agents</span>
+          <span class="ucd-mono" title="At least 10,000 rows in an hour (the floor you set) and ten times this agent's own average hour." style="right:36px;top:9px;padding:2px 6px;border:1px solid var(--line-2);border-radius:5px;font-size:9.5px;color:var(--ink-3)">agent_unusual_volume</span>
+          <span class="ucd-mono" style="left:16px;top:52px;font-size:10px;font-weight:600;color:var(--accent-ink)">support-agent</span>
+          <span class="ucd-mono" id="ucd-usage-1" style="left:16px;right:10px;top:67px;font-size:10px;color:var(--ink);white-space:nowrap">calls 4 · rows 212 · errors 1 · masked_calls 1 · adhoc 2</span>
+          <span class="ucd-mono" id="ucd-usage-2" style="left:16px;right:10px;top:82px;font-size:10px;color:var(--ink);white-space:nowrap">refusals {table_not_allowed: 1} · writes {done: 1}</span>
+        </div>
+
+        <!-- What the agent sees -->
+        <div class="ucd-side" style="left:40px;top:496px;width:180px;height:90px"><b>What the agent sees</b><span>only what its key grants</span></div>
+        <div class="ucd-code" id="ucd-sees" style="left:260px;top:496px;width:1140px;height:90px;display:grid;align-content:center;gap:5px;font-size:11px">
+          <span><i>tools       </i>orders_by_customer · revenue_by_region · list_tables · describe_table · execute_sql <i>(read-only)</i> · close_ticket <i>(approval)</i></span>
+          <span><i>resource    </i><span class="id">queryapigate://connections/warehouse/dictionary</span></span>
+          <span><i>dictionary  </i>customers.ltv_90d BIGINT "Revenue in the customer's first 90 days, EUR" · customers.email <span class="id">masked: hash</span></span>
+        </div>
+
+        <div class="ucd-legend" style="left:40px;right:40px;top:604px">
+          <span><span class="ucd-tag stable">Stable</span>compatibility promise</span>
+          <span>With Redis, a key's rate limit is one count across REST and MCP.</span>
+        </div>
+
+        <svg class="ucd-fx" id="ucd-fx" width="1440" height="640" viewBox="0 0 1440 640" aria-hidden="true"></svg>
+      </div>
+    </div>
+
+    <div class="ucd-stack">
+      <div class="ucd-sbox out"><small>An AI agent</small><b>A key, or signed in through your identity provider</b><span>Any MCP client, at <code>/mcp</code>.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Two doors, one core</small><b>MCP and REST run the same checks</b><span>An agent is never governed less because of its protocol.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox core"><small>The governed core</small><b>Rules → tables → masking → writes</b><span>Ad-hoc SQL is read-only, on allowed tables, at most 200 rows. A write waits for a person.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Your warehouse</small><b>Described for the agent, masked where you say</b><span>A dictionary of what each column means, with masked ones marked.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>What agents did</small><b>Calls, rows, refusals and writes, per agent</b><span>An alert when one reads ten times its usual hour, above a floor you set.</span></div>
+    </div>
+
+    <p class="ucd-foot">The same governed core as the <a href="../Home.dc.html#architecture">full architecture</a>.</p>
+  </section>
+  <script>
+  // AI agents: one agent session a cycle, and one app call. Discovery; a saved-query tool call; the same call over
+  // REST; ad-hoc SQL, masked and capped; a table outside the grant; and a write that waits for a person. The usage
+  // box sums it up per agent. The HTML is the state at rest.
+  document.addEventListener('DOMContentLoaded', function () {
+    var U = window.UCD, svg = document.getElementById('ucd-fx'), wrap = document.getElementById('ucd-agents');
+    if (!U || !svg) return;
+    var NS = 'http://www.w3.org/2000/svg', P = 14, V = 720;   // the cycle, in seconds; px a second
+    var SPINE = 196, DOTS = [522, 654, 786, 918], CORE = 440, DOOR = [260, 400], WH = 1040, APP_Y = 416;
+    var green = 'oklch(0.62 0.13 170)', red = 'oklch(0.65 0.2 25)', amber = 'oklch(0.75 0.14 75)';
+    function el(tag, attrs, kids) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); (kids || []).forEach(function (c) { e.appendChild(c); }); return e; }
+    function $(id) { return document.getElementById(id); }
+
+    var cols = [].slice.call(wrap.querySelectorAll('[data-col]')), live = [].slice.call(wrap.querySelectorAll('[data-live]'));
+    var chks = [].slice.call(wrap.querySelectorAll('[data-chk]')), tiles = {};
+    [].forEach.call(wrap.querySelectorAll('[data-table]'), function (t) { tiles[t.dataset.table] = t; });
+    var idp = $('ucd-idp'), approver = $('ucd-approver'), agent = $('ucd-agent'), app = $('ucd-app'), appResp = $('ucd-app-resp'), mcp = $('ucd-mcp'), rest = $('ucd-rest');
+    var transcript = $('ucd-transcript'), recorded = $('ucd-recorded'), usage1 = $('ucd-usage-1'), usage2 = $('ucd-usage-2'), usageBox = $('ucd-usage');
+    var fTables = $('ucd-f-tables'), payroll = $('ucd-payroll'), wh = $('ucd-wh'), sees = [].slice.call(document.querySelectorAll('#ucd-sees > span'));
+
+    // Lanes: the agent into MCP and the app into REST; MCP straight on into the core, REST rising in the gap to join
+    // the spine at the core's edge; the spine out to the warehouse; Recorded out to the usage box; the two asks down.
+    var lane = function (d, cls) { var p = el('path', { d: d, class: 'ucd-lane' + (cls ? ' ' + cls : '') }); svg.appendChild(p); return p; };
+    var REST_IN = 'M400,' + APP_Y + ' H420 C432,' + APP_Y + ' 428,' + SPINE + ' ' + CORE + ',' + SPINE;
+    lane('M220,' + SPINE + ' H260'); lane('M220,' + APP_Y + ' H260'); lane('M400,' + SPINE + ' H' + CORE); lane(REST_IN);
+    lane('M' + CORE + ',' + SPINE + ' H1000', 'in-core'); lane('M1000,' + SPINE + ' H' + WH); lane('M1000,416 H' + WH);
+    var idpLane = lane('M330,84 V136'), approverLane = lane('M' + DOTS[3] + ',84 V136');
+    var dotEls = DOTS.map(function (x) {
+      var d = document.createElement('span'); d.className = 'ucd-dot'; d.style.left = x + 'px'; d.style.top = SPINE + 'px';
+      wrap.querySelector('.ucd-canvas').insertBefore(d, svg); return d;
+    });
+
+    if (U.reduced) { wrap.classList.add('ucd-still'); return; }   // at rest: the HTML's own state
+
+    var use;
+    function showUsage() {
+      usage1.textContent = 'calls ' + use.calls + ' · rows ' + use.rows + ' · errors ' + use.errors + ' · masked_calls ' + use.masked + ' · adhoc ' + use.adhoc;
+      usage2.textContent = 'refusals {' + (use.refused ? 'table_not_allowed: 1' : '') + '} · writes {' + (use.done ? 'done: 1' : '') + '}';
+    }
+    function bump(ch) { for (var k in ch) use[k] += ch[k]; showUsage(); U.flash(usageBox, 600); }
+    function say(lines) { transcript.innerHTML = lines; }
+    function record(text) { recorded.style.opacity = 0; setTimeout(function () { recorded.textContent = text; recorded.style.opacity = 1; }, 200); }
+    function reset() {
+      use = { calls: 0, rows: 0, errors: 0, masked: 0, adhoc: 0, refused: 0, done: 0 }; showUsage();
+      say(''); fTables.classList.remove('rest-lit', 'lit');
+      sees.forEach(function (s) { s.style.visibility = 'hidden'; });
+      Object.keys(tiles).forEach(function (k) { tiles[k].classList.remove('rest-lit'); });
+      live.forEach(function (l) { l.textContent = ''; l.style.color = ''; });
+    }
+    reset();
+
+    var f4 = function (v) { return v.toFixed(4); };
+    function pulseG(path, color, t0, t1, fade) {   // t0, t1 in seconds into the cycle
+      var a = t0 / P, b = t1 / P, c = fade ? (t1 + fade) / P : b, begin = -P + 's';
+      return el('g', {}, [
+        el('circle', { r: 10, fill: color, opacity: 0.2 }),
+        el('circle', { r: 4.5, fill: color }),
+        el('animateMotion', { dur: P + 's', begin: begin, repeatCount: 'indefinite', path: path, calcMode: 'linear', keyPoints: '0;0;1;1', keyTimes: '0;' + f4(a) + ';' + f4(b) + ';1' }),
+        el('animate', { attributeName: 'opacity', values: '0;0;1;1;0;0', keyTimes: '0;' + f4(a) + ';' + f4(a + 0.002) + ';' + f4(fade ? b : b - 0.002) + ';' + f4(c) + ';1', dur: P + 's', begin: begin, repeatCount: 'indefinite' })
+      ]);
+    }
+    function redDot(d) { d.style.borderColor = red; d.style.boxShadow = '0 0 0 5px oklch(0.65 0.2 25 / 0.3),0 0 14px oklch(0.65 0.2 25 / 0.7)'; setTimeout(function () { d.style.borderColor = d.style.boxShadow = ''; }, 700); }
+    function holdDot(d, ms) {   // waiting, not refused: an amber outline that pulses
+      var n = 0, iv = setInterval(function () { d.style.borderColor = amber; d.style.boxShadow = (n++ % 2) ? '0 0 0 3px oklch(0.75 0.14 75 / 0.25)' : '0 0 0 7px oklch(0.75 0.14 75 / 0.12)'; }, 220);
+      setTimeout(function () { clearInterval(iv); d.style.borderColor = d.style.boxShadow = ''; }, ms);
+    }
+    function pass(i, text) { return function () { U.flash(dotEls[i], 500); U.flash(cols[i], 700); live[i].textContent = text; live[i].style.color = ''; }; }
+
+    // Paths: from the agent through MCP (the pulse jumps the door's width, as the call is inside it), or from the app
+    // through REST, rising to the spine; then along the spine to x. Lengths give arrival times.
+    var restRise = U.bez([420, APP_Y], [432, APP_Y], [428, SPINE], [CORE, SPINE]);
+    var FROM = {
+      agent: { path: 'M220,' + SPINE + ' H260 M400,' + SPINE + ' H' + CORE, lead: 40 + 40, back: ' H400 M260,' + SPINE + ' H220' },
+      app: { path: 'M220,' + APP_Y + ' H260 M' + REST_IN.slice(1), lead: 40 + 20 + restRise, back: ' C428,' + SPINE + ' 432,' + APP_Y + ' 420,' + APP_Y + ' H400 M260,' + APP_Y + ' H220' }
+    };
+    function call(who, s, x, color, fade) {   // out to x on the spine; returns arrival times at the dots and at x
+      var f = FROM[who], at = function (px) { return s + (f.lead + px - CORE) / V; };
+      svg.appendChild(pulseG(f.path + ' H' + x, color, s, at(x), fade || 0));
+      return { d: DOTS.map(at), door: s + 40 / V, end: at(x) };
+    }
+    function back(who, x, t0) {   // the result, back along the spine and out the same door
+      var f = FROM[who], t1 = t0 + (f.lead + x - CORE) / V;
+      svg.appendChild(pulseG('M' + x + ',' + SPINE + ' H' + CORE + f.back, green, t0, t1, 0.15)); return t1;
+    }
+
+    var EVENTS = [[0.05, reset]], firstCycle = true, s, c, h;
+    // 1 · discovery: tools/list and the dictionary. The identity provider lights once; MCP's checks light; the pulse
+    // turns back after Tables: discovery reads no rows.
+    s = 0.1; c = call('agent', s, DOTS[1], green); h = back('agent', DOTS[1], c.end + 0.05);
+    EVENTS.push([s, function () { if (firstCycle) { firstCycle = false; U.flash(idp, 1000); U.flash(idpLane, 1000); } say('<span style="color:var(--ink-3)">tools/list</span>'); }],
+      [c.door, function () { U.flash(mcp, 600); U.flash(chks[0], 900); setTimeout(function () { U.flash(chks[1], 900); }, 150); }],
+      [c.d[0], pass(0, 'support-agent ✓')], [c.d[1], pass(1, '6 tools listed')],
+      [h, function () { say('<span style="color:var(--ink-3)">tools/list →</span>\n6 tools · 1 dictionary'); sees[0].style.visibility = 'visible'; }],
+      [h + 0.25, function () { sees[1].style.visibility = 'visible'; }], [h + 0.5, function () { sees[2].style.visibility = 'visible'; }]);
+    // 2 · a saved-query tool call: every column, orders in the warehouse.
+    s = 1.6; c = call('agent', s, WH, green); h = back('agent', WH, c.end + 0.05);
+    EVENTS.push([s, function () { say('<span style="color:var(--ink-3)">tools/call orders_by_customer</span>'); U.flash(chks[1], 600); }],
+      [c.d[0], pass(0, 'support-agent ✓')], [c.d[1], pass(1, 'saved query')], [c.d[2], pass(2, 'no rules')], [c.d[3], pass(3, 'read')],
+      [c.end, function () { U.flash(tiles.orders, 1100); U.flash(wh, 500); record('transport: mcp · support-agent · orders_by_customer · 12 rows'); }],
+      [h, function () { say('<span style="color:var(--ink-3)">orders_by_customer →</span>\n{"rows": [12 rows],\n "truncated": false}'); bump({ calls: 1, rows: 12 }); }]);
+    // 3 · the same call over REST, from the app: the same four dots, the same answer. The app isn't an agent.
+    s = 3.7; c = call('app', s, WH, green); h = back('app', WH, c.end + 0.05);
+    EVENTS.push([s, function () { U.flash(app, 500); }], [c.door, function () { U.flash(rest, 600); }],
+      [c.d[0], pass(0, 'orders-app ✓')], [c.d[1], pass(1, 'saved query')], [c.d[2], pass(2, 'no rules')], [c.d[3], pass(3, 'read')],
+      [c.end, function () { U.flash(tiles.orders, 1100); U.flash(wh, 500); record('transport: rest · orders-app · orders_by_customer · 12 rows'); }],
+      [h, function () { appResp.className = 'ucd-resp ok'; appResp.textContent = '200 · 12 rows'; }]);
+    // 4 · ad-hoc SQL: allowed table, masked, capped at 200 rows with a note to narrow it.
+    s = 6.3; c = call('agent', s, WH, green); h = back('agent', WH, c.end + 0.05);
+    EVENTS.push([s, function () { say('<span style="color:var(--ink-3)">execute_sql SELECT email,\nltv_90d FROM customers …</span>'); }],
+      [c.d[0], pass(0, 'support-agent ✓')], [c.d[1], pass(1, 'customers ✓')], [c.d[2], pass(2, 'email → hash')], [c.d[3], pass(3, 'read')],
+      [c.end, function () { U.flash(tiles.customers, 1100); U.flash(wh, 500); record('transport: mcp · support-agent · execute_sql · 200 rows'); }],
+      [h, function () { say('<span style="color:var(--ink-3)">execute_sql →</span>\n200 rows · truncated\n<span style="color:var(--warn-ink)">note: add a filter, or ask\nfor a summary</span>'); bump({ calls: 1, rows: 200, masked: 1, adhoc: 1 }); }]);
+    // 5 · a table outside the grant: refused at Tables. payroll flashes as what was asked for; no lane reaches it.
+    s = 8.4; c = call('agent', s, DOTS[1], red, 0.35);
+    EVENTS.push([s, function () { say('<span style="color:var(--ink-3)">execute_sql SELECT *\nFROM payroll</span>'); }], [c.d[0], pass(0, 'support-agent ✓')],
+      [c.end, function () {
+        redDot(dotEls[1]); fTables.classList.add('lit'); live[1].textContent = 'payroll ✗'; live[1].style.color = red;
+        payroll.style.color = 'var(--danger-ink)'; payroll.style.borderColor = red; payroll.style.background = 'oklch(0.65 0.2 25 / 0.1)';
+        setTimeout(function () { payroll.style.color = payroll.style.borderColor = payroll.style.background = ''; }, 800);
+        record('transport: mcp · support-agent · execute_sql · table_not_allowed');
+        setTimeout(function () { say('<span style="color:var(--ink-3)">execute_sql →</span>\n<span style="color:var(--danger-ink)">isError · table_not_allowed</span>'); bump({ calls: 1, errors: 1, adhoc: 1, refused: 1 }); }, 250);
+      }]);
+    // 6 · a write: the first call holds at Writes (amber, waiting, not refused) until a person approves; then the
+    // agent calls again with the request id, and it runs once.
+    s = 9.4; c = call('agent', s, DOTS[3], amber, 0.9);
+    var tApprove = c.end + 0.5, s2 = tApprove + 0.4, c2 = call('agent', s2, WH, green); h = back('agent', WH, c2.end + 0.05);
+    svg.appendChild(pulseG('M' + DOTS[3] + ',84 V136', green, tApprove, tApprove + 52 / V, 0.2));
+    EVENTS.push([s, function () { say('<span style="color:var(--ink-3)">tools/call close_ticket\n{"ticket_id": 981}</span>'); }],
+      [c.d[0], pass(0, 'support-agent ✓')], [c.d[1], pass(1, 'saved query')], [c.d[2], pass(2, 'no rules')],
+      [c.end, function () { holdDot(dotEls[3], 1100); live[3].textContent = 'approval_required · wr_7f3k'; live[3].style.color = amber; say('<span style="color:var(--ink-3)">close_ticket →</span>\n<span style="color:var(--warn-ink)">approval_required\nwr_7f3k</span>'); }],
+      [tApprove, function () { U.flash(approver, 1000); U.flash(approverLane, 800); }],
+      [s2, function () { say('<span style="color:var(--ink-3)">close_ticket\n{"approval": "wr_7f3k"}</span>'); }],
+      [c2.d[3], function () { pass(3, 'approved ✓')(); }],
+      [c2.end, function () { U.flash(tiles.tickets, 1100); U.flash(wh, 500); record('transport: mcp · support-agent · close_ticket · approved'); }],
+      [h, function () { say('<span style="color:var(--ink-3)">close_ticket →</span>\n<span style="color:var(--accent-ink)">done · 1 row</span>'); bump({ calls: 1, done: 1 }); }]);
+    U.loop(svg, [{ begin: -P, dur: P }], function (p, f, passed) { EVENTS.forEach(function (e) { if (passed(e[0] / P)) e[1](); }); });
+  });
+  </script>
   <section style="background:#10201b;color:#e6efeb;">
     <div class="f-pad" style="max-width:1480px;margin:0 auto;padding:16px 24px 64px;display:grid;gap:24px">
 <article id="agents" class="f-2col u-case u-flip" style="background:#0c1915;border:1px solid #243b34;border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
