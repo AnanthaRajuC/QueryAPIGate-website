@@ -181,20 +181,35 @@
   });
   window.QSearch = { open: open, close: close };
 
-  // GitHub star count beside the GitHub icon in the nav: fetched once an hour, cached in localStorage, filled into
-  // every [data-gh-stars] once the page's runtime has rendered the nav.
+  // The GitHub link in the nav: stars, forks and the latest release, fetched at most once an hour, cached in
+  // localStorage, and filled into every [data-gh-stars], [data-gh-forks] and [data-gh-tag] once the page's runtime
+  // has rendered the nav. A fact that can't be fetched stays empty, and its place in the nav with it.
   (function () {
-    var KEY = 'qag-gh-stars', TTL = 3600000, value = null;
+    var KEY = 'qag-gh-repo', TTL = 3600000, REPO = 'https://api.github.com/repos/AnanthaRajuC/QueryAPIGate', vals = null;
     function fmt(n) { return n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '') + 'k' : String(n); }
-    function fill() { if (value === null) return true; var els = document.querySelectorAll('[data-gh-stars]'); for (var i = 0; i < els.length; i++) if (els[i].textContent !== value) els[i].textContent = value; return els.length > 0; }
-    function got(n) { value = fmt(n); fill(); }
-    try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && Date.now() - c.t < TTL) got(c.n); } catch (e) {}
-    if (value === null) {
-      fetch('https://api.github.com/repos/AnanthaRajuC/QueryAPIGate').then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (d) { if (d && typeof d.stargazers_count === 'number') { try { localStorage.setItem(KEY, JSON.stringify({ n: d.stargazers_count, t: Date.now() })); } catch (e) {} got(d.stargazers_count); } })
-        .catch(function () {});
+    function fill() {
+      if (vals === null) return true;
+      var n = 0;
+      [['data-gh-stars', vals.s], ['data-gh-forks', vals.f], ['data-gh-tag', vals.tag]].forEach(function (a) {
+        var v = a[1] == null ? '' : typeof a[1] === 'number' ? fmt(a[1]) : a[1], els = document.querySelectorAll('[' + a[0] + ']');
+        for (var i = 0; i < els.length; i++) { n++; if (els[i].textContent !== v) els[i].textContent = v; }
+      });
+      return n > 0;
     }
-    var tries = 0, timer = setInterval(function () { if ((value !== null && fill()) || ++tries > 40) clearInterval(timer); }, 250);
+    function json(url) { return fetch(url).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); }
+    try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && Date.now() - c.t < TTL) { vals = c; fill(); } } catch (e) {}
+    if (vals === null) {
+      Promise.all([json(REPO), json(REPO + '/releases/latest')]).then(function (r) {
+        var repo = r[0], rel = r[1];
+        if (!repo && !rel) return;
+        vals = { s: repo && typeof repo.stargazers_count === 'number' ? repo.stargazers_count : null,
+                 f: repo && typeof repo.forks_count === 'number' ? repo.forks_count : null,
+                 tag: rel && typeof rel.tag_name === 'string' ? rel.tag_name : null, t: Date.now() };
+        if (repo && rel) { try { localStorage.setItem(KEY, JSON.stringify(vals)); } catch (e) {} }
+        fill();
+      });
+    }
+    var tries = 0, timer = setInterval(function () { if ((vals !== null && fill()) || ++tries > 40) clearInterval(timer); }, 250);
     if (window.MutationObserver) new MutationObserver(function () { fill(); }).observe(document.documentElement, { childList: true, subtree: true });
   })();
 })();

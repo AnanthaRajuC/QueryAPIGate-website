@@ -7,6 +7,8 @@
   function apply(t) { root.setAttribute('data-theme', t); root.style.colorScheme = t; }
   apply(stored() || 'light');   // light unless the reader has chosen dark with the toggle
 
+  // A small outline icon as a CSS mask, so it takes the text's colour in either theme.
+  function ico(d) { return 'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>') + '")'; }
   var css = [
     ':root{--bg:#f3f5f4;--bg-90:rgba(243,245,244,0.9);--surface:#fff;--surface-2:#f8faf9;--surface-3:#eef2f0;--tint:#f3f9f6;',
     '--line:#dbe2df;--line-soft:#e8edeb;--line-2:#c3cdc9;--dots:#b3bfba;',
@@ -63,7 +65,19 @@
     // width of the page's content, centred, rather than stretching with the bar.
     '@media (min-width:1181px){.rs-navbar{max-width:none !important;padding-left:clamp(24px,3vw,56px) !important;padding-right:clamp(24px,3vw,56px) !important}',
     '.rs-nav{flex:1 1 auto}.rs-nav>:first-child{margin-left:auto}.rs-nav>.rs-pg{margin-left:auto}',
-    '.rs-mega .rs-dd-panel{left:max(24px,calc(50% - 620px)) !important;right:max(24px,calc(50% - 620px)) !important}}'
+    '.rs-mega .rs-dd-panel{left:max(24px,calc(50% - 620px)) !important;right:max(24px,calc(50% - 620px)) !important}}',
+    // The GitHub link: the repository's name over its latest release, stars and forks, as the documentation site shows
+    // it. Between 1181 and 1519px, where the bar has no room for it, it keeps to the mark and the star count.
+    '.rs-ghn{gap:9px !important;text-decoration:none !important;line-height:1.2}.rs-ghn:hover .rs-ghn-repo{color:var(--accent-ink)}',
+    '.rs-ghn-txt{display:grid;gap:3px;min-width:0}',
+    '.rs-ghn-repo{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;transition:color .2s}',
+    '.rs-ghn-facts{display:flex;align-items:center;gap:9px;min-height:14px;font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--ink-3);white-space:nowrap}',
+    '.rs-ghn-f{display:inline-flex;align-items:center;gap:3px}.rs-ghn-f:empty{display:none}',
+    '.rs-ghn-f::before{content:"";flex:none;width:11px;height:11px;background:currentColor;-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}',
+    '.rs-ghn-tag{--i:' + ico('<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r="1"/>') + '}',
+    '.rs-ghn-star{--i:' + ico('<path d="M11.5 2.3a.5.5 0 0 1 1 0l2.3 4.7a2.1 2.1 0 0 0 1.6 1.2l5.2.7a.5.5 0 0 1 .3.9l-3.8 3.7a2.1 2.1 0 0 0-.6 1.9l.9 5.1a.5.5 0 0 1-.8.6l-4.6-2.4a2.1 2.1 0 0 0-2 0L6.4 21a.5.5 0 0 1-.8-.6l.9-5.1a2.1 2.1 0 0 0-.6-1.9L2.2 9.8a.5.5 0 0 1 .3-.9l5.2-.7a2.1 2.1 0 0 0 1.6-1.2z"/>') + '}',
+    '.rs-ghn-fork{--i:' + ico('<circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9M12 12v3"/>') + '}',
+    '@media (min-width:1181px) and (max-width:1519px){.rs-ghn{gap:6px !important}.rs-ghn-repo,.rs-ghn-tag,.rs-ghn-fork{display:none !important}.rs-ghn-facts{min-height:0;font-size:12px}.rs-ghn-star::before{display:none}}'
   ].join('');
   var style = document.createElement('style'); style.id = 'qag-theme'; style.textContent = css;
   (document.head || root).appendChild(style);
