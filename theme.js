@@ -66,6 +66,24 @@
     '@media (min-width:1181px){.rs-navbar{max-width:none !important;padding-left:clamp(24px,3vw,56px) !important;padding-right:clamp(24px,3vw,56px) !important}',
     '.rs-nav{flex:1 1 auto}.rs-nav>:first-child{margin-left:auto}.rs-nav>.rs-pg{margin-left:auto}',
     '.rs-mega .rs-dd-panel{left:max(24px,calc(50% - 620px)) !important;right:max(24px,calc(50% - 620px)) !important}}',
+    // The section rail stays under the sticky nav (z-index 20), so an open menu is never drawn under it.
+    '.rail{z-index:19 !important}',
+    // The MCP menu: the pages as cards, the agent guides beside them, and the clients that connect along the bottom.
+    // The card and link styles are the other menus'; only the layout is its own.
+    '.rs-mcp-body{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1fr);gap:28px}',
+    '.rs-mcp-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-content:start}',
+    '.rs-mcp-side{display:grid;gap:2px;align-content:start;padding-left:28px;border-left:1px solid var(--line-soft)}',
+    '.rs-mcp-side small{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px 10px}',
+    '.rs-mcp-side .rs-mega-more{margin:8px 0 0 10px}',
+    '.rs-mcp-side a.rs-doc{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink);text-decoration:none;transition:background .15s}',
+    '.rs-mcp-side a.rs-doc:hover{background:var(--bg);color:var(--ink);text-decoration:none}',
+    '.rs-mcp-side .rs-doc-ico{flex:none;width:28px;height:28px;border-radius:7px;background:oklch(0.52 0.11 170 / 0.09);position:relative}',
+    '.rs-mcp-side .rs-doc-ico::after{content:"";position:absolute;inset:7px;background:var(--accent-ink);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}',
+    '.rs-mcp-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-top:14px;border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--ink-3)}',
+    '.rs-mcp-foot>span:first-child{margin-right:4px}',
+    '.rs-mcp-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:12.5px;font-weight:500;color:var(--ink-2)}',
+    '.rs-mcp-chip i{flex:none;width:13px;height:13px;background:currentColor;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}',
+    '@media (max-width:1400px){.rs-mcp-body{grid-template-columns:minmax(0,1.9fr) minmax(0,1fr)}.rs-mcp-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}',
     // The GitHub link: the repository's name over its latest release, stars and forks, as the documentation site shows
     // it. Between 1181 and 1519px, where the bar has no room for it, it keeps to the mark and the star count.
     '.rs-ghn{gap:9px !important;text-decoration:none !important;line-height:1.2}.rs-ghn:hover .rs-ghn-repo{color:var(--accent-ink)}',
