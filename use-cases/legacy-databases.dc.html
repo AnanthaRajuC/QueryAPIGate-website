@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <!-- site-meta -->
 <title>Legacy databases - Use cases - QueryAPIGate</title>
-<meta name="description" content="The core system runs on Oracle, SQL Server or DB2, and nobody wants to touch it. Generic JDBC loads the vendor&#x27;s own driver, so that data can be served through saved queries with the same keys, limits, masking and audit as any other connection.">
+<meta name="description" content="The core system runs on Oracle, SQL Server or DB2, and nobody wants to touch it. Generic JDBC loads the vendor&#x27;s own driver, so that data can be served through saved queries with the same keys, limits, quotas and audit as any other connection.">
 <meta name="theme-color" content="#10201b">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310201b'/%3E%3Cpath d='M9.5 24V10.5h13V24' fill='none' stroke='%2322a58c' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M13.5 17.5h5' stroke='%23e6efeb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="QueryAPIGate">
 <meta property="og:title" content="Legacy databases - Use cases - QueryAPIGate">
-<meta property="og:description" content="The core system runs on Oracle, SQL Server or DB2, and nobody wants to touch it. Generic JDBC loads the vendor&#x27;s own driver, so that data can be served through saved queries with the same keys, limits, masking and audit as any other connection.">
+<meta property="og:description" content="The core system runs on Oracle, SQL Server or DB2, and nobody wants to touch it. Generic JDBC loads the vendor&#x27;s own driver, so that data can be served through saved queries with the same keys, limits, quotas and audit as any other connection.">
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:image" content="https://anantharajuc.github.io/QueryAPIGate-website/images/og-card.png">
 <meta property="og:image:width" content="1200">
@@ -22,6 +22,8 @@
 <script src="../support.js"></script>
 <script src="../theme.js?v=15"></script>
 <script src="../search.js?v=6" defer></script>
+<link rel="stylesheet" href="uc-diagram.css">
+<script src="uc-diagram.js" defer></script>
 </head>
 <body>
 <helmet>
@@ -257,23 +259,257 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   <header class="f-pad" style="max-width:1480px;margin:0 auto;padding:56px 24px 8px;display:grid;gap:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)"><a class="uc-back" href="../Use Cases.dc.html#g-data" aria-label="Back to use cases" title="Back to use cases"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a><a href="../Use Cases.dc.html" style="color:var(--ink-2);font-weight:500">Use cases</a><span aria-hidden="true">/</span><a href="../Use Cases.dc.html#g-data" style="color:var(--ink-2);font-weight:500">Data teams</a><span aria-hidden="true">/</span><span style="color:var(--ink);font-weight:600">Legacy databases</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9fb3ac">09 / 12</span></div>
   </header>
+  <section class="ucd-section" id="how-it-fits" aria-labelledby="ucd-h" style="padding-top:16px;padding-bottom:40px">
+    <span class="ucd-eyebrow">How it fits together</span>
+    <h2 class="ucd-h2" id="ucd-h">The same governed front, with the vendor's own driver behind it</h2>
+    <p class="ucd-lede">QueryAPIGate loads the vendor's JDBC driver into a JVM in its own process, so nothing is installed on the database. Keys, limits, quotas, caching and audit work as for any connection. Where it can't check something on JDBC (column masking, table allow-lists), it refuses the caller rather than serving them unfiltered. The database user you give it, read-only, is the real safeguard.</p>
+    <div class="ucd-wrap" data-w="1440" data-h="640" id="ucd-legacy">
+      <div class="ucd-canvas" role="group" aria-label="A procurement app, a supplier portal and an analyst call the governed core, which checks the grant, the SQL guard and masking as for any connection. Behind it, generic JDBC, experimental, loads the vendor's own driver jar into an embedded JVM in the server's process and reaches the Oracle ERP database, with nothing installed on it. On a jdbc connection masking can't be traced, so the supplier portal, whose key has a masking rule, is refused with 403 mask_unresolvable rather than served unmasked; a table-restricted key and the schema browser are refused too. The analyst's DELETE is refused by the SQL guard, the only write check QueryAPIGate makes on JDBC, so the database user that can only read is the real safeguard; a statement timeout is set in the database.">
+
+        <div class="ucd-stats" style="right:40px;top:16px;gap:12px">
+          <div style="max-width:110px"><b>3</b><span style="font-size:10.5px;line-height:1.3">fields: the jar, its class, a JDBC URL</span></div>
+          <div style="max-width:84px"><b>0</b><span style="font-size:10.5px;line-height:1.3">things installed on the database</span></div>
+          <div style="max-width:104px"><b>1</b><span style="font-size:10.5px;line-height:1.3">read-only user, the real safeguard</span></div>
+        </div>
+
+        <div class="ucd-zone" style="left:40px;top:96px;width:200px">Who asks</div>
+        <div class="ucd-zone" style="left:280px;top:96px;width:440px">The governed core</div>
+        <div class="ucd-zone" style="left:760px;top:96px;width:300px;white-space:nowrap;font-size:11px;padding-top:2px">An embedded JVM, in the server's process</div>
+        <div class="ucd-zone" style="left:1100px;top:96px;width:300px;white-space:nowrap;font-size:11px;padding-top:2px">The database you don't change</div>
+
+        <!-- A · Who asks: outside QueryAPIGate, so dashed -->
+        <div class="ucd-box out" data-who="0" style="left:40px;top:136px;width:200px;height:96px" title="A key for one saved query, as on any connection.">
+          <a class="box-link abs" href="../Guides.dc.html?path=apps" title="Guides for this part">↗</a>
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/package.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/package.svg) center/contain no-repeat"></span><b style="font-size:13px;font-weight:600">Procurement app</b></span>
+          <span class="ucd-mono" style="left:12px;top:32px;font-size:10px;color:var(--ink)">queries: open_purchase_orders</span>
+          <span class="ucd-resp ok" data-resp style="left:12px;right:8px;top:54px">200 · text/csv · streamed</span>
+        </div>
+        <div class="ucd-box out" data-who="1" style="left:40px;top:256px;width:200px;height:96px" title="A key with a masking rule. On JDBC that can't be traced, so it's refused, never served unmasked.">
+          <a class="box-link abs" href="../Guides.dc.html?path=partner" title="Guides for this part">↗</a>
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/building-2.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/building-2.svg) center/contain no-repeat"></span><b style="font-size:13px;font-weight:600">Supplier portal</b></span>
+          <span class="ucd-mono" style="left:12px;top:32px;font-size:10px;color:var(--ink)">mask: SUPPLIERS.BANK_ACCOUNT</span>
+          <span class="ucd-resp bad" data-resp style="left:12px;right:8px;top:54px">403 mask_unresolvable</span>
+        </div>
+        <div class="ucd-box out" data-who="2" style="left:40px;top:376px;width:200px;height:96px" title="Ad-hoc SQL on the connection, read-only by default.">
+          <a class="box-link abs" href="../Guides.dc.html?path=data" title="Guides for this part">↗</a>
+          <span style="left:12px;top:9px;display:flex;align-items:center;gap:6px"><span style="display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/terminal.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/terminal.svg) center/contain no-repeat"></span><b style="font-size:13px;font-weight:600">An analyst</b></span>
+          <span class="ucd-mono" style="left:12px;top:32px;font-size:10px;color:var(--ink)">connections: [erp]</span>
+          <span class="ucd-resp bad" data-resp style="left:12px;right:8px;top:54px">403 read_only</span>
+        </div>
+
+        <!-- B · The governed core -->
+        <div class="ucd-core" style="left:280px;top:136px;width:440px;height:240px">
+          <div style="left:20px;right:14px;top:12px;display:flex;align-items:center;gap:10px"><span class="ucd-core-t">The governed core</span><span class="ucd-core-badge">GET /q/&lt;name&gt; · POST /execute_sql</span><a class="box-link dark" href="../Guides.dc.html?path=rest" title="Guides for this part" style="margin-left:auto">↗</a></div>
+          <div class="ucd-core-row" data-col="0" style="left:20px;width:128px;top:72px;bottom:6px;display:flex;flex-direction:column;gap:3px;padding:3px 7px">
+            <h4 class="ucd-stage">01 · Grant</h4>
+            <p style="font-size:11.5px;line-height:1.26;color:#e6efeb">Keys, rate limits and quotas, as on every connection.</p>
+            <span class="ucd-mono" data-live style="min-height:27px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">procurement ✓</span>
+            <span class="ucd-flag" style="margin-top:auto;font-size:10px;align-self:flex-start;white-space:nowrap">429 rate_limited</span></div>
+          <div class="ucd-core-row" data-col="1" style="left:156px;width:128px;top:72px;bottom:6px;display:flex;flex-direction:column;gap:3px;padding:3px 7px">
+            <h4 class="ucd-stage">02 · SQL guard</h4>
+            <p style="font-size:11.5px;line-height:1.26;color:#e6efeb">One read-only statement. On JDBC, the only write check QueryAPIGate makes.</p>
+            <span class="ucd-mono" data-live style="min-height:27px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">SELECT ✓</span>
+            <span class="ucd-flag" id="ucd-f-guard" style="margin-top:auto;font-size:10px;align-self:flex-start;white-space:nowrap">403 read_only</span></div>
+          <div class="ucd-core-row" data-col="2" style="left:292px;width:128px;top:72px;bottom:6px;display:flex;flex-direction:column;gap:3px;padding:3px 7px">
+            <h4 class="ucd-stage">03 · Masking</h4>
+            <p style="font-size:11.5px;line-height:1.26;color:#e6efeb">Can't be traced on JDBC: a caller with rules is refused, never served unmasked.</p>
+            <span class="ucd-mono" data-live style="min-height:27px;font-size:10.5px;line-height:1.3;color:oklch(0.8 0.11 170)">no rules ✓</span>
+            <span class="ucd-flag rest-lit" id="ucd-f-mask" style="margin-top:auto;font-size:9.5px;line-height:1.2;padding:3px 5px">403 mask_unresolvable</span></div>
+        </div>
+
+        <!-- As on every connection, under the core -->
+        <div class="ucd-box" style="left:280px;top:392px;width:440px;height:80px">
+          <a class="box-link abs" href="../Guides.dc.html?path=core" title="Guides for this part">↗</a>
+          <span style="left:14px;top:7px;font-size:11px;font-weight:600;letter-spacing:0.04em;color:var(--ink-3)">As on every connection</span>
+          <div style="left:12px;right:36px;top:26px;display:flex;flex-wrap:wrap;gap:6px">
+            <span class="ucd-chip" style="position:static;font-size:10.5px">saved queries</span><span class="ucd-chip" style="position:static;font-size:10.5px">rate limits</span><span class="ucd-chip" style="position:static;font-size:10.5px">quotas</span><span class="ucd-chip" style="position:static;font-size:10.5px">cache_ttl</span><span class="ucd-chip" style="position:static;font-size:10.5px">streaming exports</span><span class="ucd-chip" style="position:static;font-size:10.5px">run history</span><span class="ucd-chip" style="position:static;font-size:10.5px">audit log</span>
+          </div>
+        </div>
+
+        <!-- C · An embedded JVM, in the server's process -->
+        <div class="ucd-box" id="ucd-jvm" style="left:760px;top:136px;width:300px;height:336px;border-color:var(--line-2)">
+          <a class="box-link abs" href="../Guides.dc.html?path=sources" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:14px;top:10px;display:flex;align-items:center;gap:8px"><img src="https://cdn.simpleicons.org/openjdk" alt="" width="16" height="16">Embedded JVM<span class="ucd-tag exp" style="font-size:9.5px;padding:3px 5px">Exp</span></h3>
+          <span class="ucd-mono" style="left:14px;top:32px;font-size:10.5px;color:var(--ink-3)">the -h2 image includes Java</span>
+          <div class="ucd-box out" id="ucd-driver" style="left:12px;right:12px;top:78px;height:80px;background:var(--surface)" title="The vendor's own driver, not bundled: only H2's is.">
+            <span class="ucd-mono" style="left:10px;right:8px;top:7px;font-size:10.5px;line-height:16px;color:var(--ink);white-space:pre">ojdbc11.jar
+oracle.jdbc.OracleDriver
+jdbc:oracle:thin:@//
+  erp-db.internal:1521/ERP</span>
+            <span class="ucd-mono" id="ucd-jvm-start" style="right:8px;top:8px;font-size:9.5px;color:var(--warn-ink);visibility:hidden">JVM starting…</span>
+          </div>
+          <div style="left:14px;right:14px;top:172px;display:grid;gap:8px;font-size:11px;line-height:1.35;color:var(--ink-3)">
+            <span class="ucd-mono" style="position:static;font-size:10px;color:var(--ink-2)">pool · idle connections kept and reused</span>
+            <span style="position:static">Classpath fixed when the JVM starts: a new jar needs a restart.</span>
+            <span style="position:static">Columns come back as the driver names them: <code class="ucd-mono" style="font-size:10px;padding:0;background:none;border:0;color:var(--ink-2)">PO_ID</code>.</span>
+          </div>
+        </div>
+
+        <!-- D · The database you don't change -->
+        <div class="ucd-box" id="ucd-db" style="left:1100px;top:136px;width:300px;height:336px">
+          <a class="box-link abs" href="../Guides.dc.html?path=databases" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:14px;top:10px;display:flex;align-items:center;gap:8px"><span style="display:block;width:16px;height:16px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/database.svg) center/contain no-repeat"></span>Oracle<span class="ucd-tag stable" style="font-family:'Instrument Sans',sans-serif;text-transform:none;letter-spacing:0;font-size:10px;padding:3px 6px;font-weight:600">nothing installed</span></h3>
+          <span class="ucd-mono" style="left:14px;top:32px;font-size:10.5px;color:var(--ink-3)">erp-db.internal:1521/ERP</span>
+          <span class="ucd-mono" style="left:14px;top:78px;font-size:10.5px;color:var(--ink)">user api_readonly · SELECT only</span>
+          <span class="ucd-tag stable" id="ucd-safeguard" style="left:14px;top:98px;font-family:'Instrument Sans',sans-serif;text-transform:none;letter-spacing:0;font-size:10px;padding:3px 6px;transition:box-shadow 0.25s" title="QueryAPIGate's SQL check refuses writes, but JDBC's read-only flag is advisory. A user that can't write is what holds.">the real safeguard</span>
+          <div style="left:14px;right:14px;top:130px;display:grid;grid-template-columns:1fr 1fr;gap:6px">
+            <span class="ucd-tile rest-lit" data-table="PURCHASE_ORDERS" style="height:28px;font-size:10.5px">PURCHASE_ORDERS</span>
+            <span class="ucd-tile rest-lit" data-table="SUPPLIERS" style="height:28px;font-size:10.5px">SUPPLIERS</span>
+            <span class="ucd-tile" style="height:28px;font-size:10.5px">INVOICES</span>
+            <span class="ucd-tile" style="height:28px;font-size:10.5px">GL_ENTRIES</span>
+          </div>
+          <span class="ucd-mono" style="left:14px;top:208px;padding:4px 8px;border:1px dashed var(--line-2);border-radius:6px;font-size:10.5px;color:var(--ink-2)" title="QueryAPIGate's query time limit isn't enforced on JDBC: there's no portable way to cancel a statement.">statement timeout · set it here</span>
+          <span style="left:14px;right:14px;bottom:12px;font-size:11px;line-height:1.35;color:var(--ink-3)">Or SQL Server, DB2, Snowflake: any database with a JDBC driver.</span>
+        </div>
+
+        <!-- On a jdbc connection -->
+        <div class="ucd-side" style="left:40px;top:496px;width:200px;height:90px"><b>On a jdbc connection</b><span>where it can't check, it refuses</span></div>
+        <div style="left:280px;top:500px;width:1120px;display:grid;grid-template-columns:200px 1fr;gap:12px 0;align-items:center;font-family:'JetBrains Mono',monospace;font-size:10.5px">
+          <span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">Refused, never weakened</span>
+          <span style="display:flex;gap:8px;flex-wrap:wrap">
+            <span id="ucd-r-mask" style="padding:5px 9px;border-radius:6px;border:1px solid oklch(0.65 0.2 25 / 0.7);color:var(--danger-ink);background:oklch(0.65 0.2 25 / 0.12);transition:background 0.3s,color 0.3s">mask rules → 403 mask_unresolvable</span>
+            <span style="padding:5px 9px;border-radius:6px;border:1px solid oklch(0.65 0.2 25 / 0.5);color:var(--ink-2)">allowed_tables → 403 table_check_unsupported</span>
+            <span style="padding:5px 9px;border-radius:6px;border:1px solid oklch(0.65 0.2 25 / 0.5);color:var(--ink-2)">schema browser → 400 unsupported_operation</span>
+          </span>
+          <span style="font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">Yours to set</span>
+          <span style="display:flex;gap:8px;flex-wrap:wrap">
+            <span style="padding:5px 9px;border-radius:6px;border:1px dashed var(--line-2);color:var(--ink-2)">a database user that can only read</span>
+            <span style="padding:5px 9px;border-radius:6px;border:1px dashed var(--line-2);color:var(--ink-2)">a statement timeout in the database</span>
+          </span>
+        </div>
+
+        <div class="ucd-legend" style="left:40px;right:40px;top:604px">
+          <span><span class="ucd-tag exp">Exp</span>may change in a minor release</span>
+          <span>Tested in CI with H2's driver standing in for a vendor. The full comparison is in the <a href="../Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION">support matrix →</a></span>
+        </div>
+
+        <svg class="ucd-fx" id="ucd-fx" width="1440" height="640" viewBox="0 0 1440 640" aria-hidden="true"></svg>
+      </div>
+    </div>
+
+    <div class="ucd-stack">
+      <div class="ucd-sbox out"><small>Who asks</small><b>Apps, partners, analysts</b><span>The same keys, limits and quotas as on any connection.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox core"><small>The governed core</small><b>Grant → SQL guard → masking</b><span>A write is refused. A caller with mask rules is refused too: on JDBC masking can't be traced, so nothing is served unmasked.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>An embedded JVM <span class="ucd-tag exp">Exp</span></small><b>The vendor's own driver</b><span>A jar, its class and a JDBC URL, in the server's process. A new jar needs a restart.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>The database you don't change</small><b>Nothing installed on it</b><span>Give it a user that can only read, and a statement timeout of its own.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox out"><small>Refused, or yours to set</small><b>Masking, table allow-lists, schema browsing: refused</b><span>A read-only user and a statement timeout: set in the database.</span></div>
+    </div>
+
+    <p class="ucd-foot">The same governed core as the <a href="../Home.dc.html#architecture">full architecture</a>.</p>
+  </section>
+  <script>
+  // Legacy databases: four calls a cycle. The procurement app's saved query through the vendor's driver; the supplier
+  // portal, whose key has a masking rule, refused at Masking; the analyst's DELETE refused by the SQL guard; and a CSV
+  // stream that holds its connection to the last row. The HTML is the state at rest.
+  document.addEventListener('DOMContentLoaded', function () {
+    var U = window.UCD, svg = document.getElementById('ucd-fx'), wrap = document.getElementById('ucd-legacy');
+    if (!U || !svg) return;
+    var NS = 'http://www.w3.org/2000/svg', P = 12, V = 640;   // the cycle, in seconds; px a second
+    var SPINE = 196, ROWS = [184, 304, 424], DOTS = [364, 500, 636], JVM = 760, DB = 1100;
+    var green = 'oklch(0.62 0.13 170)', red = 'oklch(0.65 0.2 25)';
+    function el(tag, attrs, kids) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); (kids || []).forEach(function (c) { e.appendChild(c); }); return e; }
+    function $(id) { return document.getElementById(id); }
+
+    var cols = [].slice.call(wrap.querySelectorAll('[data-col]')), live = [].slice.call(wrap.querySelectorAll('[data-live]'));
+    var who = [].slice.call(wrap.querySelectorAll('[data-who]')), resps = who.map(function (b) { return b.querySelector('[data-resp]'); });
+    var tiles = [].slice.call(wrap.querySelectorAll('[data-table]')), driver = $('ucd-driver'), jvmStart = $('ucd-jvm-start'), db = $('ucd-db');
+    var fGuard = $('ucd-f-guard'), fMask = $('ucd-f-mask'), rMask = $('ucd-r-mask'), safeguard = $('ucd-safeguard');
+
+    // Lanes: three callers converging into the core, the spine through the core, across the JVM's band and into the
+    // database.
+    var IN = ['M240,184 C260,184 260,196 280,196', 'M240,304 C262,304 258,196 280,196', 'M240,424 C262,424 258,196 280,196'];
+    var lane = function (d, cls) { var p = el('path', { d: d, class: 'ucd-lane' + (cls ? ' ' + cls : '') }); svg.appendChild(p); return p; };
+    IN.forEach(function (d) { lane(d); }); lane('M280,' + SPINE + ' H720', 'in-core'); lane('M720,' + SPINE + ' H' + DB);
+    var dotEls = DOTS.map(function (x) {
+      var d = document.createElement('span'); d.className = 'ucd-dot'; d.style.left = x + 'px'; d.style.top = SPINE + 'px';
+      wrap.querySelector('.ucd-canvas').insertBefore(d, svg); return d;
+    });
+
+    if (U.reduced) { wrap.classList.add('ucd-still'); return; }   // at rest: the HTML's own state
+
+    function maskRed(on) { rMask.style.color = on ? '' : 'var(--ink-2)'; rMask.style.background = on ? '' : 'transparent'; rMask.style.borderColor = on ? '' : 'oklch(0.65 0.2 25 / 0.5)'; }
+    function reset() { fMask.classList.remove('rest-lit', 'lit'); fGuard.classList.remove('lit'); maskRed(false); tiles.forEach(function (t) { t.classList.remove('rest-lit'); }); }
+    reset();
+
+    var f4 = function (v) { return v.toFixed(4); };
+    function pulseG(path, color, t0, t1, fade) {   // t0, t1 in seconds into the cycle
+      var a = t0 / P, b = t1 / P, c = fade ? (t1 + fade) / P : b, begin = -P + 's';
+      return el('g', {}, [
+        el('circle', { r: 10, fill: color, opacity: 0.2 }),
+        el('circle', { r: 4.5, fill: color }),
+        el('animateMotion', { dur: P + 's', begin: begin, repeatCount: 'indefinite', path: path, calcMode: 'linear', keyPoints: '0;0;1;1', keyTimes: '0;' + f4(a) + ';' + f4(b) + ';1' }),
+        el('animate', { attributeName: 'opacity', values: '0;0;1;1;0;0', keyTimes: '0;' + f4(a) + ';' + f4(a + 0.002) + ';' + f4(fade ? b : b - 0.002) + ';' + f4(c) + ';1', dur: P + 's', begin: begin, repeatCount: 'indefinite' })
+      ]);
+    }
+    function redDot(d) { d.style.borderColor = red; d.style.boxShadow = '0 0 0 5px oklch(0.65 0.2 25 / 0.3),0 0 14px oklch(0.65 0.2 25 / 0.7)'; setTimeout(function () { d.style.borderColor = d.style.boxShadow = ''; }, 700); }
+    function resp(k, text, bad) { resps[k].className = 'ucd-resp ' + (bad ? 'bad' : 'ok'); resps[k].textContent = text; }
+    var inLen = IN.map(function (d, i) { return U.bez([240, ROWS[i]], [i ? 262 : 260, ROWS[i]], [i ? 258 : 260, SPINE], [280, SPINE]); });
+
+    // A call from caller k at s: stop is a dot index (refused there) or 'db'. hold keeps the pulse at the database.
+    function call(k, s, stop, hold) {
+      var at = function (x) { return s + (inLen[k] + x - 280) / V; }, t = { d: DOTS.map(at), jvm: at(JVM), db: at(DB) };
+      if (stop === 'db') {
+        svg.appendChild(pulseG(IN[k] + ' H' + DB, green, s, t.db, hold || 0));
+        t.back = t.db + (hold || 0) + 0.05; t.home = t.back + (t.db - s);
+        var BACK = [' C260,196 260,184 240,184', ' C258,196 262,304 240,304', ' C258,196 262,424 240,424'][k];
+        svg.appendChild(pulseG('M' + DB + ',' + SPINE + ' H280' + BACK, green, t.back, t.home, 0.2));
+      } else { t.end = t.d[stop]; svg.appendChild(pulseG(IN[k] + ' H' + DOTS[stop], red, s, t.end, 0.35)); }
+      return t;
+    }
+    function begin(k) { live.forEach(function (l) { l.textContent = ''; l.style.color = ''; }); U.flash(who[k], 500); }
+    function pass(i, text) { return function () { U.flash(dotEls[i], 500); U.flash(cols[i], 700); live[i].textContent = text; }; }
+    function through(t, hold) {   // the JVM's driver card lights, then the tables the query reads
+      return [[t.jvm, function () { U.flash(driver, 900); }], [t.db, function () { U.flash(db, 600); tiles.forEach(function (x) { U.flash(x, 1300 + (hold || 0) * 1000); }); }]];
+    }
+
+    var EVENTS = [[0.05, reset]], firstCycle = true;
+    // 1 · the procurement app's saved query, through the vendor's driver. The first time after load, the JVM starts.
+    var c1 = call(0, 0.1, 'db');
+    EVENTS.push([0.1, function () { begin(0); }], [c1.d[0], pass(0, 'procurement ✓')], [c1.d[1], pass(1, 'SELECT ✓')], [c1.d[2], pass(2, 'no rules ✓')],
+      [Math.max(0.06, c1.jvm - 0.6), function () { if (!firstCycle) return; firstCycle = false; jvmStart.style.visibility = 'visible'; setTimeout(function () { jvmStart.style.visibility = 'hidden'; }, 600); }],
+      [c1.home, function () { resp(0, '200 · 14 rows'); }]);
+    EVENTS.push.apply(EVENTS, through(c1));
+    // 2 · the supplier portal, whose key has a masking rule: refused at Masking, never served unmasked.
+    var c2 = call(1, 3.1, 2);
+    EVENTS.push([3.1, function () { begin(1); }], [c2.d[0], pass(0, 'supplier-portal ✓')], [c2.d[1], pass(1, 'SELECT ✓')],
+      [c2.end, function () {
+        redDot(dotEls[2]); fMask.classList.add('lit'); maskRed(true); live[2].textContent = "can't trace on jdbc: refused"; live[2].style.color = red;
+        setTimeout(function () { resp(1, '403 mask_unresolvable', true); }, 250);
+      }]);
+    // 3 · the analyst's DELETE: refused by the SQL guard. The read-only user couldn't have written either.
+    var c3 = call(2, 5.4, 1);
+    EVENTS.push([5.4, function () { begin(2); }], [c3.d[0], pass(0, 'analyst ✓')],
+      [c3.end, function () { redDot(dotEls[1]); fGuard.classList.add('lit'); live[1].textContent = 'DELETE ✗'; live[1].style.color = red; setTimeout(function () { resp(2, '403 read_only', true); }, 250); }],
+      [c3.end + 0.5, function () { safeguard.style.boxShadow = '0 0 0 3px oklch(0.52 0.11 170 / 0.35)'; setTimeout(function () { safeguard.style.boxShadow = ''; }, 700); }]);
+    // 4 · a CSV stream: as call 1, holding its connection at the database until the last row.
+    var c4 = call(0, 7.8, 'db', 0.5);
+    EVENTS.push([7.8, function () { begin(0); }], [c4.d[0], pass(0, 'procurement ✓')], [c4.d[1], pass(1, 'SELECT ✓')], [c4.d[2], pass(2, 'no rules ✓')],
+      [c4.home, function () { resp(0, '200 · text/csv · streamed'); }]);
+    EVENTS.push.apply(EVENTS, through(c4, 0.5));
+    U.loop(svg, [{ begin: -P, dur: P }], function (p, f, passed) { EVENTS.forEach(function (e) { if (passed(e[0] / P)) e[1](); }); });
+  });
+  </script>
   <section style="">
     <div class="f-pad" style="max-width:1480px;margin:0 auto;padding:16px 24px 64px;display:grid;gap:24px">
 <article id="legacy" class="f-2col u-case" style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
-          <div class="u-strip" role="img" aria-label="The procurement key calls GET /q/open_purchase_orders; the connection uses the vendor's driver through generic JDBC with a read-only database user, masking and audit apply as usual; the query runs on the Oracle ERP database.">
+          <div class="u-strip" role="img" aria-label="The procurement key calls GET /q/open_purchase_orders; the connection uses the vendor's driver through generic JDBC with a read-only database user, and a caller it can't check, such as one with masking rules, is refused; the query runs on the Oracle ERP database.">
             <span class="u-node"><small>who</small>key procurement</span>
             <span class="u-link l1" aria-hidden="true"></span>
             <span class="u-node u-dark"><small>door</small>GET /q/open_purchase_orders</span>
             <span class="u-link l2" aria-hidden="true"></span>
-            <span class="u-checks"><span class="u-chk c1">vendor's driver via JDBC <b>✓</b></span><span class="u-chk c2">database user read-only <b>✓</b></span><span class="u-chk c3">masking + audit as usual <b>✓</b></span></span>
+            <span class="u-checks"><span class="u-chk c1">vendor's driver via JDBC <b>✓</b></span><span class="u-chk c2">database user read-only <b>✓</b></span><span class="u-chk c3">fails closed where it can't check <b>✓</b></span></span>
             <span class="u-link l3" aria-hidden="true"></span>
             <span class="u-node u-data"><small>data</small>Oracle · erp (jdbc)</span>
           </div>
           <div style="display:grid;gap:16px;min-width:0">
             <div style="display:flex;gap:12px;align-items:center"><span style="flex:none;width:36px;height:36px;border-radius:9px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center"><span style="display:block;width:18px;height:18px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/database-zap.svg) center/contain no-repeat"></span></span><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)">For legacy and vendor databases<span style="font-size:10px;font-weight:600;letter-spacing:0.06em;padding:3px 6px;border-radius:4px;background:oklch(0.6 0.13 75 / 0.12);color:var(--warn-ink);margin-left:8px">EXPERIMENTAL</span></span></div>
             <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(28px,3.4vw,40px);line-height:1.15;font-weight:700;letter-spacing:-0.015em;text-wrap:balance;color:var(--ink)">Put a governed API in front of a database you can't change</h1>
-            <p style="margin:0;color:var(--ink-2);text-wrap:pretty">The core system runs on Oracle, SQL Server or DB2, and nobody wants to touch it. Generic JDBC loads the vendor's own driver, so that data can be served through saved queries with the same keys, limits, masking and audit as any other connection.</p>
-            <div style="display:grid;gap:10px;padding-top:6px"><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:var(--ink-2);align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>A <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">jdbc</code> connection takes the vendor's driver <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">.jar</code>, its driver class and a JDBC URL. Run the image's <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">-h2</code> variant, which includes Java.</span></div><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:var(--ink-2);align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>Saved queries, grants, masking, quotas and the audit log work as they do on every other connection.</span></div><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:var(--ink-2);align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>Known limits, verified: no query time limit (set one in the database), and no table allow-lists or schema browser on JDBC connections.</span></div><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:var(--ink-2);align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>Experimental: CI tests JDBC with H2's driver standing in for a vendor. Connect with a database user that can only read.</span></div></div>
+            <p style="margin:0;color:var(--ink-2);text-wrap:pretty">The core system runs on Oracle, SQL Server or DB2, and nobody wants to touch it. Generic JDBC loads the vendor's own driver, so that data can be served through saved queries with the same keys, limits, quotas and audit as any other connection.</p>
+            <div style="display:grid;gap:10px;padding-top:6px"><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:var(--ink-2);align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>A <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">jdbc</code> connection takes the vendor's driver <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">.jar</code>, its driver class and a JDBC URL. Run the image's <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">-h2</code> variant, which includes Java.</span></div><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:var(--ink-2);align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>Saved queries, grants, rate limits, quotas, caching, run history and the audit log work as on every other connection. Column masking and table allow-lists can't be checked on JDBC, so a caller with them is refused, never served unfiltered.</span></div><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:var(--ink-2);align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>Known limits, verified: no query time limit (set one in the database), and no table allow-lists or schema browser on JDBC connections.</span></div><div style="display:grid;grid-template-columns:18px minmax(0,1fr);gap:12px;font-size:14.5px;color:var(--ink-2);align-items:start"><span style="margin-top:3px;width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:var(--on-ink);font-size:10px;font-weight:700;display:grid;place-items:center">✓</span><span>Experimental: CI tests JDBC with H2's driver standing in for a vendor. Connect with a database user that can only read.</span></div></div>
             <div style="display:flex;gap:8px 18px;flex-wrap:wrap;font-size:14px;font-weight:600;padding-top:4px"><a href="../Guide.dc.html?g=03-connect-via-generic-jdbc">Guide 3: Connect via generic JDBC →</a><a href="../Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION">Support matrix →</a></div>
           </div>
           <div class="u-code" style="min-width:0;border-radius:12px;overflow:hidden;border:1px solid #243b34;box-shadow:0 30px 60px -30px rgba(16,32,27,0.45)">
@@ -288,7 +524,7 @@ curl -X POST https://data.example.com/api/v1/connections \
   "user": "api_readonly", "password": "${ERP_PASSWORD}"
 }'
 
-<span style="color:#9fb3ac"># then saved queries, keys and masking, as anywhere else
+<span style="color:#9fb3ac"># then saved queries and keys, as anywhere else
 </span><span style="color:oklch(0.8 0.11 170)">GET</span> /q/open_purchase_orders?supplier=ACME
 X-API-Key: sk_live_…procurement</pre>
           </div>
