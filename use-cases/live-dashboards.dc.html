@@ -22,6 +22,8 @@
 <script src="../support.js"></script>
 <script src="../theme.js?v=15"></script>
 <script src="../search.js?v=6" defer></script>
+<link rel="stylesheet" href="uc-diagram.css">
+<script src="uc-diagram.js" defer></script>
 </head>
 <body>
 <helmet>
@@ -257,6 +259,201 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   <header class="f-pad" style="max-width:1480px;margin:0 auto;padding:56px 24px 8px;display:grid;gap:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)"><a class="uc-back" href="../Use Cases.dc.html#g-partners" aria-label="Back to use cases" title="Back to use cases"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a><a href="../Use Cases.dc.html" style="color:var(--ink-2);font-weight:500">Use cases</a><span aria-hidden="true">/</span><a href="../Use Cases.dc.html#g-partners" style="color:var(--ink-2);font-weight:500">Partners and pipelines</a><span aria-hidden="true">/</span><span style="color:var(--ink);font-weight:600">Live dashboards</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9fb3ac">06 / 12</span></div>
   </header>
+  <section class="ucd-section" id="how-it-fits" aria-labelledby="ucd-h" style="padding-top:16px;padding-bottom:40px">
+    <span class="ucd-eyebrow">How it fits together</span>
+    <h2 class="ucd-h2" id="ucd-h">Every run, to whoever may see it</h2>
+    <p class="ucd-lede">A call through any front door is recorded as it completes: one history row and one event, in the same batch. A separate events server reads every instance's events from the shared store and streams each one, over plain HTTP, only to the keys allowed to see it.</p>
+    <div class="ucd-wrap" data-w="1440" data-h="640" id="ucd-live">
+      <div class="ucd-canvas" role="group" aria-label="Runs through REST, MCP and exports are recorded by the governed core as one history row and one event, written to the event log in the shared store. The events server reads every instance's events and streams each run only to the keys allowed to see it: the ops screen sees every run, the partner portal only partner-acme's, and the failures board only failed runs.">
+
+        <div class="ucd-stats" style="right:40px;top:24px" title="Measured on a 4-core machine shared with PostgreSQL and the load generator, about 170 MB for 9,000 streams.">
+          <div><b>9,000</b><span>streams in one process, measured</span></div>
+          <div><b>0.75 s</b><span>for an event to reach all of them</span></div>
+          <div><b>24 h</b><span>a client can resume from</span></div>
+        </div>
+
+        <div class="ucd-zone" style="left:40px;top:96px;width:220px" title="Any front door's runs become events. Reads the Rust data plane serves (experimental) are recorded and streamed the same way.">Runs happen</div>
+        <div class="ucd-zone" style="left:316px;top:96px;width:240px">The governed core</div>
+        <div class="ucd-zone" style="left:612px;top:96px;width:200px">Shared store</div>
+        <div class="ucd-zone" style="left:868px;top:96px;width:216px">Events server</div>
+        <div class="ucd-zone" style="left:1140px;top:96px;width:260px">Who watches</div>
+
+        <!-- A · Runs happen: outside QueryAPIGate, so dashed -->
+        <div class="ucd-box out ucd-caller" style="left:40px;top:136px;width:220px;height:96px"><a class="box-link abs" href="../Guides.dc.html?path=apps" title="Guides for this part">↗</a><span class="ucd-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-grid.svg)"></span><div style="display:grid;gap:3px;min-width:0"><h3 class="ucd-h">Partner backend</h3><span class="ucd-mono" style="font-size:10px;line-height:1.5;color:var(--ink-2)">GET /q/orders_by_customer<br><span style="color:var(--ink-3)">source: rest</span></span></div></div>
+        <div class="ucd-box out ucd-caller" style="left:40px;top:256px;width:220px;height:96px"><a class="box-link abs" href="../Guides.dc.html?path=ai-agents" title="Guides for this part">↗</a><span class="ucd-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/bot.svg)"></span><div style="display:grid;gap:3px;min-width:0"><h3 class="ucd-h">AI agent</h3><span class="ucd-mono" style="font-size:10px;line-height:1.5;color:var(--ink-2)">tools/call orders_summary<br><span style="color:var(--ink-3)">source: mcp</span></span></div></div>
+        <div class="ucd-box out ucd-caller" style="left:40px;top:376px;width:220px;height:96px"><a class="box-link abs" href="../Guides.dc.html?path=exports" title="Guides for this part">↗</a><span class="ucd-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/workflow.svg)"></span><div style="display:grid;gap:3px;min-width:0"><h3 class="ucd-h">Nightly export</h3><span class="ucd-mono" style="font-size:10px;line-height:1.5;color:var(--ink-2)">nightly_orders → s3://<br><span style="color:var(--ink-3)">source: export</span></span></div></div>
+
+        <!-- B · The governed core: the same one as on Home, on every instance -->
+        <div class="ucd-ghost" aria-hidden="true" style="left:328px;top:148px;width:240px;height:336px"></div>
+        <div class="ucd-ghost" aria-hidden="true" style="left:322px;top:142px;width:240px;height:336px"></div>
+        <div class="ucd-core" style="left:316px;top:136px;width:240px;height:336px">
+          <div style="left:16px;right:12px;top:12px;display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="ucd-core-t">The governed core</span><a class="box-link dark" href="../Guides.dc.html?path=core" title="Guides for this part">↗</a></div>
+          <span class="ucd-core-badge" style="left:16px;top:31px" title="Every instance runs the same core and writes to the same store">× each instance</span>
+          <span class="ucd-dot-n" style="left:40px;top:76px">01</span><span class="ucd-dot-n" style="left:96px;top:76px">02</span><span class="ucd-dot-n" style="left:152px;top:76px">03</span><span class="ucd-dot-n" style="left:208px;top:76px">08</span>
+          <div class="ucd-core-row" style="left:10px;right:10px;top:102px">Identity · who is asking</div>
+          <div class="ucd-core-row" style="left:10px;right:10px;top:132px">Policy · what they may see</div>
+          <div class="ucd-core-row" style="left:10px;right:10px;top:162px">Execution · run, mask, format</div>
+          <div class="ucd-core-row rest-lit" id="ucd-record" style="left:10px;right:10px;top:194px"><b>08 · Record it</b><br>One history row and one event, in the same batch</div>
+          <p class="ucd-core-note" style="left:20px;right:20px;bottom:18px">The same core as on Home: these runs were governed first.</p>
+        </div>
+
+        <!-- C · Shared store -->
+        <div class="ucd-box" id="ucd-store" style="left:612px;top:136px;width:200px;height:336px" title="Every instance writes its runs here. The events server reads them all, so one stream covers every instance.">
+          <a class="box-link abs" href="../Guides.dc.html?path=events" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:16px;top:10px">Event log</h3>
+          <span class="ucd-mono" style="left:16px;top:31px;font-size:11px;color:var(--ink-3)">shared store</span>
+          <p class="ucd-p" style="left:16px;right:14px;top:76px;font-size:12.5px">One event per run, kept 24 h by default, whatever run history keeps.</p>
+          <div style="left:14px;right:14px;top:140px;display:grid;gap:6px">
+            <span class="ucd-chip two"><span><img src="https://cdn.simpleicons.org/postgresql" alt="" width="14" height="14">PostgreSQL</span><small>NOTIFY · wakes it at once</small></span>
+            <span class="ucd-chip two"><span><img src="https://cdn.simpleicons.org/sqlite" alt="" width="14" height="14">SQLite</span><small>polled every 1 s</small></span>
+            <span class="ucd-chip two"><span><img src="https://cdn.simpleicons.org/clickhouse" alt="" width="14" height="14">ClickHouse run store</span><small>polled · 1 s settle</small><span><span class="ucd-tag exp">Exp</span><a class="box-link" href="../Guides.dc.html?path=runstore" title="Guides for the run store">↗</a></span></span>
+          </div>
+        </div>
+
+        <!-- D · Events server -->
+        <div class="ucd-box" id="ucd-events" style="left:868px;top:136px;width:216px;height:336px" title="Thousands of streams per process. A client that stops reading is cut off at 1,000 waiting events and catches up with Last-Event-ID.">
+          <a class="box-link abs" href="../Guides.dc.html?path=events" title="Guides for this part">↗</a>
+          <span class="ucd-mono" style="left:16px;top:11px;font-size:13px;font-weight:600;color:var(--ink)">queryapigate events</span>
+          <span class="ucd-tag stable" style="left:16px;top:33px;font-size:10px;padding:3px 6px">Stable</span>
+          <span class="ucd-mono" style="left:16px;right:14px;top:76px;font-size:11px;line-height:1.45;color:var(--ink-2)">own port · /events behind your proxy</span>
+          <div style="left:12px;right:12px;top:118px;display:grid;gap:6px">
+            <span class="ucd-chk" data-chk>key checked, and again every 60 s<b>✓</b></span>
+            <span class="ucd-chk" data-chk>a key sees its own runs; admin sees all<b>✓</b></span>
+            <span class="ucd-chk" data-chk>filters narrow, never widen<b>✓</b></span>
+            <span class="ucd-chk" data-chk>resume with Last-Event-ID<b>✓</b></span>
+          </div>
+        </div>
+
+        <!-- E · Who watches: outside QueryAPIGate, so dashed -->
+        <div class="ucd-box out" data-watcher="ops" style="left:1140px;top:136px;width:260px;height:96px"><a class="box-link abs" href="../Guides.dc.html?path=dashboards" title="Guides for this part">↗</a><h3 class="ucd-h" style="left:12px;top:9px;font-size:14.5px">Ops screen</h3><span class="ucd-mono" style="left:12px;top:31px;font-size:11px;color:var(--ink-3)">admin · every run</span><div class="ucd-ticker" style="left:12px;right:8px;top:54px;font-size:10px"><span>export nightly_orders 2,310 rows 1.4 s</span><span>rest   orders_by_customer 38 rows 12 ms</span></div></div>
+        <div class="ucd-box out" data-watcher="partner" style="left:1140px;top:256px;width:260px;height:96px"><a class="box-link abs" href="../Guides.dc.html?path=apps" title="Guides for this part">↗</a><h3 class="ucd-h" style="left:12px;top:9px;font-size:14.5px">Partner portal</h3><span class="ucd-mono" style="left:12px;top:31px;font-size:11px;color:var(--ink-3)">key partner-acme · its own runs</span><div class="ucd-ticker" style="left:12px;right:8px;top:54px;font-size:10px"><span>rest   orders_by_customer 41 rows 14 ms</span><span>rest   orders_by_customer 38 rows 12 ms</span></div></div>
+        <div class="ucd-box out" data-watcher="failures" style="left:1140px;top:376px;width:260px;height:96px"><a class="box-link abs" href="../Guides.dc.html?path=events" title="Guides for this part">↗</a><h3 class="ucd-h" style="left:12px;top:9px;font-size:14.5px">Failures board</h3><span class="ucd-mono" style="left:12px;top:31px;font-size:11px;color:var(--ink-3)">admin · ?status=error</span><div class="ucd-ticker" style="left:12px;right:8px;top:54px;font-size:10px"><span class="err">mcp    orders_summary error timeout</span><span class="err">rest   orders_by_customer error timeout</span></div></div>
+
+        <!-- What arrives -->
+        <div class="ucd-side" style="left:40px;top:504px;width:256px;height:56px"><b>What arrives</b><span>one frame per run: the record, never a row's values</span></div>
+        <div class="ucd-code" id="ucd-frame" style="left:316px;top:504px;width:1084px;height:56px" title="Ad-hoc runs also carry their SQL text, as far as QUERYAPIGATE_HISTORY_ADHOC_SQL keeps it."><i>id: </i><span class="id">4182</span><i>  source </i>rest<i>  query </i>orders_by_customer v1<i>  status </i>success<i>  rows </i>38<i>  </i>12 ms<i>  key </i>partner-acme</div>
+
+        <div class="ucd-legend" style="left:40px;right:40px;top:596px">
+          <span><span class="ucd-tag stable">Stable</span>compatibility promise</span>
+          <span><span class="ucd-tag exp">Exp</span>may change in a minor release</span>
+          <span>Or <code>GET /events</code> on the main server: no extra process, up to 4 streams, its own process only, no resume.</span>
+        </div>
+
+        <svg class="ucd-fx" id="ucd-fx" width="1440" height="640" viewBox="0 0 1440 640" aria-hidden="true"></svg>
+      </div>
+    </div>
+
+    <div class="ucd-stack">
+      <div class="ucd-sbox out"><small>Runs happen</small><b>Apps, partners, AI agents and exports</b><span>Every run through a front door is recorded, with <code>source</code> set to <code>rest</code>, <code>mcp</code> or <code>export</code>.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox core"><small>The governed core</small><b>Identity → policy → execution → record</b><span>Each run is recorded as it completes: one history row and one event, in the same batch, on every instance.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Shared store</small><b>The event log</b><span>Kept 24 h by default. PostgreSQL wakes the events server at once; SQLite and the ClickHouse run store (experimental) are polled every second.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Events server <span class="ucd-tag stable">Stable</span></small><b><code>queryapigate events</code></b><span>Thousands of streams per process. A key sees its own runs, the admin key sees all, and filters only narrow.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox out"><small>Who watches</small><b>Ops screens, partner portals, failure boards</b><span>Each gets frames with who, which query, status, rows and timing, never a row's values.</span></div>
+    </div>
+
+    <p class="ucd-foot">The same governed core as the <a href="../Home.dc.html#architecture">full architecture</a>.</p>
+  </section>
+  <script>
+  // Live dashboards: three runs a cycle, one from each source, recorded by the core, written to the event log, and
+  // streamed by the events server only to the watchers whose key may see them. Every third cycle the agent's run fails.
+  document.addEventListener('DOMContentLoaded', function () {
+    var U = window.UCD, svg = document.getElementById('ucd-fx'), wrap = document.getElementById('ucd-live');
+    if (!U || !svg) return;
+    var NS = 'http://www.w3.org/2000/svg', C = 7, P = 3 * C, V = 200;   // a cycle's seconds; the pattern repeats every 3; px a second
+    var SPINE = 196, SRC = [184, 304, 424], DST = { ops: 184, partner: 304, failures: 424 };
+    var green = 'oklch(0.62 0.13 170)', red = 'oklch(0.65 0.2 25)';
+    function el(tag, attrs, kids) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); (kids || []).forEach(function (c) { e.appendChild(c); }); return e; }
+
+    // The runs, and who may see each one: the route table.
+    var RUNS = [
+      { src: 0, source: 'rest', query: 'orders_by_customer', key: 'partner-acme', rows: [38, 41, 27], ms: ['12 ms', '14 ms', '11 ms'], to: ['ops', 'partner'] },
+      { src: 1, source: 'mcp', query: 'orders_summary', key: 'support-agent', rows: [4, 6], ms: ['21 ms', '19 ms'], to: ['ops'] },
+      { src: 2, source: 'export', query: 'nightly_orders', key: 'nightly-export', rows: [2310, 2287, 2341], ms: ['1.4 s', '1.3 s', '1.5 s'], to: ['ops'] }
+    ];
+    var FAILED = { to: ['ops', 'failures'] };   // the agent's run, every third cycle
+
+    // Lanes: three sources onto the spine, the spine through the core, the store and the events server, three out.
+    var curveIn = SRC.map(function (y) { return 'M260,' + y + ' C290,' + y + ' 286,' + SPINE + ' 316,' + SPINE; });
+    var curveOut = {}; Object.keys(DST).forEach(function (w) { var y = DST[w]; curveOut[w] = 'M1084,' + SPINE + ' C1114,' + SPINE + ' 1110,' + y + ' 1140,' + y; });
+    curveIn.forEach(function (d) { svg.appendChild(el('path', { d: d, class: 'ucd-lane' })); });
+    Object.keys(curveOut).forEach(function (w) { svg.appendChild(el('path', { d: curveOut[w], class: 'ucd-lane' })); });
+    svg.appendChild(el('path', { d: 'M316,' + SPINE + ' H556', class: 'ucd-lane in-core' }));
+    svg.appendChild(el('path', { d: 'M556,' + SPINE + ' H1084', class: 'ucd-lane' }));
+
+    // The core's stage dots sit on the spine; the fourth is step 8, where the run is recorded.
+    var DOTS = [356, 412, 468, 524], dotEls = DOTS.map(function (x) {
+      var d = document.createElement('span'); d.className = 'ucd-dot'; d.style.left = x + 'px'; d.style.top = SPINE + 'px';
+      wrap.querySelector('.ucd-canvas').insertBefore(d, svg); return d;
+    });
+    var record = document.getElementById('ucd-record'), store = document.getElementById('ucd-store');
+    var checks = [].slice.call(document.querySelectorAll('#ucd-events [data-chk]'));
+    var watchers = {}; [].forEach.call(document.querySelectorAll('[data-watcher]'), function (b) { watchers[b.getAttribute('data-watcher')] = b; });
+    var frame = document.getElementById('ucd-frame');
+
+    if (U.reduced) { wrap.classList.add('ucd-still'); return; }
+    record.classList.remove('rest-lit');
+
+    // Where along a source's lane a given x on the spine is, in px, and the lengths each pulse travels.
+    var lenIn = SRC.map(function (y) { return U.bez([260, y], [290, y], [286, SPINE], [316, SPINE]); });
+    var lenOut = {}; Object.keys(DST).forEach(function (w) { lenOut[w] = U.bez([1084, SPINE], [1114, SPINE], [1110, DST[w]], [1140, DST[w]]); });
+    function at(src, x) { return lenIn[src] + (x - 316); }
+
+    function pulseG(path, color, begin, t0, t1) {
+      var f4 = function (v) { return v.toFixed(4); };
+      return el('g', {}, [
+        el('circle', { r: 10, fill: color, opacity: 0.2 }),
+        el('circle', { r: 4.5, fill: color }),
+        el('animateMotion', { dur: P + 's', begin: begin + 's', repeatCount: 'indefinite', path: path, calcMode: 'linear', keyPoints: '0;0;1;1', keyTimes: '0;' + f4(t0) + ';' + f4(t1) + ';1' }),
+        el('animate', { attributeName: 'opacity', values: '0;0;1;1;0;0', keyTimes: '0;' + f4(t0) + ';' + f4(t0 + 0.002) + ';' + f4(t1 - 0.002) + ';' + f4(t1) + ';1', dur: P + 's', begin: begin + 's', repeatCount: 'indefinite' })
+      ]);
+    }
+
+    var pulses = [], n = 0;
+    for (var c = 0; c < 3; c++) RUNS.forEach(function (run) {
+      var i = run.src, failed = i === 1 && c === 2, to = failed ? FAILED.to : run.to, color = failed ? red : green;
+      var s = c * C + i * C / 3, begin = +(s - P).toFixed(3);   // starts s seconds into the pattern, already running on load
+      var trunk = curveIn[i] + ' H1084', tTrunk = at(i, 1084) / V;
+      svg.appendChild(pulseG(trunk, color, begin, 0.0005, tTrunk / P));
+      // Each branch leaves the events server the moment the trunk pulse reaches it: same begin, its window starting at tTrunk.
+      var arrive = {};
+      to.forEach(function (w) { var t1 = tTrunk + lenOut[w] / V; svg.appendChild(pulseG(curveOut[w], color, begin, tTrunk / P, t1 / P)); arrive[w] = t1 / P; });
+      var k = c % run.rows.length, rows = run.rows[k], rowsTxt = rows.toLocaleString('en-US');
+      pulses.push({
+        begin: begin, dur: P, run: run, failed: failed, arrive: arrive,
+        dots: DOTS.map(function (x) { return at(i, x) / V / P; }),
+        store: at(i, 712) / V / P,
+        checks: [0, 1, 2, 3].map(function (j) { return at(i, 868 + 216 * (j + 1) / 5) / V / P; }),
+        line: failed ? pad(run.source) + run.query + ' error timeout' : pad(run.source) + run.query + ' ' + rowsTxt + ' rows ' + run.ms[k % run.ms.length],
+        rows: failed ? 0 : rowsTxt, ms: failed ? 'timeout' : run.ms[k % run.ms.length]
+      });
+    });
+    function pad(s) { return (s + '       ').slice(0, 7); }   // the source, in a column 7 wide
+
+    var nextId = 4183;
+    function tick(w, p) {
+      var t = watchers[w].querySelector('.ucd-ticker'), line = document.createElement('span');
+      line.textContent = p.line; if (p.failed) line.className = 'err';
+      t.insertBefore(line, t.firstChild); while (t.children.length > 2) t.removeChild(t.lastChild);
+      U.flash(watchers[w], 700);
+    }
+    function show(p) {
+      var r = p.run, h = function (s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
+      frame.innerHTML = '<i>id: </i><span class="id">' + (nextId++) + '</span><i>  source </i>' + h(r.source) + '<i>  query </i>' + h(r.query) + ' v1<i>  status </i>' +
+        (p.failed ? '<span class="err">error</span>' : 'success') + '<i>  rows </i>' + h(p.rows) + '<i>  </i>' + h(p.ms) + '<i>  key </i>' + h(r.key);
+    }
+
+    U.loop(svg, pulses, function (p, f, passed) {
+      p.dots.forEach(function (m, j) { if (passed(m)) { U.flash(dotEls[j], 500); if (j === 3) U.flash(record, 1100); } });
+      if (passed(p.store)) U.flash(store, 700);
+      p.checks.forEach(function (m, j) { if (passed(m)) U.flash(checks[j], 1100); });
+      Object.keys(p.arrive).forEach(function (w) { if (passed(p.arrive[w])) { tick(w, p); if (w === 'ops') show(p); } });
+    });
+  });
+  </script>
   <section style="">
     <div class="f-pad" style="max-width:1480px;margin:0 auto;padding:16px 24px 64px;display:grid;gap:24px">
 <article id="events" class="f-2col u-case u-flip" style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
