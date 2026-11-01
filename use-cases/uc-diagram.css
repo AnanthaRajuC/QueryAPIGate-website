@@ -126,6 +126,17 @@
 .ucd-btn{display:inline-block;font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:7px;border:1px solid oklch(0.52 0.11 170 / 0.6);color:var(--accent-ink);background:var(--surface);transition:box-shadow 0.15s,background 0.15s}
 .ucd-btn.lit{box-shadow:inset 0 2px 4px rgba(16,32,27,0.25);background:oklch(0.52 0.11 170 / 0.12)}
 
+/* Terms written on something (a key, a grant): each segment lights while its stage holds a call to it, red when it refused one */
+.ucd-seg{display:inline-block;padding:2px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-2);white-space:nowrap;transition:color 0.25s,background 0.25s}
+.ucd-seg.lit,.ucd-still .ucd-seg{color:oklch(0.52 0.11 170);background:oklch(0.62 0.13 170 / 0.14)}
+.ucd-seg.bad{color:oklch(0.65 0.2 25);background:oklch(0.65 0.2 25 / 0.14)}
+:root[data-theme=dark] .ucd-seg.lit,:root[data-theme=dark] .ucd-still .ucd-seg{color:oklch(0.78 0.11 170)}
+/* Tables in a schema: dimmed, and full strength for the ones a call actually reads */
+.ucd-tile{display:grid;align-content:center;gap:2px;padding:6px 9px;border-radius:6px;border:1px solid transparent;background:oklch(0.52 0.11 170 / 0.09);font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;color:var(--ink);opacity:0.45;transition:opacity 0.3s,border-color 0.3s}
+.ucd-tile small{font-size:10px;font-weight:400;color:var(--accent-ink);display:none}
+.ucd-tile.lit,.ucd-still .ucd-tile.rest-lit{opacity:1;border-color:oklch(0.52 0.11 170 / 0.5)}
+.ucd-tile.lit small,.ucd-still .ucd-tile.rest-lit small{display:block}
+
 /* Phones: the canvas gives way to a stack of boxes */
 .ucd-stack{display:none;gap:8px}
 .ucd-sbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:6px}
@@ -144,4 +155,4 @@
 /* Reduced motion: no pulses; whatever lights up shows lit, at rest */
 .ucd-still .ucd-core-row.rest-lit{background:oklch(0.62 0.13 170 / 0.14);border-color:oklch(0.62 0.13 170 / 0.5)}
 .ucd-still .ucd-chk{border-color:oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08);color:var(--ink)}
-@media (prefers-reduced-motion:reduce){.ucd-box,.ucd-core-row,.ucd-dot,.ucd-chk,.ucd-gate,.ucd-flag,.ucd-pill,.ucd-pop,.ucd-btn{transition:none}}
+@media (prefers-reduced-motion:reduce){.ucd-box,.ucd-core-row,.ucd-dot,.ucd-chk,.ucd-gate,.ucd-flag,.ucd-pill,.ucd-pop,.ucd-btn,.ucd-seg,.ucd-tile{transition:none}}

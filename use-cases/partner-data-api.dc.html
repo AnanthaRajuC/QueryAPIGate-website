@@ -22,6 +22,8 @@
 <script src="../support.js"></script>
 <script src="../theme.js?v=15"></script>
 <script src="../search.js?v=6" defer></script>
+<link rel="stylesheet" href="uc-diagram.css">
+<script src="uc-diagram.js" defer></script>
 </head>
 <body>
 <helmet>
@@ -257,6 +259,206 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   <header class="f-pad" style="max-width:1480px;margin:0 auto;padding:56px 24px 8px;display:grid;gap:14px">
     <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)"><a class="uc-back" href="../Use Cases.dc.html#g-partners" aria-label="Back to use cases" title="Back to use cases"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></a><a href="../Use Cases.dc.html" style="color:var(--ink-2);font-weight:500">Use cases</a><span aria-hidden="true">/</span><a href="../Use Cases.dc.html#g-partners" style="color:var(--ink-2);font-weight:500">Partners and pipelines</a><span aria-hidden="true">/</span><span style="color:var(--ink);font-weight:600">Partner data API</span><span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#9fb3ac">04 / 12</span></div>
   </header>
+  <section class="ucd-section" id="how-it-fits" aria-labelledby="ucd-h" style="padding-top:16px;padding-bottom:40px">
+    <span class="ucd-eyebrow">How it fits together</span>
+    <h2 class="ucd-h2" id="ucd-h">The key is the contract</h2>
+    <p class="ucd-lede">Everything a partner may do is written on their key: one query, the columns it hashes, how often, from where and until when. Every call is held to it, and the rest of your schema stays out of reach. Their API documentation lists the one endpoint they can call.</p>
+    <div class="ucd-wrap" data-w="1440" data-h="640" id="ucd-partner">
+      <div class="ucd-canvas" role="group" aria-label="A partner's backend calls with one key. The key's terms are one saved query, the email column hashed, 60 calls a minute, the partner's network and an expiry date. The governed core holds every call to them: the key is identified and limited, its grant allows one query and no schema, and the email is hashed wherever the SQL puts it. The query reads two of the database's eight tables. A call for the schema or another query is refused with 403, a leaked copy of the key used from elsewhere fails like a wrong key with 401, and the 61st call in a minute gets 429.">
+
+        <div class="ucd-stats" style="right:40px;top:18px;gap:20px">
+          <div style="max-width:96px"><b>1</b><span>endpoint in their OpenAPI</span></div>
+          <div style="max-width:92px"><b>16 hex</b><span>for an email, hashed</span></div>
+          <div style="max-width:110px"><b>60 min</b><span>of overlap when you rotate</span></div>
+        </div>
+
+        <div class="ucd-zone" style="left:40px;top:96px;width:240px">The partner</div>
+        <div class="ucd-zone" style="left:340px;top:96px;width:660px">The governed core</div>
+        <div class="ucd-zone" style="left:1060px;top:96px;width:340px">Your database</div>
+
+        <!-- The key strip: the contract, above the core -->
+        <div class="ucd-side" style="left:40px;top:24px;width:280px;height:60px"><b>The key's terms</b><span>everything the partner may do, on one key</span></div>
+        <div class="ucd-box" style="left:340px;top:24px;width:660px;height:60px" title="Also on the key, if you want them: a monthly quota, max_concurrent, query_timeout and max_rows. Each narrows the server's own limits, never widens them.">
+          <div style="left:12px;right:12px;top:8px;display:flex;align-items:center;gap:7px"><span style="flex:none;display:block;width:14px;height:14px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/key-round.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/key-round.svg) center/contain no-repeat"></span><b style="font-size:12px;font-weight:600">partner-acme</b><span style="font-size:11.5px;color:var(--ink-3)">· one key, one contract</span><span aria-hidden="true" style="margin-left:auto;font-size:11px;color:#9fb3ac">↕</span></div>
+          <div class="ucd-mono" style="left:8px;right:8px;top:31px;display:flex;align-items:center;gap:1px;font-size:11px;color:var(--ink-4);white-space:nowrap">
+            <span class="ucd-seg" data-seg="queries">queries: acme_orders</span>·<span class="ucd-seg" data-seg="mask">mask email → hash</span>·<span class="ucd-seg" data-seg="rate">60/minute</span>·<span class="ucd-seg" data-seg="ip">203.0.113.0/24</span>·<span class="ucd-seg" data-seg="expires">expires 2027-01-01</span>
+          </div>
+        </div>
+
+        <!-- A · The partner: outside QueryAPIGate, so dashed -->
+        <div class="ucd-box out ucd-caller" style="left:40px;top:136px;width:240px;height:120px" title="Partners who sign in through your identity provider can share one query instead: a from_claim parameter takes their customer id from the token."><a class="box-link abs" href="../Guides.dc.html?path=partner" title="Guides for this part">↗</a><span class="ucd-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/layout-grid.svg)"></span><div style="display:grid;gap:3px;min-width:0"><h3 class="ucd-h">Acme's backend</h3><span class="ucd-mono" style="font-size:10.5px;line-height:1.5;color:var(--ink-2)">key partner-acme<br>from 203.0.113.0/24</span><span class="ucd-resp" data-resp="acme"></span></div></div>
+        <div class="ucd-box out ucd-caller" style="left:40px;top:280px;width:240px;height:80px;padding-top:8px;padding-bottom:8px"><span class="ucd-ico" style="--ico:url(https://unpkg.com/lucide-static@0.460.0/icons/key-round.svg)"></span><div style="display:grid;gap:2px;min-width:0"><h3 class="ucd-h" style="font-size:13.5px">A leaked copy of the key</h3><span class="ucd-mono" style="font-size:10.5px;color:var(--ink-2)">from 198.51.100.9</span><span class="ucd-resp" data-resp="leak"></span></div></div>
+        <div class="ucd-box out" style="left:40px;top:384px;width:240px;height:88px" title="/openapi.json, /docs and /catalog list only what this key can call.">
+          <a class="box-link abs" href="../Guides.dc.html?path=partner" title="Guides for this part">↗</a>
+          <div style="left:12px;right:34px;top:8px;display:flex;align-items:center;gap:6px"><span style="flex:none;display:block;width:13px;height:13px;background:oklch(0.52 0.11 170);-webkit-mask:url(https://unpkg.com/lucide-static@0.460.0/icons/file-text.svg) center/contain no-repeat;mask:url(https://unpkg.com/lucide-static@0.460.0/icons/file-text.svg) center/contain no-repeat"></span><b style="font-size:13.5px;font-weight:600">Their API docs</b></div>
+          <span class="ucd-mono" style="left:12px;right:10px;top:27px;font-size:10px;line-height:1.4;color:var(--ink-2)">/openapi.json<br><span style="color:var(--accent-ink)">paths: /q/acme_orders</span></span>
+          <span style="left:12px;right:10px;top:55px;font-size:11px;line-height:1.25;color:var(--ink-3)">One endpoint, and a Postman collection if it's in one.</span>
+        </div>
+
+        <!-- B · The governed core -->
+        <div class="ucd-core" style="left:340px;top:136px;width:660px;height:336px">
+          <div style="left:20px;right:14px;top:12px;display:flex;align-items:center;gap:10px"><span class="ucd-core-t">The governed core</span><a class="box-link dark" href="../Guides.dc.html?path=core" title="Guides for this part" style="margin-left:auto">↗</a></div>
+          <div class="ucd-core-row" data-col="0" style="left:20px;width:201.3px;top:84px;bottom:12px;display:flex;flex-direction:column;gap:8px;color:#e6efeb" title="A call from outside the address list fails exactly like a wrong key, so a caller learns nothing about why. Rotating the secret keeps the old one working for 60 minutes by default, at most a week.">
+            <h4 class="ucd-stage">01 · Identity</h4>
+            <span style="font-size:13px;line-height:1.4"><b>Identify the key</b><br><span style="color:#9fb3ac">its secret, still active, not expired, from an allowed address</span></span>
+            <span style="font-size:13px;line-height:1.4"><b>Apply its limits</b><br><span style="color:#9fb3ac">60 a minute, on top of the server's own</span></span>
+            <span style="margin-top:auto;display:grid;gap:5px"><span class="ucd-flag" data-flag="401">401</span><span class="ucd-flag" data-flag="429">429 rate_limited</span></span>
+          </div>
+          <div class="ucd-core-row" data-col="1" style="left:229.3px;width:201.3px;top:84px;bottom:12px;display:flex;flex-direction:column;gap:8px;color:#e6efeb">
+            <h4 class="ucd-stage">02 · Policy</h4>
+            <span style="font-size:13px;line-height:1.4"><b>Check the grant</b><br><span style="color:#9fb3ac">this one saved query, on its own connection; no other query, no schema, no SQL</span></span>
+            <span style="font-size:13px;line-height:1.4"><b>Validate parameters</b><br><span style="color:#9fb3ac"><code class="ucd-mono" style="font-size:11px">status</code> is typed and bound</span></span>
+            <span style="margin-top:auto"><span class="ucd-flag" data-flag="403">403</span></span>
+          </div>
+          <div class="ucd-core-row" data-col="2" style="left:438.7px;width:201.3px;top:84px;bottom:12px;display:flex;flex-direction:column;gap:8px;color:#e6efeb">
+            <h4 class="ucd-stage">03 · Execution</h4>
+            <span style="font-size:13px;line-height:1.4"><b>Run it</b><br><span style="color:#9fb3ac">the SQL fixes Acme's partner id</span></span>
+            <span style="font-size:13px;line-height:1.4"><b>Mask it</b><br><span style="color:#9fb3ac"><code class="ucd-mono" style="font-size:11px">customers.email</code> hashed, traced through aliases and expressions</span></span>
+            <span style="font-size:13px;line-height:1.4"><b>Record it</b><br><span style="color:#9fb3ac">history lists what was masked</span></span>
+          </div>
+        </div>
+
+        <!-- C · Your database: the whole schema, dimmed -->
+        <div class="ucd-box" id="ucd-db" style="left:1060px;top:136px;width:340px;height:336px">
+          <a class="box-link abs" href="../Guides.dc.html?path=databases" title="Guides for this part">↗</a>
+          <h3 class="ucd-h" style="left:16px;top:10px;display:flex;align-items:center;gap:8px"><img src="https://cdn.simpleicons.org/postgresql" alt="" width="16" height="16">PostgreSQL</h3>
+          <span class="ucd-mono" style="left:16px;top:31px;font-size:11px;color:var(--ink-3)">shop</span>
+          <div style="left:16px;right:16px;top:80px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:40px;gap:8px">
+            <span class="ucd-tile rest-lit" data-tile="orders">orders</span><span class="ucd-tile rest-lit" data-tile="customers">customers<small>email → hash</small></span>
+            <span class="ucd-tile">payments</span><span class="ucd-tile">payroll</span>
+            <span class="ucd-tile">staff</span><span class="ucd-tile">inventory</span>
+            <span class="ucd-tile">suppliers</span><span class="ucd-tile">audit_events</span>
+          </div>
+          <p class="ucd-p" style="left:16px;right:16px;bottom:14px;font-size:12px;color:var(--ink-3)">Behind <code class="ucd-mono" style="font-size:11px">acme_orders</code>: two tables. The key reaches nothing else here, not even the schema.</p>
+        </div>
+
+        <!-- What Acme gets back -->
+        <div class="ucd-side" style="left:40px;top:500px;width:280px;height:66px"><b>What Acme gets back</b><span>equal emails give equal codes</span></div>
+        <div class="ucd-code" id="ucd-back" style="left:340px;top:500px;width:1060px;height:66px;display:grid;align-content:center;gap:5px;font-size:12px;transition:border-color 0.3s">
+          <span>{"order_id": 8812, "status": "open", "qty": 3, "email": <span class="id">"3f9a1c0be47d2a65"</span>}</span>
+          <span><i>X-RateLimit-Limit: </i>60<i>   X-RateLimit-Remaining: </i><span id="ucd-remaining">59</span></span>
+        </div>
+
+        <div class="ucd-legend" style="left:40px;right:40px;top:596px">
+          <span><span class="ucd-tag stable">Stable</span>compatibility promise</span>
+          <span><span class="ucd-tag exp">Exp</span>may change in a minor release</span>
+          <span>A leaked secret? Rotate it: the old one keeps working for an hour by default while the partner switches.</span>
+        </div>
+
+        <svg class="ucd-fx" id="ucd-fx" width="1440" height="640" viewBox="0 0 1440 640" aria-hidden="true"></svg>
+      </div>
+    </div>
+
+    <div class="ucd-stack">
+      <div class="ucd-sbox out"><small>The partner</small><b>Acme's backend, with one key</b><span>Their API docs list one endpoint; a leaked copy of the key used from anywhere else fails like a wrong key.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>The key's terms</small><b>One query · email hashed · 60/minute · their network · until 2027-01-01</b><span>Everything the partner may do, written on the key.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox core"><small>The governed core</small><b>Identity → policy → execution</b><span>The key is identified and limited, its grant allows one saved query and no schema, and the email column is hashed wherever the SQL puts it.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>Your database</small><b>Two tables behind one query</b><span>The rest of the schema isn't reachable with this key.</span></div>
+      <span class="ucd-sarrow" aria-hidden="true">↓</span>
+      <div class="ucd-sbox"><small>What Acme gets back</small><b>Their rows, email hashed</b><span>Equal values give equal codes, so they can still join on it. Rate-limit headers tell them how much is left.</span></div>
+    </div>
+
+    <p class="ucd-foot">The same governed core as the <a href="../Home.dc.html#architecture">full architecture</a>.</p>
+  </section>
+  <script>
+  // Partner data API: five calls a cycle, all on one key. Each stage lights the terms on the key it enforces; a refused
+  // call lights, in red, the term that refused it. Only the one granted query reaches the database, and only its two tables.
+  document.addEventListener('DOMContentLoaded', function () {
+    var U = window.UCD, svg = document.getElementById('ucd-fx'), wrap = document.getElementById('ucd-partner');
+    if (!U || !svg) return;
+    var NS = 'http://www.w3.org/2000/svg', P = 12, V = 200;   // the cycle, in seconds; px a second
+    var SPINE = 196, DOTS = [460.7, 670, 879.3];
+    var green = 'oklch(0.62 0.13 170)', red = 'oklch(0.65 0.2 25)';
+    function el(tag, attrs, kids) { var e = document.createElementNS(NS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); (kids || []).forEach(function (c) { e.appendChild(c); }); return e; }
+
+    // Which terms each stage enforces (connections: [] isn't drawn: the grant's queries term stands for it).
+    var TERMS = [['ip', 'expires', 'rate'], ['queries'], ['mask']];
+    // The calls: from Acme or the leaked copy; where each stops (a stage, or the database); the term and flag that refuse it.
+    var CALLS = [
+      { from: 'acme', stop: 'db' },
+      { from: 'acme', stop: 1, term: 'queries', flag: '403', resp: ['bad', '403'] },
+      { from: 'acme', stop: 1, term: 'queries', flag: '403', resp: ['bad', '403'] },
+      { from: 'leak', stop: 0, term: 'ip', flag: '401', resp: ['bad', '401 · same as a wrong key'] },
+      { from: 'acme', stop: 0, term: 'rate', flag: '429', resp: ['bad', '429 rate_limited · Retry-After: 12'] }
+    ];
+
+    var segs = {}; [].forEach.call(wrap.querySelectorAll('[data-seg]'), function (s) { segs[s.getAttribute('data-seg')] = s; });
+    var flags = {}; [].forEach.call(wrap.querySelectorAll('[data-flag]'), function (f) { flags[f.getAttribute('data-flag')] = f; });
+    var resp = {}; [].forEach.call(wrap.querySelectorAll('[data-resp]'), function (r) { resp[r.getAttribute('data-resp')] = r; });
+    var cols = [].slice.call(wrap.querySelectorAll('[data-col]')), tiles = [].slice.call(wrap.querySelectorAll('.ucd-tile.rest-lit'));
+    var db = document.getElementById('ucd-db'), back = document.getElementById('ucd-back'), remaining = document.getElementById('ucd-remaining');
+
+    // Lanes: Acme straight onto the spine, the leaked copy converging; the spine through the core into the database;
+    // the key strip down to each stage.
+    var lane = function (d, cls) { var p = el('path', { d: d, class: 'ucd-lane' + (cls ? ' ' + cls : '') }); svg.appendChild(p); return p; };
+    lane('M280,' + SPINE + ' H340'); lane('M280,320 C310,320 310,' + SPINE + ' 340,' + SPINE);
+    lane('M340,' + SPINE + ' H1000', 'in-core'); lane('M1000,' + SPINE + ' H1060');
+    var keyLanes = DOTS.map(function (x) { return lane('M' + x + ',84 V136'); });
+    var dotEls = DOTS.map(function (x) {
+      var d = document.createElement('span'); d.className = 'ucd-dot'; d.style.left = x + 'px'; d.style.top = SPINE + 'px';
+      wrap.querySelector('.ucd-canvas').insertBefore(d, svg); return d;
+    });
+
+    if (U.reduced) {
+      wrap.classList.add('ucd-still');
+      resp.acme.className = 'ucd-resp ok'; resp.acme.textContent = '200 · X-RateLimit-Remaining: 59';
+      resp.leak.className = 'ucd-resp bad'; resp.leak.textContent = '401 · same as a wrong key';
+      return;
+    }
+
+    var lenLeak = U.bez([280, 320], [310, 320], [310, SPINE], [340, SPINE]);
+    function at(from, x) { return from === 'leak' ? lenLeak + (x - 340) : x - 280; }
+    var f4 = function (v) { return v.toFixed(4); };
+    function pulseG(path, color, begin, t0, t1, fade) {
+      var t2 = fade ? t1 + fade / P : t1;
+      return el('g', {}, [
+        el('circle', { r: 10, fill: color, opacity: 0.2 }),
+        el('circle', { r: 4.5, fill: color }),
+        el('animateMotion', { dur: P + 's', begin: begin + 's', repeatCount: 'indefinite', path: path, calcMode: 'linear', keyPoints: '0;0;1;1', keyTimes: '0;' + f4(t0) + ';' + f4(t1) + ';1' }),
+        el('animate', { attributeName: 'opacity', values: '0;0;1;1;0;0', keyTimes: '0;' + f4(t0) + ';' + f4(t0 + 0.002) + ';' + f4(fade ? t1 : t1 - 0.002) + ';' + f4(t2) + ';1', dur: P + 's', begin: begin + 's', repeatCount: 'indefinite' })
+      ]);
+    }
+
+    var pulses = [];
+    var land0 = at('acme', 1060) / V;
+    CALLS.forEach(function (c, n) {
+      var endX = c.stop === 'db' ? 1060 : DOTS[c.stop];
+      // Calls land 2.4 s apart, so each answer stays on screen for a moment: a call leaves its travel time before that.
+      var s = ((land0 + n * 2.4 - at(c.from, endX) / V) % P + P) % P, begin = +(s - P).toFixed(3);
+      var path = (c.from === 'leak' ? 'M280,320 C310,320 310,' + SPINE + ' 340,' + SPINE : 'M280,' + SPINE + ' H340') + ' H' + endX;
+      var tEnd = at(c.from, endX) / V / P;
+      svg.appendChild(pulseG(path, c.stop === 'db' ? green : red, begin, 0.0005, tEnd, c.stop === 'db' ? 0 : 0.4));
+      var reach = c.stop === 'db' ? 3 : c.stop + 1;
+      pulses.push({ begin: begin, dur: P, c: c, dots: DOTS.slice(0, reach).map(function (x) { return at(c.from, x) / V / P; }), end: tEnd });
+    });
+
+    function flashClass(e, cls, ms) { var n = (e['_' + cls] = (e['_' + cls] || 0) + 1); e.classList.add(cls); setTimeout(function () { if (e['_' + cls] === n) e.classList.remove(cls); }, ms); }
+    var left = 59;   // X-RateLimit-Remaining, counting down a little each cycle as Acme keeps calling
+    U.loop(svg, pulses, function (p, f, passed) {
+      var c = p.c;
+      p.dots.forEach(function (m, j) {
+        if (!passed(m)) return;
+        U.flash(dotEls[j], 500); U.flash(keyLanes[j], 700);
+        if (c.stop === j) {                                    // refused here: the term that refused it, in red
+          flashClass(segs[c.term], 'bad', 1500); U.flash(flags[c.flag], 1500);
+          var r = resp[c.from]; r.className = 'ucd-resp ' + c.resp[0]; r.textContent = c.resp[1];
+          return;
+        }
+        U.flash(cols[j], 700);
+        TERMS[j].forEach(function (t) { U.flash(segs[t], 900); });
+      });
+      if (c.stop === 'db' && passed(p.end)) {
+        U.flash(db, 900); tiles.forEach(function (t) { U.flash(t, 2600); });
+        remaining.textContent = left; U.flash(back, 900);
+        resp.acme.className = 'ucd-resp ok'; resp.acme.textContent = '200 · X-RateLimit-Remaining: ' + left;
+        left = left > 55 ? left - 1 : 59;
+      }
+    });
+  });
+  </script>
   <section style="">
     <div class="f-pad" style="max-width:1480px;margin:0 auto;padding:16px 24px 64px;display:grid;gap:24px">
 <article id="partner" class="f-2col u-case u-flip" style="background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:clamp(22px,3vw,36px);display:grid;gap:36px;align-items:center;scroll-margin-top:132px;box-shadow:0 30px 60px -40px rgba(16,32,27,0.25)">
