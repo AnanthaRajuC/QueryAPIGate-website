@@ -94,6 +94,15 @@ the moment more than loopback should reach it, setting `QUERYAPIGATE_API_KEY` (o
 MCP OAuth) stops being optional - SECURITY.md's first checklist item. Behind a reverse proxy or in a container, the
 peer is the proxy or the pod network, not loopback, so open-access mode is refused there too: set a key.
 
+The MCP server (`queryapigate mcp`) applies the same rule to every request to `/mcp`, before a session starts, and
+more strictly: a caller is local only if the connection's own address is loopback and so is the client a trusted
+proxy names, if one does. So a forged `X-Forwarded-For`, even with `FORWARDED_ALLOW_IPS` wide open, doesn't make a
+remote client local, and neither does a proxy on the same host passing a remote client on. *Fixed 2026-10-30:* until then
+it didn't apply it at all. With no key, administrator, JWT or OAuth configured, any client that could reach its port
+was the unrestricted caller - every saved query, read-only SQL on every connection, an agent's writes. Its default
+address is loopback, but the Docker image needs `--host 0.0.0.0`, so a container started without a key served the
+network. Found while drafting the MCP Registry entry, which is exactly that command.
+
 ### Authorization: what a scoped key can actually do
 
 Three grant fields say what a key reaches, and they **add up** - a saved query is reachable if `connections`,
@@ -271,7 +280,8 @@ This is the part worth being the most precise about, because it's also the part 
   against an allow-list when writes aren't permitted - then looks behind a read-only one for writes it can hide: a
   writable CTE (`WITH d AS (DELETE ... RETURNING *) SELECT ...`), the statement `EXPLAIN ANALYZE` runs, and
   `SELECT ... INTO`. The same rule covers a key's `allowed_write_ops`. PostgreSQL, MySQL, ClickHouse and SQLite
-  connections also run read-only queries in read-only sessions, so the database refuses a write even if the guard
+  connections also run read-only queries read-only in the database (a read-only transaction on PostgreSQL and MySQL,
+  a read-only setting or file mode on ClickHouse and SQLite), so the database refuses a write even if the guard
   missed it; **DuckDB, H2 and JDBC connections are opened read-write, so there the guard is the only lock** - the
   case where 0.16 closed a real gap (`EXPLAIN ANALYZE DELETE` ran on DuckDB with writes off). **This is explicitly
   documented as defence in depth,
@@ -281,6 +291,21 @@ This is the part worth being the most precise about, because it's also the part 
 - **`allowed_tables` uses a real parser** (`sqlglot`) specifically because table extraction has to be
   correct, not just approximately right - a key restricted to certain tables is refused entirely rather
   than let through on a best-effort guess when the dialect can't be parsed reliably (H2/JDBC).
+- **`allowed_tables` is matched schema-qualified** (from 0.43). Before, every dialect but Trino matched bare names,
+  so a grant of `customer` read `billing.customer` too, on a connection whose user could see both. Now a reference's
+  and a grant's missing schema is the connection's default (`engine._table_defaults`): MySQL's or ClickHouse's
+  database, PostgreSQL's `public` or `options.schema`, SQLite's and DuckDB's `main`. A catalog a reference names
+  stays part of its name (fail closed). PostgreSQL resolves unqualified names through `search_path`, so a
+  table-restricted call pins it to that schema, inside the call's own transaction. Names are compared lower-cased, so
+  two tables differing only in case (MySQL with `lower_case_table_names=0`, quoted PostgreSQL names) share a grant.
+- **Statements the check can't see into are refused for a table-restricted key:** `SHOW`, `SET`, `USE`, `ATTACH`,
+  `PRAGMA`, `CALL`, `PREPARE`/`EXECUTE`, `DECLARE`/`FETCH`, and anything sqlglot only keeps as text
+  (`tableguard._statements`). Each names its tables somewhere the check doesn't look, or none at all: before 0.43,
+  `SHOW CREATE TABLE secret` showed a forbidden table's DDL, `PREPARE` then `EXECUTE` read its rows, and DuckDB's
+  `SET search_path` rerouted later calls on a pooled connection. `EXPLAIN` is checked by the statement it explains.
+- **Nothing a PostgreSQL query sets outlives it** (ADR 0027). Calls run in autocommit, where a session setting a
+  query changes (`SELECT set_config(...)`) is committed with it, so each message begins `RESET ALL`. Read-only, the
+  time limit and the pinned `search_path` are set `LOCAL`, inside the message's transaction.
 - **DuckDB file access is enforced by DuckDB itself.** A DuckDB connection reads only its `allowed_paths` - none by
   default - because each connection's configuration is locked as it opens (`enable_external_access = false`, the
   allowed paths, `lock_configuration`): no SQL can reach another file, URL or extension, or change the setting back.
@@ -348,7 +373,7 @@ operation exists. Reviewed for its graduation to tier 1 in 0.37 ([ADR
 - **Column masking is refused** on MongoDB (`mask_unresolvable`) rather than applied to fields it can't trace.
 - **The refusals are properties under fuzzing**: `fuzz/fuzz_mongo.py` (ClusterFuzzLite, from 0.35.1) checks that no
   server-side JavaScript survives into what MongoDB is sent and no parameter becomes an operator; the CI integration
-  job sends them to a real MongoDB 8.0.
+  job sends them to a real MongoDB (7.0 while the CI runners' kernel stops 8.0 starting; see ci.yml).
 
 ### Trino: a federation engine behind one grant (ADR 0026, experimental)
 
@@ -387,6 +412,120 @@ within one database must hold *across catalogs*. Reviewed for its introduction (
 
 What remains before tier 1 is a release of unchanged shape and real-deployment use; agent writes (ADR 0008) are not
 offered on Trino, and the schema browser not showing keys or DDL is a capability gap, not a security one.
+
+### The Rust data plane (ADR 0028, a prototype)
+
+A second process, `dataplane/`, can listen on the public port in front of the Python server. It serves `/q/<name>`
+reads itself from *plans* Python gives it, and forwards everything else unchanged
+([ADR 0028](adr/0028-rust-data-plane-prototype.md)). It's in the Docker image, and the Helm chart's `dataplane` block
+runs it as a second container in each API server pod ([ADR 0030](adr/0030-shipping-the-data-plane.md)), but it runs
+only when started: nothing changes for a deployment that doesn't. It isn't in the PyPI package. Where it does run:
+
+- **It makes no security decision of its own.** The SQL guard, the table allow-list, masking and every refusal stay
+  in Python. A plan is Python's verdict for one key, one saved query version and one connection, made only on a call
+  that succeeded, and only for a scoped API key in the `default` workspace with no rate limit, quota, concurrency,
+  time or row limit of its own. Administrators, signed-in users (JWT, SSO, MCP OAuth), other workspaces, writes,
+  streams, other formats and every dialect but PostgreSQL and MySQL are always forwarded. With a server-wide rate
+  limit or OpenTelemetry tracing configured, it forwards every call.
+- **Behind trusted proxies, it finds the client as Python does.** With `QUERYAPIGATE_TRUST_PROXY` set, the address a
+  key's `allowed_ips` is checked against comes from `X-Forwarded-For`, as `ProxyFix` takes it, so this is an access
+  decision made in two places. The data plane serves only a call whose forwarding headers read one way: one line each,
+  no quotes, no empty item, an address in its own spelling, a scheme of `http` or `https`, and a host werkzeug can
+  encode. Anything else is forwarded for Python to read. The differential test's proxied run sends both every shape of those headers, against
+  IP-restricted keys, and requires the same answers (ADR 0030, section 5).
+- **Behind it, gunicorn trusts no client's forwarding headers.** Every request reaches gunicorn over loopback, and
+  gunicorn trusts loopback by default to set the scheme (`X-Forwarded-Proto`, `-Ssl`, `-Protocol`) and `SCRIPT_NAME`
+  from headers. A client's own were passed on, so it could make Python send HSTS over plain HTTP, turn a call into a
+  400, or move part of a path out of what Flask routes, past a proxy's rules for that path. With the secret set,
+  `gunicorn_conf.py` trusts no peer's (`forwarded_allow_ips` empty, unless `FORWARDED_ALLOW_IPS` says otherwise), and
+  Python reads the forwarding headers only through `ProxyFix`, as it does without the data plane. Found and fixed
+  shipping it, 2026-10-30.
+- **The two come from one release.** The protocol between them is internal and unversioned, so the data plane sends
+  its version with the secret (`X-QAG-Dataplane-Version`), and Python gives no plan and no run store lease to another.
+  A mismatched pair forwards every call. In the image both come from one build, and the crate's version is the
+  release's, checked by a test.
+- **A plan is checked against the store on every call.** It names digests of the key, query and connection rows it
+  was computed from. The data plane reads those rows for each call, with Python's own SELECTs, and serves only when
+  they digest the same. A revoked, expired or re-scoped key, an edited query or a changed connection doesn't match, and
+  the call goes to Python. With `QUERYAPIGATE_METADATA_CACHE_TTL` set, both processes reuse those rows for the same
+  number of seconds, so a change takes effect within that time, as it does on Python alone. A masked plan expires
+  with the schema its trace was made from. Plans live in the data plane's memory only.
+- **One shared secret ties the two processes together.** `QUERYAPIGATE_DATAPLANE_SECRET`, at least 16 characters,
+  goes in `X-QAG-Dataplane` on every request the data plane forwards; Python compares it in constant time. The data
+  plane removes `X-QAG-Dataplane`, `X-QAG-Peer` and `X-QAG-Plan` from anything a client sends, and Python's
+  outermost WSGI layer removes the first two again before anything else reads or logs a request. Without the secret, Python
+  gives no plan, ignores `X-QAG-Peer`, and answers 404 at `/internal/dataplane/runs`.
+- **The client's address is the client's.** With the secret, `X-QAG-Peer` carries the client's own socket address,
+  and Python takes it as the real peer before `ProxyFix`. So open-access mode's loopback rule, a key's `allowed_ips`
+  and `QUERYAPIGATE_TRUST_PROXY` judge the client, not the data plane's loopback connection. A peer that isn't an IP
+  address counts as remote.
+- **Parameter values go into the SQL as literals,** as psycopg2 and mysql-connector do, so the quoting is the
+  injection boundary. PostgreSQL strings are sent as pure-ASCII `E'...'` with `\u` escapes, and MySQL strings as
+  `_utf8mb4 X'...'`, so neither depends on a session setting a query could change (`standard_conforming_strings`,
+  `sql_mode`). Each PostgreSQL message ends with `RESET ALL`. The differential test sends hostile strings for exactly
+  this.
+- **Its runs are recorded by Python.** The data plane reports each served run to `/internal/dataplane/runs`, with the
+  secret, and Python writes its history, event and metrics. Python trusts those entries: whoever holds the secret
+  can write run history. Runs the data plane can't queue, and reports Python doesn't take, are counted as dropped in
+  `/metrics`, never lost silently. On SIGTERM it sends what it still holds before it exits, for up to 10 seconds, as
+  Python's own history writer flushes at exit; a hard kill loses up to one flush interval of runs, as Python's does.
+- **Resource use before the key is checked is bounded.** The data plane reads a request's body itself only when it
+  has a Content-Length of at most 64 KiB; anything larger, or chunked, streams through to Python unread. A connection
+  whose database can't be reached is left to Python for 30 seconds, rather than each call waiting on a connect.
+- **What the process holds:** the store's credentials (`QUERYAPIGATE_DATABASE_URL`, or the SQLite file) for reading,
+  each connection's credentials as the store keeps them, and the shared secret. A compromise of the data plane is a
+  compromise of what those reach, as for the Python process. Run it as the same user, with the same secrets, and never
+  expose Python's own port once the data plane is in front of it. The image and the chart put Python on the pod's
+  loopback (`QUERYAPIGATE_BIND=127.0.0.1:5001`), reachable from its own pod only.
+
+*Reviewed for 0.44.* The gate is the differential test (`dataplane/tests/test_differential.py`): random calls sent to
+both processes, comparing whole responses and the history rows they leave, with expired and rotated keys, hostile
+parameters, and grants changed, a key revoked and a query given a new version while calls run. Every run of it was clean, over 13,500 calls on
+PostgreSQL and MySQL. The data plane's Rust dependencies are pinned in `dataplane/Cargo.lock` and updated by
+Dependabot.
+
+*Reviewed for shipping it (ADR 0030).* The differential test also runs behind two trusted proxies with HSTS on: 9,000
+more calls over three seeds, every one the same. CI audits the crates against RustSec (`cargo audit`) and fails on a known
+vulnerability, and the image's binary is built with `cargo auditable`, so the image's SBOM and scanners see its crates.
+Its cryptography (ring, RustCrypto) isn't a FIPS-validated module: a deployment that needs FIPS 140 leaves the data
+plane off.
+
+### The ClickHouse run store (ADR 0029, a prototype)
+
+With `QUERYAPIGATE_RUN_STORE_URL` set, run history, the event log and usage rollups are kept in ClickHouse rather than
+the metadata store ([ADR 0029](adr/0029-clickhouse-run-store.md)). Keys, queries, connections and the audit log stay
+in the metadata store, so the run store never decides who may do what. Where it is used:
+
+- **What its credentials reach.** The run store holds every run's history entry - who called, which query, when, how
+  many rows, the error message, an ad-hoc statement as `QUERYAPIGATE_HISTORY_ADHOC_SQL` keeps it - but never a result
+  row. A stolen credential reads those entries, and one that can insert can forge runs and events: history and live
+  events would show calls that didn't happen. It can't change a key, a query or a grant. Give the data plane a user that
+  can only insert into `events` (guide 65); its rows reach history and the rollups through views that run as the
+  user who made them. What such a writer puts in a row stays inside its own event: a frame's data is always one line
+  (a line break can't start a frame of the writer's own), and ids above 2^53 are refused by the table.
+- **In transit:** `https://` is required except to a loopback host, since the URL carries a password and every run.
+  It is a secret setting: it can be read from a file (`QUERYAPIGATE_RUN_STORE_URL_FILE`), is masked in Settings, and
+  only its host, port and database are written to the metadata store or the log.
+- **Queries are parameterised.** Every value a read compares against goes to ClickHouse as a typed query parameter
+  (`{key:String}`), never in the SQL text; table names are the module's own constants.
+- **Where runs are, recorded once.** The metadata store records which ClickHouse server and database hold its runs. An
+  instance configured otherwise refuses to start, so a misconfigured instance can't send a share of the runs elsewhere
+  or leave them out of an erasure. A data plane learns the location from its lease, and writes nothing while its own
+  differs.
+- **Erasure (ADR 0016)** reaches `events`, `history`, `history_counts` and both rollup tables, which hold key names. Rows are hidden at
+  once by a lightweight delete and gone from disk once ClickHouse has rewritten the parts that held them
+  (`APPLY DELETED MASK`). It deletes again once runs still in flight - a data plane's batch, another worker's queue -
+  would have landed. Ad-hoc statements, which may hold values, are kept as text no longer than the event log: the
+  hourly rollup, kept 400 days, holds their hash. A backup of the metadata store no longer holds runs; ClickHouse's own backups do, and an
+  erasure doesn't reach those.
+- **Event ids** come from blocks of each millisecond that writers lease in the metadata store, so two writers never
+  mint the same one; the data plane leases its block from Python, behind its secret, keeping its own store access
+  read-only. Delivery waits a settle window so a resume misses nothing; an event acknowledged later than that is counted
+  (`queryapigate_events_late_total`).
+
+*Reviewed* on 2026-10-28, part of what it needs to graduate (ADR 0017): six findings, fixed in schema version 2 of
+its tables ([ADR 0029 section 7](adr/0029-clickhouse-run-store.md#reviewed-2026-10-28-and-what-changed)). It stays
+experimental until a release unchanged (the 250-million-run measurement is done).
 
 ### Secrets at rest
 

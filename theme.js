@@ -7,6 +7,8 @@
   function apply(t) { root.setAttribute('data-theme', t); root.style.colorScheme = t; }
   apply(stored() || 'light');   // light unless the reader has chosen dark with the toggle
 
+  // A small outline icon as a CSS mask, so it takes the text's colour in either theme.
+  function ico(d) { return 'url("data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>') + '")'; }
   var css = [
     ':root{--bg:#f3f5f4;--bg-90:rgba(243,245,244,0.9);--surface:#fff;--surface-2:#f8faf9;--surface-3:#eef2f0;--tint:#f3f9f6;',
     '--line:#dbe2df;--line-soft:#e8edeb;--line-2:#c3cdc9;--dots:#b3bfba;',
@@ -58,7 +60,42 @@
     '.rs-pg:hover .rs-pg-ico{animation:rs-pg-nudge .5s ease}@keyframes rs-pg-nudge{40%{transform:translateY(-2px)}}',
     '@media (max-width:1180px){.rs-pg-t{display:inline}.rs-nav a.rs-pg{display:flex !important;align-items:center;gap:10px}}',
     '@media (prefers-reduced-motion:reduce){.rs-pg-caret,.rs-pg-live,.rs-pg:hover .rs-pg-ico{animation:none}}',
-    '.uc-back{display:inline-grid;place-items:center;width:24px;height:24px;margin-right:2px;color:var(--ink-2);text-decoration:none;flex:none;transition:color .2s,transform .2s}.uc-back:hover{color:var(--accent-ink);transform:translateX(-2px);text-decoration:none}.uc-back svg{display:block}'
+    '.uc-back{display:inline-grid;place-items:center;width:24px;height:24px;margin-right:2px;color:var(--ink-2);text-decoration:none;flex:none;transition:color .2s,transform .2s}.uc-back:hover{color:var(--accent-ink);transform:translateX(-2px);text-decoration:none}.uc-back svg{display:block}',
+    // The top nav spans the whole bar on desktop: the links centred between the brand and the icons. The menus keep the
+    // width of the page's content, centred, rather than stretching with the bar.
+    '@media (min-width:1181px){.rs-navbar{max-width:none !important;padding-left:clamp(24px,3vw,56px) !important;padding-right:clamp(24px,3vw,56px) !important}',
+    '.rs-nav{flex:1 1 auto}.rs-nav>:first-child{margin-left:auto}.rs-nav>.rs-pg{margin-left:auto}',
+    '.rs-mega .rs-dd-panel{left:max(24px,calc(50% - 620px)) !important;right:max(24px,calc(50% - 620px)) !important}}',
+    // The section rail stays under the sticky nav (z-index 20), so an open menu is never drawn under it.
+    '.rail{z-index:19 !important}',
+    // The MCP menu: the pages as cards, the agent guides beside them, and the clients that connect along the bottom.
+    // The card and link styles are the other menus'; only the layout is its own.
+    '.rs-mcp-body{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1fr);gap:28px}',
+    '.rs-mcp-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-content:start}',
+    '.rs-mcp-side{display:grid;gap:2px;align-content:start;padding-left:28px;border-left:1px solid var(--line-soft)}',
+    '.rs-mcp-side small{font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);margin:0 0 6px 10px}',
+    '.rs-mcp-side .rs-mega-more{margin:8px 0 0 10px}',
+    '.rs-mcp-side a.rs-doc{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink);text-decoration:none;transition:background .15s}',
+    '.rs-mcp-side a.rs-doc:hover{background:var(--bg);color:var(--ink);text-decoration:none}',
+    '.rs-mcp-side .rs-doc-ico{flex:none;width:28px;height:28px;border-radius:7px;background:oklch(0.52 0.11 170 / 0.09);position:relative}',
+    '.rs-mcp-side .rs-doc-ico::after{content:"";position:absolute;inset:7px;background:var(--accent-ink);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}',
+    '.rs-mcp-foot{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-top:14px;border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--ink-3)}',
+    '.rs-mcp-foot>span:first-child{margin-right:4px}',
+    '.rs-mcp-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:12.5px;font-weight:500;color:var(--ink-2)}',
+    '.rs-mcp-chip i{flex:none;width:13px;height:13px;background:currentColor;-webkit-mask:var(--m) center/contain no-repeat;mask:var(--m) center/contain no-repeat}',
+    '@media (max-width:1400px){.rs-mcp-body{grid-template-columns:minmax(0,1.9fr) minmax(0,1fr)}.rs-mcp-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}',
+    // The GitHub link: the repository's name over its latest release, stars and forks, as the documentation site shows
+    // it. Between 1181 and 1519px, where the bar has no room for it, it keeps to the mark and the star count.
+    '.rs-ghn{gap:9px !important;text-decoration:none !important;line-height:1.2}.rs-ghn:hover .rs-ghn-repo{color:var(--accent-ink)}',
+    '.rs-ghn-txt{display:grid;gap:3px;min-width:0}',
+    '.rs-ghn-repo{font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;transition:color .2s}',
+    '.rs-ghn-facts{display:flex;align-items:center;gap:9px;min-height:14px;font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--ink-3);white-space:nowrap}',
+    '.rs-ghn-f{display:inline-flex;align-items:center;gap:3px}.rs-ghn-f:empty{display:none}',
+    '.rs-ghn-f::before{content:"";flex:none;width:11px;height:11px;background:currentColor;-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}',
+    '.rs-ghn-tag{--i:' + ico('<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r="1"/>') + '}',
+    '.rs-ghn-star{--i:' + ico('<path d="M11.5 2.3a.5.5 0 0 1 1 0l2.3 4.7a2.1 2.1 0 0 0 1.6 1.2l5.2.7a.5.5 0 0 1 .3.9l-3.8 3.7a2.1 2.1 0 0 0-.6 1.9l.9 5.1a.5.5 0 0 1-.8.6l-4.6-2.4a2.1 2.1 0 0 0-2 0L6.4 21a.5.5 0 0 1-.8-.6l.9-5.1a2.1 2.1 0 0 0-.6-1.9L2.2 9.8a.5.5 0 0 1 .3-.9l5.2-.7a2.1 2.1 0 0 0 1.6-1.2z"/>') + '}',
+    '.rs-ghn-fork{--i:' + ico('<circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9M12 12v3"/>') + '}',
+    '@media (min-width:1181px) and (max-width:1519px){.rs-ghn{gap:6px !important}.rs-ghn-repo,.rs-ghn-tag,.rs-ghn-fork{display:none !important}.rs-ghn-facts{min-height:0;font-size:12px}.rs-ghn-star::before{display:none}}'
   ].join('');
   var style = document.createElement('style'); style.id = 'qag-theme'; style.textContent = css;
   (document.head || root).appendChild(style);

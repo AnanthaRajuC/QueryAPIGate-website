@@ -30,7 +30,7 @@ DOC_CAT = {  # top-level documents whose group the site sets by hand; anything e
     'INSTALLATION_AND_SETUP': 'Run it', 'CONFIGURATION': 'Run it', 'DEPLOYMENT': 'Run it', 'DATABASE_CONNECTION_CONFIGURATION': 'Run it',
     'API': 'Reference', 'MCP': 'Reference', 'FEATURES': 'Reference', 'EXAMPLES': 'Reference', 'QUERY_METADATA_MANAGEMENT': 'Reference', 'SCREENSHOTS': 'Reference',
     'THREAT_MODEL': 'Security', 'DATA_PROTECTION': 'Security', 'SECURITY': 'Security', 'ARCHITECTURE': 'Security', 'QUESTIONNAIRE': 'Security', 'SBOM': 'Security',
-    'PERFORMANCE_V3': 'Performance', 'PERFORMANCE_MYSQL_V1': 'Performance', 'PERFORMANCE_V2': 'Performance', 'PERFORMANCE': 'Performance',
+    'PERFORMANCE_V5': 'Performance', 'PERFORMANCE_V4': 'Performance', 'PERFORMANCE_MYSQL_V2': 'Performance', 'PERFORMANCE_V3': 'Performance', 'PERFORMANCE_MYSQL_V1': 'Performance', 'PERFORMANCE_V2': 'Performance', 'PERFORMANCE': 'Performance',
     'WHY': 'Project', 'TECHNOLOGY_STACK': 'Project', 'CONTRIBUTING': 'Project', 'CODE_OF_CONDUCT': 'Project',
 }
 DOC_GROUP_ORDER = ['Run it', 'Reference', 'Performance', 'Security', 'Project']

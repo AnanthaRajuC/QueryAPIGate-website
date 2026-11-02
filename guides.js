@@ -488,7 +488,7 @@ export const guides = [
  {
   "num": "55",
   "slug": "55-promote-a-setup-from-dev-to-prod-through-a-pull-request",
-  "title": "Promote a setup from dev to prod through a pull request",
+  "title": "Manage your setup as code, and promote it from dev to prod through a pull request",
   "cat": "Operate",
   "time": "20 min",
   "timeMin": 20,
@@ -556,6 +556,33 @@ export const guides = [
   "time": "10 min",
   "timeMin": 10,
   "outcome": "A clear read on which keys, connections, queries and tools are actually in use - which ones are busy, which are granted but never touched - without wiring up any external monitoring."
+ },
+ {
+  "num": "63",
+  "slug": "63-tune-a-deployment-for-throughput",
+  "title": "Tune a deployment for throughput",
+  "cat": "Operate",
+  "time": "20 min",
+  "timeMin": 20,
+  "outcome": "Threads, CPU, logging, cache and disk settings chosen for your queries and your database's distance, a number of containers to start from, and the figures each one rests on."
+ },
+ {
+  "num": "64",
+  "slug": "64-try-the-rust-data-plane",
+  "title": "Try the Rust data plane in front of /q/",
+  "cat": "Operate",
+  "time": "10 min",
+  "timeMin": 10,
+  "outcome": "The data plane on your public port, serving your saved-query reads itself, Python behind it doing everything else, and a way to see which calls it served."
+ },
+ {
+  "num": "65",
+  "slug": "65-keep-runs-in-clickhouse",
+  "title": "Keep run history and the event log in ClickHouse",
+  "cat": "Operate",
+  "time": "20 min",
+  "timeMin": 20,
+  "outcome": "Every run recorded in ClickHouse instead of the metadata store - history, the event log and usage rollups - written in batches by the Python server and by the Rust data plane, if you run one."
  }
 ];
 
@@ -619,6 +646,24 @@ export const docs = [
   "path": "documentation/SCREENSHOTS.md",
   "title": "A tour of the Console",
   "cat": "Reference"
+ },
+ {
+  "slug": "PERFORMANCE_V5",
+  "path": "documentation/PERFORMANCE_V5.md",
+  "title": "Performance, v5: a Rust data plane in front of /q/",
+  "cat": "Performance"
+ },
+ {
+  "slug": "PERFORMANCE_V4",
+  "path": "documentation/PERFORMANCE_V4.md",
+  "title": "Performance, v4: what 0.43 changed on PostgreSQL",
+  "cat": "Performance"
+ },
+ {
+  "slug": "PERFORMANCE_MYSQL_V2",
+  "path": "documentation/PERFORMANCE_MYSQL_V2.md",
+  "title": "Performance on MySQL, v2: what 0.43 changed",
+  "cat": "Performance"
  },
  {
   "slug": "PERFORMANCE_V3",
@@ -715,6 +760,30 @@ export const docs = [
    topic and version are optional labels. summary is the card text. featured: true puts a post in the large card at the top
    (otherwise the newest is). href sends the card somewhere other than blog/<slug>.md, such as the changelog. */
 export const posts = [
+ {
+  "slug": "the-30-percent-in-the-build",
+  "title": "The 30% that was in the build",
+  "date": "2026-10-31",
+  "cat": "Benchmark",
+  "topic": "Operations",
+  "summary": "QueryAPIGate's Docker image ran Python about 30% slower per CPU than other builds of the same Python. We found why, measured what fixing it is worth at the gateway (less than 30%), found that the obvious fix came with a security cost, and chose the one that didn't."
+ },
+ {
+  "slug": "every-run-recorded",
+  "title": "Every run, recorded",
+  "date": "2026-10-29",
+  "cat": "Benchmark",
+  "topic": "Operations",
+  "summary": "The Rust data plane served calls faster than QueryAPIGate could record them: at the peak, half the runs never reached the audit trail. An optional ClickHouse run store records every one, in about 13 bytes, with reads in milliseconds at 250 million runs. Experimental, measured, reviewed."
+ },
+ {
+  "slug": "python-decides-rust-serves",
+  "title": "Python decides, Rust serves",
+  "date": "2026-10-28",
+  "cat": "Benchmark",
+  "topic": "Operations",
+  "summary": "A Rust data plane in front of QueryAPIGate's saved queries, with every security decision left in Python: about 8 times the calls a second per core, p99 in single milliseconds, and the audit trail that almost didn't keep up. A prototype, measured and decided go."
+ },
  {
   "slug": "one-mysql-six-services",
   "title": "One MySQL server, six services, one gateway",

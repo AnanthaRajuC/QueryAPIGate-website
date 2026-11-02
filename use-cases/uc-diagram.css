@@ -1,0 +1,189 @@
+/* Use-case diagrams: the Home architecture diagram's visual language as classes, so every use case reads the same.
+   A dashed box is outside QueryAPIGate, a solid box is yours, the dark box is the governed core; green pulses travel
+   the lanes and red is a run that failed. Values are the Home diagram's own. */
+
+/* The section around a diagram */
+.ucd-section{max-width:1480px;margin:0 auto;padding:0 24px 72px;display:grid;gap:10px}
+.ucd-eyebrow{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)}
+.ucd-h2{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(26px,3.2vw,40px);line-height:1.1;font-weight:800;letter-spacing:-0.02em;text-wrap:balance;color:var(--ink)}
+.ucd-lede{margin:0 0 14px;max-width:80ch;font-size:17px;color:var(--ink-2);text-wrap:pretty}
+.ucd-foot{margin:6px 0 0;font-size:14px;color:var(--ink-3)}
+
+/* The canvas: fixed size, scaled down by uc-diagram.js */
+.ucd-wrap{position:relative;width:100%;overflow:hidden;border-radius:14px;background:var(--bg)}
+.ucd-canvas{position:absolute;left:0;top:0;width:1440px;height:640px;transform-origin:0 0;font-family:'Instrument Sans',system-ui,sans-serif;color:var(--ink)}
+.ucd-canvas *,.ucd-stack *{box-sizing:border-box}
+.ucd-canvas>*{position:absolute}
+.ucd-canvas h3,.ucd-canvas h4,.ucd-canvas p{margin:0}
+.ucd-mono{font-family:'JetBrains Mono',monospace}
+
+/* Zone labels, and the right-aligned label beside a row (Home's "Reports to") */
+.ucd-zone{padding-bottom:6px;border-bottom:1px solid var(--line);font-family:'Schibsted Grotesk',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)}
+.ucd-side{display:grid;align-content:center;justify-items:end;text-align:right;gap:3px}
+.ucd-side b{font-family:'Schibsted Grotesk',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3)}
+.ucd-side span{font-size:12px;line-height:1.35;color:var(--ink-3)}
+
+/* Boxes: solid is yours, .out (dashed) is outside QueryAPIGate */
+.ucd-box{background:var(--surface);border:1px solid var(--line);border-radius:8px;transition:border-color 0.25s,box-shadow 0.25s}
+.ucd-box.out{border:1px dashed var(--line-2);background:var(--bg)}
+.ucd-box.lit{border-color:oklch(0.52 0.11 170 / 0.7);box-shadow:0 0 0 3px oklch(0.52 0.11 170 / 0.12)}
+.ucd-box>*{position:absolute}
+.ucd-h{font-size:15px;font-weight:600;line-height:1.3;color:var(--ink)}
+.ucd-p{font-size:13px;line-height:1.45;color:var(--ink-2)}
+.ucd-ico{flex:none;width:38px;height:38px;border-radius:8px;background:oklch(0.52 0.11 170 / 0.09);display:grid;place-items:center}
+.ucd-ico::after{content:'';display:block;width:20px;height:20px;background:oklch(0.52 0.11 170);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.ucd-caller{display:flex;gap:10px;align-items:center;padding:14px 10px}
+.ucd-caller>*{position:static}
+
+/* Tags and the ↗ link to a Guides path */
+.ucd-tag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:4px 7px;border-radius:4px;line-height:1;white-space:nowrap}
+.ucd-tag.stable{background:oklch(0.52 0.11 170 / 0.09);color:var(--accent-ink)}
+.ucd-tag.exp{background:oklch(0.6 0.13 75 / 0.12);color:var(--warn-ink)}
+.ucd-canvas .box-link,.ucd-stack .box-link{box-sizing:border-box;display:grid;place-items:center;width:20px;height:20px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink-3);text-decoration:none;font-size:12px;line-height:1;flex:none;transition:background 0.15s,color 0.15s,border-color 0.15s}
+.ucd-canvas .box-link:hover,.ucd-stack .box-link:hover{background:oklch(0.52 0.11 170);border-color:var(--accent-ink);color:var(--on-ink);text-decoration:none}
+.ucd-canvas .box-link.abs{position:absolute;top:8px;right:8px}
+.ucd-canvas .box-link.dark{background:#10201b;border-color:#2a3d37;color:#9fb3ac}
+.ucd-canvas .box-link.dark:hover{background:oklch(0.52 0.11 170);color:#fff}
+
+/* Chips, as Home's database chips; .two adds a second, smaller line */
+.ucd-chip{display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;padding:3px 6px 3px 5px;border-radius:4px;background:oklch(0.52 0.11 170 / 0.09);color:var(--ink)}
+.ucd-chip img{display:block;width:14px;height:14px}
+.ucd-chip.two{display:grid;gap:3px;padding:6px 7px;border-radius:6px;font-size:11px}
+.ucd-chip.two>span{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.ucd-chip.two small{font-size:10px;font-weight:400;color:var(--ink-3);white-space:nowrap}
+
+/* The governed core: there is only ever one, and it is Home's */
+.ucd-core{color:#e6efeb;border-radius:14px;background:radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.52 0.11 170 / 0.28), transparent 70%),repeating-linear-gradient(0deg, transparent 0 23px, rgba(255,255,255,0.035) 23px 24px),repeating-linear-gradient(90deg, transparent 0 23px, rgba(255,255,255,0.035) 23px 24px),#10201b;box-shadow:0 0 0 1px oklch(0.62 0.13 170 / 0.5), 0 0 70px oklch(0.62 0.13 170 / 0.2), 0 30px 60px -24px rgba(0,0,0,0.55)}
+.ucd-core>*{position:absolute}
+.ucd-ghost{border:1px solid #2f463f;border-radius:14px}
+.ucd-core-t{font-family:'Schibsted Grotesk',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:#e6efeb;white-space:nowrap}
+.ucd-core-badge{font-family:'JetBrains Mono',monospace;font-size:11px;color:#7c8f88;white-space:nowrap}
+.ucd-core-row{padding:5px 10px;border-radius:8px;border:1px solid transparent;font-size:12.5px;line-height:1.4;color:#9fb3ac;transition:background 0.2s,border-color 0.2s}
+.ucd-core-row b{font-weight:600;color:#e6efeb}
+.ucd-core-row.lit{background:oklch(0.62 0.13 170 / 0.14);border-color:oklch(0.62 0.13 170 / 0.5)}
+.ucd-core-note{font-size:11.5px;line-height:1.4;color:#7c8f88}
+.ucd-dot{width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#10201b;border:2px solid oklch(0.62 0.13 170);transition:box-shadow 0.2s}
+.ucd-dot.lit{box-shadow:0 0 0 5px oklch(0.62 0.13 170 / 0.3),0 0 14px oklch(0.62 0.13 170 / 0.7)}
+.ucd-dot-n{font-family:'JetBrains Mono',monospace;font-size:10px;color:oklch(0.8 0.11 170);transform:translateX(-50%)}
+
+/* Checks that light in order, as the hero strip's */
+.ucd-chk{display:flex;align-items:flex-start;justify-content:space-between;gap:6px;padding:4px 8px;border-radius:6px;border:1px solid var(--line-2);background:var(--surface);font-size:12px;line-height:1.35;color:var(--ink-3);transition:background 0.2s,border-color 0.2s,color 0.2s}
+.ucd-chk b{font-weight:500;color:var(--accent-ink)}
+.ucd-chk.lit{border-color:oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08);color:var(--ink)}
+
+/* A two-line ticker: the newest line on top */
+.ucd-ticker{display:grid;gap:1px;font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.4;color:var(--ink-2)}
+.ucd-ticker>span{display:block;white-space:pre;overflow:hidden;text-overflow:ellipsis}
+.ucd-ticker>span:first-child{color:var(--ink)}
+.ucd-ticker>span.err{color:var(--danger-ink)}
+
+/* A line of output, styled like the hero's code block */
+.ucd-code{display:flex;align-items:center;gap:0;padding:0 18px;border-radius:10px;border:1px solid #243b34;background:#10201b;color:#e6efeb;font-family:'JetBrains Mono',monospace;font-size:12.5px;white-space:pre;overflow:hidden}
+.ucd-code i{font-style:normal;color:#9fb3ac}
+.ucd-code .id{color:oklch(0.8 0.11 170)}
+.ucd-code .err{color:oklch(0.72 0.18 25)}
+
+/* The stat row and the legend */
+.ucd-stats{display:flex;gap:36px}
+.ucd-stats>div{display:grid;gap:4px}
+.ucd-stats b{font-family:'Schibsted Grotesk',sans-serif;font-size:30px;line-height:1;font-weight:700;color:var(--ink)}
+.ucd-stats span{font-size:12px;color:var(--ink-3);letter-spacing:0.03em}
+.ucd-legend{display:flex;align-items:center;gap:22px;font-size:13px;color:var(--ink-2);white-space:nowrap}
+.ucd-legend>span{display:flex;gap:8px;align-items:center}
+.ucd-legend code{font-family:'JetBrains Mono',monospace;font-size:12px}
+
+/* Lanes and pulses, drawn above the boxes */
+.ucd-fx{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+.ucd-lane{fill:none;stroke:var(--line-2);stroke-width:1.5}
+.ucd-lane.in-core{stroke:#2f463f}
+
+/* Stages and gates inside the core: a stage's name (Home's h4), a gate's bar on the lane, which opens (fades) as a
+   pulse goes through, and a status flag that turns red when a call stops there */
+.ucd-stage{font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.11 170)}
+.ucd-gate{stroke:oklch(0.62 0.13 170);stroke-width:2;transition:opacity 0.25s}
+.ucd-gate.lit{opacity:0.3}
+.ucd-flag{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.35;padding:3px 6px;border:1px solid #2f463f;border-radius:5px;color:#7c8f88;transition:color 0.3s,border-color 0.3s,background 0.3s}
+.ucd-flag.lit,.ucd-still .ucd-flag.rest-lit{color:oklch(0.65 0.2 25);border-color:oklch(0.65 0.2 25);background:oklch(0.65 0.2 25 / 0.1)}
+.ucd-tag.neutral{background:#1a2d27;color:#9fb3ac}
+/* An action a person takes: an outline pill that fills when it happens */
+.ucd-pill{display:inline-block;font-size:11px;font-weight:600;line-height:1;padding:4px 10px;border-radius:999px;border:1px solid oklch(0.52 0.11 170 / 0.6);color:var(--accent-ink);background:transparent;transition:background 0.3s,color 0.3s}
+.ucd-pill.lit,.ucd-still .ucd-pill.rest-lit{background:oklch(0.52 0.11 170);color:#fff}
+.ucd-lane.lit{stroke:oklch(0.62 0.13 170);stroke-width:2.5}
+/* A caller's last response */
+.ucd-resp{font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.4;min-height:14px}
+.ucd-resp.ok{color:var(--accent-ink)}.ucd-resp.bad{color:var(--danger-ink)}.ucd-resp.wait{color:var(--warn-ink)}
+.ucd-code.lit{border-color:oklch(0.62 0.13 170 / 0.8)}
+
+/* A core row refusing a call; a small badge that pops in for a moment */
+.ucd-core-row.bad,.ucd-still .ucd-core-row.rest-bad{background:oklch(0.65 0.2 25 / 0.16);border-color:oklch(0.65 0.2 25 / 0.6)}
+.ucd-pop{opacity:0;transform:translate(-50%,-4px);transition:opacity 0.25s,transform 0.25s}
+.ucd-pop.lit{opacity:1;transform:translate(-50%,0)}
+/* A small app window: its chrome, who is signed in, and a button */
+.ucd-chrome{display:flex;align-items:center;gap:5px;padding:0 10px;height:30px;border-bottom:1px dashed var(--line-2)}
+.ucd-chrome>i{width:7px;height:7px;border-radius:50%;background:var(--line-2)}
+.ucd-avatar{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 4px;border-radius:999px;background:oklch(0.52 0.11 170 / 0.09);font-size:12px;font-weight:600;color:var(--ink)}
+.ucd-avatar>i{width:16px;height:16px;border-radius:50%;background:oklch(0.52 0.11 170);color:#fff;font-style:normal;font-size:10px;display:grid;place-items:center}
+.ucd-btn{display:inline-block;font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:7px;border:1px solid oklch(0.52 0.11 170 / 0.6);color:var(--accent-ink);background:var(--surface);transition:box-shadow 0.15s,background 0.15s}
+.ucd-btn.lit{box-shadow:inset 0 2px 4px rgba(16,32,27,0.25);background:oklch(0.52 0.11 170 / 0.12)}
+
+/* Terms written on something (a key, a grant): each segment lights while its stage holds a call to it, red when it refused one */
+.ucd-seg{display:inline-block;padding:2px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-2);white-space:nowrap;transition:color 0.25s,background 0.25s}
+.ucd-seg.lit,.ucd-still .ucd-seg{color:oklch(0.52 0.11 170);background:oklch(0.62 0.13 170 / 0.14)}
+.ucd-seg.bad{color:oklch(0.65 0.2 25);background:oklch(0.65 0.2 25 / 0.14)}
+:root[data-theme=dark] .ucd-seg.lit,:root[data-theme=dark] .ucd-still .ucd-seg{color:oklch(0.78 0.11 170)}
+/* Tables in a schema: dimmed, and full strength for the ones a call actually reads */
+.ucd-tile{display:grid;align-content:center;gap:2px;padding:6px 9px;border-radius:6px;border:1px solid transparent;background:oklch(0.52 0.11 170 / 0.09);font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:500;color:var(--ink);opacity:0.45;transition:opacity 0.3s,border-color 0.3s}
+.ucd-tile small{font-size:10px;font-weight:400;color:var(--accent-ink);display:none}
+.ucd-tile.lit,.ucd-still .ucd-tile.rest-lit{opacity:1;border-color:oklch(0.52 0.11 170 / 0.5)}
+.ucd-tile.lit small,.ucd-still .ucd-tile.rest-lit small{display:block}
+
+/* A run of repeated jobs: one cell per run, muted until its outcome is known, then a green or red top edge; and a pin
+   that marks how far something has got along them */
+.ucd-cell{display:grid;align-content:center;gap:2px;padding:6px 10px;border-radius:8px;border:1px solid var(--line);border-top:3px solid var(--line);background:var(--surface);color:var(--ink-4);transition:border-color 0.3s,color 0.3s}
+.ucd-cell b{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500}
+.ucd-cell span{font-size:11px;line-height:1.3}
+.ucd-cell.ok,.ucd-still .ucd-cell.rest-ok{border-top-color:oklch(0.62 0.13 170);color:var(--ink-2)}
+.ucd-cell.ok b,.ucd-cell.bad b,.ucd-still .ucd-cell b{color:var(--ink)}
+.ucd-cell.bad,.ucd-still .ucd-cell.rest-bad{border-top-color:oklch(0.65 0.2 25);color:var(--ink-2)}
+.ucd-pin{display:flex;align-items:center;gap:6px;transform:translate(-5px,-50%);transition:left 0.4s ease-in-out;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-3)}
+.ucd-pin>i{width:10px;height:10px;border-radius:50%;background:oklch(0.52 0.11 170);box-shadow:0 0 0 3px var(--bg)}
+.ucd-pin>span{padding:0 4px;background:var(--bg)}
+.ucd-rule{height:1px;background:var(--line-2)}
+
+/* Rows of a log or a list: a row lights when it's acted on, is .off until it's written, and turns red when it no longer
+   matches what was written; .chain joins each row to the one before it, as a hash chain does. A chip that lights. */
+.ucd-entry{display:flex;align-items:center;gap:10px;height:20px;padding:0 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-2);white-space:pre;transition:opacity 0.4s,color 0.3s,background 0.3s}
+.ucd-box>.ucd-entry>*{position:static}
+.ucd-entry b{font-weight:500;color:var(--ink-3)}
+.ucd-entry.lit{background:oklch(0.52 0.11 170 / 0.1);color:var(--ink)}
+.ucd-entry.off{opacity:0}
+.ucd-entry.bad,.ucd-entry.bad b{color:var(--danger-ink)}
+.ucd-entry.bad{background:oklch(0.65 0.2 25 / 0.1)}
+.ucd-entry.chain{padding-left:24px}
+.ucd-entry.chain::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:1px;background:var(--line-2)}
+.ucd-entry.chain.first::before{top:50%}
+.ucd-entry.chain:not(.first)::after{content:'';position:absolute;left:7px;top:-3px;width:7px;height:6px;border:1.5px solid var(--ink-4);border-radius:3px;background:var(--surface)}
+.ucd-chip.lit{box-shadow:0 0 0 2px oklch(0.52 0.11 170 / 0.55)}
+/* Rows inside the dark core */
+.ucd-core .ucd-entry{color:#9fb3ac}
+.ucd-core .ucd-entry.lit{background:oklch(0.62 0.13 170 / 0.18);color:#e6efeb}
+
+/* Phones: the canvas gives way to a stack of boxes */
+.ucd-stack{display:none;gap:8px}
+.ucd-sbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:6px}
+.ucd-sbox.out{border-style:dashed;background:var(--bg)}
+.ucd-sbox>small{font-size:11.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);display:flex;align-items:center;gap:8px}
+.ucd-sbox>b{font-weight:600;color:var(--ink)}
+.ucd-sbox>span{font-size:14px;color:var(--ink-2)}
+.ucd-sbox code{font-family:'JetBrains Mono',monospace;font-size:0.9em}
+.ucd-sbox.core{background:#10201b;border-color:#10201b;color:#e6efeb}
+.ucd-sbox.core>small{color:oklch(0.8 0.11 170)}
+.ucd-sbox.core>b{color:#e6efeb}
+.ucd-sbox.core>span{color:#9fb3ac}
+.ucd-sarrow{justify-self:center;color:#9fb3ac;font-size:18px;line-height:1}
+@media (max-width:700px){.ucd-wrap{display:none}.ucd-stack{display:grid}}
+
+/* Reduced motion: no pulses; whatever lights up shows lit, at rest */
+.ucd-still .ucd-core-row.rest-lit{background:oklch(0.62 0.13 170 / 0.14);border-color:oklch(0.62 0.13 170 / 0.5)}
+.ucd-still .ucd-chk{border-color:oklch(0.52 0.11 170 / 0.6);background:oklch(0.52 0.11 170 / 0.08);color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.ucd-box,.ucd-core-row,.ucd-dot,.ucd-chk,.ucd-gate,.ucd-flag,.ucd-pill,.ucd-pop,.ucd-btn,.ucd-seg,.ucd-tile,.ucd-cell,.ucd-pin,.ucd-entry{transition:none}}

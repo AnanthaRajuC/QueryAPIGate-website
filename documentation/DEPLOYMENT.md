@@ -230,6 +230,9 @@ The schema is recreated under its original name, so the URL's `search_path` (if 
   but a lost secret can't be recovered from a backup: issue a new key instead.
 - **The databases QueryAPIGate connects to** - back those up in their own right. The Redis response cache, if
   used, is disposable: it refills.
+- **Run history and the event log, with a run store** (`QUERYAPIGATE_RUN_STORE_URL`, ADR 0029): they're in
+  ClickHouse then, not the metadata store. Back it up with ClickHouse's own tools if history must survive; the store
+  restored without it starts with none.
 
 A restore from an older release's store is upgraded on first start, as any upgrade is; one from a newer release
 is refused rather than run on. `tests/test_backup_restore.py` does all of this on every CI run: it fills a store,
@@ -372,14 +375,19 @@ succeeded - Caddy retried them on the others. Walkthrough:
 
 **One worker per container, more containers for more capacity.** The image runs gunicorn with one worker and eight
 threads, and that stays right when scaling out: each process keeps its own `/metrics`, and Prometheus scraping a
-container with several workers would reach one of them at random. For more headroom inside one container, raise
-`--threads` - `gthread` keeps a slow request from blocking the others - with a `command:` override:
+container with several workers would reach one of them at random. For more headroom inside one container, raise the
+threads - `gthread` keeps a slow request from blocking the others - with `QUERYAPIGATE_THREADS` (from 0.43; the pool
+follows it). Before 0.43 this took a `command:` override with `--threads`, which still works: a flag, or
+`GUNICORN_CMD_ARGS`, beats the setting.
 
 ~~~yaml
-    command: ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--worker-class", "gthread",
-              "--threads", "16", "--timeout", "120", "--graceful-timeout", "30", "--access-logfile", "-",
-              "--no-control-socket", "-c", "python:queryapigate.gunicorn_conf", "queryapigate.app:create_app()"]
+    environment:
+      QUERYAPIGATE_THREADS: "16"
+      QUERYAPIGATE_ACCESS_LOG: "off"   # when the proxy in front logs requests already
 ~~~
+
+How many threads, and how much CPU to give each container:
+[Tune a deployment for throughput](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/63-tune-a-deployment-for-throughput.md).
 
 **What stays per instance:** `/metrics` (scrape each instance; the bundled dashboard sums them), the Console's Metrics
 screen, and the main server's own `GET /events` (use `queryapigate events`). `GET /api/v1/instances` lists the
@@ -420,7 +428,7 @@ on the PostgreSQL store with Redis. They roll one at a time, and a new pod must 
 | Network | `networkPolicy.enabled`: in only from `networkPolicy.ingressFrom`, out only to `networkPolicy.egress` and DNS. List your databases, Redis and the SIEM there. |
 | Scale | `autoscaling.enabled`, CPU-based, PostgreSQL shape only. |
 | Secrets managers | `${vault:...}`, `${aws-sm:...}` and short-lived database credentials ([Secrets from files and secrets managers](API.md#secrets-from-files-and-secrets-managers); AWS's experimental): `vaultToken.enabled` for Vault's Kubernetes auth, `serviceAccount.annotations` for IRSA, and the `QUERYAPIGATE_VAULT_*` / `QUERYAPIGATE_AWS_*` settings through `config`. |
-| Configuration as code | `configAsCode.enabled` with `configAsCode.file` (or `existingConfigMap`): connections, queries, roles, keys and the rest as one file in git, applied by the first new API server pod as it starts, once per file ([Configuration as code](API.md#configuration-as-code), experimental). A change to it rolls the pods; a file that can't be applied stops the rollout at its first pod. `locked: true` keeps what it manages to the file. |
+| Configuration as code | `configAsCode.enabled` with `configAsCode.file` (or `existingConfigMap`): connections, queries, roles, keys and the rest as one file in git, applied by the first new API server pod as it starts, once per file ([Configuration as code](API.md#configuration-as-code)). A change to it rolls the pods; a file that can't be applied stops the rollout at its first pod. `locked: true` keeps what it manages to the file. |
 
 Two things to know:
 - **Changing a Secret you manage doesn't restart the pods**, since the chart can't see inside it. Run
@@ -434,6 +442,40 @@ Walkthrough, run on kind:
 [Install on Kubernetes with Helm](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/54-install-on-kubernetes-with-helm.md).
 Plain manifests of the PostgreSQL shape, kept in step with the chart by a test:
 [`deploy/kubernetes/`](https://github.com/AnanthaRajuC/QueryAPIGate/tree/main/deploy/kubernetes).
+
+## A Rust data plane in front of /q/
+
+> **Experimental** - outside the compatibility promise ([what that means](../CHANGELOG.md#versioning-and-compatibility)):
+> decided go in 0.44 ([ADR 0028](adr/0028-rust-data-plane-prototype.md)) and shipped in the image and the chart
+> ([ADR 0030](adr/0030-shipping-the-data-plane.md)); what it serves, its settings and its headers may change before it
+> graduates.
+
+A second process, `queryapigate-dataplane` in the image, can take the public port and serve saved-query reads itself,
+from plans the Python server gives it, forwarding everything else to Python unchanged. For the calls it serves it
+measured 3-9x the calls a second per core, with every run still recorded ([Performance, v5](PERFORMANCE_V5.md)).
+
+It runs as a second container from the same image, sharing the first one's network: Python on `127.0.0.1:5001`
+(`QUERYAPIGATE_BIND`), the data plane on port 5000, both with the same `QUERYAPIGATE_DATAPLANE_SECRET` (at least 16
+characters) and settings. The Helm chart does that with `dataplane.enabled: true`. One gunicorn worker records about
+17,000 runs a second: without a run store ([guide 65](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/65-keep-runs-in-clickhouse.md)),
+keep a pod's data plane near 2 CPUs and scale out with pods. It isn't for FIPS 140 deployments: its cryptography isn't
+a validated module. To turn it on, and see which calls it serves:
+[Try the Rust data plane](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/64-try-the-rust-data-plane.md).
+
+## A ClickHouse run store (prototype)
+
+> **Experimental** - outside the compatibility promise ([what that means](../CHANGELOG.md#versioning-and-compatibility)):
+> a prototype ([ADR 0029](adr/0029-clickhouse-run-store.md), measured and decided go). Its tables, its event ids and
+> how it's switched on may change before it graduates.
+
+With `QUERYAPIGATE_RUN_STORE_URL=https://user:password@host:8443/database` set on every instance, run history, the
+event log and per-minute and per-hour usage rollups are kept in ClickHouse (24.8 or later) instead of the metadata
+store - for a data plane's rates, where every run recorded is billions of rows a day. Keys, queries and the audit log
+stay where they are. History is kept by time (`QUERYAPIGATE_HISTORY_RETENTION_DAYS`, 30 days unless set), and live
+events arrive about a second later than from the metadata store. Every instance must name the same server and
+database: the store records which one holds its runs, and an instance that disagrees refuses to start.
+The users, the data plane's own insert-only one, copying history across and switching back:
+[Keep run history and the event log in ClickHouse](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/65-keep-runs-in-clickhouse.md).
 
 ## Upgrading
 
