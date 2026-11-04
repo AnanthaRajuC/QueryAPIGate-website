@@ -183,7 +183,9 @@
 
   // The GitHub link in the nav: stars, forks and the latest release, fetched at most once an hour, cached in
   // localStorage, and filled into every [data-gh-stars], [data-gh-forks] and [data-gh-tag] once the page's runtime
-  // has rendered the nav. A fact that can't be fetched stays empty, and its place in the nav with it.
+  // has rendered the nav. Past the hour, the saved facts show at once while fresh ones are fetched; when GitHub
+  // can't answer (its rate limit, an outage, offline), they stay. Only a fact never fetched stays empty, and its
+  // place in the nav with it.
   (function () {
     var KEY = 'qag-gh-repo', TTL = 3600000, REPO = 'https://api.github.com/repos/AnanthaRajuC/QueryAPIGate', vals = null;
     function fmt(n) { return n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '') + 'k' : String(n); }
@@ -197,15 +199,18 @@
       return n > 0;
     }
     function json(url) { return fetch(url).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); }
-    try { var c = JSON.parse(localStorage.getItem(KEY) || 'null'); if (c && Date.now() - c.t < TTL) { vals = c; fill(); } } catch (e) {}
-    if (vals === null) {
+    var c = null; try { c = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+    if (c) { vals = c; fill(); }
+    if (!c || !(Date.now() - c.t < TTL)) {
       Promise.all([json(REPO), json(REPO + '/releases/latest')]).then(function (r) {
-        var repo = r[0], rel = r[1];
+        var repo = r[0], rel = r[1], was = c || {};
         if (!repo && !rel) return;
-        vals = { s: repo && typeof repo.stargazers_count === 'number' ? repo.stargazers_count : null,
-                 f: repo && typeof repo.forks_count === 'number' ? repo.forks_count : null,
-                 tag: rel && typeof rel.tag_name === 'string' ? rel.tag_name : null, t: Date.now() };
-        if (repo && rel) { try { localStorage.setItem(KEY, JSON.stringify(vals)); } catch (e) {} }
+        vals = { s: repo && typeof repo.stargazers_count === 'number' ? repo.stargazers_count : was.s == null ? null : was.s,
+                 f: repo && typeof repo.forks_count === 'number' ? repo.forks_count : was.f == null ? null : was.f,
+                 tag: rel && typeof rel.tag_name === 'string' ? rel.tag_name : was.tag == null ? null : was.tag,
+                 // fresh for an hour only if both answered; otherwise keep the old time, so the next page asks again
+                 t: repo && rel ? Date.now() : was.t || 0 };
+        try { localStorage.setItem(KEY, JSON.stringify(vals)); } catch (e) {}
         fill();
       });
     }
