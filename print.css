@@ -24,9 +24,28 @@ article{display:block !important}
 article>*+*{margin-top:22px}
 .bp-head,article>header{padding-bottom:18px !important}
 
-/* the line build.mjs adds under the title: where the live page is, and when this copy was made */
-.pdf-source{margin:10px 0 0;font-size:12.5px;color:var(--ink-3)}
-.pdf-source a{color:var(--accent-ink)}
+/* ---- the PDFs only (build.mjs adds html.pdf-build): a branded masthead in place of the page's header, and a closing strip ---- */
+html.pdf-build article>header:not(.pdf-mast){display:none !important}
+.pdf-mast{display:grid;gap:10px;padding-bottom:22px !important;border-bottom:1px solid var(--line)}
+.pdf-band{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:#10201b;color:#e6efeb;margin-bottom:14px}
+.pdf-band svg rect{stroke:#2a3d37;stroke-width:1.5}
+.pdf-word{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:500;letter-spacing:-0.01em}.pdf-word b{font-weight:500;color:#22a58c}
+.pdf-kind{margin-left:auto;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac}
+.pdf-mast h1{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:40px;line-height:1.07;font-weight:800;letter-spacing:-0.02em;text-wrap:balance;color:var(--ink)}
+.pdf-dek{margin:2px 0 0;font-size:17px;line-height:1.5;color:var(--ink-2);text-wrap:pretty}
+.pdf-meta{margin:0;font-size:12.5px;color:var(--ink-3)}.pdf-meta b{color:var(--ink);font-weight:600}.pdf-meta a{color:var(--accent-ink)}
+.pdf-end{margin-top:40px;padding:18px 20px 14px;border-radius:12px;background:var(--tint);border:1px solid var(--line);display:grid;gap:14px;break-inside:avoid}
+.pdf-end-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.pdf-end-grid div{display:grid;gap:4px;align-content:start;font-size:13px;line-height:1.4}
+.pdf-end-grid small{font-size:10.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)}
+.pdf-end a{color:var(--accent-ink);overflow-wrap:anywhere}
+.pdf-social{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px 16px;padding-top:12px;border-top:1px solid var(--line)}
+.pdf-social small{font-size:10.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)}
+.pdf-social-icons{display:flex;flex-wrap:wrap;gap:6px 16px}
+.pdf-social-icons a{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink) !important;text-decoration:none !important}
+.pdf-social-icons svg{width:14px;height:14px;color:#10201b}
+.pdf-social-text{grid-column:2;font-size:11.5px;color:var(--ink-3)}
+.pdf-legal{display:flex;align-items:center;gap:8px;margin:0;padding-top:12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-3)}.pdf-legal b{color:var(--ink);font-weight:600}
 
 /* code: light panels, long lines wrap */
 #guide-body .md-term{background:var(--surface-2) !important;border:1px solid var(--line);box-shadow:none !important;border-radius:8px}
