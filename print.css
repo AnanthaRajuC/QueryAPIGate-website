@@ -1,0 +1,49 @@
+/* Guide.dc.html on paper, and the PDFs that tools/pdf/build.mjs makes from it.
+   Only the article prints: no nav, rails, footer or buttons; light colours whatever the theme;
+   code wraps instead of scrolling; blocks avoid splitting across pages.
+   Changing this file makes the next `node tools/pdf/build.mjs` rebuild every PDF. */
+
+@page{size:A4;margin:18mm 14mm 18mm}
+
+/* the light palette, whichever theme is on screen (beats theme.js's :root[data-theme=dark]) */
+html:root[data-theme]{--bg:#fff;--bg-90:#fff;--surface:#fff;--surface-2:#f8faf9;--surface-3:#eef2f0;--tint:#f3f9f6;
+  --line:#dbe2df;--line-soft:#e8edeb;--line-2:#c3cdc9;--dots:#b3bfba;
+  --ink:#17201d;--ink-2:#4a5652;--ink-3:#626d69;--ink-4:#7c8783;--on-ink:#fff;
+  --accent-ink:oklch(0.52 0.11 170);--accent-ink-2:oklch(0.42 0.11 170);--danger-ink:oklch(0.55 0.2 25);--warn-ink:oklch(0.6 0.13 75);
+  color-scheme:light}
+html,body{background:#fff !important}
+html:root[data-theme] #guide-body p,html:root[data-theme] #guide-body ul,html:root[data-theme] #guide-body ol{color:#2b3532}
+html:root[data-theme] img{filter:none !important}
+
+/* only the article */
+.rs-progress,.rs-top,[data-screen-label]>nav,[data-screen-label]>footer,.g-layout>aside,article>nav,
+.g-actions,.bp-share,.pa,.copy-btn,.md-term-bar .dots{display:none !important}
+.g-layout{display:block !important;max-width:none !important;padding:0 !important;margin:0 !important}
+[data-screen-label]{min-height:0 !important;background:#fff !important}
+article{display:block !important}
+article>*+*{margin-top:22px}
+.bp-head,article>header{padding-bottom:18px !important}
+
+/* the line build.mjs adds under the title: where the live page is, and when this copy was made */
+.pdf-source{margin:10px 0 0;font-size:12.5px;color:var(--ink-3)}
+.pdf-source a{color:var(--accent-ink)}
+
+/* code: light panels, long lines wrap */
+#guide-body .md-term{background:var(--surface-2) !important;border:1px solid var(--line);box-shadow:none !important;border-radius:8px}
+#guide-body .md-term-bar{border-bottom:1px solid var(--line) !important;padding:4px 12px !important;min-height:0}
+#guide-body .md-term-bar .lang{color:var(--ink-3) !important}
+#guide-body pre{background:none !important;color:var(--ink) !important;white-space:pre-wrap;overflow-wrap:anywhere;overflow:visible !important;padding:10px 12px !important}
+
+/* tables fit the page instead of scrolling */
+#guide-body .md-table{overflow:visible !important}
+#guide-body table{font-size:12.5px}
+#guide-body th,#guide-body td{overflow-wrap:anywhere !important}
+
+/* links stay links in the PDF; underline them, since colour alone may not survive a printer */
+#guide-body a{color:var(--accent-ink);text-decoration:underline;text-decoration-thickness:0.5px;text-underline-offset:2px}
+
+/* page breaks */
+#guide-body h2,#guide-body h3{break-after:avoid}
+#guide-body .md-term,#guide-body .md-callout,#guide-body .md-stats,#guide-body .md-bars,#guide-body figure,#guide-body blockquote,#guide-body tr,#guide-body img{break-inside:avoid}
+#guide-body p,#guide-body li{orphans:3;widows:3}
+#guide-body figure img{max-width:100%;height:auto}

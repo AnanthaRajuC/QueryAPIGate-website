@@ -1,0 +1,913 @@
+{
+ "pages": {
+  "d=API": {
+   "file": "pdf/docs/API.pdf",
+   "source": "documentation/API.md",
+   "sha256": "b676026acd20c116b3cece3e3f1b2d0e60adef4ae60f2fe2282a99ad419f8551",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 61,
+   "bytes": 3781973
+  },
+  "d=ARCHITECTURE": {
+   "file": "pdf/docs/ARCHITECTURE.pdf",
+   "source": "security-pack/ARCHITECTURE.md",
+   "sha256": "6af79b9b35546b87b701479246aeb3f1b99b12153c7cf15c80add08ca02826ee",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 10,
+   "bytes": 566607
+  },
+  "d=CODE_OF_CONDUCT": {
+   "file": "pdf/docs/CODE_OF_CONDUCT.pdf",
+   "source": "CODE_OF_CONDUCT.md",
+   "sha256": "ccc3dc560edcc933a690fa2de0d05b03a2d489e994ac59a4709107083f484fb1",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 152417
+  },
+  "d=CONFIGURATION": {
+   "file": "pdf/docs/CONFIGURATION.pdf",
+   "source": "documentation/CONFIGURATION.md",
+   "sha256": "b4e63e4983b2c56df7afd390df40ab6eb52eb86bb2f5b390650dc5d40af25684",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 5,
+   "bytes": 455084
+  },
+  "d=CONTRIBUTING": {
+   "file": "pdf/docs/CONTRIBUTING.pdf",
+   "source": "CONTRIBUTING.md",
+   "sha256": "dafd49e523f9a6e2487d3422e04d5b07cb3173d217ff992a89a5377b436dbe24",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 323363
+  },
+  "d=DATA_PROTECTION": {
+   "file": "pdf/docs/DATA_PROTECTION.pdf",
+   "source": "documentation/DATA_PROTECTION.md",
+   "sha256": "6623855dc7d3985f52f70440b86f0166908868eedc14d8af0acfff052d0461a0",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 8,
+   "bytes": 563427
+  },
+  "d=DATABASE_CONNECTION_CONFIGURATION": {
+   "file": "pdf/docs/DATABASE_CONNECTION_CONFIGURATION.pdf",
+   "source": "documentation/DATABASE_CONNECTION_CONFIGURATION.md",
+   "sha256": "f6d23179205c4cafe38e4b9fd5ed39dd33b61c10ed4b7a407a1024790acb58db",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 11,
+   "bytes": 796411
+  },
+  "d=DEPLOYMENT": {
+   "file": "pdf/docs/DEPLOYMENT.pdf",
+   "source": "documentation/DEPLOYMENT.md",
+   "sha256": "ac0ad4f97170a5b46d5aa5d408997cd43f32c2a99f500ed40d6fc4414b34b156",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 12,
+   "bytes": 724892
+  },
+  "d=EXAMPLES": {
+   "file": "pdf/docs/EXAMPLES.pdf",
+   "source": "documentation/EXAMPLES.md",
+   "sha256": "50ef28f81c8132e6b6025c090b1b433d5c30df7d3eb3fb239f3ab443729a6153",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 5,
+   "bytes": 447653
+  },
+  "d=FEATURES": {
+   "file": "pdf/docs/FEATURES.pdf",
+   "source": "documentation/FEATURES.md",
+   "sha256": "c61a7b5b040c6243863dd4ac38ea77a999b17202914575e2e65c3d05ad8edb4c",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 5,
+   "bytes": 304928
+  },
+  "d=INSTALLATION_AND_SETUP": {
+   "file": "pdf/docs/INSTALLATION_AND_SETUP.pdf",
+   "source": "documentation/INSTALLATION_AND_SETUP.md",
+   "sha256": "3ecd8abf27335755b167d35a43fe4782bd6e18e8d3315bf1272ac3669f274107",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 5,
+   "bytes": 389637
+  },
+  "d=MCP": {
+   "file": "pdf/docs/MCP.pdf",
+   "source": "documentation/MCP.md",
+   "sha256": "34b9b05e736ab7a398967d40598afeb0a287edcfa4966b1459acfc03e4b4bb1c",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 6,
+   "bytes": 596497
+  },
+  "d=PERFORMANCE": {
+   "file": "pdf/docs/PERFORMANCE.pdf",
+   "source": "documentation/PERFORMANCE.md",
+   "sha256": "c1b11c85741bf68afd3160d93805ce1032503988f864f154a8f8273feed55795",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 8,
+   "bytes": 553486
+  },
+  "d=PERFORMANCE_MYSQL_V1": {
+   "file": "pdf/docs/PERFORMANCE_MYSQL_V1.pdf",
+   "source": "documentation/PERFORMANCE_MYSQL_V1.md",
+   "sha256": "0321a0d10e9c8daf1e876f73d5e993258099e6dbd67a6ef17b950136e8b0a61c",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 14,
+   "bytes": 871049
+  },
+  "d=PERFORMANCE_MYSQL_V2": {
+   "file": "pdf/docs/PERFORMANCE_MYSQL_V2.pdf",
+   "source": "documentation/PERFORMANCE_MYSQL_V2.md",
+   "sha256": "a46a113d5d01accd317b1a618bcc9ba5aa80cf6be30b16903fb68fc5c3029a63",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 8,
+   "bytes": 580064
+  },
+  "d=PERFORMANCE_V2": {
+   "file": "pdf/docs/PERFORMANCE_V2.pdf",
+   "source": "documentation/PERFORMANCE_V2.md",
+   "sha256": "448fad4b507eab90fe03207f06ae0d6ceb42d2d65483d53b3193535dba076174",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 8,
+   "bytes": 755381
+  },
+  "d=PERFORMANCE_V3": {
+   "file": "pdf/docs/PERFORMANCE_V3.pdf",
+   "source": "documentation/PERFORMANCE_V3.md",
+   "sha256": "ea5640361432e5307eef7f5cd7e15218bde9bc38be5e6f330edd392d565f8f93",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 13,
+   "bytes": 867158
+  },
+  "d=PERFORMANCE_V4": {
+   "file": "pdf/docs/PERFORMANCE_V4.pdf",
+   "source": "documentation/PERFORMANCE_V4.md",
+   "sha256": "5fb92ea6e52664c455fc383694a0350a72ecc23700475bf39f97ef6492b0bf1f",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 5,
+   "bytes": 419192
+  },
+  "d=PERFORMANCE_V5": {
+   "file": "pdf/docs/PERFORMANCE_V5.pdf",
+   "source": "documentation/PERFORMANCE_V5.md",
+   "sha256": "59ab4f5a79306a77bdfa4b7b81367a29de99c018e9abdb7e4e75c262e8b9e908",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 7,
+   "bytes": 514471
+  },
+  "d=QUERY_METADATA_MANAGEMENT": {
+   "file": "pdf/docs/QUERY_METADATA_MANAGEMENT.pdf",
+   "source": "documentation/QUERY_METADATA_MANAGEMENT.md",
+   "sha256": "a483ea3b9099a7c4673f94cbff230d100949a67a031331c43afcef94a0759de6",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 2,
+   "bytes": 209450
+  },
+  "d=QUESTIONNAIRE": {
+   "file": "pdf/docs/QUESTIONNAIRE.pdf",
+   "source": "security-pack/QUESTIONNAIRE.md",
+   "sha256": "ad059b5e34a7bff07851e603564cbabe78baa9ce03b79742fa57ec85e1e8922c",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 20,
+   "bytes": 769201
+  },
+  "d=SBOM": {
+   "file": "pdf/docs/SBOM.pdf",
+   "source": "security-pack/SBOM.md",
+   "sha256": "5c9a1fbb18efddfa9a727c991adb25d40dc638152de93d5da21aa114ec63f607",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 2,
+   "bytes": 228187
+  },
+  "d=SCREENSHOTS": {
+   "file": "pdf/docs/SCREENSHOTS.pdf",
+   "source": "documentation/SCREENSHOTS.md",
+   "sha256": "b3578f6e0727d4c64d7579ea47b229552c4b195c861d52e3d514220090a6a965",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 5590134
+  },
+  "d=SECURITY": {
+   "file": "pdf/docs/SECURITY.pdf",
+   "source": "SECURITY.md",
+   "sha256": "0424dce8dfeda17774e3294bc4357ca193881bb84cc5188f16aaf83f1b6800d2",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 2,
+   "bytes": 251625
+  },
+  "d=TECHNOLOGY_STACK": {
+   "file": "pdf/docs/TECHNOLOGY_STACK.pdf",
+   "source": "documentation/TECHNOLOGY_STACK.MD",
+   "sha256": "b89d59d4c0f8ff750e66d975605a788fdae5c25b20421810b81fe41944680b01",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 7,
+   "bytes": 541651
+  },
+  "d=THREAT_MODEL": {
+   "file": "pdf/docs/THREAT_MODEL.pdf",
+   "source": "documentation/THREAT_MODEL.md",
+   "sha256": "5759a44cfc6226a3a0bc0cfa7659a158a7ba664a88e0b9c4b0ecf23fb1fc9235",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 20,
+   "bytes": 1113032
+  },
+  "d=WHY": {
+   "file": "pdf/docs/WHY.pdf",
+   "source": "documentation/WHY.md",
+   "sha256": "08919e93a722488964a4f018a90a521a7d7a67cd6360ac42bba2051a22c4e5af",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 2,
+   "bytes": 183425
+  },
+  "g=01-turn-your-first-sql-query-into-a-rest-api": {
+   "file": "pdf/guides/01-turn-your-first-sql-query-into-a-rest-api.pdf",
+   "source": "how-to/01-turn-your-first-sql-query-into-a-rest-api.md",
+   "sha256": "c2b27c1c5dc2c16de5332bff1bc50ad73ab6db8343e95df555c46fa8a8219ea1",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 287481
+  },
+  "g=02-connect-a-database": {
+   "file": "pdf/guides/02-connect-a-database.pdf",
+   "source": "how-to/02-connect-a-database.md",
+   "sha256": "7b95cff59e6cad7185fd9ec9037746d6c163c4855b126d13b85cf558888fc718",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 312638
+  },
+  "g=03-connect-via-generic-jdbc": {
+   "file": "pdf/guides/03-connect-via-generic-jdbc.pdf",
+   "source": "how-to/03-connect-via-generic-jdbc.md",
+   "sha256": "dfacd20a501f0d4b37eca0b5f2a0e8430a343297e485e64bd00b290f592085e7",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 345684
+  },
+  "g=04-connect-to-mongodb": {
+   "file": "pdf/guides/04-connect-to-mongodb.pdf",
+   "source": "how-to/04-connect-to-mongodb.md",
+   "sha256": "e9a8df6e34691532a2d43c7e6ecfdc63309570ef34e9788204bc98fa4b1d55af",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 296988
+  },
+  "g=05-try-the-built-in-example-apis": {
+   "file": "pdf/guides/05-try-the-built-in-example-apis.pdf",
+   "source": "how-to/05-try-the-built-in-example-apis.md",
+   "sha256": "a4a1fdf3afbb714abe4b7afae9f78b19f406f40ad4ec700fa5d754a0db9cff75",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 309145
+  },
+  "g=06-use-bound-parameters-safely": {
+   "file": "pdf/guides/06-use-bound-parameters-safely.pdf",
+   "source": "how-to/06-use-bound-parameters-safely.md",
+   "sha256": "d1e5e91ab14bd511acf946a656b7a61cc6615362230dff29bd7ee06eba11c50c",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 344300
+  },
+  "g=07-group-queries-into-a-collection": {
+   "file": "pdf/guides/07-group-queries-into-a-collection.pdf",
+   "source": "how-to/07-group-queries-into-a-collection.md",
+   "sha256": "dc98f43e3a3bef253ec869a7b5f2ac760832a577ffc7519fa6d9abcbe9a51809",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 249342
+  },
+  "g=08-cache-a-saved-query": {
+   "file": "pdf/guides/08-cache-a-saved-query.pdf",
+   "source": "how-to/08-cache-a-saved-query.md",
+   "sha256": "5fc7493c2414cc61cc2ffa10548e75f7652087882e99a84b67b7c4b477488ef9",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 236229
+  },
+  "g=09-stream-a-large-export": {
+   "file": "pdf/guides/09-stream-a-large-export.pdf",
+   "source": "how-to/09-stream-a-large-export.md",
+   "sha256": "468d827bf38b9ada04b0527891f55027215ebcef34ac4ab13ba8858cfa21f7a6",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 308690
+  },
+  "g=10-allow-a-saved-query-to-write-data": {
+   "file": "pdf/guides/10-allow-a-saved-query-to-write-data.pdf",
+   "source": "how-to/10-allow-a-saved-query-to-write-data.md",
+   "sha256": "703035cb12c820777353cba8d93993ceb1cd94218e1aaf9347eb7036dc1b4446",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 254061
+  },
+  "g=11-browse-a-connections-schema": {
+   "file": "pdf/guides/11-browse-a-connections-schema.pdf",
+   "source": "how-to/11-browse-a-connections-schema.md",
+   "sha256": "1f62fc9d95b16e5edd3ace09bf7e012097d64ffbf4d242ac249f9731b5a22a5d",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 234040
+  },
+  "g=12-export-a-postman-collection": {
+   "file": "pdf/guides/12-export-a-postman-collection.pdf",
+   "source": "how-to/12-export-a-postman-collection.md",
+   "sha256": "aff9dcbbbc485b84cd125caa3c89334f6da026d48128716805fc07342aeb3991",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 2,
+   "bytes": 230916
+  },
+  "g=13-set-up-a-scoped-api-key": {
+   "file": "pdf/guides/13-set-up-a-scoped-api-key.pdf",
+   "source": "how-to/13-set-up-a-scoped-api-key.md",
+   "sha256": "4954594d2910425c583ffe49f3ea7f98552f79bb38a95cb8ab668d6b6914e88c",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 228804
+  },
+  "g=14-give-a-partner-one-query-only": {
+   "file": "pdf/guides/14-give-a-partner-one-query-only.pdf",
+   "source": "how-to/14-give-a-partner-one-query-only.md",
+   "sha256": "1cacbe23fe5bfa5426fc923d20e4e1034c1bb1062d054b5870ff8dfcfdc23f39",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 246947
+  },
+  "g=15-create-a-role": {
+   "file": "pdf/guides/15-create-a-role.pdf",
+   "source": "how-to/15-create-a-role.md",
+   "sha256": "0f19e8c32a903abd4c456af1af5c2c4dc3b6cfe5542284a9d95f9348c18007de",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 218280
+  },
+  "g=16-restrict-a-key-to-tables": {
+   "file": "pdf/guides/16-restrict-a-key-to-tables.pdf",
+   "source": "how-to/16-restrict-a-key-to-tables.md",
+   "sha256": "473aa65c045be364ca293572cbe746189460b739a895de23c9a6deb868d9724b",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 297742
+  },
+  "g=17-rate-limit-a-key": {
+   "file": "pdf/guides/17-rate-limit-a-key.pdf",
+   "source": "how-to/17-rate-limit-a-key.md",
+   "sha256": "dcc477861d904b0b17ac84804e41b60778b9c116a19ac5c31fb8f8ee8c9305da",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 326568
+  },
+  "g=18-restrict-a-key-to-ips": {
+   "file": "pdf/guides/18-restrict-a-key-to-ips.pdf",
+   "source": "how-to/18-restrict-a-key-to-ips.md",
+   "sha256": "36a1e96b93f3fca9b3506a302c55491abd04d157b0052940634102c399fee993",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 2,
+   "bytes": 272213
+  },
+  "g=19-give-a-key-an-expiry-date": {
+   "file": "pdf/guides/19-give-a-key-an-expiry-date.pdf",
+   "source": "how-to/19-give-a-key-an-expiry-date.md",
+   "sha256": "2cdcf2e7ac68257f7768858a577b4d0c7bdba6ec73fdb40b27e2d6227acbcbe3",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 2,
+   "bytes": 220649
+  },
+  "g=20-read-the-audit-log": {
+   "file": "pdf/guides/20-read-the-audit-log.pdf",
+   "source": "how-to/20-read-the-audit-log.md",
+   "sha256": "a07006fe6a1fc3df4badc43ff6aa85bb6baadcc1a649f6fb11b5ea8febe84239",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 297788
+  },
+  "g=21-verify-who-can-reach-what": {
+   "file": "pdf/guides/21-verify-who-can-reach-what.pdf",
+   "source": "how-to/21-verify-who-can-reach-what.md",
+   "sha256": "8673dd5be05b55b975db46ed1f0c087c8249b6f6179483701ab53882fd16fa53",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 284646
+  },
+  "g=22-encrypt-passwords-at-rest": {
+   "file": "pdf/guides/22-encrypt-passwords-at-rest.pdf",
+   "source": "how-to/22-encrypt-passwords-at-rest.md",
+   "sha256": "5c5839fa663ac0afaea0fca609ab53e80fda78c9cd51f7860808bfb44344c445",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 312901
+  },
+  "g=23-put-it-behind-a-reverse-proxy": {
+   "file": "pdf/guides/23-put-it-behind-a-reverse-proxy.pdf",
+   "source": "how-to/23-put-it-behind-a-reverse-proxy.md",
+   "sha256": "5f8f9391586527971b84ddac2b98d15e9763f348630e03de059ea9aa8a945d23",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 333969
+  },
+  "g=24-let-an-agent-call-your-queries-via-mcp": {
+   "file": "pdf/guides/24-let-an-agent-call-your-queries-via-mcp.pdf",
+   "source": "how-to/24-let-an-agent-call-your-queries-via-mcp.md",
+   "sha256": "2fb406910ad190705562ff27eef81d3bf5aac7561d4e805e02c5fa370bc6e761",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 251412
+  },
+  "g=25-mcp-ad-hoc-tools": {
+   "file": "pdf/guides/25-mcp-ad-hoc-tools.pdf",
+   "source": "how-to/25-mcp-ad-hoc-tools.md",
+   "sha256": "23cfbefc71fdaa6ccedee139199ca76ea1d72989653b925670663004c4fd3012",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 325549
+  },
+  "g=26-mcp-structured-results": {
+   "file": "pdf/guides/26-mcp-structured-results.pdf",
+   "source": "how-to/26-mcp-structured-results.md",
+   "sha256": "978d182d8b9b3ab851c0814d1aa99a225b59fcfdfca8762965a828b8247ee396",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 319325
+  },
+  "g=27-check-the-mcp-server-from-the-console": {
+   "file": "pdf/guides/27-check-the-mcp-server-from-the-console.pdf",
+   "source": "how-to/27-check-the-mcp-server-from-the-console.md",
+   "sha256": "1484bf351713955b00fc08862b6547248286d9753e005439e44ac289a410b6d6",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 2,
+   "bytes": 257046
+  },
+  "g=28-build-a-client-that-watches-queries-run": {
+   "file": "pdf/guides/28-build-a-client-that-watches-queries-run.pdf",
+   "source": "how-to/28-build-a-client-that-watches-queries-run.md",
+   "sha256": "31e31ca2e087ddd5072588b5dddd01f93e16738b08e1ae6e57d52d258934aa4e",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 262466
+  },
+  "g=29-per-key-live-feeds": {
+   "file": "pdf/guides/29-per-key-live-feeds.pdf",
+   "source": "how-to/29-per-key-live-feeds.md",
+   "sha256": "19e7f7ccad375590012d5ecbf7fa0a4f48ddac4c3e28b94e75ca6fa887a2fa26",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 300951
+  },
+  "g=30-schedule-an-export": {
+   "file": "pdf/guides/30-schedule-an-export.pdf",
+   "source": "how-to/30-schedule-an-export.md",
+   "sha256": "68770b3e2773061d45383e4253540701e284ef94571f0390352be618134a3809",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 300944
+  },
+  "g=31-get-the-cli-command-for-a-query": {
+   "file": "pdf/guides/31-get-the-cli-command-for-a-query.pdf",
+   "source": "how-to/31-get-the-cli-command-for-a-query.md",
+   "sha256": "b0932afe8ae1b713a1c708a79c763808355a1491c79b0c8411d7e8049280dde9",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 2,
+   "bytes": 237500
+  },
+  "g=32-deploy-with-docker": {
+   "file": "pdf/guides/32-deploy-with-docker.pdf",
+   "source": "how-to/32-deploy-with-docker.md",
+   "sha256": "db614d66ded6912fde2667bbd1f7865249f0a45224191541583d729079e68d00",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 313189
+  },
+  "g=33-back-up-and-restore": {
+   "file": "pdf/guides/33-back-up-and-restore.pdf",
+   "source": "how-to/33-back-up-and-restore.md",
+   "sha256": "c82a78f74ca5faeff4a26f110636b0020f1198069377c9726dff505f8345f24a",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 315806
+  },
+  "g=34-upgrade-safely": {
+   "file": "pdf/guides/34-upgrade-safely.pdf",
+   "source": "how-to/34-upgrade-safely.md",
+   "sha256": "6b6b257dd7c62e97e95471764e79b0141863ef8b2e4ed548096189fb17f2ddfa",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 239264
+  },
+  "g=35-wire-up-prometheus-and-grafana": {
+   "file": "pdf/guides/35-wire-up-prometheus-and-grafana.pdf",
+   "source": "how-to/35-wire-up-prometheus-and-grafana.md",
+   "sha256": "a2cc4e6888dd05fbe225c04bc224610cfd4c1cdeb98eb44bda5aeab7a7de31f4",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 291771
+  },
+  "g=36-trace-a-request-in-the-logs": {
+   "file": "pdf/guides/36-trace-a-request-in-the-logs.pdf",
+   "source": "how-to/36-trace-a-request-in-the-logs.md",
+   "sha256": "a75d11db3a52bcde89d49505e84a4209cea5e9fea73726a3ca418791bfe08402",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 274706
+  },
+  "g=37-tune-the-connection-pool": {
+   "file": "pdf/guides/37-tune-the-connection-pool.pdf",
+   "source": "how-to/37-tune-the-connection-pool.md",
+   "sha256": "dec46df3fc64f150fc91615c9ef6e67a639e505bbc6c5ee71edcb54a8ef0447c",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 278376
+  },
+  "g=38-allow-a-browser-frontend-cors": {
+   "file": "pdf/guides/38-allow-a-browser-frontend-cors.pdf",
+   "source": "how-to/38-allow-a-browser-frontend-cors.md",
+   "sha256": "500567a8ebf47bdd3d84dde751fbda41d3fbfe942947d0e05acc6e89007a913b",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 2,
+   "bytes": 268250
+  },
+  "g=39-walk-through-the-example-apis": {
+   "file": "pdf/guides/39-walk-through-the-example-apis.pdf",
+   "source": "how-to/39-walk-through-the-example-apis.md",
+   "sha256": "0a567aa35df6e7d2cbc965dbec4d788e6a6fe3c7056a01b0f99ab42e65680cc9",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 329930
+  },
+  "g=40-read-the-threat-model": {
+   "file": "pdf/guides/40-read-the-threat-model.pdf",
+   "source": "how-to/40-read-the-threat-model.md",
+   "sha256": "717c578a27e9454c2fe2dd28540df2a6f81e87bc876a9b7485a1c7cd2ef7af1b",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 276605
+  },
+  "g=41-publish-files-in-s3-as-an-api": {
+   "file": "pdf/guides/41-publish-files-in-s3-as-an-api.pdf",
+   "source": "how-to/41-publish-files-in-s3-as-an-api.md",
+   "sha256": "9c44339269a14788bdcc9698f716e2858c92f37fd598b0de4f4014cfc920bec1",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 308528
+  },
+  "g=42-run-several-instances": {
+   "file": "pdf/guides/42-run-several-instances.pdf",
+   "source": "how-to/42-run-several-instances.md",
+   "sha256": "eb9d5cf1f61d87c5477ff683ec33a248d94c27c1f2f74229462df45a85723033",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 374768
+  },
+  "g=43-give-your-team-their-own-admin-access": {
+   "file": "pdf/guides/43-give-your-team-their-own-admin-access.pdf",
+   "source": "how-to/43-give-your-team-their-own-admin-access.md",
+   "sha256": "e0a6ab12a6628dcd2dcfe1671b3285f762dc718ddda8f4deb87412a1eb37152b",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 291970
+  },
+  "g=44-deliver-a-daily-file-to-a-partners-bucket": {
+   "file": "pdf/guides/44-deliver-a-daily-file-to-a-partners-bucket.pdf",
+   "source": "how-to/44-deliver-a-daily-file-to-a-partners-bucket.md",
+   "sha256": "5bddbea42c36d8c481059c74b32bd1763a5ff932425d6034610a10890232078e",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 301457
+  },
+  "g=45-hide-personal-data-from-a-partner-or-an-ai-agent": {
+   "file": "pdf/guides/45-hide-personal-data-from-a-partner-or-an-ai-agent.pdf",
+   "source": "how-to/45-hide-personal-data-from-a-partner-or-an-ai-agent.md",
+   "sha256": "54c8a3a6fcee932b6e06be72b2c36b8d6d29b473e54536c6b1768b6d5c807c6f",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 354423
+  },
+  "g=46-let-ai-clients-sign-in-through-your-identity-provider": {
+   "file": "pdf/guides/46-let-ai-clients-sign-in-through-your-identity-provider.pdf",
+   "source": "how-to/46-let-ai-clients-sign-in-through-your-identity-provider.md",
+   "sha256": "884ad0ac56a30c3fb5f92786be1a9085d5264e1095da5896bb02815d6d127db3",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 5,
+   "bytes": 341846
+  },
+  "g=47-tell-agents-what-your-data-means-and-see-what-they-did": {
+   "file": "pdf/guides/47-tell-agents-what-your-data-means-and-see-what-they-did.pdf",
+   "source": "how-to/47-tell-agents-what-your-data-means-and-see-what-they-did.md",
+   "sha256": "d58d222a04f9e630cef95c2898f7a9e0f516cd21a3bef62db7eff241286c6f59",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 5,
+   "bytes": 307063
+  },
+  "g=48-sign-in-to-the-console-through-your-identity-provider": {
+   "file": "pdf/guides/48-sign-in-to-the-console-through-your-identity-provider.pdf",
+   "source": "how-to/48-sign-in-to-the-console-through-your-identity-provider.md",
+   "sha256": "29b23eb494ccfd5d9a1073d2ccb2916262ca787da3ec30d01b72fa37d53316eb",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 359753
+  },
+  "g=49-let-an-agent-write-with-a-person-approving-each-write": {
+   "file": "pdf/guides/49-let-an-agent-write-with-a-person-approving-each-write.pdf",
+   "source": "how-to/49-let-an-agent-write-with-a-person-approving-each-write.md",
+   "sha256": "20123e4f27b5726625d508be7d7fb2b24e65098d12f0ea94b055ee024d056aa9",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 5,
+   "bytes": 300817
+  },
+  "g=50-rotate-an-api-key-without-downtime": {
+   "file": "pdf/guides/50-rotate-an-api-key-without-downtime.pdf",
+   "source": "how-to/50-rotate-an-api-key-without-downtime.md",
+   "sha256": "f3dfe5ef9aa91b828509316dd156ed2b1fc3f6ec6730bcbff33e98fdf526dab7",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 239070
+  },
+  "g=51-see-queryapigate-in-your-traces": {
+   "file": "pdf/guides/51-see-queryapigate-in-your-traces.pdf",
+   "source": "how-to/51-see-queryapigate-in-your-traces.md",
+   "sha256": "f3bbe8859e7ff69c6af15a735478301901197475107116200ad4ab19a6a4a861",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 275855
+  },
+  "g=52-give-a-partner-a-quota-and-a-concurrency-cap": {
+   "file": "pdf/guides/52-give-a-partner-a-quota-and-a-concurrency-cap.pdf",
+   "source": "how-to/52-give-a-partner-a-quota-and-a-concurrency-cap.md",
+   "sha256": "2c54848cab9fb3e8a5aa37803a21c815cac529758af8fa2f90be128e47b64630",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 261954
+  },
+  "g=53-send-the-audit-log-to-your-siem": {
+   "file": "pdf/guides/53-send-the-audit-log-to-your-siem.pdf",
+   "source": "how-to/53-send-the-audit-log-to-your-siem.md",
+   "sha256": "f8c4e52095379a5a71ba148163c585aa41f3c74a87b0ca8833753b0f78a7e034",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 273242
+  },
+  "g=54-install-on-kubernetes-with-helm": {
+   "file": "pdf/guides/54-install-on-kubernetes-with-helm.pdf",
+   "source": "how-to/54-install-on-kubernetes-with-helm.md",
+   "sha256": "a9398cccd8ab9c12e72d337b1d560687a8dad855683ec4c58cf18270ad20f9f0",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 5,
+   "bytes": 326579
+  },
+  "g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request": {
+   "file": "pdf/guides/55-promote-a-setup-from-dev-to-prod-through-a-pull-request.pdf",
+   "source": "how-to/55-promote-a-setup-from-dev-to-prod-through-a-pull-request.md",
+   "sha256": "26e731b909ef808ff3820d2317d94775577d603534c401503f28cf5c6b84a1f5",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 5,
+   "bytes": 287303
+  },
+  "g=56-use-short-lived-database-credentials-from-vault": {
+   "file": "pdf/guides/56-use-short-lived-database-credentials-from-vault.pdf",
+   "source": "how-to/56-use-short-lived-database-credentials-from-vault.md",
+   "sha256": "a40b310a29b2cc4598d69cb8df2024e274abb24a26ff1dcddff21cc37408e3b0",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 262366
+  },
+  "g=57-answer-a-security-questionnaire-about-data-and-cryptography": {
+   "file": "pdf/guides/57-answer-a-security-questionnaire-about-data-and-cryptography.pdf",
+   "source": "how-to/57-answer-a-security-questionnaire-about-data-and-cryptography.md",
+   "sha256": "033c99d52622d17b76835471ee4c4b2b394861740671fadc28ac7b59b00ae68e",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 269179
+  },
+  "g=58-keep-the-servers-own-secrets-and-metrics-in": {
+   "file": "pdf/guides/58-keep-the-servers-own-secrets-and-metrics-in.pdf",
+   "source": "how-to/58-keep-the-servers-own-secrets-and-metrics-in.md",
+   "sha256": "302412307e5622d633ed2a846055b44fad7e926779b7d5361e9782ef84fc1951",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 297131
+  },
+  "g=59-verify-a-release-before-you-run-it": {
+   "file": "pdf/guides/59-verify-a-release-before-you-run-it.pdf",
+   "source": "how-to/59-verify-a-release-before-you-run-it.md",
+   "sha256": "2ea4c9aea451cd596d9b2c8daea06a51c617f8a32c93b1aa566616192b6b98b1",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 6,
+   "bytes": 331280
+  },
+  "g=60-give-each-team-its-own-workspace": {
+   "file": "pdf/guides/60-give-each-team-its-own-workspace.pdf",
+   "source": "how-to/60-give-each-team-its-own-workspace.md",
+   "sha256": "5174fadd0ffdf04b11d596970728286d37f2f3bbbb12ac4999bdf705b1294297",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 259993
+  },
+  "g=61-connect-to-trino": {
+   "file": "pdf/guides/61-connect-to-trino.pdf",
+   "source": "how-to/61-connect-to-trino.md",
+   "sha256": "de8f1cc8ae8a876e26b21806f32699f89cadd6ed3fb9b867a28d3e778f644b9d",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 317736
+  },
+  "g=62-see-whats-being-used-from-the-console": {
+   "file": "pdf/guides/62-see-whats-being-used-from-the-console.pdf",
+   "source": "how-to/62-see-whats-being-used-from-the-console.md",
+   "sha256": "855d6f993e08517cd7c2a2f350cc993091792ce94ad45dd2c0ee7d9419e58dac",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 266387
+  },
+  "g=63-tune-a-deployment-for-throughput": {
+   "file": "pdf/guides/63-tune-a-deployment-for-throughput.pdf",
+   "source": "how-to/63-tune-a-deployment-for-throughput.md",
+   "sha256": "aefc90ca9cbd088bb2a99b5eefb0fb9db3a0423f4db0297c4ba4d468e20824b3",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 344583
+  },
+  "g=64-try-the-rust-data-plane": {
+   "file": "pdf/guides/64-try-the-rust-data-plane.pdf",
+   "source": "how-to/64-try-the-rust-data-plane.md",
+   "sha256": "03e3ff6e4e285d60deb7affc73f7ffdc07d08a64b2b57dd1513b9eb1ec96f090",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 415294
+  },
+  "g=65-keep-runs-in-clickhouse": {
+   "file": "pdf/guides/65-keep-runs-in-clickhouse.pdf",
+   "source": "how-to/65-keep-runs-in-clickhouse.md",
+   "sha256": "130e9282ad73f80893b8f9bef901a499d4cdfdd0c43c7a12caba9eb3c0cac097",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 3,
+   "bytes": 254986
+  },
+  "p=agents-can-write-now": {
+   "file": "pdf/blog/agents-can-write-now.pdf",
+   "source": "blog/agents-can-write-now.md",
+   "sha256": "d920328bf6ed26bc9aa66d17b77c0a856fe8fce90e896c5e681408acc2adfce7",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 2,
+   "bytes": 167589
+  },
+  "p=every-run-recorded": {
+   "file": "pdf/blog/every-run-recorded.pdf",
+   "source": "blog/every-run-recorded.md",
+   "sha256": "bcb0e74e2c298418245ca014513f0678817ac9a70e7b8168fc0bd0ce9f0cb105",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 251779
+  },
+  "p=one-mysql-six-services": {
+   "file": "pdf/blog/one-mysql-six-services.pdf",
+   "source": "blog/one-mysql-six-services.md",
+   "sha256": "c965d2ab1aa031627c2f233507adc1dbbf819caa56be5144724d08ddc383d513",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 313390
+  },
+  "p=one-worker-many-threads": {
+   "file": "pdf/blog/one-worker-many-threads.pdf",
+   "source": "blog/one-worker-many-threads.md",
+   "sha256": "bedc7eb6ff1f8775ce21597a9908d55b532edfd4ed16baf8ebe26106fd24c3a8",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 2,
+   "bytes": 176841
+  },
+  "p=python-decides-rust-serves": {
+   "file": "pdf/blog/python-decides-rust-serves.pdf",
+   "source": "blog/python-decides-rust-serves.md",
+   "sha256": "7772b11b159ceabdd820f8d28ea6ea3e174b2495584c8e26be2d3f48dc53527d",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 241707
+  },
+  "p=sql2api-is-now-queryapigate": {
+   "file": "pdf/blog/sql2api-is-now-queryapigate.pdf",
+   "source": "blog/sql2api-is-now-queryapigate.md",
+   "sha256": "6359b19fef7650c7c1d4d8b93f2b7b9ce203b541eee2bd935b0dfafeb15f5b24",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 2,
+   "bytes": 155920
+  },
+  "p=the-30-percent-in-the-build": {
+   "file": "pdf/blog/the-30-percent-in-the-build.pdf",
+   "source": "blog/the-30-percent-in-the-build.md",
+   "sha256": "da529411d9b73547c0ee13878de120bcb49b485fe9b286425dd4983553a3c8cf",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 4,
+   "bytes": 317942
+  },
+  "p=what-a-governed-call-costs": {
+   "file": "pdf/blog/what-a-governed-call-costs.pdf",
+   "source": "blog/what-a-governed-call-costs.md",
+   "sha256": "cb99c82d1949419a691e7ac71dc796ecd1ab13e32022c83152e9dc24b6ab89be",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 14,
+   "bytes": 738626
+  },
+  "p=why-every-front-door-runs-the-same-eight-steps": {
+   "file": "pdf/blog/why-every-front-door-runs-the-same-eight-steps.pdf",
+   "source": "blog/why-every-front-door-runs-the-same-eight-steps.md",
+   "sha256": "4225cb86704a7281c4bed3e04e0c1e39ab0032412567d12d414fddf2664fe7df",
+   "design": "9eaecbbca6ad063a4269f3c8c31834c6bf8e9d9d93ea89e9266a69c0cf72c2c1",
+   "built": "2026-11-04",
+   "pages": 2,
+   "bytes": 145584
+  }
+ }
+}

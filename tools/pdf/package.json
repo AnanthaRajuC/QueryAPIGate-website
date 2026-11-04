@@ -1,0 +1,9 @@
+{
+  "name": "queryapigate-page-pdfs",
+  "private": true,
+  "type": "module",
+  "description": "Builds pdf/*: a PDF of every guide, doc and blog post, offered by Guide.dc.html",
+  "dependencies": {
+    "playwright-core": "1.56.1"
+  }
+}
