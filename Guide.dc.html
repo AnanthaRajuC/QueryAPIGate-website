@@ -240,6 +240,20 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .bp-by{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;font-size:14px;color:var(--ink-3)}
 .bp-share{font:inherit;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;margin-left:auto;padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);cursor:pointer;transition:border-color .2s,color .2s}
 .bp-share:hover{border-color:var(--accent-ink);color:var(--accent-ink)}.bp-share svg{display:block}
+/* Page actions: "Copy page" copies the markdown; the caret opens View as Markdown and Open in Claude / ChatGPT. */
+.pa{position:relative;display:inline-flex;align-items:stretch;margin-left:auto;border:1px solid var(--line-2);border-radius:999px;background:var(--surface)}
+.pa button{font:inherit;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--ink);cursor:pointer;transition:color .2s}
+.pa button:hover{color:var(--accent-ink)}.pa svg{display:block}
+.pa-main{padding:6px 10px 6px 12px;border-radius:999px 0 0 999px}
+.pa-more{padding:6px 10px 6px 8px;border-left:1px solid var(--line-2) !important;border-radius:0 999px 999px 0}
+.pa-more svg{transition:transform .2s}.pa-more[aria-expanded=true] svg{transform:rotate(180deg)}
+.pa-menu{position:absolute;top:calc(100% + 6px);right:0;z-index:25;width:290px;padding:6px;display:grid;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 40px -20px rgba(16,32,27,0.4)}
+.pa-item{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;align-items:center;padding:8px;border-radius:8px;color:var(--ink);text-decoration:none;transition:background .15s}
+.pa-item:hover,.pa-item:focus-visible{background:var(--bg);text-decoration:none;color:var(--ink)}
+.pa-ico{width:30px;height:30px;border-radius:8px;background:oklch(0.52 0.11 170 / 0.1);position:relative}
+.pa-ico::after{content:'';position:absolute;inset:7px;background:var(--accent-ink);-webkit-mask:var(--ico) center/contain no-repeat;mask:var(--ico) center/contain no-repeat}
+.pa-txt{display:grid;gap:1px;min-width:0}.pa-txt b{font-size:13.5px;font-weight:600}.pa-txt small{font-size:12.5px;color:var(--ink-3);line-height:1.35}
+@media (max-width:560px){.pa{margin-left:0}.pa-menu{right:auto;left:0}}
 /* Markdown extras for any page; written for performance reports. */
 /* > [!NOTE] / [!TIP] / [!IMPORTANT] / [!WARNING] / [!CAUTION]: a callout with a title. */
 #guide-body .md-callout{--c:var(--accent-ink);border-left:3px solid var(--c);background:color-mix(in oklch,var(--c) 7%,var(--surface));border-radius:0 10px 10px 0;padding:14px 18px;color:var(--ink-2)}
@@ -333,14 +347,22 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
           <span class="bp-meta"><span class="bp-cat"><i style="background:{{ post.color }}"></i>{{ post.cat }}</span><span style="display:{{ post.topicShow }}">{{ post.topic }}</span><span class="bp-ver" style="display:{{ post.verShow }}">{{ post.version }}</span></span>
           <h1>{{ title }}</h1>
           <p class="bp-dek" style="display:{{ post.dekShow }}">{{ post.summary }}</p>
-          <div class="bp-by"><span>{{ post.when }}</span><button type="button" class="bp-share" onClick="{{ post.share }}"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>{{ post.shareLabel }}</button></div>
+          <div class="bp-by"><span>{{ post.when }}</span><button type="button" class="bp-share" onClick="{{ post.share }}"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>{{ post.shareLabel }}</button>
+            <div class="pa" style="margin-left:0"><button type="button" class="pa-main" onClick="{{ pa.copy }}"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ pa.copyLabel }}</button><button type="button" class="pa-more" aria-label="More ways to use this page" aria-haspopup="menu" aria-expanded="{{ pa.open }}" onClick="{{ pa.toggle }}"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+              <div class="pa-menu" role="menu" style="display:{{ pa.menuDisplay }}"><sc-for list="{{ pa.items }}" as="it" hint-placeholder-count="3"><a class="pa-item" role="menuitem" href="{{ it.href }}" target="_blank" rel="noopener noreferrer" onClick="{{ pa.close }}"><span class="pa-ico" aria-hidden="true" style="--ico:url({{ it.icon }})"></span><span class="pa-txt"><b>{{ it.title }} ↗</b><small>{{ it.desc }}</small></span></a></sc-for></div>
+            </div></div>
         </header>
       </sc-if>
       <sc-if value="{{ notPost }}" hint-placeholder-val="{{ true }}">
       <header style="display:grid;gap:12px;padding-bottom:24px;border-bottom:1px solid var(--line)">
           <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">{{ kindLabel }} · {{ catLabel }}</span>
           <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(30px,3.8vw,44px);line-height:1.08;font-weight:800;letter-spacing:-0.02em;text-wrap:balance">{{ title }}</h1>
-          <sc-if value="{{ showRepo }}" hint-placeholder-val="{{ true }}"><div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13.5px;color:var(--ink-3)"><a href="{{ ghHref }}" style="color:var(--ink-2)">View on GitHub ↗</a><a href="{{ editHref }}" style="color:var(--ink-2)">Suggest an edit ↗</a></div></sc-if>
+          <div style="display:flex;gap:10px 16px;flex-wrap:wrap;align-items:center;font-size:13.5px;color:var(--ink-3)">
+            <sc-if value="{{ showRepo }}" hint-placeholder-val="{{ true }}"><a href="{{ ghHref }}" style="color:var(--ink-2)">View on GitHub ↗</a><a href="{{ editHref }}" style="color:var(--ink-2)">Suggest an edit ↗</a></sc-if>
+            <div class="pa"><button type="button" class="pa-main" onClick="{{ pa.copy }}"><svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>{{ pa.copyLabel }}</button><button type="button" class="pa-more" aria-label="More ways to use this page" aria-haspopup="menu" aria-expanded="{{ pa.open }}" onClick="{{ pa.toggle }}"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+              <div class="pa-menu" role="menu" style="display:{{ pa.menuDisplay }}"><sc-for list="{{ pa.items }}" as="it" hint-placeholder-count="3"><a class="pa-item" role="menuitem" href="{{ it.href }}" target="_blank" rel="noopener noreferrer" onClick="{{ pa.close }}"><span class="pa-ico" aria-hidden="true" style="--ico:url({{ it.icon }})"></span><span class="pa-txt"><b>{{ it.title }} ↗</b><small>{{ it.desc }}</small></span></a></sc-for></div>
+            </div>
+          </div>
         </header>
       </sc-if>
       <sc-if value="{{ error }}" hint-placeholder-val="{{ false }}"><p style="margin:0;color:var(--ink-2)">{{ error }}</p></sc-if>
@@ -396,7 +418,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 </x-dc>
 <script type="text/x-dc" data-dc-script>
 class Component extends DCLogic {
-  state = { md: null, error: null, slug: null, tocCount: 0 };
+  state = { md: null, error: null, slug: null, tocCount: 0, paOpen: false, paCopied: false };
   bodyRef = React.createRef();
   tocRef = React.createRef();
   componentDidMount() {
@@ -411,12 +433,23 @@ class Component extends DCLogic {
       if (kind === 'p') document.querySelectorAll('.rs-nav a[aria-current="page"]').forEach(a => { a.removeAttribute('aria-current'); a.style.color = 'var(--ink-2)'; });
       if (kind === 'p') document.querySelectorAll('.rs-nav > a[href="Blog.dc.html"]').forEach(a => { a.setAttribute('aria-current', 'page'); a.style.color = 'var(--ink)'; });
       const path = kind === 'd' ? (this.docs.find(d => d.slug === slug) || {}).path : kind === 'p' ? 'blog/' + slug + '.md' : 'how-to/' + slug + '.md';
+      this.mdPath = path;
       this.setState({ slug });
       fetch(path).then(r => r.ok ? r.text() : Promise.reject(new Error(r.status))).then(md => this.setState({ md })).catch(() => this.setState({ error: 'This guide could not be loaded. It is on GitHub.' }));
     });
+    // the page-actions menu closes on a click outside it, and on Escape (focus goes back to its caret)
+    this.paDoc = e => {
+      if (!this.state.paOpen) return;
+      if (e.type === 'keydown') { if (e.key !== 'Escape') return; const b = document.querySelector('.pa-more[aria-expanded="true"]'); this.setState({ paOpen: false }); b && b.focus(); return; }
+      if (!e.target.closest('.pa')) this.setState({ paOpen: false });
+    };
+    document.addEventListener('click', this.paDoc); document.addEventListener('keydown', this.paDoc);
   }
   componentDidUpdate() { this.renderMd(); this.setTitle(); }
-  componentWillUnmount() { this.tocScroll && window.removeEventListener('scroll', this.tocScroll); }
+  componentWillUnmount() {
+    this.tocScroll && window.removeEventListener('scroll', this.tocScroll);
+    document.removeEventListener('click', this.paDoc); document.removeEventListener('keydown', this.paDoc);
+  }
   setTitle() {
     const kind = this.kind || 'g';
     const gs = (kind === 'd' ? this.docs : kind === 'p' ? this.posts : this.guides) || [];
@@ -559,8 +592,24 @@ class Component extends DCLogic {
         shareLabel: this.state.copied ? 'Link copied' : 'Copy link',
         share: () => { try { navigator.clipboard.writeText(location.origin + location.pathname + '?p=' + g.slug); } catch (e) {} this.setState({ copied: true }); clearTimeout(this.copyT); this.copyT = setTimeout(() => this.setState({ copied: false }), 1600); } };
     }
+    // Page actions: the markdown this page is rendered from, to copy, read as plain text, or hand to an AI assistant.
+    const mdUrl = this.mdPath ? new URL(this.mdPath, location.href).href : '';
+    const ask = 'Read ' + mdUrl + ' so I can ask questions about it.';
+    const ICO = 'https://unpkg.com/lucide-static@0.460.0/icons/';
+    const pa = {
+      open: this.state.paOpen ? 'true' : 'false', menuDisplay: this.state.paOpen ? 'grid' : 'none',
+      copyLabel: this.state.paCopied ? 'Copied' : 'Copy page',
+      copy: () => { if (!this.state.md) return; try { navigator.clipboard.writeText(this.state.md); } catch (e) {} this.setState({ paCopied: true }); clearTimeout(this.paT); this.paT = setTimeout(() => this.setState({ paCopied: false }), 1600); },
+      toggle: () => this.setState({ paOpen: !this.state.paOpen }),
+      close: () => this.setState({ paOpen: false }),
+      items: [
+        { title: 'View as Markdown', desc: 'This page as plain-text markdown', href: mdUrl, icon: ICO + 'file-text.svg' },
+        { title: 'Open in Claude', desc: 'Ask Claude questions about this page', href: 'https://claude.ai/new?q=' + encodeURIComponent(ask), icon: ICO + 'message-square-text.svg' },
+        { title: 'Open in ChatGPT', desc: 'Ask ChatGPT questions about this page', href: 'https://chatgpt.com/?hints=search&q=' + encodeURIComponent(ask), icon: ICO + 'message-square-text.svg' },
+      ],
+    };
     return {
-      kind, post, notPost: kind !== 'p', prevLabel: kind === 'p' ? '← Newer post' : '← Previous', nextLabel: kind === 'p' ? 'Older post →' : 'Next →',
+      kind, post, pa, notPost: kind !== 'p', prevLabel: kind === 'p' ? '← Newer post' : '← Previous', nextLabel: kind === 'p' ? 'Older post →' : 'Next →',
       bodyRef: this.bodyRef, tocRef: this.tocRef, tocDisplay: this.state.tocCount ? 'grid' : 'none', error: this.state.error, backHref, backLabel,
       kindLabel: kind === 'd' ? 'Documentation' : kind === 'p' ? (g ? g.date : 'Blog') : 'Guide ' + (g ? g.num : ''),
       showRepo: !!repoPath,
