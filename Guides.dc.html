@@ -91,6 +91,35 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
   .rs-gh{display:none !important}
 }
 @media (max-width:820px){.g-sticky{position:static !important}}
+/* "By part of the architecture": a left column from the top of the page, the diagram's groups with their paths nested under each; the title, Reading paths and the list are on the right. */
+.ga-rail{display:grid;gap:1px;align-content:start;padding:0 4px 12px 0;font-size:13.5px}
+/* the whole column always shows: it stays in place while the list scrolls only when the window is tall enough to hold all of it (fitRail) */
+@media (min-width:821px){.ga-rail.pin{position:sticky;top:84px}}
+.ga-eyebrow{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)}
+.ga-note{font-size:12.5px;color:var(--ink-3);line-height:1.45;margin:4px 0 8px}
+.ga-group{display:grid;gap:1px;padding-top:10px}
+/* #arch-<group> lands on the list (theme.js and the browser scroll to it); the left column then shows that group */
+.ga-anchors{position:absolute;top:0;left:0;width:0;height:0}.ga-anchors span{display:block;height:0;scroll-margin-top:76px}
+.ga-label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-3);padding:0 0 4px}
+.ga-items{display:grid;border-left:1px solid var(--line)}
+.ga-item,.ga-all{font:inherit;text-align:left;display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:2px 0 2px 14px;margin-left:-1px;border:0;border-left:2px solid transparent;background:none;color:var(--ink-2);cursor:pointer;line-height:1.35;transition:color 0.15s,border-color 0.15s}
+.ga-all{padding-left:0;margin-left:0;border-left:0;font-weight:500}
+.ga-item:hover,.ga-all:hover{color:var(--ink)}
+.ga-item[aria-pressed=true]{color:var(--ink);font-weight:600;border-left-color:var(--accent-ink)}
+.ga-all[aria-pressed=true]{color:var(--ink);font-weight:600}
+.ga-n{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:400;color:var(--ink-4)}
+.ga-group.flash .ga-label{color:var(--accent-ink)}
+/* the same frame as the left column on a guide page (Guide.dc.html), so it sits in the same place */
+@media (max-width:1100px){.ga{grid-template-columns:230px minmax(0,1fr) !important;gap:48px !important}}
+@media (max-width:820px){
+  .ga{grid-template-columns:minmax(0,1fr) !important;gap:8px !important;padding-left:24px !important;padding-right:24px !important}
+  /* one column: the title and Reading paths first, then the architecture as pills, then the list */
+  .ga-main{display:contents !important}.ga-main>header{order:1}.ga-main>section{order:2}.ga-rail{order:3}.ga-list{order:4}
+  .ga-rail{position:static;max-height:none;overflow:visible}
+  .ga-items{display:flex;flex-wrap:wrap;gap:6px;border-left:0}
+  .ga-item{margin:0;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+  .ga-item[aria-pressed=true]{background:#10201b;color:#e6efeb;border-color:#10201b}.ga-item[aria-pressed=true] .ga-n{color:#9fb3ac}
+}
 /* Use-cases dropdown in the top nav (desktop only; the burger menu keeps a plain link). */
 .rs-dd{position:relative}
 .rs-dd-panel{display:none;position:absolute;top:100%;left:-18px;padding-top:12px;z-index:30}
@@ -237,50 +266,54 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
     </div>
   </nav>
 
-  <header class="rs-2col" style="max-width:1240px;margin:0 auto;padding:72px 24px 36px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
-    <div style="display:grid;gap:14px">
-      <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">How-to guides</span>
-      <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(34px,4.5vw,54px);line-height:1.04;font-weight:800;letter-spacing:-0.02em;max-width:22ch;text-wrap:balance">{{ statGuides }} guides, each one run against a real server</h1>
-    </div>
-    <div style="display:grid;gap:14px">
-      <p style="margin:0;font-size:17px;color:var(--ink-2);max-width:52ch;text-wrap:pretty">Every command and response in them was executed before it was written down, and a test checks that every guide is listed and every link resolves. Start with the first five, then follow the path that matches your job.</p>
-      <div style="display:flex;flex-wrap:wrap;gap:8px 24px">
-        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">{{ statGuides }}</b><span style="font-size:12px;color:var(--ink-3);letter-spacing:0.03em">guides</span></div>
-        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">{{ statTopics }}</b><span style="font-size:12px;color:var(--ink-3);letter-spacing:0.03em">topics</span></div>
-        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">{{ statHours }}</b><span style="font-size:12px;color:var(--ink-3);letter-spacing:0.03em">end to end</span></div>
-        <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1;color:var(--accent-ink)">✓</b><span style="font-size:12px;color:var(--ink-3);letter-spacing:0.03em">every one run in CI</span></div>
-      </div>
-    </div>
-  </header>
-
-  <section aria-label="Reading paths" style="max-width:1240px;margin:0 auto;padding:0 24px 28px;display:grid;gap:12px">
-    <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">Reading paths</span><span style="font-size:13px;color:var(--ink-3)">Pick one and the list below becomes that path, in order.</span></div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
-      <sc-for list="{{ paths }}" as="pt" hint-placeholder-count="5">
-        <button type="button" aria-pressed="{{ pt.pressed }}" onClick="{{ pt.go }}" style="font:inherit;text-align:left;display:grid;gap:8px;align-content:start;padding:14px 16px;border-radius:12px;border:1px solid {{ pt.border }};background:{{ pt.bg }};color:{{ pt.color }};cursor:pointer;transition:background 0.2s,color 0.2s,border-color 0.2s;min-width:0">
-          <span style="display:grid;gap:3px"><b style="font-weight:600;font-size:14.5px">{{ pt.title }}</b><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ pt.meta }}">{{ pt.count }} · ≈{{ pt.mins }} min</span></span>
-          <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:{{ pt.chain }};overflow-wrap:anywhere;line-height:1.7">{{ pt.nums }}</span>
-          <span style="font-size:12.5px;color:{{ pt.meta }}">{{ pt.desc }}</span>
-        </button>
-      </sc-for>
-    </div>
-  </section>
-  <section aria-label="Paths from the architecture diagram" style="max-width:1240px;margin:0 auto;padding:0 24px 28px;display:grid;gap:12px">
-    <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">By part of the architecture</span><span style="font-size:13px;color:var(--ink-3)">Each box of the diagram on the <a href="Home.dc.html#architecture">Home page</a> links to one of these.</span></div>
-    <div style="display:grid;gap:8px">
+  <div class="ga" style="max-width:1600px;margin:0 auto;padding:56px 32px 88px;display:grid;grid-template-columns:250px minmax(0,1fr);gap:56px;align-items:start">
+    <aside class="ga-rail" ref="{{ railRef }}" aria-label="Guides by part of the architecture">
+      <span class="ga-eyebrow">By part of the architecture</span>
+      <span class="ga-note">Each box of the diagram on the <a href="Home.dc.html#architecture">Home page</a> links to one of these.</span>
+      <button type="button" class="ga-all" aria-pressed="{{ allPressed }}" onClick="{{ showAll }}"><span>All guides</span><span class="ga-n">{{ statGuides }}</span></button>
       <sc-for list="{{ archGroups }}" as="g" hint-placeholder-count="6">
-        <div id="{{ g.anchor }}" style="display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;scroll-margin-top:96px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.04em;text-transform:uppercase;color:#9fb3ac;width:128px;flex:none">{{ g.label }}</span>
-          <sc-for list="{{ g.items }}" as="pt" hint-placeholder-count="4">
-            <button type="button" aria-pressed="{{ pt.pressed }}" onClick="{{ pt.go }}" style="font:inherit;display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;border:1px solid {{ pt.border }};background:{{ pt.bg }};color:{{ pt.color }};font-size:13.5px;font-weight:500;cursor:pointer;transition:background 0.2s,color 0.2s,border-color 0.2s">{{ pt.title }}<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ pt.countColor }}">{{ pt.count }}</span></button>
-          </sc-for>
+        <div class="ga-group" data-group="{{ g.anchor }}">
+          <span class="ga-label">{{ g.label }}</span>
+          <div class="ga-items">
+            <sc-for list="{{ g.items }}" as="pt" hint-placeholder-count="4">
+              <button type="button" class="ga-item" aria-pressed="{{ pt.pressed }}" title="{{ pt.desc }}" onClick="{{ pt.go }}"><span>{{ pt.title }}</span><span class="ga-n">{{ pt.count }}</span></button>
+            </sc-for>
+          </div>
         </div>
       </sc-for>
-    </div>
-  </section>
-
-  <section style="max-width:1240px;margin:0 auto;padding:0 24px 88px;display:grid;gap:22px">
+    </aside>
+    <div class="ga-main" style="display:grid;min-width:0">
+    <header class="rs-2col" style="padding:0 0 36px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:32px;align-items:end">
+      <div style="display:grid;gap:14px">
+        <span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">How-to guides</span>
+        <h1 style="margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:clamp(34px,4.5vw,54px);line-height:1.04;font-weight:800;letter-spacing:-0.02em;max-width:22ch;text-wrap:balance">{{ statGuides }} guides, each one run against a real server</h1>
+      </div>
+      <div style="display:grid;gap:14px">
+        <p style="margin:0;font-size:17px;color:var(--ink-2);max-width:52ch;text-wrap:pretty">Every command and response in them was executed before it was written down, and a test checks that every guide is listed and every link resolves. Start with the first five, then follow the path that matches your job.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:8px 24px">
+          <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">{{ statGuides }}</b><span style="font-size:12px;color:var(--ink-3);letter-spacing:0.03em">guides</span></div>
+          <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">{{ statTopics }}</b><span style="font-size:12px;color:var(--ink-3);letter-spacing:0.03em">topics</span></div>
+          <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1">{{ statHours }}</b><span style="font-size:12px;color:var(--ink-3);letter-spacing:0.03em">end to end</span></div>
+          <div style="display:grid;gap:2px"><b style="font-family:'Schibsted Grotesk',sans-serif;font-size:22px;line-height:1;color:var(--accent-ink)">✓</b><span style="font-size:12px;color:var(--ink-3);letter-spacing:0.03em">every one run in CI</span></div>
+        </div>
+      </div>
+    </header>
+    <section aria-label="Reading paths" style="padding:0 0 28px;display:grid;gap:12px">
+      <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent-ink)">Reading paths</span><span style="font-size:13px;color:var(--ink-3)">Pick one and the list below becomes that path, in order.</span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+        <sc-for list="{{ paths }}" as="pt" hint-placeholder-count="5">
+          <button type="button" aria-pressed="{{ pt.pressed }}" onClick="{{ pt.go }}" style="font:inherit;text-align:left;display:grid;gap:8px;align-content:start;padding:14px 16px;border-radius:12px;border:1px solid {{ pt.border }};background:{{ pt.bg }};color:{{ pt.color }};cursor:pointer;transition:background 0.2s,color 0.2s,border-color 0.2s;min-width:0">
+            <span style="display:grid;gap:3px"><b style="font-weight:600;font-size:14.5px">{{ pt.title }}</b><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ pt.meta }}">{{ pt.count }} · ≈{{ pt.mins }} min</span></span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11.5px;color:{{ pt.chain }};overflow-wrap:anywhere;line-height:1.7">{{ pt.nums }}</span>
+            <span style="font-size:12.5px;color:{{ pt.meta }}">{{ pt.desc }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </section>
+    <div class="ga-list" ref="{{ listRef }}" style="position:relative;display:grid;gap:22px;min-width:0">
+      <div class="ga-anchors" aria-hidden="true"><sc-for list="{{ archGroups }}" as="g" hint-placeholder-count="6"><span id="{{ g.anchor }}"></span></sc-for></div>
     <div class="g-sticky" style="position:sticky;top:67px;z-index:18;background:var(--bg);padding:12px 0;border-bottom:1px solid var(--line);display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-      <input ref="{{ inputRef }}" onInput="{{ onSearch }}" placeholder="Search guides" aria-label="Search guides" style="font:inherit;font-size:14.5px;padding:10px 14px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);color:var(--ink);min-width:240px;outline:none">
+      <input ref="{{ inputRef }}" onInput="{{ onSearch }}" placeholder="Search guides" aria-label="Search guides" style="font:inherit;font-size:14.5px;padding:10px 14px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface);color:var(--ink);flex:1 1 180px;min-width:180px;max-width:280px;outline:none">
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <sc-for list="{{ cats }}" as="c" hint-placeholder-count="8">
           <button type="button" onClick="{{ c.go }}" style="font:inherit;font-size:13px;font-weight:500;padding:7px 12px;border-radius:999px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};cursor:pointer;transition:background 0.2s,color 0.2s;display:inline-flex;gap:6px;align-items:baseline">{{ c.label }}<span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:{{ c.countColor }}">{{ c.count }}</span></button>
@@ -306,7 +339,9 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       </div>
     </sc-for>
     <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}"><p style="margin:0;color:var(--ink-2)">No guide matches. Try fewer words, or <a href="https://github.com/AnanthaRajuC/QueryAPIGate/issues/new">ask for one</a>.</p></sc-if>
-  </section>
+    </div>
+    </div>
+  </div>
   <footer class="ft" style="border-top:0;background:radial-gradient(circle,var(--dots) 0.4px,transparent 0.7px) 0 0/8px 1px repeat-x var(--bg)">
     <div style="max-width:1240px;margin:0 auto;padding:56px 24px 28px;display:grid;gap:40px">
       <div class="ft-grid">
@@ -348,11 +383,17 @@ class Component extends DCLogic {
   state = { cat: 'All', q: '', path: null, guides: [] };
   componentDidMount() {
     import('./guides.js').then(m => this.setState({ guides: m.guides }));
-    try { const h = location.hash.slice(1); if (h.startsWith('arch-')) setTimeout(() => { const el = document.getElementById(h); if (el) el.scrollIntoView({ block: 'start' }); }, 50); } catch (e) {}
+    // #arch-<group> (the Guides menu links here) scrolls to the list; that group lights up in the left column
+    this.onHash = () => { const h = location.hash.slice(1); if (h.startsWith('arch-')) setTimeout(() => this.showGroup(h), 50); };
+    this.onHash(); window.addEventListener('hashchange', this.onHash);
+    this.fitRail = () => { const r = this.railRef.current; if (r) r.classList.toggle('pin', r.offsetHeight + 84 + 16 <= window.innerHeight); };
+    this.fitRail(); window.addEventListener('resize', this.fitRail); document.fonts && document.fonts.ready.then(this.fitRail);
     try { const id = new URLSearchParams(location.search).get('path'); if (id && this.allPaths().some(p => p.id === id)) this.setState({ path: id }); } catch (e) {}
     try { const c = new URLSearchParams(location.search).get('cat'); if (c && this.cats.includes(c)) this.setState({ cat: c }); } catch (e) {}
   }
   inputRef = React.createRef();
+  railRef = React.createRef();
+  listRef = React.createRef();
   cats = ["All","Start","Queries","Access","Agents","Events & exports","Operate","Govern"];
   // Reading paths: the order your own pages send people in (the first five, the Use-case cards, the Deploy checklist).
   paths = [
@@ -389,6 +430,17 @@ class Component extends DCLogic {
     { group: 'Reports to', id: 'audit', title: 'Audit', desc: 'Read it, ship it to your SIEM, answer the questionnaire, read the threat model.', nums: ['20','53','57','40'] },
     { group: 'Reports to', id: 'runstore', title: 'Run store', desc: 'Run history, the event log and usage in ClickHouse.', nums: ['65','28'] },
   ];
+  componentWillUnmount() { window.removeEventListener('hashchange', this.onHash); window.removeEventListener('resize', this.fitRail); }
+  showGroup(id) {
+    const el = document.querySelector('.ga-group[data-group="' + id + '"]'); if (!el) return;
+    el.classList.add('flash'); clearTimeout(this.flashT); this.flashT = setTimeout(() => el.classList.remove('flash'), 1600);
+  }
+  // after picking from the left column, the top of the list is where its first guide is; scroll up to it if it is above the screen
+  toList() {
+    const el = this.listRef.current; if (!el) return;
+    const top = el.getBoundingClientRect().top;
+    if (top < 0) window.scrollTo({ top: top + window.scrollY - 76 });
+  }
   allPaths() { return this.paths.concat(this.archPaths); }
   guides = [{"num":"01","title":"Turn your first SQL query into a REST API","cat":"Start","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/01-turn-your-first-sql-query-into-a-rest-api.md"},{"num":"02","title":"Connect a database","cat":"Start","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/02-connect-a-database.md"},{"num":"03","title":"Connect via generic JDBC","cat":"Start","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/03-connect-via-generic-jdbc.md"},{"num":"04","title":"Connect to MongoDB","cat":"Start","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/04-connect-to-mongodb.md"},{"num":"05","title":"Try the built-in example APIs","cat":"Start","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/05-try-the-built-in-example-apis.md"},{"num":"06","title":"Use bound parameters safely","cat":"Queries","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/06-use-bound-parameters-safely.md"},{"num":"07","title":"Group queries into a collection","cat":"Queries","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/07-group-queries-into-a-collection.md"},{"num":"08","title":"Cache a saved query","cat":"Queries","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/08-cache-a-saved-query.md"},{"num":"09","title":"Stream a large export","cat":"Queries","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/09-stream-a-large-export.md"},{"num":"10","title":"Allow a saved query to write data","cat":"Queries","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/10-allow-a-saved-query-to-write-data.md"},{"num":"11","title":"Browse a connection's schema","cat":"Queries","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/11-browse-a-connections-schema.md"},{"num":"12","title":"Export a Postman collection","cat":"Queries","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/12-export-a-postman-collection.md"},{"num":"13","title":"Set up a scoped API key","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/13-set-up-a-scoped-api-key.md"},{"num":"14","title":"Give a partner one query only","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/14-give-a-partner-one-query-only.md"},{"num":"15","title":"Create a role","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/15-create-a-role.md"},{"num":"16","title":"Restrict a key to tables","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/16-restrict-a-key-to-tables.md"},{"num":"17","title":"Rate limit a key","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/17-rate-limit-a-key.md"},{"num":"18","title":"Restrict a key to IPs","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/18-restrict-a-key-to-ips.md"},{"num":"19","title":"Give a key an expiry date","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/19-give-a-key-an-expiry-date.md"},{"num":"20","title":"Read the audit log","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/20-read-the-audit-log.md"},{"num":"21","title":"Verify who can reach what","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/21-verify-who-can-reach-what.md"},{"num":"22","title":"Encrypt passwords at rest","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/22-encrypt-passwords-at-rest.md"},{"num":"52","title":"Give a partner a quota and a concurrency cap","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/52-give-a-partner-a-quota-and-a-concurrency-cap.md"},{"num":"56","title":"Use short-lived database credentials from Vault","cat":"Access","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/56-use-short-lived-database-credentials-from-vault.md"},{"num":"24","title":"Let an agent call your queries via MCP","cat":"Agents","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/24-let-an-agent-call-your-queries-via-mcp.md"},{"num":"25","title":"MCP ad-hoc tools","cat":"Agents","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/25-mcp-ad-hoc-tools.md"},{"num":"26","title":"MCP structured results","cat":"Agents","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/26-mcp-structured-results.md"},{"num":"27","title":"Check the MCP server from the Console","cat":"Agents","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/27-check-the-mcp-server-from-the-console.md"},{"num":"46","title":"Let AI clients sign in through your identity provider","cat":"Agents","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/46-let-ai-clients-sign-in-through-your-identity-provider.md"},{"num":"47","title":"Tell agents what your data means and see what they did","cat":"Agents","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/47-tell-agents-what-your-data-means-and-see-what-they-did.md"},{"num":"49","title":"Let an agent write, with a person approving each write","cat":"Agents","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/49-let-an-agent-write-with-a-person-approving-each-write.md"},{"num":"28","title":"Build a client that watches queries run","cat":"Events & exports","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/28-build-a-client-that-watches-queries-run.md"},{"num":"29","title":"Per-key live feeds","cat":"Events & exports","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/29-per-key-live-feeds.md"},{"num":"30","title":"Schedule an export","cat":"Events & exports","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/30-schedule-an-export.md"},{"num":"31","title":"Get the CLI command for a query","cat":"Events & exports","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/31-get-the-cli-command-for-a-query.md"},{"num":"41","title":"Publish files in S3 as an API","cat":"Events & exports","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/41-publish-files-in-s3-as-an-api.md"},{"num":"44","title":"Deliver a daily file to a partner's bucket","cat":"Events & exports","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/44-deliver-a-daily-file-to-a-partners-bucket.md"},{"num":"23","title":"Put it behind a reverse proxy","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/23-put-it-behind-a-reverse-proxy.md"},{"num":"32","title":"Deploy with Docker","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/32-deploy-with-docker.md"},{"num":"33","title":"Back up and restore","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/33-back-up-and-restore.md"},{"num":"34","title":"Upgrade safely","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/34-upgrade-safely.md"},{"num":"35","title":"Wire up Prometheus and Grafana","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/35-wire-up-prometheus-and-grafana.md"},{"num":"36","title":"Trace a request in the logs","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/36-trace-a-request-in-the-logs.md"},{"num":"37","title":"Tune the connection pool","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/37-tune-the-connection-pool.md"},{"num":"38","title":"Allow a browser frontend (CORS)","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/38-allow-a-browser-frontend-cors.md"},{"num":"39","title":"Walk through the example APIs","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/39-walk-through-the-example-apis.md"},{"num":"42","title":"Run several instances","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/42-run-several-instances.md"},{"num":"51","title":"See QueryAPIGate in your traces","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/51-see-queryapigate-in-your-traces.md"},{"num":"54","title":"Install on Kubernetes with Helm","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/54-install-on-kubernetes-with-helm.md"},{"num":"55","title":"Promote a setup from dev to prod through a pull request","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/55-promote-a-setup-from-dev-to-prod-through-a-pull-request.md"},{"num":"58","title":"Keep the server's own secrets, and its metrics, in","cat":"Operate","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/58-keep-the-servers-own-secrets-and-metrics-in.md"},{"num":"40","title":"Read the threat model","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/40-read-the-threat-model.md"},{"num":"43","title":"Give your team their own admin access","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/43-give-your-team-their-own-admin-access.md"},{"num":"45","title":"Hide personal data from a partner or an AI agent","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/45-hide-personal-data-from-a-partner-or-an-ai-agent.md"},{"num":"48","title":"Sign in to the Console through your identity provider","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/48-sign-in-to-the-console-through-your-identity-provider.md"},{"num":"50","title":"Rotate an API key without downtime","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/50-rotate-an-api-key-without-downtime.md"},{"num":"53","title":"Send the audit log to your SIEM","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/53-send-the-audit-log-to-your-siem.md"},{"num":"57","title":"Answer a security questionnaire about data and cryptography","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/57-answer-a-security-questionnaire-about-data-and-cryptography.md"},{"num":"59","title":"Verify a release before you run it","cat":"Govern","href":"https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/59-verify-a-release-before-you-run-it.md"}];
   renderVals() {
@@ -401,7 +453,7 @@ class Component extends DCLogic {
     let shown, groups;
     if (active) {
       shown = active.nums.map(n => byNum[n]).filter(Boolean).map(link);
-      groups = [{ label: active.title, count: shown.length + ' guides', note: 'in this order', items: shown }];
+      groups = [{ label: active.title, count: shown.length + ' guides', note: (active.group ? active.desc + ' ' : '') + 'In this order.', items: shown }];
     } else {
       shown = guides.filter(g => (cat === 'All' || g.cat === cat) && (!needle || g.title.toLowerCase().includes(needle) || g.cat.toLowerCase().includes(needle) || (g.outcome || '').toLowerCase().includes(needle))).map(link);
       if (cat === 'All' && !needle) groups = this.cats.slice(1).map(c => { const items = shown.filter(g => g.cat === c); return { label: c, count: items.length + (items.length === 1 ? ' guide' : ' guides'), note: '', items }; }).filter(x => x.items.length);
@@ -417,9 +469,12 @@ class Component extends DCLogic {
       paths: this.paths.map(p => { const on = p.id === path; return { title: p.title, desc: p.desc, nums: p.nums.join(' → '), count: p.nums.length + ' guides', mins: String(mins(p.nums)), pressed: on ? 'true' : 'false',
         go: () => { clearSearch(); this.setState({ path: on ? null : p.id, cat: 'All', q: '' }); },
         bg: on ? '#10201b' : 'var(--surface)', color: on ? '#e6efeb' : 'var(--ink)', border: on ? '#10201b' : 'var(--line)', meta: on ? '#9fb3ac' : 'var(--ink-3)', chain: on ? 'oklch(0.8 0.11 170)' : 'var(--accent-ink)' }; }),
-      archGroups: [...new Set(this.archPaths.map(p => p.group))].map(g => ({ label: g, anchor: 'arch-' + g.toLowerCase().replace(/^the governed /, '').replace(/[^a-z]+/g, '-'), items: this.archPaths.filter(p => p.group === g).map(p => { const on = p.id === path; return { title: p.title, count: String(p.nums.length), pressed: on ? 'true' : 'false',
-        go: () => { clearSearch(); this.setState({ path: on ? null : p.id, cat: 'All', q: '' }); },
-        bg: on ? '#10201b' : 'var(--surface)', color: on ? '#e6efeb' : 'var(--ink)', border: on ? '#10201b' : 'var(--line)', countColor: on ? '#9fb3ac' : '#9fb3ac' }; }) })),
+      railRef: this.railRef, listRef: this.listRef,
+      allPressed: !active && cat === 'All' && !needle ? 'true' : 'false',
+      showAll: () => { clearSearch(); this.setState({ path: null, cat: 'All', q: '' }); this.toList(); },
+      archGroups: [...new Set(this.archPaths.map(p => p.group))].map(g => ({ label: g, anchor: 'arch-' + g.toLowerCase().replace(/^the governed /, '').replace(/[^a-z]+/g, '-'), items: this.archPaths.filter(p => p.group === g).map(p => ({
+        title: p.title, desc: p.desc, count: String(p.nums.length), pressed: p.id === path ? 'true' : 'false',
+        go: () => { clearSearch(); this.setState({ path: p.id, cat: 'All', q: '' }); this.toList(); } })) })),
       archDesc: active && active.group ? active.desc : '',
       groups, count: shown.length + ' of ' + guides.length, empty: shown.length === 0,
       statGuides: String(guides.length), statTopics: String(new Set(guides.map(g => g.cat)).size), statHours: total ? '≈' + Math.round(total / 60) + ' h' : '—',
