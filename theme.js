@@ -123,10 +123,11 @@
     '.rs-ai-panel[hidden]{display:none}.rs-ai-head{display:flex;align-items:center;gap:10px}.rs-ai-head b{font:700 15.5px/1.3 "Schibsted Grotesk",sans-serif;margin-right:auto}',
     '.rs-ai-x{border:0;background:none;color:var(--ink-3);cursor:pointer;font-size:20px;line-height:1;padding:2px 4px;border-radius:6px}.rs-ai-x:hover{color:var(--ink)}',
     '.rs-ai-panel p{margin:0;color:var(--ink-2);font-size:13.5px}.rs-ai-panel small{color:var(--ink-3);font-size:12.5px;line-height:1.45}.rs-ai-panel a{color:var(--accent-ink)}',
-    '.rs-ai-code{background:#10201b;border-radius:10px;overflow:hidden}.rs-ai-code-bar{display:flex;align-items:center;padding:6px 8px 6px 12px;border-bottom:1px solid #1b2f29;font:11px "JetBrains Mono",monospace;color:#7c8f88}',
-    '.rs-ai-code-bar button{margin-left:auto;font:500 11px "JetBrains Mono",monospace;color:#c5d3cd;background:#1b2f29;border:1px solid #2a3d37;border-radius:6px;padding:3px 9px;cursor:pointer}.rs-ai-code-bar button:hover{background:#24403a;color:#e6efeb}',
-    '.rs-ai-code code{display:block;padding:10px 12px;font:12px/1.6 "JetBrains Mono",monospace;color:#e6efeb;overflow-wrap:anywhere}',
-    '.rs-ai-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rs-ai-row a{display:flex;align-items:center;justify-content:center;padding:8px 10px;border-radius:9px;border:1px solid var(--line-2);color:var(--ink) !important;font-weight:600;font-size:13.5px;text-decoration:none !important}.rs-ai-row a:hover{border-color:var(--accent-ink);color:var(--accent-ink) !important}',
+    '.rs-ai-tools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}',
+    '.rs-ai-tool{display:grid;justify-items:center;gap:5px;padding:9px 2px 7px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink) !important;cursor:pointer;font:inherit;text-decoration:none !important;transition:border-color .15s,background .15s}',
+    '.rs-ai-tool:hover,.rs-ai-tool:focus-visible{border-color:var(--accent-ink);background:var(--bg);outline:none}.rs-ai-tool svg,.rs-ai-tool img{display:block;width:22px;height:22px}',
+    '.rs-ai-tool span{font-size:11px;font-weight:600;line-height:1.2;color:var(--ink-2);text-align:center}',
+    '.rs-ai-hint{min-height:2.9em;margin:0;font-size:12.5px !important;color:var(--ink-2) !important}',
     '.rs-ai-more{font-weight:600;font-size:13.5px}',
     '@media (max-width:640px){.rs-ai{right:16px;bottom:calc(16px + env(safe-area-inset-bottom))}.rs-ai.up{transform:translateY(-54px)}.rs-ai-btn{width:42px;height:42px}}',
     '@media (prefers-reduced-motion:reduce){.rs-ai{transition:none}.rs-ai-i1,.rs-ai-i2{animation:none}.rs-ai-i2{opacity:0}.rs-ai-btn::before,.rs-ai-btn::after{animation:none}.rs-ai-btn::before{background:oklch(0.62 0.13 170 / 0.6)}}',
@@ -146,27 +147,65 @@
     if (top) { ring.style.strokeDashoffset = String(C * (1 - f)); top.classList.toggle('on', window.scrollY > window.innerHeight * 0.9); if (ai) ai.classList.toggle('up', top.classList.contains('on')); }
   }
   function tick() { if (!pending) { pending = true; requestAnimationFrame(progress); } }
-  // The documentation MCP server, from any page: the Claude Code command to copy, one-click installs for Cursor and
-  // VS Code (their documented install-link formats), and the full setup on the Docs page.
+  // The documentation MCP server, from any page: one button per AI tool, by its logo. Where the tool has an install link
+  // (Cursor, VS Code, LM Studio: their documented formats), one click installs; for Claude it copies the address and
+  // opens Connectors; for the rest it copies the command or config to run. Logos: Simple Icons (CC0), drawn in the text
+  // colour; VS Code's is Microsoft's own icon, unaltered, in images/brands/ (its brand rules: "<action> in VS Code");
+  // OpenAI asked for its logo to be withheld, so Codex gets a plain terminal icon.
   var DOCS_MCP = 'https://queryapigate-docs.queryapigate-docs-mcp.workers.dev/mcp';
+  var LOGO = {
+    claude: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m4.7144 15.9555 4.7174-2.6471.079-.2307-.079-.1275h-.2307l-.7893-.0486-2.6956-.0729-2.3375-.0971-2.2646-.1214-.5707-.1215-.5343-.7042.0546-.3522.4797-.3218.686.0608 1.5179.1032 2.2767.1578 1.6514.0972 2.4468.255h.3886l.0546-.1579-.1336-.0971-.1032-.0972L6.973 9.8356l-2.55-1.6879-1.3356-.9714-.7225-.4918-.3643-.4614-.1578-1.0078.6557-.7225.8803.0607.2246.0607.8925.686 1.9064 1.4754 2.4893 1.8336.3643.3035.1457-.1032.0182-.0728-.164-.2733-1.3539-2.4467-1.445-2.4893-.6435-1.032-.17-.6194c-.0607-.255-.1032-.4674-.1032-.7285L6.287.1335 6.6997 0l.9957.1336.419.3642.6192 1.4147 1.0018 2.2282 1.5543 3.0296.4553.8985.2429.8318.091.255h.1579v-.1457l.1275-1.706.2368-2.0947.2307-2.6957.0789-.7589.3764-.9107.7468-.4918.5828.2793.4797.686-.0668.4433-.2853 1.8517-.5586 2.9021-.3643 1.9429h.2125l.2429-.2429.9835-1.3053 1.6514-2.0643.7286-.8196.85-.9046.5464-.4311h1.0321l.759 1.1293-.34 1.1657-1.0625 1.3478-.8804 1.1414-1.2628 1.7-.7893 1.36.0729.1093.1882-.0183 2.8535-.607 1.5421-.2794 1.8396-.3157.8318.3886.091.3946-.3278.8075-1.967.4857-2.3072.4614-3.4364.8136-.0425.0304.0486.0607 1.5482.1457.6618.0364h1.621l3.0175.2247.7892.522.4736.6376-.079.4857-1.2142.6193-1.6393-.3886-3.825-.9107-1.3113-.3279h-.1822v.1093l1.0929 1.0686 2.0035 1.8092 2.5075 2.3314.1275.5768-.3218.4554-.34-.0486-2.2039-1.6575-.85-.7468-1.9246-1.621h-.1275v.17l.4432.6496 2.3436 3.5214.1214 1.0807-.17.3521-.6071.2125-.6679-.1214-1.3721-1.9246L14.38 17.959l-1.1414-1.9428-.1397.079-.674 7.2552-.3156.3703-.7286.2793-.6071-.4614-.3218-.7468.3218-1.4753.3886-1.9246.3157-1.53.2853-1.9004.17-.6314-.0121-.0425-.1397.0182-1.4328 1.9672-2.1796 2.9446-1.7243 1.8456-.4128.164-.7164-.3704.0667-.6618.4008-.5889 2.386-3.0357 1.4389-1.882.929-1.0868-.0062-.1579h-.0546l-6.3385 4.1164-1.1293.1457-.4857-.4554.0608-.7467.2307-.2429 1.9064-1.3114Z"/></svg>',
+    cursor: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.503.131 1.891 5.678a.84.84 0 0 0-.42.726v11.188c0 .3.162.575.42.724l9.609 5.55a1 1 0 0 0 .998 0l9.61-5.55a.84.84 0 0 0 .42-.724V6.404a.84.84 0 0 0-.42-.726L12.497.131a1.01 1.01 0 0 0-.996 0M2.657 6.338h18.55c.263 0 .43.287.297.515L12.23 22.918c-.062.107-.229.064-.229-.06V12.335a.59.59 0 0 0-.295-.51l-9.11-5.257c-.109-.063-.064-.23.061-.23"/></svg>',
+    lmstudio: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.025 0c3.492 0 5.237 0 6.571.68a6.24 6.24 0 0 1 2.725 2.724C24 4.738 24 6.484 24 9.975v4.05c0 3.492 0 5.237-.68 6.571a6.24 6.24 0 0 1-2.724 2.725c-1.334.679-3.08.679-6.571.679h-4.05c-3.492 0-5.237 0-6.571-.68A6.24 6.24 0 0 1 .68 20.597C0 19.262 0 17.516 0 14.025v-4.05c0-3.492 0-5.237.68-6.571A6.23 6.23 0 0 1 3.404.68C4.738 0 6.484 0 9.975 0zM7.688 16.313a1.313 1.313 0 0 0 0 2.625h11.625a1.313 1.313 0 0 0 0-2.625zm-3-3.75a1.313 1.313 0 0 0 0 2.624h11.625a1.313 1.313 0 0 0 0-2.624zm3-3.75a1.313 1.313 0 0 0 0 2.624h11.625a1.313 1.313 0 0 0 0-2.624zm-3-3.75a1.313 1.313 0 0 0 0 2.625h11.625a1.313 1.313 0 0 0 0-2.625z"/></svg>',
+    windsurf: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.55 5.067c-1.2038-.002-2.1806.973-2.1806 2.1765v4.8676c0 .972-.8035 1.7594-1.7597 1.7594-.568 0-1.1352-.286-1.4718-.7659l-4.9713-7.1003c-.4125-.5896-1.0837-.941-1.8103-.941-1.1334 0-2.1533.9635-2.1533 2.153v4.8957c0 .972-.7969 1.7594-1.7596 1.7594-.57 0-1.1363-.286-1.4728-.7658L.4076 5.1598C.2822 4.9798 0 5.0688 0 5.2882v4.2452c0 .2147.0656.4228.1884.599l5.4748 7.8183c.3234.462.8006.8052 1.3509.9298 1.3771.313 2.6446-.747 2.6446-2.0977v-4.893c0-.972.7875-1.7593 1.7596-1.7593h.003a1.798 1.798 0 0 1 1.4718.7658l4.9723 7.0994c.4135.5905 1.05.941 1.8093.941 1.1587 0 2.1515-.9645 2.1515-2.153v-4.8948c0-.972.7875-1.7594 1.7596-1.7594h.194a.22.22 0 0 0 .2204-.2202v-4.622a.22.22 0 0 0-.2203-.2203Z"/></svg>',
+    gemini: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/></svg>',
+    terminal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>'
+  };
   function mountAi() {
-    var cmd = 'claude mcp add --transport http queryapigate-docs ' + DOCS_MCP + ' --scope user';
-    var cursor = 'cursor://anysphere.cursor-deeplink/mcp/install?name=queryapigate-docs&config=' + encodeURIComponent(btoa(JSON.stringify({ url: DOCS_MCP })));
-    var vscode = 'vscode:mcp/install?' + encodeURIComponent(JSON.stringify({ name: 'queryapigate-docs', type: 'http', url: DOCS_MCP }));
+    var b64 = function (o) { return encodeURIComponent(btoa(JSON.stringify(o))); };
+    var run = 'Command copied: run it in a terminal.';
+    var TOOLS = [
+      { name: 'Claude', logo: LOGO.claude, label: 'Add to Claude', open: 'https://claude.ai/customize/connectors', copy: DOCS_MCP,
+        tip: 'Claude, on the web and the desktop app: copies the address and opens Connectors.', done: 'Address copied. In Connectors, click Add custom connector, paste it, then Add.' },
+      { name: 'Claude Code', logo: LOGO.claude, label: 'Copy the Claude Code command', copy: 'claude mcp add --transport http queryapigate-docs ' + DOCS_MCP + ' --scope user',
+        tip: 'Claude Code: copies the command to run in a terminal.', done: run },
+      { name: 'Cursor', logo: LOGO.cursor, label: 'Add to Cursor', href: 'cursor://anysphere.cursor-deeplink/mcp/install?name=queryapigate-docs&config=' + b64({ url: DOCS_MCP }),
+        tip: 'Add to Cursor: one click, then confirm in Cursor.', done: 'Opening Cursor. Nothing happened? Cursor isn\'t installed here.' },
+      { name: 'VS Code', logo: '<img src="' + SITE_ROOT + 'images/brands/vscode.svg" alt="" width="22" height="22">', label: 'Install in VS Code',
+        href: 'vscode:mcp/install?' + encodeURIComponent(JSON.stringify({ name: 'queryapigate-docs', type: 'http', url: DOCS_MCP })),
+        tip: 'Install in VS Code: one click, then confirm in VS Code.', done: 'Opening VS Code. Nothing happened? VS Code isn\'t installed here.' },
+      { name: 'LM Studio', logo: LOGO.lmstudio, label: 'Add to LM Studio', href: 'lmstudio://add_mcp?name=queryapigate-docs&config=' + b64({ url: DOCS_MCP }),
+        tip: 'Add to LM Studio: one click, then confirm in LM Studio.', done: 'Opening LM Studio. Nothing happened? LM Studio isn\'t installed here.' },
+      { name: 'Windsurf', logo: LOGO.windsurf, label: 'Copy the Windsurf config',
+        copy: JSON.stringify({ mcpServers: { 'queryapigate-docs': { command: 'npx', args: ['-y', 'mcp-remote', DOCS_MCP] } } }, null, 2),
+        tip: 'Windsurf: copies the config for its settings file.', done: 'Config copied: add it to ~/.codeium/windsurf/mcp_config.json.' },
+      { name: 'Gemini CLI', logo: LOGO.gemini, label: 'Copy the Gemini CLI command', copy: 'gemini mcp add --transport http queryapigate-docs ' + DOCS_MCP,
+        tip: 'Gemini CLI: copies the command to run in a terminal.', done: run },
+      { name: 'Codex', logo: LOGO.terminal, label: 'Copy the Codex command', copy: 'codex mcp add queryapigate-docs --url ' + DOCS_MCP,
+        tip: 'Codex: copies the command to run in a terminal.', done: run }
+    ];
+    var HINT = 'Pick your tool: one click installs it, or copies what to run.';
     var esc = function (t) { return t.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    var tiles = TOOLS.map(function (t, i) {
+      var attrs = ' class="rs-ai-tool" data-tool="' + i + '" aria-label="' + esc(t.label) + '" title="' + esc(t.label) + '"';
+      var inner = t.logo + '<span>' + esc(t.name) + '</span>';
+      if (t.href) return '<a href="' + esc(t.href) + '"' + attrs + '>' + inner + '</a>';
+      if (t.open) return '<a href="' + esc(t.open) + '" target="_blank" rel="noopener noreferrer"' + attrs + '>' + inner + '</a>';
+      return '<button type="button"' + attrs + '>' + inner + '</button>';
+    }).join('');
     ai = document.createElement('div'); ai.className = 'rs-ai';
     ai.innerHTML = '<div class="rs-ai-panel" id="rs-ai-panel" role="dialog" aria-label="Use these docs with AI" hidden>'
       + '<div class="rs-ai-head"><b>Use these docs with AI</b><button type="button" class="rs-ai-x" aria-label="Close">×</button></div>'
       + '<p>Connect your AI tool to QueryAPIGate\'s documentation MCP server: it searches the docs, guides and blog, and reads any page. Read-only, no sign-in.</p>'
-      + '<div class="rs-ai-code"><div class="rs-ai-code-bar">claude code<button type="button" class="rs-ai-copy">Copy</button></div><code>' + esc(cmd) + '</code></div>'
-      + '<div class="rs-ai-row"><a href="' + esc(cursor) + '">Add to Cursor</a><a href="' + esc(vscode) + '">Add to VS Code</a></div>'
-      + '<a class="rs-ai-more" href="' + SITE_ROOT + 'Docs.dc.html#ai">Codex, Claude Desktop, Windsurf →</a>'
+      + '<div class="rs-ai-tools">' + tiles + '</div>'
+      + '<p class="rs-ai-hint" aria-live="polite">' + HINT + '</p>'
+      + '<a class="rs-ai-more" href="' + SITE_ROOT + 'Docs.dc.html#ai">Other tools, and the full setup →</a>'
       + '<small>It answers questions about QueryAPIGate. To give agents your own data, QueryAPIGate itself is the <a href="' + SITE_ROOT + 'MCP.dc.html">MCP server</a>.</small></div>'
       + '<button type="button" class="rs-ai-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="rs-ai-panel" aria-label="Use these docs with AI" title="Use these docs with AI">'
       + '<svg class="rs-ai-i1" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>'
       + '<svg class="rs-ai-i2" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>'
       + '<span class="rs-ai-badge" aria-hidden="true">AI</span></button>';
-    var btn = ai.querySelector('.rs-ai-btn'), panel = ai.querySelector('.rs-ai-panel'), copy = ai.querySelector('.rs-ai-copy');
+    var btn = ai.querySelector('.rs-ai-btn'), panel = ai.querySelector('.rs-ai-panel'), hint = ai.querySelector('.rs-ai-hint'), said = null;
     // A mouse resting on the button opens the panel, and it closes a moment after the mouse leaves both. A click (a tap,
     // Enter) pins it open until a second click, a click outside, the × or Escape: the only way on touch screens.
     var pinned = false, openT, closeT;
@@ -185,9 +224,16 @@
       show(true); pinned = true;
     });
     ai.querySelector('.rs-ai-x').addEventListener('click', function () { show(false); btn.focus(); });
-    copy.addEventListener('click', function () {
-      try { navigator.clipboard && navigator.clipboard.writeText(cmd); } catch (e) {}
-      copy.textContent = 'Copied'; clearTimeout(copy._t); copy._t = setTimeout(function () { copy.textContent = 'Copy'; }, 1400);
+    function say(text, keep) { hint.textContent = text; clearTimeout(said); if (keep) said = setTimeout(function () { hint.textContent = HINT; said = null; }, 4000); }
+    ai.querySelectorAll('.rs-ai-tool').forEach(function (el) {
+      var t = TOOLS[+el.dataset.tool];
+      var tip = function () { if (!said) say(t.tip); }, untip = function () { if (!said) say(HINT); };
+      el.addEventListener('pointerenter', tip); el.addEventListener('focus', tip);
+      el.addEventListener('pointerleave', untip); el.addEventListener('blur', untip);
+      el.addEventListener('click', function () {
+        if (t.copy) { try { navigator.clipboard && navigator.clipboard.writeText(t.copy); } catch (e) {} }
+        pinned = true; say(t.done, true);
+      });
     });
     document.addEventListener('click', function (e) { if (!panel.hidden && !ai.contains(e.target)) show(false); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) { show(false); btn.focus(); } });
