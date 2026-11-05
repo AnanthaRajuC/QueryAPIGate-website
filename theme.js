@@ -3,6 +3,8 @@
    <html data-theme="dark">. The choice is kept in localStorage ('qag-theme'); without one the site is light. */
 (function () {
   var KEY = 'qag-theme', root = document.documentElement;
+  // where this script is, so links from any page (including use-cases/) reach the site's root
+  var SITE_ROOT = (function () { try { return new URL('.', document.currentScript.src).href; } catch (e) { return ''; } })();
   function stored() { try { var t = localStorage.getItem(KEY); return t === 'dark' || t === 'light' ? t : null; } catch (e) { return null; } }
   function apply(t) { root.setAttribute('data-theme', t); root.style.colorScheme = t; }
   apply(stored() || 'light');   // light unless the reader has chosen dark with the toggle
@@ -95,22 +97,102 @@
     '.rs-ghn-tag{--i:' + ico('<path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4z"/><circle cx="7.5" cy="7.5" r="1"/>') + '}',
     '.rs-ghn-star{--i:' + ico('<path d="M11.5 2.3a.5.5 0 0 1 1 0l2.3 4.7a2.1 2.1 0 0 0 1.6 1.2l5.2.7a.5.5 0 0 1 .3.9l-3.8 3.7a2.1 2.1 0 0 0-.6 1.9l.9 5.1a.5.5 0 0 1-.8.6l-4.6-2.4a2.1 2.1 0 0 0-2 0L6.4 21a.5.5 0 0 1-.8-.6l.9-5.1a2.1 2.1 0 0 0-.6-1.9L2.2 9.8a.5.5 0 0 1 .3-.9l5.2-.7a2.1 2.1 0 0 0 1.6-1.2z"/>') + '}',
     '.rs-ghn-fork{--i:' + ico('<circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V9M12 12v3"/>') + '}',
-    '@media (min-width:1181px) and (max-width:1519px){.rs-ghn{gap:6px !important}.rs-ghn-repo,.rs-ghn-tag,.rs-ghn-fork{display:none !important}.rs-ghn-facts{min-height:0;font-size:12px}.rs-ghn-star::before{display:none}}'
+    '@media (min-width:1181px) and (max-width:1519px){.rs-ghn{gap:6px !important}.rs-ghn-repo,.rs-ghn-tag,.rs-ghn-fork{display:none !important}.rs-ghn-facts{min-height:0;font-size:12px}.rs-ghn-star::before{display:none}}',
+    // "Use these docs with AI": a round button above Back to top (in its place until that appears) that opens how to
+    // connect an AI tool to the documentation MCP server (tools/docs-mcp). Never printed.
+    '.rs-ai{position:fixed;right:24px;bottom:24px;z-index:41;transition:transform .25s}.rs-ai.up{transform:translateY(-58px)}',
+    '.rs-ai-btn{position:relative;width:46px;height:46px;padding:0;border:0;border-radius:50%;background:var(--surface);color:var(--ink);cursor:pointer;display:grid;place-items:center;box-shadow:0 10px 28px -12px rgba(16,32,27,0.45),0 0 0 1px var(--line)}',
+    '.rs-ai-btn:hover,.rs-ai-btn[aria-expanded=true]{color:var(--accent-ink)}.rs-ai-btn:focus-visible{outline:2px solid var(--accent-ink);outline-offset:3px}.rs-ai-btn svg{display:block;grid-area:1/1}',
+    // the book (the docs) and sparkles (AI) take turns, every 4 seconds; held still on hover, focus or while open, and
+    // never moving for a reader who asks for reduced motion (then the book shows, with its AI badge)
+    '.rs-ai-i1{animation:rs-ai-a 8s ease-in-out infinite}.rs-ai-i2{animation:rs-ai-b 8s ease-in-out infinite}',
+    '@keyframes rs-ai-a{0%,42%{opacity:1;transform:none}50%,92%{opacity:0;transform:scale(.55) rotate(-25deg)}100%{opacity:1;transform:none}}',
+    '@keyframes rs-ai-b{0%,42%{opacity:0;transform:scale(.55) rotate(25deg)}50%,92%{opacity:1;transform:none}100%{opacity:0;transform:scale(.55) rotate(25deg)}}',
+    '.rs-ai-btn:hover svg,.rs-ai-btn:focus-visible svg,.rs-ai-btn[aria-expanded=true] svg{animation-play-state:paused}',
+    // the Home page's checklist pill effect (.pill-beam): a streak of light travels around the border, a soft glow behind it
+    '@property --rs-ai-beam{syntax:"<angle>";initial-value:0deg;inherits:false}',
+    '.rs-ai-btn::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:2px;pointer-events:none;background:conic-gradient(from var(--rs-ai-beam),transparent 0deg 200deg,oklch(0.62 0.13 170 / 0.35) 270deg,oklch(0.86 0.14 170) 340deg,#fff 352deg,transparent 360deg);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);animation:rs-ai-beam 3.2s linear infinite}',
+    '.rs-ai-btn::after{content:"";position:absolute;inset:-6px;border-radius:inherit;pointer-events:none;z-index:-1;background:conic-gradient(from var(--rs-ai-beam),transparent 0deg 260deg,oklch(0.62 0.13 170 / 0.55) 340deg,transparent 360deg);filter:blur(10px);animation:rs-ai-beam 3.2s linear infinite}',
+    '.rs-ai-btn:hover::before,.rs-ai-btn:hover::after{animation-duration:1.6s}',
+    '@keyframes rs-ai-beam{to{--rs-ai-beam:360deg}}',
+    // the badge: white on the brand's near-black green (about 16:1), or near-black on its bright green in dark mode (about 6:1)
+    '.rs-ai-badge{position:absolute;top:-5px;right:-7px;font:800 11px/1 "Instrument Sans",system-ui,sans-serif;letter-spacing:.03em;padding:3px 5px 3px;border-radius:999px;background:#10201b;color:#fff;box-shadow:0 0 0 2px var(--bg)}',
+    ':root[data-theme=dark] .rs-ai-badge{background:#22a58c;color:#0b100f}',
+    '.rs-ai-panel{box-sizing:border-box;position:absolute;right:0;bottom:calc(100% + 12px);width:min(370px,calc(100vw - 32px));display:grid;gap:12px;padding:16px;border-radius:14px;background:var(--surface);color:var(--ink);border:1px solid var(--line);box-shadow:0 24px 48px -20px rgba(16,32,27,0.45);font:14px/1.5 "Instrument Sans",system-ui,sans-serif;text-align:left}',
+    '.rs-ai-panel::after{content:"";position:absolute;left:0;right:0;top:100%;height:14px}',
+    '.rs-ai-panel[hidden]{display:none}.rs-ai-head{display:flex;align-items:center;gap:10px}.rs-ai-head b{font:700 15.5px/1.3 "Schibsted Grotesk",sans-serif;margin-right:auto}',
+    '.rs-ai-x{border:0;background:none;color:var(--ink-3);cursor:pointer;font-size:20px;line-height:1;padding:2px 4px;border-radius:6px}.rs-ai-x:hover{color:var(--ink)}',
+    '.rs-ai-panel p{margin:0;color:var(--ink-2);font-size:13.5px}.rs-ai-panel small{color:var(--ink-3);font-size:12.5px;line-height:1.45}.rs-ai-panel a{color:var(--accent-ink)}',
+    '.rs-ai-code{background:#10201b;border-radius:10px;overflow:hidden}.rs-ai-code-bar{display:flex;align-items:center;padding:6px 8px 6px 12px;border-bottom:1px solid #1b2f29;font:11px "JetBrains Mono",monospace;color:#7c8f88}',
+    '.rs-ai-code-bar button{margin-left:auto;font:500 11px "JetBrains Mono",monospace;color:#c5d3cd;background:#1b2f29;border:1px solid #2a3d37;border-radius:6px;padding:3px 9px;cursor:pointer}.rs-ai-code-bar button:hover{background:#24403a;color:#e6efeb}',
+    '.rs-ai-code code{display:block;padding:10px 12px;font:12px/1.6 "JetBrains Mono",monospace;color:#e6efeb;overflow-wrap:anywhere}',
+    '.rs-ai-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rs-ai-row a{display:flex;align-items:center;justify-content:center;padding:8px 10px;border-radius:9px;border:1px solid var(--line-2);color:var(--ink) !important;font-weight:600;font-size:13.5px;text-decoration:none !important}.rs-ai-row a:hover{border-color:var(--accent-ink);color:var(--accent-ink) !important}',
+    '.rs-ai-more{font-weight:600;font-size:13.5px}',
+    '@media (max-width:640px){.rs-ai{right:16px;bottom:calc(16px + env(safe-area-inset-bottom))}.rs-ai.up{transform:translateY(-54px)}.rs-ai-btn{width:42px;height:42px}}',
+    '@media (prefers-reduced-motion:reduce){.rs-ai{transition:none}.rs-ai-i1,.rs-ai-i2{animation:none}.rs-ai-i2{opacity:0}.rs-ai-btn::before,.rs-ai-btn::after{animation:none}.rs-ai-btn::before{background:oklch(0.62 0.13 170 / 0.6)}}',
+    '@media print{.rs-ai{display:none !important}}',
   ].join('');
   var style = document.createElement('style'); style.id = 'qag-theme'; style.textContent = css;
   (document.head || root).appendChild(style);
 
   // A thin bar along the top edge shows how far down the page the reader is.
   var bar, pending = false;
-  var top, ring, C = 2 * Math.PI * 21;
+  var top, ring, ai, C = 2 * Math.PI * 21;
   function progress() {
     pending = false;
     var doc = document.documentElement, max = doc.scrollHeight - window.innerHeight;
     var f = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
     bar.style.transform = 'scaleX(' + f + ')';
-    if (top) { ring.style.strokeDashoffset = String(C * (1 - f)); top.classList.toggle('on', window.scrollY > window.innerHeight * 0.9); }
+    if (top) { ring.style.strokeDashoffset = String(C * (1 - f)); top.classList.toggle('on', window.scrollY > window.innerHeight * 0.9); if (ai) ai.classList.toggle('up', top.classList.contains('on')); }
   }
   function tick() { if (!pending) { pending = true; requestAnimationFrame(progress); } }
+  // The documentation MCP server, from any page: the Claude Code command to copy, one-click installs for Cursor and
+  // VS Code (their documented install-link formats), and the full setup on the Docs page.
+  var DOCS_MCP = 'https://queryapigate-docs.queryapigate-docs-mcp.workers.dev/mcp';
+  function mountAi() {
+    var cmd = 'claude mcp add --transport http queryapigate-docs ' + DOCS_MCP + ' --scope user';
+    var cursor = 'cursor://anysphere.cursor-deeplink/mcp/install?name=queryapigate-docs&config=' + encodeURIComponent(btoa(JSON.stringify({ url: DOCS_MCP })));
+    var vscode = 'vscode:mcp/install?' + encodeURIComponent(JSON.stringify({ name: 'queryapigate-docs', type: 'http', url: DOCS_MCP }));
+    var esc = function (t) { return t.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    ai = document.createElement('div'); ai.className = 'rs-ai';
+    ai.innerHTML = '<div class="rs-ai-panel" id="rs-ai-panel" role="dialog" aria-label="Use these docs with AI" hidden>'
+      + '<div class="rs-ai-head"><b>Use these docs with AI</b><button type="button" class="rs-ai-x" aria-label="Close">×</button></div>'
+      + '<p>Connect your AI tool to QueryAPIGate\'s documentation MCP server: it searches the docs, guides and blog, and reads any page. Read-only, no sign-in.</p>'
+      + '<div class="rs-ai-code"><div class="rs-ai-code-bar">claude code<button type="button" class="rs-ai-copy">Copy</button></div><code>' + esc(cmd) + '</code></div>'
+      + '<div class="rs-ai-row"><a href="' + esc(cursor) + '">Add to Cursor</a><a href="' + esc(vscode) + '">Add to VS Code</a></div>'
+      + '<a class="rs-ai-more" href="' + SITE_ROOT + 'Docs.dc.html#ai">Codex, Claude Desktop, Windsurf →</a>'
+      + '<small>It answers questions about QueryAPIGate. To give agents your own data, QueryAPIGate itself is the <a href="' + SITE_ROOT + 'MCP.dc.html">MCP server</a>.</small></div>'
+      + '<button type="button" class="rs-ai-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="rs-ai-panel" aria-label="Use these docs with AI" title="Use these docs with AI">'
+      + '<svg class="rs-ai-i1" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>'
+      + '<svg class="rs-ai-i2" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>'
+      + '<span class="rs-ai-badge" aria-hidden="true">AI</span></button>';
+    var btn = ai.querySelector('.rs-ai-btn'), panel = ai.querySelector('.rs-ai-panel'), copy = ai.querySelector('.rs-ai-copy');
+    // A mouse resting on the button opens the panel, and it closes a moment after the mouse leaves both. A click (a tap,
+    // Enter) pins it open until a second click, a click outside, the × or Escape: the only way on touch screens.
+    var pinned = false, openT, closeT;
+    function show(open) { panel.hidden = !open; btn.setAttribute('aria-expanded', String(open)); if (!open) pinned = false; }
+    ai.addEventListener('pointerenter', function (e) {
+      if (e.pointerType !== 'mouse') return;
+      clearTimeout(closeT); if (panel.hidden) openT = setTimeout(function () { show(true); }, 150);
+    });
+    ai.addEventListener('pointerleave', function (e) {
+      if (e.pointerType !== 'mouse') return;
+      clearTimeout(openT); if (!pinned) closeT = setTimeout(function () { show(false); }, 350);
+    });
+    btn.addEventListener('click', function () {
+      clearTimeout(openT); clearTimeout(closeT);
+      if (!panel.hidden && pinned) { show(false); return; }
+      show(true); pinned = true;
+    });
+    ai.querySelector('.rs-ai-x').addEventListener('click', function () { show(false); btn.focus(); });
+    copy.addEventListener('click', function () {
+      try { navigator.clipboard && navigator.clipboard.writeText(cmd); } catch (e) {}
+      copy.textContent = 'Copied'; clearTimeout(copy._t); copy._t = setTimeout(function () { copy.textContent = 'Copy'; }, 1400);
+    });
+    document.addEventListener('click', function (e) { if (!panel.hidden && !ai.contains(e.target)) show(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !panel.hidden) { show(false); btn.focus(); } });
+    document.body.appendChild(ai);
+  }
   function mount() {
     if (bar || !document.body) return;
     bar = document.createElement('div'); bar.className = 'rs-progress'; bar.setAttribute('aria-hidden', 'true'); document.body.appendChild(bar);
@@ -125,6 +207,7 @@
       var t = document.querySelector('a[href], button, input'); if (t && t.focus) try { t.focus({ preventScroll: true }); } catch (e) {}
     });
     document.body.appendChild(top);
+    mountAi();
     window.addEventListener('scroll', tick, { passive: true }); window.addEventListener('resize', tick); progress();
     var tries = 0, t = setInterval(function () { progress(); if (++tries > 20) clearInterval(t); }, 250);
   }
