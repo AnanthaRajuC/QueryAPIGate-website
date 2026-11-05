@@ -2,7 +2,10 @@
 
 Writes, at the site root:
   search-index.json  one entry per heading section (documents, guides) and one per site page; read by search.js
-  llms.txt           a short index of every document and guide, for AI tools that read it
+  llms.txt           a short index of every document and guide, for AI tools that read it: each links to its markdown,
+                     which a tool can read, and names its page on the site, which renders that markdown with JavaScript
+  pages.json         every document, guide and blog post: its key (d=, g=, p=), title, kind, category, markdown and page;
+                     read by the documentation MCP server (tools/docs-mcp)
   llms-full.txt      every document and guide in full, one file
   sitemap.xml        every page, use case, document, guide and blog post, for search engines
   feed.xml           an Atom feed of the blog posts in guides.js, newest first
@@ -14,6 +17,7 @@ import html, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE = 'https://anantharajuc.github.io/QueryAPIGate-website/'
+DOCS_MCP = 'https://queryapigate-docs.queryapigate-docs-mcp.workers.dev/mcp'  # tools/docs-mcp, on Cloudflare Workers
 SKIP_PAGES = {'Guide.dc.html', 'QueryAPIGate Architecture.dc.html'}
 
 
@@ -113,14 +117,17 @@ def page_entries():
 def build():
     gjs = open(os.path.join(ROOT, 'guides.js'), encoding='utf-8').read()
     guides, docs, posts = load_js_export(gjs, 'guides'), load_js_export(gjs, 'docs'), load_js_export(gjs, 'posts')
-    entries, full, short = [], [], []
+    entries, full, short, pages = [], [], [], []
+    def listed(key, title, kind, cat, md_path, url, extra=''):
+        pages.append({'key': key, 'title': title, 'kind': kind, 'cat': cat, 'md': md_path, 'url': url, **({'date': extra} if extra else {})})
+        short.append(f"- [{title}]({SITE}{md_path}): {kind}, {cat}{', ' + extra if extra else ''}. On the site: {SITE}{url}")
     for d in docs:
         p = os.path.join(ROOT, d['path'])
         if not os.path.exists(p): continue
         md = open(p, encoding='utf-8').read()
         url = 'Guide.dc.html?d=' + d['slug']
         entries += md_entries('doc', d['title'], url, 'Documentation · ' + d['cat'], md)
-        short.append(f"- [{d['title']}]({SITE}{url}): documentation, {d['cat']}")
+        listed('d=' + d['slug'], d['title'], 'documentation', d['cat'], d['path'], url)
         full.append(f"# {d['title']}\nSource: {SITE}{url}\n\n{md.strip()}\n")
     for g in guides:
         p = os.path.join(ROOT, 'how-to', g['slug'] + '.md')
@@ -128,7 +135,7 @@ def build():
         md = open(p, encoding='utf-8').read()
         url = 'Guide.dc.html?g=' + g['slug']
         entries += md_entries('guide', g['title'], url, 'Guide ' + g['num'] + ' · ' + g['cat'], md)
-        short.append(f"- [Guide {g['num']}: {g['title']}]({SITE}{url}): how-to, {g['cat']}")
+        listed('g=' + g['slug'], f"Guide {g['num']}: {g['title']}", 'how-to', g['cat'], 'how-to/' + g['slug'] + '.md', url)
         full.append(f"# Guide {g['num']}: {g['title']}\nSource: {SITE}{url}\n\n{md.strip()}\n")
     for b in posts:
         p = os.path.join(ROOT, 'blog', b['slug'] + '.md')
@@ -136,7 +143,7 @@ def build():
         md = open(p, encoding='utf-8').read()
         url = 'Guide.dc.html?p=' + b['slug']
         entries += md_entries('post', b['title'], url, 'Blog · ' + b['cat'], md)
-        short.append(f"- [{b['title']}]({SITE}{url}): blog, {b['cat']}, {b['date']}")
+        listed('p=' + b['slug'], b['title'], 'blog', b['cat'], 'blog/' + b['slug'] + '.md', url, b['date'])
         full.append(f"# {b['title']}\nSource: {SITE}{url}\n\n{md.strip()}\n")
     entries += page_entries()
     changed = []
@@ -146,10 +153,13 @@ def build():
         if old != data:
             open(p, 'w', encoding='utf-8').write(data); changed.append(rel)
     write('search-index.json', json.dumps(entries, ensure_ascii=False, separators=(',', ':')))
+    write('pages.json', json.dumps(pages, ensure_ascii=False, indent=1) + '\n')
     intro = ('# QueryAPIGate\n\n> One governed gate between your databases and everything that asks them for data: '
              'saved SQL published as REST endpoints, MCP tools for AI agents, live events and scheduled exports, '
              'with identity, grants, parameter validation, masking and an audit record on every call. Self-hosted, Python, Apache-2.0.\n\n'
-             f'Site: {SITE}\nRepository: https://github.com/AnanthaRajuC/QueryAPIGate\nEverything below in one file: {SITE}llms-full.txt\n\n')
+             f'Site: {SITE}\nRepository: https://github.com/AnanthaRajuC/QueryAPIGate\nEverything below in one file: {SITE}llms-full.txt\n'
+             f'Documentation MCP server (search these docs and read any page from an AI agent; read-only, no sign-in): {DOCS_MCP}\n'
+             'Each link below is the markdown of a page; the site renders it at the address that follows.\n\n')
     # The glossary page's terms, as plain text, so AI tools reading these files get the vocabulary right.
     gl, gl_md = os.path.join(ROOT, 'Glossary.dc.html'), ''
     if os.path.exists(gl):

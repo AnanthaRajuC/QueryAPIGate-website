@@ -11,8 +11,13 @@ permissions:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      # the documentation MCP server is redeployed only once these are set (Settings → Secrets and variables → Actions)
+      HAS_CLOUDFLARE: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
     steps:
       - uses: actions/checkout@v4
+      - name: Note where this run starts
+        run: echo "BEFORE=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -28,3 +33,19 @@ jobs:
           if git diff --cached --quiet; then echo "Nothing to sync."; exit 0; fi
           git commit -m "Sync guides and docs from QueryAPIGate ($(date -u +%Y-%m-%d))"
           git push
+      # The documentation MCP server has the search index built into it (tools/docs-mcp): when the sync changed the
+      # index, deploy it again so search finds what the site now says. Pages themselves it always reads live.
+      - uses: actions/setup-node@v4
+        if: env.HAS_CLOUDFLARE == 'true'
+        with:
+          node-version: '22'
+      - name: Redeploy the documentation MCP server if its index changed
+        if: env.HAS_CLOUDFLARE == 'true'
+        working-directory: tools/docs-mcp
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if git diff --quiet "$BEFORE" HEAD -- ../../search-index.json ../../pages.json; then echo "The index didn't change; nothing to deploy."; exit 0; fi
+          npm ci
+          npx wrangler deploy

@@ -1,0 +1,13 @@
+{
+  "name": "queryapigate-docs-mcp",
+  "private": true,
+  "type": "module",
+  "description": "The QueryAPIGate documentation MCP server, a Cloudflare Worker: search the docs, guides and blog, read any page as markdown",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "4.157.0"
+  }
+}

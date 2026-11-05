@@ -619,6 +619,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
       <div class="fs-card"><h3>A separate process, not a mode</h3><p>MCP's HTTP transport is ASGI-native, while the REST API is WSGI (Flask on gunicorn). So <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em">queryapigate mcp</code> is its own server, started with the same variables.</p></div>
       <div class="fs-card"><h3>The same code, by direct import</h3><p>What matters for correctness, reusing the project's own connection-grant checks, caching and audit logging, happens by direct Python import, not an HTTP round-trip back to the REST API, whichever process each server runs in.</p></div>
     </div>
+    <div style="display:grid;gap:8px;padding:18px 20px;border:1px solid var(--line);border-radius:12px;background:var(--surface)"><b style="font-size:15.5px;font-weight:600">Learning QueryAPIGate? Let your agent read its docs.</b><p style="margin:0;font-size:14.5px;color:var(--ink-2);text-wrap:pretty">A separate, read-only MCP server answers questions about QueryAPIGate itself, from its documentation, guides and blog. In Claude Code: <code style="font-family:'JetBrains Mono',monospace;font-size:0.9em;overflow-wrap:anywhere">claude mcp add --transport http queryapigate-docs https://queryapigate-docs.queryapigate-docs-mcp.workers.dev/mcp</code></p><a href="Docs.dc.html#ai" style="font-size:14.5px;font-weight:600;color:var(--accent-ink)">Other clients, and what it can do →</a></div>
   </section>
 
   <section id="auth" class="f-sec2" style="scroll-margin-top:84px">

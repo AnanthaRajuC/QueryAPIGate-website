@@ -5,6 +5,8 @@
 Site: https://anantharajuc.github.io/QueryAPIGate-website/
 Repository: https://github.com/AnanthaRajuC/QueryAPIGate
 Everything below in one file: https://anantharajuc.github.io/QueryAPIGate-website/llms-full.txt
+Documentation MCP server (search these docs and read any page from an AI agent; read-only, no sign-in): https://queryapigate-docs.queryapigate-docs-mcp.workers.dev/mcp
+Each link below is the markdown of a page; the site renders it at the address that follows.
 
 # Installation and setup
 Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=INSTALLATION_AND_SETUP

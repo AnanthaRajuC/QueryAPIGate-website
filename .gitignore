@@ -13,6 +13,7 @@ desktop.ini
 
 # Local tooling, logs and secrets
 node_modules/
+.wrangler/
 __pycache__/
 *.log
 .env
