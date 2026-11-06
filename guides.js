@@ -583,6 +583,15 @@ export const guides = [
   "time": "20 min",
   "timeMin": 20,
   "outcome": "Every run recorded in ClickHouse instead of the metadata store - history, the event log and usage rollups - written in batches by the Python server and by the Rust data plane, if you run one."
+ },
+ {
+  "num": "66",
+  "slug": "66-serve-a-lakehouse-through-trino",
+  "title": "Serve a lakehouse through Trino, to apps and AI agents",
+  "cat": "Start",
+  "time": "15 min",
+  "timeMin": 15,
+  "outcome": "Iceberg tables on S3-compatible storage, read through Trino and joined with a PostgreSQL database, served as governed REST endpoints and MCP tools. An AI agent gets hashed emails and three tables, a partner's app gets one endpoint, and repeat calls skip Trino entirely."
  }
 ];
 

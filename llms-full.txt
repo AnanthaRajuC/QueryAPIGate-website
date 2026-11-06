@@ -1171,7 +1171,9 @@ read-only and read-write connections separately would trip constantly):
 
 > Experimental (ADR 0026). `trino` turns the [Trino](https://trino.io/) distributed SQL engine - which federates
 > many catalogs (Hive, Iceberg, Delta, Kafka, object stores, other databases) behind one endpoint - into a governed
-> source. Install with `pip install "queryapigate[trino]"`.
+> source. Install with `pip install "queryapigate[trino]"` (the Docker image has it from 0.50). A lakehouse to try it
+> on - Iceberg on S3-compatible storage, joined with PostgreSQL, in Docker Compose:
+> [how-to 66](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/66-serve-a-lakehouse-through-trino.md).
 
 ```json
 {
@@ -2344,8 +2346,10 @@ see everything. It protects teams from each other's mistakes and reach, not from
 - also answers under `/w/<workspace>/...`, in that workspace: `/w/team-a/q/orders`, `/w/team-a/api/v1/queries`.
 
 - **An API key** belongs to the workspace it was created in, and every call it makes is there - with or without the
-  prefix. A signed-in user's role is found by name in the workspace the path names (`default` without one), so the
-  users of another workspace call `/w/<workspace>/...`. MCP: a key's tools are its workspace's queries.
+  prefix. MCP: a key's tools are its workspace's queries.
+- **A signed-in user** (a JWT) belongs to the workspace their token's `QUERYAPIGATE_JWT_WORKSPACE_CLAIM` claim names,
+  or `default` when that setting is unset; their role is found by name there. Like a key, they call with or without
+  the prefix, and a prefix naming another workspace is `404`.
 - **An administrator** acts in the workspace the path names, or `default`. One whose roles are all memberships names
   their workspace; unprefixed, they get `403 workspace_required`.
 - **Naming a workspace you aren't in** - or one that doesn't exist - is `404 workspace_not_found`, either way, so a
@@ -2353,6 +2357,11 @@ see everything. It protects teams from each other's mistakes and reach, not from
 - **Kept apart** in each workspace: its run history, usage quotas (two workspaces' keys of one name are two
   callers), cached responses and the cache's management, write requests, descriptions and configuration-file records.
   A local-folder destination is only in `default`: the folders exports may write under are the server's.
+- **Files on the server are a server-wide role's.** Saving, testing or repointing a connection that opens local files -
+  SQLite, H2, JDBC, a DuckDB file or local `allowed_paths` - takes a server-wide role (`403 role_forbidden`
+  otherwise), since whoever chooses the path could read any file the server can. A workspace's own owner runs the ones
+  a server administrator set up there, switches them on and off and changes their password, and sets up DuckDB over
+  remote storage (`s3://`, `gs://`, `https://`...) and server databases themselves.
 - **The Console**: once there is a second workspace, a switcher under the wordmark picks the one the tab works in -
   every screen then reads and changes that workspace's things - and the **Workspaces** screen lists them, creates and
   removes them (owners), and manages each one's members. An administrator whose roles are all in workspaces starts
@@ -2950,9 +2959,14 @@ non-Postgres connection - never run with the raw text bound where a vector belon
 
 ## Tracing (OpenTelemetry)
 
-> **Experimental** - new in 0.23 ([ADR 0010](adr/0010-tracing-and-security-headers.md)); span names and attributes may
-> change in any minor release, always noted in the changelog, as OpenTelemetry's conventions for databases and AI
-> agents settle. What never goes into a span won't change.
+> **Stable** since 0.50, under the compatibility promise ([what that means](../CHANGELOG.md#versioning-and-compatibility)),
+> new in 0.23 ([ADR 0010](adr/0010-tracing-and-security-headers.md)). Spans, attributes and resource attributes may
+> still be added - a backend ignores what it doesn't know; the span names, the attributes below and what never goes
+> into a span stay as they are. Two exceptions follow OpenTelemetry until it marks them stable, each change noted in
+> the changelog: `db.response.returned_rows` and `db.response.affected_rows`, and the MCP span (its name and its
+> `gen_ai.*` attributes). Limits: with an OTLP endpoint set, the [Rust data plane](DEPLOYMENT.md) forwards every call
+> to Python, so a traced `/q/` call doesn't get the data plane's speed; a streamed result's database span ends at
+> its first row; spans are exported over OTLP/HTTP only (not gRPC); a collector that's down costs spans, not requests.
 
 Spans to your tracing backend (Jaeger, Tempo, Honeycomb, Datadog...) through OTLP, so the time between your app and
 its database shows where it went - authentication, the query, serialising the result. Install the extra and set an
@@ -2973,7 +2987,7 @@ process - `serve`, `mcp`, `events`, an export - is its own `service.instance.id`
 |---|---|---|
 | `GET /q/<name>` - the route rule | server | `http.request.method`, `http.route`, `http.response.status_code`, `url.scheme`, `client.address`, `queryapigate.request_id`, `queryapigate.caller`; `error.type` (the error `code`) on a 4xx or 5xx |
 | `query <name>` | internal | `queryapigate.query`, `.version`, `.connection`, `.rows`, `.masked`, `.cache` (`hit`, `miss`); `.agent_write` for an agent's write |
-| `SELECT <connection>` (the statement's kind) | client | `db.system.name`, `db.operation.name`, `db.namespace` (a network database's name), `server.address`, `server.port`, `db.response.returned_rows` or `db.response.affected_rows` |
+| `SELECT sales` - the statement's kind and its target, as [OpenTelemetry's database conventions](https://opentelemetry.io/docs/specs/semconv/database/database-spans/) name it: the collection (`find orders`), else the database, else the server (`SELECT db.internal:5432`); just `SELECT` for a SQLite or DuckDB file | client | `db.system.name`, `db.operation.name`, `db.collection.name` (MongoDB), `db.namespace` (a network database's name), `server.address`, `server.port`, `queryapigate.connection`, `db.response.returned_rows` or `db.response.affected_rows` |
 | `serialize <format>` | internal | `queryapigate.format`, `queryapigate.bytes` |
 | `tools/call <tool>` (MCP) | server | `gen_ai.tool.name`, `queryapigate.caller`; `error.type` when the tool failed |
 | `GET /events` | server | opening a live stream - one span, not one per event |
@@ -7509,6 +7523,14 @@ not between a hosted service's tenants. What it holds against, and how:
   what only a server-wide role does (`adminroles.SERVER_ONLY`): administrators, settings, re-keying, erasing a
   person, creating workspaces, `/metrics` and the instance list. A member naming a workspace they aren't in gets
   `404`.
+- **A file on the server is a server-wide role's to open.** Whoever chooses a connection's path reads any file the
+  server process can - another workspace's SQLite or DuckDB database, a secret's file, a key file. So saving, testing
+  or repointing a connection that opens local files - SQLite, H2, JDBC, a DuckDB file or local `allowed_paths` -
+  takes a server-wide role, in every workspace, through the API and configuration files alike
+  (`services/connections.refuse_local_files()`). A role from a membership still runs the ones a server administrator
+  set up for its workspace, switches them on and off and changes their password, and sets up DuckDB over remote
+  storage (`s3://`, `https://`...) itself. Before 0.50 a workspace owner could set any path (found in a review of the
+  boundary on 2026-11-05, and confirmed by reading another workspace's database and a key file).
 - **What happened is per workspace**: audit entries carry their workspace inside the hash chain, so rewriting whose
   an entry was breaks the chain; a member reads only their workspace's. Events reach only their workspace's
   subscribers; the response cache, and its management, are per workspace.
@@ -7520,10 +7542,10 @@ What it doesn't protect against - stated in the documentation's first paragraph 
   A bug outside the lookups above - in the process, or in a driver - is a bug for every workspace. No per-workspace
   resource limits yet: one workspace can exhaust the shared connection pool, event-stream slots or database load for
   the others (each key's own rate limits and quotas still apply).
-- **The JVM, for a workspace owner.** Creating a connection is a workspace owner's to do (`connections.write` isn't
-  server-only), and an experimental H2 or JDBC connection is opened read-write on one shared JVM with only the SQL
-  guard as its lock - so the H2/JDBC process-level risk above now reaches any workspace's owner, where before it took
-  a server administrator. Leave H2/JDBC off (they are experimental) where workspace owners aren't fully trusted.
+- **The JVM, for what a server administrator set up.** An experimental H2 or JDBC connection is opened read-write on
+  one shared JVM with only the SQL guard as its lock. Setting one up, or changing anything but its `active` flag and
+  password, is a server-wide role's (above), so a workspace's owner can't choose its URL or jar - but one a server
+  administrator sets up in a workspace carries the H2/JDBC process-level risk above to whoever runs SQL on it there.
 - **The databases themselves.** Two workspaces can each have a connection to the same database host; what a
   workspace's connection can read is its database account's grants, as it always was.
 - **Folders.** A local-folder destination is allowed only in `default`: `QUERYAPIGATE_EXPORT_DIRS` is the server's,
@@ -7874,7 +7896,7 @@ is the deployer's choice (`QUERYAPIGATE_HSTS_MAX_AGE`), sent only over HTTPS. `/
 loads one exact Swagger UI release with Subresource Integrity hashes and a CSP allowing only those files: a compromised
 CDN, or a bad release of the library, can't run script there. The Console bundles everything it runs.
 
-**Tracing** (ADR 0010, experimental, off unless an OTLP endpoint is set) sends spans to a collector the deployer runs.
+**Tracing** (ADR 0010, stable since 0.50, off unless an OTLP endpoint is set) sends spans to a collector the deployer runs.
 Its readers are treated like the audit log's: no data access. So spans carry the route, the saved query's name and
 the row count - never a parameter value, row, statement, header or credential, and not exception messages, which can
 carry values; a test enforces it on every front door. A caller's `traceparent` is accepted, which also lets it ask
@@ -14283,7 +14305,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: export
-              image: ghcr.io/anantharajuc/queryapigate:0.49.0
+              image: ghcr.io/anantharajuc/queryapigate:0.50.0
               command: ["queryapigate", "export", "example_rentals_since", "--out", "/exports/{name}_{date}.csv"]
               envFrom:
                 - secretRef:
@@ -14408,7 +14430,7 @@ queryapigate/
 ```yaml
 services:
   queryapigate:
-    image: ghcr.io/anantharajuc/queryapigate:0.49.0   # pin a version - upgrades should be deliberate
+    image: ghcr.io/anantharajuc/queryapigate:0.50.0   # pin a version - upgrades should be deliberate
     restart: unless-stopped
     env_file: .env
     environment:
@@ -14711,11 +14733,11 @@ From the changelog's [versioning policy](../CHANGELOG.md#versioning-and-compatib
 3. **Pin the target version** - never upgrade by accident:
 
    ```bash
-   pip install "queryapigate[server,postgres]==0.49.0"      # not just "queryapigate"
+   pip install "queryapigate[server,postgres]==0.50.0"      # not just "queryapigate"
    ```
 
    ```yaml
-   image: ghcr.io/anantharajuc/queryapigate:0.49.0           # not :latest
+   image: ghcr.io/anantharajuc/queryapigate:0.50.0           # not :latest
    ```
 
 ## During: just start it
@@ -17179,8 +17201,10 @@ Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=51-s
 Jaeger here, or any backend that takes OpenTelemetry (Tempo, Honeycomb, Datadog, Grafana Cloud) - showing where the
 time went.
 
-> **Experimental** - tracing is new in 0.23 and its span names and attributes may change in any minor release, always
-> noted in the changelog ([what that means](../CHANGELOG.md#versioning-and-compatibility)).
+> **Stable** since 0.50 ([what that means](../CHANGELOG.md#versioning-and-compatibility)): span names and attributes
+> stay as they are, and more may be added. The exceptions, which follow OpenTelemetry until it marks them stable:
+> `db.response.returned_rows`/`affected_rows` and the MCP span. The span list and its limits:
+> [Tracing](../documentation/API.md#tracing-opentelemetry).
 
 Every command and result below was run against a real server (gunicorn, one worker, 8 threads), a PostgreSQL 16
 `orders` table of 3,000 rows behind the saved query `orders_by_customer`, and Jaeger 2.5 as the collector.
@@ -17203,8 +17227,7 @@ OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 OTEL_SERVICE_NAME=queryapigate
   gunicorn --bind 127.0.0.1:5000 --workers 1 --worker-class gthread --threads 8 "queryapigate.app:create_app()"
 ```
 
-The log says it's on - *Experimental: Tracing with OpenTelemetry (OTEL_EXPORTER_OTLP_ENDPOINT) - may change in any
-minor release* - and **Settings → Tracing** shows the endpoint, the service name and the sampler. Every other
+**Settings → Tracing** shows the endpoint, the service name and the sampler. Every other
 OpenTelemetry variable works as it does for any service (`OTEL_RESOURCE_ATTRIBUTES`, `OTEL_EXPORTER_OTLP_HEADERS` for
 a backend's token, ...). Without the extra installed, setting the endpoint stops the server: *An OTLP endpoint is set
 ... run `pip install "queryapigate[otel]"`*.
@@ -17231,12 +17254,14 @@ spans inside it:
 shop-backend: GET /customers/{id}/orders   39.4 ms
   queryapigate: GET /q/<name>              12.8 ms   http.route=/q/<name>  status 200  caller=shop-backend
     queryapigate: query orders_by_customer 11.7 ms   queryapigate.rows=10
-      queryapigate: SELECT shop            10.1 ms   db.system.name=postgresql  db.namespace=postgres
+      queryapigate: SELECT postgres        10.1 ms   db.system.name=postgresql  db.namespace=postgres
                                                      server.address=localhost  db.response.returned_rows=10
       queryapigate: serialize json          0.1 ms   queryapigate.format=json  queryapigate.bytes=226
 ```
 
-So of 12.8 ms in QueryAPIGate, 10.1 went to PostgreSQL. Each span records only what [the list](../documentation/API.md#tracing-opentelemetry)
+So of 12.8 ms in QueryAPIGate, 10.1 went to PostgreSQL. The database span is named as OpenTelemetry's database
+conventions say - the statement's kind and the database, `SELECT postgres` - and the connection (`shop`) is its
+`queryapigate.connection` attribute. Each span records only what [the list](../documentation/API.md#tracing-opentelemetry)
 says. The parameter (`acme`), the statement, the API key and the database password appear nowhere in the stored trace
 (checked by searching it), and that holds for every span: tests fail if one ever does.
 
@@ -18977,7 +19002,8 @@ curl -X POST http://127.0.0.1:5000/api/v1/connections -H 'X-API-Key: demo-key' -
 }'
 ```
 
-Needs `pip install "queryapigate[trino]"`. The fields that are specific to Trino:
+Needs `pip install "queryapigate[trino]"` - the Docker image has it from 0.50. A whole lakehouse to try it on, in
+Docker Compose: [guide 66](66-serve-a-lakehouse-through-trino.md). The fields that are specific to Trino:
 
 - **`database` is the Trino *catalog*** (here `tpch`, a catalog every Trino ships with). This is the one field that
   reads differently from the SQL dialects, where `database` is a database on the server.
@@ -19436,7 +19462,7 @@ dataplane:
 
 ```bash
 helm upgrade --install qag oci://ghcr.io/anantharajuc/charts/queryapigate -f values.yaml
-kubectl logs deploy/qag-queryapigate -c dataplane   # queryapigate-dataplane 0.49.0: listening on 0.0.0.0:5000, ...
+kubectl logs deploy/qag-queryapigate -c dataplane   # queryapigate-dataplane 0.50.0: listening on 0.0.0.0:5000, ...
 ```
 
 Behind the chart's ingress it serves as above: the chart sets `QUERYAPIGATE_TRUST_PROXY=1`, and the data plane reads
@@ -19450,7 +19476,7 @@ plane on port 5000. Both need the same secret, settings and store.
 
 ```bash
 export QUERYAPIGATE_DATAPLANE_SECRET="$(openssl rand -hex 32)"   # at least 16 characters; the same for both
-IMAGE=ghcr.io/anantharajuc/queryapigate:0.49.0
+IMAGE=ghcr.io/anantharajuc/queryapigate:0.50.0
 docker run -d --name qag -p 5000:5000 -v qag-data:/data --env-file qag.env \
     -e QUERYAPIGATE_DATAPLANE_SECRET -e QUERYAPIGATE_BIND=127.0.0.1:5001 "$IMAGE"
 docker run -d --name qag-dataplane --network container:qag -v qag-data:/data --env-file qag.env \
@@ -19660,6 +19686,153 @@ queryapigate runs leave-clickhouse   # with QUERYAPIGATE_RUN_STORE_URL still set
 
 Then unset `QUERYAPIGATE_RUN_STORE_URL` on every instance and restart them. The metadata store's event ids continue
 above ClickHouse's, so clients still resume. The runs already in ClickHouse stay there; nothing is copied back.
+
+
+# Guide 66: Serve a lakehouse through Trino, to apps and AI agents
+Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=66-serve-a-lakehouse-through-trino
+
+# How to serve a lakehouse through Trino, to apps and AI agents
+
+**Time:** 15 minutes, with Docker. **You'll end up with:** Iceberg tables on S3-compatible storage, read through
+Trino and joined with a PostgreSQL database, served as governed REST endpoints and MCP tools. An AI agent gets hashed
+emails and three tables, a partner's app gets one endpoint, and repeat calls skip Trino entirely.
+
+> Trino connections are **experimental** ([ADR 0026](../documentation/adr/0026-trino-connections.md)): what they cover
+> and their limits are in [Trino connections](../documentation/DATABASE_CONNECTION_CONFIGURATION.md#trino-connections).
+> [Connect to Trino](61-connect-to-trino.md) is the same connection, step by step, against a Trino you already run.
+
+Every command and result below was run against [`deploy/lakehouse`](https://github.com/AnanthaRajuC/QueryAPIGate/tree/main/deploy/lakehouse),
+on one laptop.
+
+## Step 1: Start it
+
+```bash
+docker compose -f deploy/lakehouse/docker-compose.yml up --build -d --wait
+```
+
+The first run builds QueryAPIGate's image from the repository; after that it takes about 35 seconds. It starts:
+
+| Service | What it is |
+|---|---|
+| `storage` | S3-compatible object storage (SeaweedFS). The `lakehouse` bucket holds the tables' Parquet files. |
+| `postgres` | The Iceberg catalog (which tables exist, where their metadata is), and `crm`, an operational database. |
+| `trino` | Trino 484, with an `iceberg` catalog over the two above and a `crm` catalog over PostgreSQL. Its UI is on <http://127.0.0.1:8085>. |
+| `seed` | Writes `iceberg.sales.orders` (15,000 orders, partitioned by month) and `iceberg.sales.customers` from Trino's built-in TPC-H data, then exits. |
+| `queryapigate` | The REST API on <http://127.0.0.1:5000>, configured from [`queryapigate.yaml`](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/deploy/lakehouse/queryapigate.yaml) at startup (`QUERYAPIGATE_CONFIG_FILE`). |
+| `mcp` | The MCP server on <http://127.0.0.1:5001/mcp>, with the same store, keys and history. |
+
+`queryapigate.yaml` holds everything QueryAPIGate serves: one Trino connection, three saved queries and two scoped
+keys. The connection's `database` is the Trino catalog (`iceberg`), and `options.schema` is its default schema
+(`sales`). Tables in other catalogs are named in full, as `crm.public.accounts`.
+
+## Step 2: A lakehouse table as an endpoint
+
+```bash
+curl 'http://127.0.0.1:5000/q/revenue_by_month?year=1995&page_size=3' -H 'X-API-Key: lakehouse-admin'
+```
+```json
+[{"month":"1995-01-01","orders":165,"revenue":23852700.49},{"month":"1995-02-01","orders":172,"revenue":24978868.07},{"month":"1995-03-01","orders":181,"revenue":24248460.26}]
+```
+
+`year` is a typed parameter (an integer from 1992 to 1998), sent to Trino as a bound parameter, never pasted into the
+SQL. The orders table is partitioned by month, so Trino reads only that year's: 12 of its 80 partitions, 2,204 of
+15,000 rows (`EXPLAIN ANALYZE` in Trino shows it).
+
+**Repeat calls don't reach Trino.** Each call costs Trino 100 to 280 ms here, most of it planning. Each saved query
+sets `cache_ttl: 60`, so a repeat within a minute is answered from QueryAPIGate's response cache:
+
+```text
+year 1993:  0.210 s (X-Cache: MISS)   0.0024 s (HIT)   0.0022 s (HIT)   0.0025 s (HIT)
+```
+
+A lakehouse table usually changes in batches, so a cache time a little shorter than the batch interval rarely serves
+stale data.
+
+## Step 3: The lakehouse and PostgreSQL in one query
+
+`top_accounts` joins the Iceberg tables with `crm.public.accounts` in PostgreSQL, in one statement that Trino runs:
+
+```sql
+SELECT c.name AS customer, c.nation, a.account_manager, a.tier, a.contact_email, count(*) AS orders, ...
+FROM orders o JOIN customers c ON o.custkey = c.custkey JOIN crm.public.accounts a ON a.custkey = o.custkey
+WHERE year(o.orderdate) = :year ...
+```
+
+Called with the agent's key, every contact email comes back hashed:
+
+```bash
+curl 'http://127.0.0.1:5000/q/top_accounts?year=1995&page_size=2' -H 'X-API-Key: lakehouse-agent-key'
+```
+```json
+[{"customer":"Customer#000000349","nation":"UNITED KINGDOM","account_manager":"Emil Larsen","tier":"silver","contact_email":"6f3dba5952272d9c","orders":12,"revenue":1861780.42},
+ {"customer":"Customer#000000814","nation":"MOROCCO","account_manager":"Emil Larsen","tier":"standard","contact_email":"bc20b8dfde9544ae","orders":7,"revenue":1418923.15}]
+```
+
+With the admin key, the same row shows `buyer349@customer58.example.com`. The rule is on the agent's role,
+`{column: "*.contact_email", action: hash}`, and it's traced through the join to the source column. A hash stays the
+same for the same value on this server, so the agent can still count and group by it.
+
+## Step 4: What each key can't do
+
+The agent's role reaches the connection, but only three tables:
+`allowed_tables: [sales.orders, sales.customers, crm.public.accounts]`. On Trino these names are matched in full, as
+`catalog.schema.table`, so a grant can't reach a table of the same name in another catalog:
+
+```bash
+curl -X POST http://127.0.0.1:5000/execute_sql -H 'X-API-Key: lakehouse-agent-key' -H 'Content-Type: application/json' \
+  -d '{"connection_name": "lakehouse", "sql": "SELECT count(*) AS n FROM tpch.tiny.lineitem"}'
+```
+```json
+{"error":"This API key may only query these tables: crm.public.accounts, iceberg.sales.customers, iceberg.sales.orders. Forbidden: tpch.tiny.lineitem.","code":"table_not_allowed"}
+```
+
+Nothing writes: `DELETE FROM orders` is refused before Trino sees it (`read_only`). The partner's key runs
+`revenue_by_month` and nothing else, so `/q/top_accounts` answers `connection_forbidden`.
+
+## Step 5: The same queries as MCP tools
+
+The agent connects to the MCP server with its own key (the [whole script](24-let-an-agent-call-your-queries-via-mcp.md)
+is in guide 24):
+
+```python
+async with streamablehttp_client('http://127.0.0.1:5001/mcp', headers={'X-API-Key': 'lakehouse-agent-key'}) as (r, w, _):
+    async with ClientSession(r, w) as session:
+        await session.initialize()
+        print([t.name for t in (await session.list_tools()).tools])
+        result = await session.call_tool('execute_sql', {'connection_name': 'lakehouse', 'sql':
+            'SELECT a.tier, count(*) AS orders FROM orders o JOIN crm.public.accounts a ON a.custkey = o.custkey '
+            'GROUP BY 1 ORDER BY 2 DESC'})
+        print(result.structuredContent['rows'])
+```
+```text
+['revenue_by_month', 'revenue_by_region', 'top_accounts', 'list_tables', 'execute_sql', 'describe_table']
+[{'tier': 'standard', 'orders': 10565}, {'tier': 'silver', 'orders': 2939}, {'tier': 'gold', 'orders': 1496}]
+```
+
+Each saved query is a tool, with the parameters it declares. Ad-hoc SQL over MCP is always read-only and bound by the
+same `allowed_tables` and masking, and every call is in the same run history as the REST ones.
+
+## Step 6: Point it at your own lakehouse
+
+- **The catalog.** This example's Iceberg catalog is JDBC on PostgreSQL. Trino reads a REST catalog (Polaris,
+  Lakekeeper, Nessie), AWS Glue or a Hive metastore the same way, and Delta Lake and Hive tables through their own
+  connectors. QueryAPIGate sees none of that: to it, each is a Trino catalog.
+- **A scoped Trino user.** A connection reaches whatever its Trino user can. Give QueryAPIGate a read-only user,
+  limited to the catalogs and schemas it serves, and let `allowed_tables` narrow from there
+  ([guide 61](61-connect-to-trino.md#the-outer-boundary-a-scoped-trino-user)).
+- **Secrets.** Here the passwords are in the open and every port is bound to 127.0.0.1. With TLS
+  (`http_scheme: https`), the Trino password is a `${VAR}` reference in the file, never a value.
+- **Time limits.** `QUERYAPIGATE_QUERY_TIMEOUT`, or a key's own `query_timeout`, cancels a slow query on the Trino
+  cluster, not only in QueryAPIGate.
+
+Clean up with `docker compose -f deploy/lakehouse/docker-compose.yml down -v`.
+
+## Next steps
+
+- [Connect to Trino](61-connect-to-trino.md) - the connection's fields and switching catalogs.
+- [Hide personal data from a partner or an AI agent](45-hide-personal-data-from-a-partner-or-an-ai-agent.md) - every
+  masking action.
+- [Configuration as code](../documentation/API.md#configuration-as-code) - the file this example starts from.
 
 
 # The 30% that was in the build

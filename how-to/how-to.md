@@ -16,6 +16,9 @@ guide covers one scenario end to end, and every command and response in it was r
    and whole results streamed as NDJSON, CSV or Parquet.
 61. [**Connect to Trino**](61-connect-to-trino.md) (experimental) - one connection federating many catalogs, with
    fully-qualified `allowed_tables`, masking and a schema browser.
+66. [**Serve a lakehouse through Trino, to apps and AI agents**](66-serve-a-lakehouse-through-trino.md)
+   (experimental) - Iceberg on S3-compatible storage joined with PostgreSQL, in Docker Compose: REST endpoints, MCP
+   tools, masking, qualified `allowed_tables` and caching.
 5. [**Try it without any setup, using the built-in example APIs**](05-try-the-built-in-example-apis.md) -
    `queryapigate examples load`, what it installs, and how to explore it in the Console.
 
@@ -123,7 +126,7 @@ guide covers one scenario end to end, and every command and response in it was r
     logs, slow queries.
 62. [**See what's being used, from the Console**](62-see-whats-being-used-from-the-console.md) - the 30-day activity
     sparklines, a key's usage history, quotas, the Metrics and Agents screens, and the run log behind them all.
-51. [**See QueryAPIGate in your traces**](51-see-queryapigate-in-your-traces.md) (experimental) - OpenTelemetry: one
+51. [**See QueryAPIGate in your traces**](51-see-queryapigate-in-your-traces.md) - OpenTelemetry: one
     trace from your app through QueryAPIGate to the database, in Jaeger; what it costs.
 37. [**Diagnose and tune the connection pool**](37-tune-the-connection-pool.md) - measured, with symptoms and fixes.
 63. [**Tune a deployment for throughput**](63-tune-a-deployment-for-throughput.md) - threads, CPU per container,

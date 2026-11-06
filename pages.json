@@ -736,6 +736,14 @@
   "url": "Guide.dc.html?g=65-keep-runs-in-clickhouse"
  },
  {
+  "key": "g=66-serve-a-lakehouse-through-trino",
+  "title": "Guide 66: Serve a lakehouse through Trino, to apps and AI agents",
+  "kind": "how-to",
+  "cat": "Start",
+  "md": "how-to/66-serve-a-lakehouse-through-trino.md",
+  "url": "Guide.dc.html?g=66-serve-a-lakehouse-through-trino"
+ },
+ {
   "key": "p=the-30-percent-in-the-build",
   "title": "The 30% that was in the build",
   "kind": "blog",
