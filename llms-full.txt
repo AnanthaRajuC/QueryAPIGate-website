@@ -10603,10 +10603,23 @@ Open **<http://127.0.0.1:5000/console>**. The first time, it asks for an API key
 In the left sidebar, under **API**, click **API Designer**. This is the "write and run SQL, then save it as
 an endpoint" screen - distinct from **API Repository**, which lists endpoints you've already saved.
 
+[![API Designer: the Connection dropdown set to examples, the SQL editor holding this guide's query with its :rating parameter highlighted, the Save as New API, Explain and Run buttons above it, and the Schema tab on the right listing the example tables - address, category, customer, film, payment, rental, staff and store](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-01-api-designer.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-01-api-designer.png)
+
+*API Designer, with the connection picked in step 3 and the query from step 4 typed in.*
+
 ## Step 3: Pick a connection and look at what's there
 
-At the top of API Designer, the **Connection** dropdown lists every database connection this server knows
-about. Select **examples**.
+A **connection** is a database this server can query. Every connection is listed on the **Connections** screen
+(in the sidebar, under **Data**). Right after `examples load` there's one, `examples`: the SQLite file that
+step 1 created, marked with an `example` badge. Your own databases join it there once you
+[connect them](02-connect-a-database.md).
+
+[![The Connections screen with one connection, examples: type sqlite, database examples.db, status Active, with a New connection button at the top right](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-01-connections.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-01-connections.png)
+
+*The Connections screen, right after `examples load`.*
+
+Back in API Designer, the **Connection** dropdown at the top lists the same connections - every active one.
+Select **examples**.
 
 Click the **Schema** tab on the right side of the screen. It lists every table (`film`, `customer`,
 `rental`, `payment`, `category`, ...) - click one to see its columns. This is the same schema QueryAPIGate
@@ -10623,19 +10636,24 @@ WHERE rating = :rating
 ORDER BY title
 ```
 
-Click **Run**. You should see a real result grid - films with a `G` rating won't show yet, because
-`:rating` has no value bound to it. That's expected: `:rating` is a **bound parameter**, resolved at request
-time - the same mechanism [documentation/API.md](../documentation/API.md#parameter-rules) uses everywhere,
-never string-substituted into the SQL.
+Click **Run** (or press `Ctrl`+`Enter`). It stops with `No value provided for parameter(s): rating` - and
+that's expected. `:rating` is a **bound parameter**: its value arrives with each request, separately from the
+SQL, and is never pasted into it. That's the same mechanism
+[documentation/API.md](../documentation/API.md#parameter-rules) describes everywhere.
 
-(If you want to see it actually run with a real value first: temporarily replace `:rating` with `'PG'`,
-click Run, see real rows come back, then put `:rating` back before continuing - this step isn't required,
-just reassuring the first time.)
+To run it with a value, open the **Settings** tab on the right, put this in **Bound parameters**:
+
+```json
+{"rating": "PG"}
+```
+
+and click **Run** again. The result grid fills with the `PG` films. That value is only for this run; nothing
+here is saved yet.
 
 ## Step 5: Save it as a new API
 
-Click **Save as New API**, right below the editor. A form opens on the same screen - no navigation, your
-query stays exactly as you wrote it. Fill in:
+Click **Save as New API**, in the toolbar beside **Run**. A form opens below the editor, on the same screen -
+no navigation, and your query stays exactly as you wrote it. Fill in:
 
 | Field | Value for this guide |
 |---|---|
@@ -10645,6 +10663,9 @@ query stays exactly as you wrote it. Fill in:
 | Collection | leave blank |
 | Tags | leave blank |
 | `query_parameters` | `{"rating": {"type": "str", "enum": ["G", "PG", "PG-13", "R", "NC-17"], "description": "MPAA rating"}}` |
+
+`query_parameters` starts out holding `{"rating": {}}` - one entry for each parameter in your SQL, with no
+rules yet. Replace it with the line above.
 
 That last field is what turns `:rating` from "any text someone sends" into a validated, documented
 parameter - a request with a rating outside that list gets rejected with a clear error before your SQL ever
@@ -10666,7 +10687,7 @@ configured actually enforced:
 ```bash
 curl 'http://127.0.0.1:5000/q/films_by_rating?rating=NOT-A-RATING' -H 'X-API-Key: demo-key'
 # {"error": "Invalid parameters: rating must be one of: G, PG, PG-13, R, NC-17",
-#  "errors": {"rating": "must be one of: G, PG, PG-13, R, NC-17"}}
+#  "code": "param_invalid", "errors": {"rating": "must be one of: G, PG, PG-13, R, NC-17"}, "request_id": "..."}
 ```
 
 Other formats work the same way, no extra code:
@@ -10725,6 +10746,10 @@ and a schema browser: [Connect to Trino](61-connect-to-trino.md) (experimental).
 
 **Admin UI**: open **<http://127.0.0.1:5000/console>**, go to **Connections** (under **Data** in the sidebar),
 click **New connection**, fill in the form, **Test** it, then **Save**.
+
+[![The New connection form open beside the Connections list: name orders, database type postgres, host orders-db.internal, port 5432, user reporting, a password field, default database orders, a Load databases button, an Active checkbox, Test connection, and Cancel and Create buttons](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-02-new-connection.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-02-new-connection.png)
+
+*New connection, filled in for a PostgreSQL database - Test connection before Create.*
 
 **API directly** (what this guide's examples use, since it's copy-pasteable and identical for every
 dialect):
@@ -11266,12 +11291,20 @@ Open **<http://127.0.0.1:5000/console>**. Two things worth noticing right away:
   numbers - total runs, success rate, average duration, a requests-per-day bar chart - from the seeded
   history above, with no need to call it yourself first.
 
+[![API Repository with the example APIs loaded: the banner saying 11 queries in 4 collections, 5 roles and an examples connection are loaded, with a Remove examples button; the examples-reporting collection open on the left, and example_top_films on the right with its total runs, success rate, durations and a requests-per-day chart](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/saved-queries.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/saved-queries.png)
+
+*API Repository with the examples loaded - the banner with Remove examples, and a query already showing its seeded runs.*
+
 From there, the same tabs work as they would for a query you wrote yourself: **SQL** (the query text),
 **History** (every run, seeded or real), **Curl**/**CLI** (copy-pasteable commands), **API Keys**/**Roles**
 (which of the five keys can reach this specific query), **Access**, **Cache** (for the dashboard scenario's
 `cache_ttl=30` queries), **Metrics**. Visit **Access map** (under **Access** in the sidebar) to see all
 five keys and every query they reach laid out at once - the fastest way to build intuition for how
 `connections`/`queries`/`collections` grants actually compose, before designing your own.
+
+[![The Access map: saved queries as rows and API keys and roles as columns, each cell marked with how that key reaches that query](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/access-map.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/access-map.png)
+
+*The Access map - every query against every key and role.*
 
 ## Removing them
 
@@ -11668,6 +11701,10 @@ The admin UI's **Caching** tab (under **Data**) shows the same thing - every liv
 it (the exact response body, if you want to inspect it), and how long until it expires - plus the current
 backend (in-process or Redis) under **Settings**.
 
+[![The Caching screen: the response cache backend, entry count, hit rate, hits and misses, and the saved queries with a cache_ttl set, each with a 30-day activity sparkline](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/caching.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/caching.png)
+
+*The Caching screen.*
+
 ## When it's actually worth it
 
 Good fit: a query that's expensive or slow relative to how often the underlying data really changes - a
@@ -11951,6 +11988,10 @@ next to **Recent Queries** and **Settings**. It has two sub-tabs:
 `SELECT * FROM orders WHERE ` and the cursor at the end, clicking `customer_id` in the Columns list turned
 it into `SELECT * FROM orders WHERE customer_id` - no copy-pasting column names by hand.
 
+[![API Designer with the examples connection picked and SELECT title, rating FROM film WHERE in the editor; on the right, the Schema tab's Columns view for film: film_id INTEGER with a PK badge, title, category, rating, length and rental_rate with their types](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-11-schema-columns.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-11-schema-columns.png)
+
+*The Schema tab's Columns view for `film` - click a name to insert it at the cursor.*
+
 ## The same thing over the API
 
 ```bash
@@ -12048,6 +12089,10 @@ you can hand to a teammate without them writing a single request by hand.
 Open **API Repository**, click **Collections**, pick a collection, then click **Postman** (next to the key
 count and **Rename**, in the collection's own query list) - downloads a `.json` file ready to import into
 Postman (File → Import).
+
+[![API Repository with a collection open: above its query list, the key count, a Postman link and Rename](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/saved-queries.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/saved-queries.png)
+
+*A collection open in API Repository - Postman sits beside the key count and Rename.*
 
 ## Over the API
 
@@ -12388,6 +12433,10 @@ curl -X POST http://127.0.0.1:5000/api/v1/roles -H 'X-API-Key: demo-key' -H 'Con
 
 In the Console: **Access → Roles → New role**.
 
+[![The Roles screen: each role's scope, access, rate limit, the keys created from it and a 30-day activity sparkline, with a New key from this action per row](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/roles.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/roles.png)
+
+*Access → Roles.*
+
 ## Step 2: Create keys from it
 
 ```bash
@@ -12662,6 +12711,10 @@ Only set it when there really is a proxy that overwrites `X-Forwarded-For`. With
   refused 10 or more times in the last hour, with what to do about it.
 - `/metrics` counts every refusal in `queryapigate_rate_limit_rejections_total`; the Metrics screen shows it too.
 
+[![The Alerts screen: a critical alert for a failing connection, and warnings for an expiring key, a key that keeps hitting its rate limit, a failing query and a write waiting for approval, each with a button to the screen that fixes it](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/alerts.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/alerts.png)
+
+*Alerts - here, API key 'internal-analyst' keeps hitting its rate limit, among the others.*
+
 ## Limits of the limits
 
 Without Redis, the counters live in each server process's memory: they reset on restart, and several instances
@@ -12802,6 +12855,10 @@ accepted - `"31/12/2026"` gets `400`: *expires_at must be a date in YYYY-MM-DD f
 In the Console, the API key form has an **Expires** date field. A key created from a [role](15-create-a-role.md) can
 have its own expiry too: `{"name": "acme", "role": "partner", "expires_at": "2026-12-31"}`.
 
+[![The New API key form scrolled to its last fields - quota, rate limit and allowed IPs above - and the Expires date field filled in, with the hint: valid through the end of this date, leave blank for no expiry](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-19-new-api-key.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-19-new-api-key.png)
+
+*The Expires field at the end of the new-key form.*
+
 ## What an expired key gets
 
 Verified with a key that expired yesterday:
@@ -12883,6 +12940,10 @@ runs - those are the [run history](../documentation/API.md#run-history).
 
 In the Console: **Observability → Audit log** - newest first, with an action filter and a search box over actor,
 target and time. **Export** downloads what's shown as JSON.
+
+[![The Audit log: newest first, each row with its time, actor, action and target, an action filter and a search box above](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/audit-log.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/audit-log.png)
+
+*Observability → Audit log.*
 
 Over the API (admin key only), filtered by what changed:
 
@@ -13032,6 +13093,10 @@ The one surprise to remember: **a key created without `connections` gets every c
 **Access → Access map** puts every saved query (rows) against every API key and role (columns). Each cell says how
 that key reaches that query:
 
+[![The Access map: saved queries as rows, API keys and roles as columns, cells lettered Q, C or W for how each key reaches each query](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/access-map.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/access-map.png)
+
+*The Access map - Q by name, C through a collection, W through a whole connection.*
+
 - **Q** - by name (`queries`)
 - **C** - through its collection (`collections`)
 - **W** - through a whole connection (`connections`)
@@ -13076,6 +13141,10 @@ In the Console, **Access → API keys → (the key) → Details** is the key-cen
 reach and how each is granted, the connections and tables behind them, its limits and masking, and its full run
 history - clicking a query there opens its SQL. Each key on the list also carries a 30-day activity sparkline (and so
 does each API, connection, cached query and MCP tool), so "granted but never used" shows at a glance.
+
+[![The Details page of the key acme-corp: created from role example-partner, its status, expiry, rate limit and limits; the two APIs it can reach through the examples-partner collection with activity sparklines; the examples connection, reached by saved query only; no table allow-list; and its usage history](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-21-key-details.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-21-key-details.png)
+
+*A key's Details - what it reaches, how, and what it did.*
 
 Ask as the key itself over the API. `GET /catalog` lists exactly the saved queries this caller can run through
 `/q/<name>`, and the terms it runs them on - verified with the `example-executive` key:
@@ -13810,6 +13879,10 @@ on its own. The **MCP** screen in the sidebar asks on request - and lists the to
 
 ## What the MCP screen shows
 
+[![The MCP server screen: the Connect a client snippet for Claude Desktop, Reachability with a Check now button, and the Tools a client sees - each saved query with its kind, parameters, description and MCP activity](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/mcp.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/mcp.png)
+
+*The MCP screen: the connect snippet, Check now, and the tools.*
+
 **Connect a client** - the config an MCP client needs: the server's URL and a scoped API key as the `X-API-Key`
 header - the same one-entry snippet you paste into Claude Desktop's config.
 
@@ -14359,6 +14432,10 @@ queryapigate export 'example_rentals_since' \
 
 **Copy command** puts it on the clipboard.
 
+[![example_rentals_since in API Repository with its CLI tab open: queryapigate export 'example_rentals_since' --param 'since=2000-01-01' --format csv --out '/exports/example_rentals_since_{date}.csv'](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-31-cli-tab.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-31-cli-tab.png)
+
+*The CLI tab of `example_rentals_since`.*
+
 How each line is built:
 
 - **`--param`** - one per parameter a caller supplies. A parameter with a `default` shows that default (`since`
@@ -14832,6 +14909,10 @@ dashboard showing traffic, errors, latency and per-connection load, and a few al
 QueryAPIGate serves Prometheus metrics at `/metrics` - no key needed - and ships a Grafana dashboard built on them.
 The Console's **Metrics** screen shows the same numbers as a snapshot; Prometheus adds history, trends and alerting.
 
+[![The Metrics screen: stat tiles for requests, error rate, active queries, pool and rate limiting, bars for requests by status and queries by connection, and a per-connection latency table](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/metrics.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/metrics.png)
+
+*The Console's Metrics screen - a snapshot of the numbers `/metrics` serves.*
+
 Everything below was run for real: Prometheus scraping a server, the dashboard imported into Grafana, and every one of
 its panel queries returning data.
 
@@ -15025,6 +15106,10 @@ Who (`reporter`), what (the SQL), why (`no such column: totl`) and how it ended 
 own lines don't repeat the ID.
 
 From the Console instead: open the query's **History** tab, find the red run, and take its `request_id` to the log.
+
+[![A saved query's History tab: every run with its time, calling API key, rows, duration and request ID, with a status filter and search box](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/saved-query-history.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/saved-query-history.png)
+
+*A query's History tab.*
 
 These lines need `QUERYAPIGATE_LOG_REQUESTS` left on, as it is by default. With it `off`, a request leaves only its
 warnings and errors in the log, still tagged with the ID - and the run history keeps the `request_id` either way.
@@ -15804,6 +15889,10 @@ curl http://127.0.0.1:5000/api/v1/me -H 'X-API-Key: qagadm_9-2f...'
 In the Console: **Access → Administrators → New administrator**. Their first token, valid for 90 days, is shown
 once - hand it over the way you'd hand over a password. Or with the API:
 
+[![The Administrators screen: alice (Owner), bob (Developer) and carol (Auditor), each with an email, when they were last seen, a token count, and Tokens, edit and delete actions, with a New administrator button](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-43-administrators.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-43-administrators.png)
+
+*Access → Administrators - a role each, and their own tokens.*
+
 ```bash
 curl -X POST http://127.0.0.1:5000/api/v1/administrators -H 'X-API-Key: qagadm_9-2f...' \
   -H 'Content-Type: application/json' -d '{"name": "bob", "role": "developer", "email": "bob@corp.com"}'
@@ -16027,6 +16116,14 @@ Three new rentals later, the next run delivers exactly those:
 
 In the Console: **Delivery → Exports → Run now**, and **Runs** for its history.
 
+[![The Exports screen: the export acme-rentals, its query example_rentals_since, where it writes (acme:rentals/{date}/rentals_{run}.csv), its format, and Run now, Runs, edit and delete](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-44-exports.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-44-exports.png)
+
+*Delivery → Exports.*
+
+[![An export's Runs: a successful run with its time, 20000 rows, the file it wrote and who ran it](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-44-export-runs.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-44-export-runs.png)
+
+*Runs - each one's rows and the file it wrote.*
+
 ## Step 5: Put it on a schedule
 
 QueryAPIGate doesn't keep a clock; your scheduler calls it. From the server's own host - no server needed, it reads
@@ -16147,6 +16244,10 @@ A rule names a **source column** - `table.column`, or `schema.table.column`, wit
 
 The strictest rule that applies wins (`drop` > `null` > `mask` > `hash`). In the Console: **API keys → New API key →
 Column masking**; keys and roles with rules carry a **masked** tag, in their tables and on the Access map.
+
+[![The Column masking section of the New API key form: a rule masking customer.email, with an Add a masking rule button](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-45-column-masking.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-45-column-masking.png)
+
+*A masking rule on a new key: `customer.email`, masked.*
 
 ## Step 2: See it
 
@@ -16665,6 +16766,10 @@ curl 'http://127.0.0.1:5000/api/v1/usage/agents?hours=1' -H 'X-API-Key: demo-key
 
 In the Console: **Observability → Agents**, busiest first, a row opening to the agent's queries and statements.
 
+[![The Agents screen: the agent rentals-assistant with 8 calls, 34 rows, none failed or masked, opened to its saved queries (example_film_lookup 3 times, example_top_films twice) and its most frequent ad-hoc statements](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-47-agents.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-47-agents.png)
+
+*Observability → Agents, one agent opened.*
+
 ## Step 6: Be told when one reads far more than usual
 
 `agent_unusual_volume` fires when an agent reads at least `QUERYAPIGATE_ALERT_AGENT_ROWS` rows (default 10,000) in
@@ -16980,6 +17085,10 @@ curl -X POST http://localhost:5098/api/v1/write-requests/wr_4cfa357ce998/approve
 # {"id": "wr_4cfa357ce998", "status": "approved", "decided_by": "maria", "decided_via": "token", ...}
 ```
 
+[![The Approvals screen with a write request open: support-bot asked to run close_ticket (version 1) on helpdesk, changing at most 1 row; the SQL UPDATE tickets SET status = 'closed' WHERE id = :id; exactly these arguments: id 2; when it was asked and when it expires; a Reason box, and Approve, Reject and Close](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-49-approval.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-49-approval.png)
+
+*The write waiting on the Approvals screen - the SQL, the exact arguments, Approve or Reject.*
+
 ## Step 5: It runs - that write, once
 
 ```
@@ -17119,6 +17228,10 @@ curl 'http://127.0.0.1:5098/q/orders_by_customer?customer=acme' -H "X-API-Key: $
 
 In the Console: **API keys → Edit** (the pencil) → **Secret**: choose how long to keep the old secret working, then
 **Rotate secret**. The new secret is shown once, and the key gets a *rotating* tag in the list.
+
+[![The Edit API key form for finance-team, at its Secret field: Keep the old secret working, set to for 1 hour, and a Rotate secret button](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-50-rotate-key.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-50-rotate-key.png)
+
+*Secret in the Edit form - how long the old secret keeps working, then Rotate secret.*
 
 ## Step 3: See whether they've switched
 
@@ -17347,6 +17460,10 @@ curl -X POST http://127.0.0.1:5091/api/v1/api-keys -H "X-API-Key: $TOKEN" -H 'Co
 `effective_limits` is what each comes to against the server's own limits - a key's limit only ever narrows them. In
 the Console: **API keys → New** (or Edit) → **Queries at once**, **Time limit**, **Rows per call**, and **Quota**.
 A role takes the same fields; for signed-in users each gets the role's quota as their own.
+
+[![The limits in the New API key form: Queries at once 2, Time limit 30 seconds, Rows per call 5000, Quota calls 10000 per month, with Quota rows left blank](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-52-key-limits.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-52-key-limits.png)
+
+*A key's limits: two queries at once, 30 seconds each, 5,000 rows a call, 10,000 calls a month.*
 
 ## Step 2: Two queries at once - and no more
 
@@ -18839,6 +18956,10 @@ curl -X POST http://127.0.0.1:5000/api/v1/workspaces -H 'X-API-Key: demo-key' -H
 
 Or in the Console: **Access → Workspaces → New workspace**.
 
+[![The Workspaces screen: the payments and catalogue workspaces, payments open with its members - bea as owner, dmitri as developer](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/workspaces.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/workspaces.png)
+
+*Access → Workspaces, with payments open.*
+
 ## Step 2: Give the team's lead a role in it - and only there
 
 Bea leads payments. She gets no role on the server itself (`"role": null` - say so: leaving `role` out is refused, so
@@ -19145,10 +19266,18 @@ A drawn line means traffic; a **flat baseline means "granted but never used in 3
 thing on the screen, because it points at access you can take away. Hover any sparkline for the totals (for example
 *"example-reporting: 28 runs over 30 days · 3 failed · peak 3/day"*).
 
+[![The Connections screen: each connection with its type, host, database, status, usage and a 30-day activity sparkline](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/connections.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/connections.png)
+
+*Data → Connections - one sparkline per connection.*
+
 ## 2. A key in full: the Details screen
 
 On **Access → API keys**, each row has a **Details** link. It opens a page built entirely from that key's own
 activity:
+
+[![A key's Details page: its limits, the APIs and connections it reaches with their sparklines, and its usage history](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-21-key-details.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-21-key-details.png)
+
+*A key's Details.*
 
 - the saved queries (APIs) it can reach, and how each is granted;
 - the connections and tables behind them, its limits and masking;
@@ -19184,6 +19313,10 @@ started**, and a restart resets them. That's why a freshly restarted server show
 connection tables even when the 30-day sparklines are full: the sparklines read the durable run log, the Usage column
 reads these live counters.
 
+[![The Metrics screen: stat tiles for requests, error rate, active queries, pool and rate limiting, and bars for requests by status and queries by connection - counted since this process started](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/metrics.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/metrics.png)
+
+*Observability → Metrics.*
+
 For dashboards and alerting over time, scrape `/metrics` - [Wire up Prometheus and
 Grafana](35-wire-up-prometheus-and-grafana.md).
 
@@ -19191,6 +19324,10 @@ Grafana](35-wire-up-prometheus-and-grafana.md).
 
 **Observability → Agents** is the usage view for AI clients: what each agent called over MCP, in the recent window.
 `GET /api/v1/usage/agents` backs it:
+
+[![The Agents screen: an agent with its calls, rows, failures and masked calls, opened to its saved queries and ad-hoc statements](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-47-agents.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-47-agents.png)
+
+*Observability → Agents.*
 
 ```bash
 curl http://127.0.0.1:5000/api/v1/usage/agents -H 'X-API-Key: demo-key'
