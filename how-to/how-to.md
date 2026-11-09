@@ -16,6 +16,9 @@ guide covers one scenario end to end, and every command and response in it was r
    and whole results streamed as NDJSON, CSV or Parquet.
 61. [**Connect to Trino**](61-connect-to-trino.md) (experimental) - one connection federating many catalogs, with
    fully-qualified `allowed_tables`, masking and a schema browser.
+66. [**Serve a lakehouse through Trino, to apps and AI agents**](66-serve-a-lakehouse-through-trino.md)
+   (experimental) - Iceberg on S3-compatible storage joined with PostgreSQL, in Docker Compose: REST endpoints, MCP
+   tools, masking, qualified `allowed_tables` and caching.
 5. [**Try it without any setup, using the built-in example APIs**](05-try-the-built-in-example-apis.md) -
    `queryapigate examples load`, what it installs, and how to explore it in the Console.
 
@@ -123,14 +126,14 @@ guide covers one scenario end to end, and every command and response in it was r
     logs, slow queries.
 62. [**See what's being used, from the Console**](62-see-whats-being-used-from-the-console.md) - the 30-day activity
     sparklines, a key's usage history, quotas, the Metrics and Agents screens, and the run log behind them all.
-51. [**See QueryAPIGate in your traces**](51-see-queryapigate-in-your-traces.md) (experimental) - OpenTelemetry: one
+51. [**See QueryAPIGate in your traces**](51-see-queryapigate-in-your-traces.md) - OpenTelemetry: one
     trace from your app through QueryAPIGate to the database, in Jaeger; what it costs.
 37. [**Diagnose and tune the connection pool**](37-tune-the-connection-pool.md) - measured, with symptoms and fixes.
 63. [**Tune a deployment for throughput**](63-tune-a-deployment-for-throughput.md) - threads, CPU per container,
     logging, the metadata cache, the event log's disk, and how many containers - each from a measurement.
 64. [**Try the Rust data plane in front of `/q/`**](64-try-the-rust-data-plane.md) (experimental) - turn it on in the
     Helm chart or with Docker, Python behind it, and see which calls it serves.
-65. [**Keep run history and the event log in ClickHouse**](65-keep-runs-in-clickhouse.md) (prototype) - a run store
+65. [**Keep run history and the event log in ClickHouse**](65-keep-runs-in-clickhouse.md) - a run store
     for the data plane's rates: the users, the setting, and what changes.
 38. [**Allow a browser-based frontend to call the API directly**](38-allow-a-browser-frontend-cors.md) - CORS, and
     why it isn't authentication.

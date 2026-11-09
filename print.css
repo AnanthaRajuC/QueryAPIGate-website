@@ -1,0 +1,68 @@
+/* Guide.dc.html on paper, and the PDFs that tools/pdf/build.mjs makes from it.
+   Only the article prints: no nav, rails, footer or buttons; light colours whatever the theme;
+   code wraps instead of scrolling; blocks avoid splitting across pages.
+   Changing this file makes the next `node tools/pdf/build.mjs` rebuild every PDF. */
+
+@page{size:A4;margin:18mm 14mm 18mm}
+
+/* the light palette, whichever theme is on screen (beats theme.js's :root[data-theme=dark]) */
+html:root[data-theme]{--bg:#fff;--bg-90:#fff;--surface:#fff;--surface-2:#f8faf9;--surface-3:#eef2f0;--tint:#f3f9f6;
+  --line:#dbe2df;--line-soft:#e8edeb;--line-2:#c3cdc9;--dots:#b3bfba;
+  --ink:#17201d;--ink-2:#4a5652;--ink-3:#626d69;--ink-4:#7c8783;--on-ink:#fff;
+  --accent-ink:oklch(0.52 0.11 170);--accent-ink-2:oklch(0.42 0.11 170);--danger-ink:oklch(0.55 0.2 25);--warn-ink:oklch(0.6 0.13 75);
+  color-scheme:light}
+html,body{background:#fff !important}
+html:root[data-theme] #guide-body p,html:root[data-theme] #guide-body ul,html:root[data-theme] #guide-body ol{color:#2b3532}
+html:root[data-theme] img{filter:none !important}
+
+/* only the article */
+.rs-progress,.rs-top,[data-screen-label]>nav,[data-screen-label]>footer,.g-layout>aside,article>nav,
+.g-actions,.bp-share,.pa,.copy-btn,.md-term-bar .dots{display:none !important}
+.g-layout{display:block !important;max-width:none !important;padding:0 !important;margin:0 !important}
+[data-screen-label]{min-height:0 !important;background:#fff !important}
+article{display:block !important}
+article>*+*{margin-top:22px}
+.bp-head,article>header{padding-bottom:18px !important}
+
+/* ---- the PDFs only (build.mjs adds html.pdf-build): a branded masthead in place of the page's header, and a closing strip ---- */
+html.pdf-build article>header:not(.pdf-mast){display:none !important}
+.pdf-mast{display:grid;gap:10px;padding-bottom:22px !important;border-bottom:1px solid var(--line)}
+.pdf-band{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:#10201b;color:#e6efeb;margin-bottom:14px}
+.pdf-band svg rect{stroke:#2a3d37;stroke-width:1.5}
+.pdf-word{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:500;letter-spacing:-0.01em}.pdf-word b{font-weight:500;color:#22a58c}
+.pdf-kind{margin-left:auto;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#9fb3ac}
+.pdf-mast h1{margin:0;font-family:'Schibsted Grotesk',sans-serif;font-size:40px;line-height:1.07;font-weight:800;letter-spacing:-0.02em;text-wrap:balance;color:var(--ink)}
+.pdf-dek{margin:2px 0 0;font-size:17px;line-height:1.5;color:var(--ink-2);text-wrap:pretty}
+.pdf-meta{margin:0;font-size:12.5px;color:var(--ink-3)}.pdf-meta b{color:var(--ink);font-weight:600}.pdf-meta a{color:var(--accent-ink)}
+.pdf-end{margin-top:40px;padding:18px 20px 14px;border-radius:12px;background:var(--tint);border:1px solid var(--line);display:grid;gap:14px;break-inside:avoid}
+.pdf-end-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.pdf-end-grid div{display:grid;gap:4px;align-content:start;font-size:13px;line-height:1.4}
+.pdf-end-grid small{font-size:10.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)}
+.pdf-end a{color:var(--accent-ink);overflow-wrap:anywhere}
+.pdf-social{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px 16px;padding-top:12px;border-top:1px solid var(--line)}
+.pdf-social small{font-size:10.5px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3)}
+.pdf-social-icons{display:flex;flex-wrap:wrap;gap:6px 16px}
+.pdf-social-icons a{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--ink) !important;text-decoration:none !important}
+.pdf-social-icons svg{width:14px;height:14px;color:#10201b}
+.pdf-social-text{grid-column:2;font-size:11.5px;color:var(--ink-3)}
+.pdf-legal{display:flex;align-items:center;gap:8px;margin:0;padding-top:12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-3)}.pdf-legal b{color:var(--ink);font-weight:600}
+
+/* code: light panels, long lines wrap */
+#guide-body .md-term{background:var(--surface-2) !important;border:1px solid var(--line);box-shadow:none !important;border-radius:8px}
+#guide-body .md-term-bar{border-bottom:1px solid var(--line) !important;padding:4px 12px !important;min-height:0}
+#guide-body .md-term-bar .lang{color:var(--ink-3) !important}
+#guide-body pre{background:none !important;color:var(--ink) !important;white-space:pre-wrap;overflow-wrap:anywhere;overflow:visible !important;padding:10px 12px !important}
+
+/* tables fit the page instead of scrolling */
+#guide-body .md-table{overflow:visible !important}
+#guide-body table{font-size:12.5px}
+#guide-body th,#guide-body td{overflow-wrap:anywhere !important}
+
+/* links stay links in the PDF; underline them, since colour alone may not survive a printer */
+#guide-body a{color:var(--accent-ink);text-decoration:underline;text-decoration-thickness:0.5px;text-underline-offset:2px}
+
+/* page breaks */
+#guide-body h2,#guide-body h3{break-after:avoid}
+#guide-body .md-term,#guide-body .md-callout,#guide-body .md-stats,#guide-body .md-bars,#guide-body figure,#guide-body blockquote,#guide-body tr,#guide-body img{break-inside:avoid}
+#guide-body p,#guide-body li{orphans:3;widows:3}
+#guide-body figure img{max-width:100%;height:auto}

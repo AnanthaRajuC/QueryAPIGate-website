@@ -1090,8 +1090,10 @@ see everything. It protects teams from each other's mistakes and reach, not from
 - also answers under `/w/<workspace>/...`, in that workspace: `/w/team-a/q/orders`, `/w/team-a/api/v1/queries`.
 
 - **An API key** belongs to the workspace it was created in, and every call it makes is there - with or without the
-  prefix. A signed-in user's role is found by name in the workspace the path names (`default` without one), so the
-  users of another workspace call `/w/<workspace>/...`. MCP: a key's tools are its workspace's queries.
+  prefix. MCP: a key's tools are its workspace's queries.
+- **A signed-in user** (a JWT) belongs to the workspace their token's `QUERYAPIGATE_JWT_WORKSPACE_CLAIM` claim names,
+  or `default` when that setting is unset; their role is found by name there. Like a key, they call with or without
+  the prefix, and a prefix naming another workspace is `404`.
 - **An administrator** acts in the workspace the path names, or `default`. One whose roles are all memberships names
   their workspace; unprefixed, they get `403 workspace_required`.
 - **Naming a workspace you aren't in** - or one that doesn't exist - is `404 workspace_not_found`, either way, so a
@@ -1099,6 +1101,11 @@ see everything. It protects teams from each other's mistakes and reach, not from
 - **Kept apart** in each workspace: its run history, usage quotas (two workspaces' keys of one name are two
   callers), cached responses and the cache's management, write requests, descriptions and configuration-file records.
   A local-folder destination is only in `default`: the folders exports may write under are the server's.
+- **Files on the server are a server-wide role's.** Saving, testing or repointing a connection that opens local files -
+  SQLite, H2, JDBC, a DuckDB file or local `allowed_paths` - takes a server-wide role (`403 role_forbidden`
+  otherwise), since whoever chooses the path could read any file the server can. A workspace's own owner runs the ones
+  a server administrator set up there, switches them on and off and changes their password, and sets up DuckDB over
+  remote storage (`s3://`, `gs://`, `https://`...) and server databases themselves.
 - **The Console**: once there is a second workspace, a switcher under the wordmark picks the one the tab works in -
   every screen then reads and changes that workspace's things - and the **Workspaces** screen lists them, creates and
   removes them (owners), and manages each one's members. An administrator whose roles are all in workspaces starts
@@ -1413,7 +1420,9 @@ hides the values of named **source** columns in everything that caller receives
 
 - `column` is `table.column` or `schema.table.column`, with `*` wildcards.
 - `action`: `hash` (HMAC-SHA256, 16 hex characters - equal values give equal codes; keyed with
-  `QUERYAPIGATE_MASK_KEY`, or a key the store makes once), `mask` (text keeps its first character, an email its
+  `QUERYAPIGATE_MASK_KEY`, or a key the store makes once; a binary value, PostgreSQL `bytea` or MySQL `BLOB`, is hashed
+  as the text JSON shows for it, so bytes that aren't UTF-8 count as one replacement character and two values differing
+  only there get one code), `mask` (text keeps its first character, an email its
   domain: `j***@example.com`; other values become null), `null`, `drop` (the column is removed), or `keep` (left as is
   on purpose - for a view, below). The strictest that applies wins.
 
@@ -1694,9 +1703,14 @@ non-Postgres connection - never run with the raw text bound where a vector belon
 
 ## Tracing (OpenTelemetry)
 
-> **Experimental** - new in 0.23 ([ADR 0010](adr/0010-tracing-and-security-headers.md)); span names and attributes may
-> change in any minor release, always noted in the changelog, as OpenTelemetry's conventions for databases and AI
-> agents settle. What never goes into a span won't change.
+> **Stable** since 0.50, under the compatibility promise ([what that means](../CHANGELOG.md#versioning-and-compatibility)),
+> new in 0.23 ([ADR 0010](adr/0010-tracing-and-security-headers.md)). Spans, attributes and resource attributes may
+> still be added - a backend ignores what it doesn't know; the span names, the attributes below and what never goes
+> into a span stay as they are. Two exceptions follow OpenTelemetry until it marks them stable, each change noted in
+> the changelog: `db.response.returned_rows` and `db.response.affected_rows`, and the MCP span (its name and its
+> `gen_ai.*` attributes). Limits: with an OTLP endpoint set, the [Rust data plane](DEPLOYMENT.md) forwards every call
+> to Python, so a traced `/q/` call doesn't get the data plane's speed; a streamed result's database span ends at
+> its first row; spans are exported over OTLP/HTTP only (not gRPC); a collector that's down costs spans, not requests.
 
 Spans to your tracing backend (Jaeger, Tempo, Honeycomb, Datadog...) through OTLP, so the time between your app and
 its database shows where it went - authentication, the query, serialising the result. Install the extra and set an
@@ -1717,7 +1731,7 @@ process - `serve`, `mcp`, `events`, an export - is its own `service.instance.id`
 |---|---|---|
 | `GET /q/<name>` - the route rule | server | `http.request.method`, `http.route`, `http.response.status_code`, `url.scheme`, `client.address`, `queryapigate.request_id`, `queryapigate.caller`; `error.type` (the error `code`) on a 4xx or 5xx |
 | `query <name>` | internal | `queryapigate.query`, `.version`, `.connection`, `.rows`, `.masked`, `.cache` (`hit`, `miss`); `.agent_write` for an agent's write |
-| `SELECT <connection>` (the statement's kind) | client | `db.system.name`, `db.operation.name`, `db.namespace` (a network database's name), `server.address`, `server.port`, `db.response.returned_rows` or `db.response.affected_rows` |
+| `SELECT sales` - the statement's kind and its target, as [OpenTelemetry's database conventions](https://opentelemetry.io/docs/specs/semconv/database/database-spans/) name it: the collection (`find orders`), else the database, else the server (`SELECT db.internal:5432`); just `SELECT` for a SQLite or DuckDB file | client | `db.system.name`, `db.operation.name`, `db.collection.name` (MongoDB), `db.namespace` (a network database's name), `server.address`, `server.port`, `queryapigate.connection`, `db.response.returned_rows` or `db.response.affected_rows` |
 | `serialize <format>` | internal | `queryapigate.format`, `queryapigate.bytes` |
 | `tools/call <tool>` (MCP) | server | `gen_ai.tool.name`, `queryapigate.caller`; `error.type` when the tool failed |
 | `GET /events` | server | opening a live stream - one span, not one per event |

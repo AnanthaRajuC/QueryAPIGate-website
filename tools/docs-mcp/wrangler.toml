@@ -1,0 +1,7 @@
+# The QueryAPIGate documentation MCP server, on Cloudflare Workers. See README.md.
+name = "queryapigate-docs"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+# src/index.js imports search-index.json and pages.json from the repository root: they are built into the Worker
