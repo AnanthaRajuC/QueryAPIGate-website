@@ -1223,10 +1223,18 @@ Docker image; elsewhere it's downloaded on first use, or install it ahead with
 | `storage` | `s3` (default, also any S3-compatible service), `gcs` (HMAC keys) or `r2` |
 | `region`, `endpoint`, `url_style`, `use_ssl` | as DuckDB's S3 settings: `endpoint` and `url_style: "path"` for an S3-compatible service such as MinIO; `account_id` for R2 |
 
+**TLS.** Web files and buckets over HTTPS are verified against the system's CA bundle (`/etc/ssl/certs/ca-certificates.crt`
+and the other places DuckDB looks), which a connection that reads remote files is therefore also allowed to read - it
+holds public certificates only. For a store with certificates from a private CA, set `SSL_CERT_FILE` in the server's
+environment to that CA's bundle: QueryAPIGate makes it DuckDB's `ca_cert_file` (DuckDB doesn't read `SSL_CERT_FILE`
+itself). As everywhere `SSL_CERT_FILE` is used, it replaces the system bundle rather than adding to it, so if the same
+server also reads public HTTPS files or cloud buckets, make it the system bundle with your CA appended. `"use_ssl": false` is for a store that only speaks plain HTTP, such as a test MinIO.
+
 **A bucket prefix is a second lock, not the first.** DuckDB refuses anything outside the listed prefixes, but an
 S3-compatible server might itself resolve `..` in an object key, so give the connection credentials that can read only
 what it should - a bucket policy or IAM role scoped to those prefixes. Tested against an S3-compatible server
-(SeaweedFS) and a plain web server; Google Cloud Storage and R2 use the same mechanism but weren't tested here.
+(SeaweedFS), a plain web server and an HTTPS one with its own CA; Google Cloud Storage and R2 use the same mechanism
+but weren't tested here.
 
 Any caller with the connection in its `connections` grant can read every listed path with its own SQL; the key ID and
 endpoint are visible to it through DuckDB's `duckdb_secrets()` (the secret itself is always redacted). For partners,
@@ -14378,7 +14386,7 @@ spec:
           restartPolicy: Never
           containers:
             - name: export
-              image: ghcr.io/anantharajuc/queryapigate:0.50.0
+              image: ghcr.io/anantharajuc/queryapigate:0.50.1
               command: ["queryapigate", "export", "example_rentals_since", "--out", "/exports/{name}_{date}.csv"]
               envFrom:
                 - secretRef:
@@ -14507,7 +14515,7 @@ queryapigate/
 ```yaml
 services:
   queryapigate:
-    image: ghcr.io/anantharajuc/queryapigate:0.50.0   # pin a version - upgrades should be deliberate
+    image: ghcr.io/anantharajuc/queryapigate:0.50.1   # pin a version - upgrades should be deliberate
     restart: unless-stopped
     env_file: .env
     environment:
@@ -14810,11 +14818,11 @@ From the changelog's [versioning policy](../CHANGELOG.md#versioning-and-compatib
 3. **Pin the target version** - never upgrade by accident:
 
    ```bash
-   pip install "queryapigate[server,postgres]==0.50.0"      # not just "queryapigate"
+   pip install "queryapigate[server,postgres]==0.50.1"      # not just "queryapigate"
    ```
 
    ```yaml
-   image: ghcr.io/anantharajuc/queryapigate:0.50.0           # not :latest
+   image: ghcr.io/anantharajuc/queryapigate:0.50.1           # not :latest
    ```
 
 ## During: just start it
@@ -15707,6 +15715,9 @@ stop `https://data.example.com/public/../private/...`.
 
 - **Local files and folders** work the same way, with absolute paths: `"allowed_paths": ["/data/sales/"]`. A DuckDB
   connection with no `allowed_paths` reads no files at all.
+- **HTTPS and private CAs.** Buckets and web files over HTTPS are checked against the server's CA bundle, as a browser
+  would. If your S3-compatible store uses certificates from your own CA, set `SSL_CERT_FILE` on the server to that
+  CA's bundle ([TLS](../documentation/DATABASE_CONNECTION_CONFIGURATION.md#files-on-s3-gcs-r2-and-the-web)).
 - **Credentials are visible in part.** Anyone who can run SQL on the connection can see its key ID and endpoint through
   DuckDB's `duckdb_secrets()` - never the secret. Another reason to give partners saved queries, not SQL.
 - **Costs**: on a cloud bucket, each read is requests and egress you pay for. Cache, rate-limit, and prefer Parquet -
@@ -19599,7 +19610,7 @@ dataplane:
 
 ```bash
 helm upgrade --install qag oci://ghcr.io/anantharajuc/charts/queryapigate -f values.yaml
-kubectl logs deploy/qag-queryapigate -c dataplane   # queryapigate-dataplane 0.50.0: listening on 0.0.0.0:5000, ...
+kubectl logs deploy/qag-queryapigate -c dataplane   # queryapigate-dataplane 0.50.1: listening on 0.0.0.0:5000, ...
 ```
 
 Behind the chart's ingress it serves as above: the chart sets `QUERYAPIGATE_TRUST_PROXY=1`, and the data plane reads
@@ -19613,7 +19624,7 @@ plane on port 5000. Both need the same secret, settings and store.
 
 ```bash
 export QUERYAPIGATE_DATAPLANE_SECRET="$(openssl rand -hex 32)"   # at least 16 characters; the same for both
-IMAGE=ghcr.io/anantharajuc/queryapigate:0.50.0
+IMAGE=ghcr.io/anantharajuc/queryapigate:0.50.1
 docker run -d --name qag -p 5000:5000 -v qag-data:/data --env-file qag.env \
     -e QUERYAPIGATE_DATAPLANE_SECRET -e QUERYAPIGATE_BIND=127.0.0.1:5001 "$IMAGE"
 docker run -d --name qag-dataplane --network container:qag -v qag-data:/data --env-file qag.env \
