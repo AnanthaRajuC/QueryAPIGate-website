@@ -178,6 +178,11 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 /* Release entries rendered from GitHub share the static entries' layout; these style their inline markdown. */
 .cl-body code{font-family:'JetBrains Mono',monospace;font-size:0.9em}
 .cl-body p{margin:0}
+.cl-body{overflow-wrap:anywhere}
+.cl-note{display:grid;gap:8px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--danger-ink);border-radius:10px;font-size:14.5px;color:var(--ink-2)}
+.cl-note>*{margin:0}
+.cl-body .cl-note ul{padding-left:18px;list-style:disc;gap:6px}
+.cl-note strong{color:var(--ink);font-weight:600}
 .cl-body ul{margin:0;padding:0;list-style:none;display:grid;gap:10px;font-size:14.5px;color:var(--ink-2)}
 .cl-body li>span>b,.cl-body li>span>strong{color:var(--ink);font-weight:600}
 /* Footer */
@@ -520,16 +525,23 @@ class Component extends DCLogic {
   inline(md, tag) {
     if (!window.marked) return this.esc(md);
     let html = window.marked.parseInline(md, { gfm: true });
-    // relative links in release notes point into the repository at that tag
-    return html.replace(/href="(?!https?:|#|mailto:)([^"]+)"/g, (m, h) => 'href="' + this.repo + '/blob/' + tag + '/' + h + '"');
+    return this.repoLinks(html, tag);
   }
+  block(md, tag) {
+    if (!window.marked) return '<p>' + this.esc(md) + '</p>';
+    return this.repoLinks(window.marked.parse(md, { gfm: true }), tag);
+  }
+  // relative links in release notes point into the repository at that tag
+  repoLinks(html, tag) { return html.replace(/href="(?!https?:|#|mailto:)([^"]+)"/g, (m, h) => 'href="' + this.repo + '/blob/' + tag + '/' + h + '"'); }
   parse(body) {
     // Keep-a-Changelog style notes: an intro paragraph, then "### Section" headings with "- **Lead.** text" bullets.
     const lines = (body || '').replace(/\r/g, '').split('\n');
-    const sections = []; let cur = { name: '', items: [], text: [] };
+    // A "> " block (such as a security notice) is kept whole and shown as a callout.
+    const sections = []; let cur = { name: '', items: [], text: [], quote: [] };
     for (const line of lines) {
+      if (/^\s*>/.test(line)) { cur.quote.push(line.replace(/^\s*>\s?/, '')); continue; }
       const h = line.match(/^#{2,4}\s+(.+?)\s*$/);
-      if (h) { sections.push(cur); cur = { name: h[1].trim(), items: [], text: [] }; continue; }
+      if (h) { sections.push(cur); cur = { name: h[1].trim(), items: [], text: [], quote: [] }; continue; }
       if (/^\s*[-*]\s+/.test(line)) cur.items.push(line.replace(/^\s*[-*]\s+/, ''));
       else if (/^\s{2,}\S/.test(line) && cur.items.length) cur.items[cur.items.length - 1] += ' ' + line.trim();
       else if (line.trim()) cur.text.push(line.trim()); else if (cur.text.length && cur.text[cur.text.length - 1] !== '') cur.text.push('');
@@ -548,13 +560,15 @@ class Component extends DCLogic {
     if (/graduates? to tier 1|graduate[sd]? (?:to|into) stable/i.test(r.body || '')) tags.push(['Stable', 'oklch(0.52 0.11 170 / 0.09)', 'var(--accent-ink)']);
     const tagHtml = tags.map(([t, bg, fg]) => `<span style="font-size:10.5px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:4px 7px;border-radius:4px;background:${bg};color:${fg}">${t}</span>`).join('');
     const summary = intro.text.join(' ').replace(/\s+/g, ' ').trim();
+    const quote = secs.map(x => x.quote.join('\n').trim()).filter(Boolean).join('\n\n');
+    const noteHtml = quote ? `<div class="cl-note">${this.block(quote, tag)}</div>` : '';
     const upgrading = named.find(x => /^upgrading/i.test(x.name));
     const rest = named.filter(x => x !== upgrading);
     const items = rest.flatMap(x => x.items.map(it => `<li class="rs-2col" style="display:grid;grid-template-columns:84px minmax(0,1fr);gap:12px"><span style="font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-3);padding-top:3px">${this.esc(x.name)}</span><span>${this.inline(it, tag)}</span></li>`)).join('');
     const upHtml = upgrading ? `<div style="display:grid;gap:4px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;font-size:14px"><b style="font-weight:600">${this.esc(upgrading.name)}</b><span style="color:var(--ink-2)">${upgrading.items.concat(upgrading.text).map(t => this.inline(t, tag)).join(' ')}</span></div>` : '';
     return `<article class="rs-2col" style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:32px;padding:36px 0;border-bottom:1px solid var(--line);align-items:start">
       <div class="rs-aside" style="display:grid;gap:6px;position:sticky;top:84px"><a href="${this.esc(r.html_url)}" style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;color:var(--ink)">${this.esc(version)}</a><time datetime="${this.esc(r.published_at || '')}" style="font-size:13px;color:var(--ink-3)">${this.fmtDate(r.published_at)}</time><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${tagHtml}</div></div>
-      <div class="cl-body" style="display:grid;gap:16px">${summary ? `<p style="font-size:17px;color:var(--ink);max-width:72ch;text-wrap:pretty">${this.inline(summary, tag)}</p>` : ''}${upHtml}${items ? `<ul>${items}</ul>` : ''}</div>
+      <div class="cl-body" style="display:grid;gap:16px">${noteHtml}${summary ? `<p style="font-size:17px;color:var(--ink);max-width:72ch;text-wrap:pretty">${this.inline(summary, tag)}</p>` : ''}${upHtml}${items ? `<ul>${items}</ul>` : ''}</div>
     </article>`;
   }
   renderReleases() {
