@@ -509,17 +509,21 @@ class Component extends DCLogic {
     el.querySelectorAll('td code, th code').forEach(c => { if (c.children.length === 0) c.innerHTML = c.textContent.replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch])).replace(/([_.])/g, '$1<wbr>'); });
     el.dataset.rendered = this.state.slug;
     this.setState({ tocCount: 0 });
+    const kind = this.kind || 'g';
+    const src = kind === 'd' ? (this.docs.find(d => d.slug === this.state.slug) || {}).path : kind === 'g' ? 'how-to/' + this.state.slug + '.md' : null;
     el.querySelectorAll('a[href]').forEach(a => {
       const h = a.getAttribute('href');
       let m = h.match(/^(?:\.\.?\/)?(?:how-to\/)?(\d\d-[a-z0-9-]+)\.md(#.*)?$/);
       if (m) { a.setAttribute('href', 'Guide.dc.html?g=' + m[1] + (m[2] || '')); return; }
-      m = h.match(/^(?:\.\.?\/)?(?:documentation\/)?([A-Z_]+)\.(?:md|MD)(#.*)?$/);
+      m = h.match(/^(?:\.\.?\/)?(?:documentation\/)?([A-Z][A-Z0-9_]*)\.(?:md|MD)(#.*)?$/);
       if (m && this.docs.some(d => d.slug === m[1])) { a.setAttribute('href', 'Guide.dc.html?d=' + m[1] + (m[2] || '')); return; }
       if (/^Guide\.dc\.html|^Home\.dc\.html/.test(h)) return;
       m = h.match(/^\.\.\/(.*)$/) || h.match(/^(?:\.\/)?((?:documentation|deploy|examples|tests|queryapigate|frontend)\/.*)$/) || h.match(/^(?:\.\/)?([A-Z_]+\.md)(#.*)?$/);
       if (m) { a.setAttribute('href', 'https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/' + m[1]); a.target = '_blank'; return; }
       if (/^#/.test(h)) return;
-      if (/^https?:/.test(h)) a.target = '_blank';
+      if (/^https?:/.test(h)) { a.target = '_blank'; return; }
+      // any other relative link in a doc or guide is a file in the product repository, next to that page there
+      if (src && !/^[a-z][a-z0-9+.-]*:|^\//i.test(h)) { a.setAttribute('href', new URL(h, 'https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/' + src).href); a.target = '_blank'; }
     });
     el.querySelectorAll('img[src^="../"]').forEach(img => img.src = 'https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/' + img.getAttribute('src').slice(3));
     const seenIds = {};
