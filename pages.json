@@ -744,6 +744,14 @@
   "url": "Guide.dc.html?g=66-serve-a-lakehouse-through-trino"
  },
  {
+  "key": "g=67-push-new-results-when-the-data-changes",
+  "title": "Guide 67: Push a query's new result to your app when the data changes",
+  "kind": "how-to",
+  "cat": "Events & exports",
+  "md": "how-to/67-push-new-results-when-the-data-changes.md",
+  "url": "Guide.dc.html?g=67-push-new-results-when-the-data-changes"
+ },
+ {
   "key": "p=the-30-percent-in-the-build",
   "title": "The 30% that was in the build",
   "kind": "blog",

@@ -592,6 +592,15 @@ export const guides = [
   "time": "15 min",
   "timeMin": 15,
   "outcome": "Iceberg tables on S3-compatible storage, read through Trino and joined with a PostgreSQL database, served as governed REST endpoints and MCP tools. An AI agent gets hashed emails and three tables, a partner's app gets one endpoint, and repeat calls skip Trino entirely."
+ },
+ {
+  "num": "67",
+  "slug": "67-push-new-results-when-the-data-changes",
+  "title": "Push a query's new result to your app when the data changes",
+  "cat": "Events & exports",
+  "time": "30 min",
+  "timeMin": 30,
+  "outcome": "An app's product screen that shows a price and stock, and updates within about a second when that row changes in PostgreSQL - changed by any application, not only through QueryAPIGate. No polling, and no change to the saved query the app already calls."
  }
 ];
 
