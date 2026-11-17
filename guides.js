@@ -779,6 +779,15 @@ export const docs = [
    (otherwise the newest is). href sends the card somewhere other than blog/<slug>.md, such as the changelog. */
 export const posts = [
  {
+  "slug": "pushed-when-the-data-changes",
+  "title": "Pushed when the data changes",
+  "date": "2026-11-17",
+  "cat": "Design note",
+  "topic": "Architecture",
+  "version": "0.51",
+  "summary": "QueryAPIGate 0.51 pushes a saved query's result again when the data behind it changes - from its own writes or through Debezium. Every push is an ordinary run as the subscriber, with their grants, masking and rate limit. 51 ms from commit to 1,000 streams, 1,000 live queries on three-quarters of a core. Experimental."
+ },
+ {
   "slug": "the-30-percent-in-the-build",
   "title": "The 30% that was in the build",
   "date": "2026-10-31",

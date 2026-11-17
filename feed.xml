@@ -5,8 +5,16 @@
   <link href="https://anantharajuc.github.io/QueryAPIGate-website/Blog.dc.html"/>
   <link rel="self" href="https://anantharajuc.github.io/QueryAPIGate-website/feed.xml"/>
   <id>https://anantharajuc.github.io/QueryAPIGate-website/Blog.dc.html</id>
-  <updated>2026-10-31T12:00:00Z</updated>
+  <updated>2026-11-17T12:00:00Z</updated>
   <author><name>QueryAPIGate</name></author>
+  <entry>
+    <title>Pushed when the data changes</title>
+    <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=pushed-when-the-data-changes"/>
+    <id>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=pushed-when-the-data-changes</id>
+    <updated>2026-11-17T12:00:00Z</updated>
+    <category term="Design note"/>
+    <summary>QueryAPIGate 0.51 pushes a saved query&#x27;s result again when the data behind it changes - from its own writes or through Debezium. Every push is an ordinary run as the subscriber, with their grants, masking and rate limit. 51 ms from commit to 1,000 streams, 1,000 live queries on three-quarters of a core. Experimental.</summary>
+  </entry>
   <entry>
     <title>The 30% that was in the build</title>
     <link href="https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=the-30-percent-in-the-build"/>

@@ -752,6 +752,15 @@
   "url": "Guide.dc.html?g=67-push-new-results-when-the-data-changes"
  },
  {
+  "key": "p=pushed-when-the-data-changes",
+  "title": "Pushed when the data changes",
+  "kind": "blog",
+  "cat": "Design note",
+  "md": "blog/pushed-when-the-data-changes.md",
+  "url": "Guide.dc.html?p=pushed-when-the-data-changes",
+  "date": "2026-11-17"
+ },
+ {
   "key": "p=the-30-percent-in-the-build",
   "title": "The 30% that was in the build",
   "kind": "blog",

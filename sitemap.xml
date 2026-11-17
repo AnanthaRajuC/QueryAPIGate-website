@@ -136,6 +136,7 @@
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=65-keep-runs-in-clickhouse</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=66-serve-a-lakehouse-through-trino</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=67-push-new-results-when-the-data-changes</loc></url>
+  <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=pushed-when-the-data-changes</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=the-30-percent-in-the-build</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=every-run-recorded</loc></url>
   <url><loc>https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=python-decides-rust-serves</loc></url>
