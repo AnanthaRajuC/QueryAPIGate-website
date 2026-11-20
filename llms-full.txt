@@ -1646,7 +1646,7 @@ curl -X POST http://127.0.0.1:5000/api/v1/queries/film_by_id/publish -H 'X-API-K
 | `GET /api/v1/connections/deleted` | Deleted connections, newest first, with who deleted them, when and why. |
 | `POST /api/v1/connections/test` | Try to connect with the given fields (an unsaved form), or a saved connection's own by `name`. Nothing is saved. A connection that can't be reached is a 502 `connection_failed` with the driver's message in `detail` (any password in it is redacted). |
 | `POST /api/v1/connections/databases` | The databases on that server, for the same two kinds of body. |
-| `GET /api/v1/connections/{name}/schema` | Its tables and columns, with their [descriptions](#descriptions); `?database=` reads another database on the same server, for the types that have more than one (MySQL, PostgreSQL, ClickHouse, MongoDB). |
+| `GET /api/v1/connections/{name}/schema` | Its tables and columns, with their [descriptions](#descriptions); `?database=` reads another database on the same server, for the types that have more than one (MySQL, PostgreSQL, ClickHouse, Trino, MongoDB); on any other it is `400 unsupported_operation`. |
 | `GET /api/v1/connections/{name}/descriptions` | What its tables and columns mean, and its notes - see [Descriptions](#descriptions). |
 | `PATCH /api/v1/connections/{name}/descriptions` | Set or remove some: `{"items": [{"table", "column", "description"}]}`. |
 | `POST /api/v1/connections/{name}/descriptions/import` | Its database's own table and column comments, as descriptions. |
@@ -3912,7 +3912,8 @@ only to specific queries or collections never sees these two, the same way it ca
 endpoints either):
 
 - **`list_tables`** - `{"connection_name": "...", "database": "..."}` (`database` is admin-key only, same
-  as REST). Returns the same shape `GET /connections/<name>/schema` does: each table/view (or Mongo
+  as REST, and only on a server database - PostgreSQL, MySQL, ClickHouse, Trino, MongoDB; on a file-backed one it is
+  `unsupported_operation`). Returns the same shape `GET /connections/<name>/schema` does: each table/view (or Mongo
   collection) with its columns, types, nullability, and primary/foreign keys where the dialect supports it.
 - **`describe_table`** - `{"connection_name": "...", "table": "...", "database": "..."}`. One table's columns,
   types and primary/foreign keys - the same, masking-aware, so a masked or dropped column is flagged rather than
@@ -7819,6 +7820,11 @@ This is the part worth being the most precise about, because it's also the part 
 - **A connection can't be pointed at the server's own metadata store** (`store_not_allowed`): neither a
   SQLite/DuckDB/H2 `database` of `queryapigate.db` nor a DuckDB `allowed_paths` folder containing it - which would
   otherwise hand an administrator the key and token hashes. A PostgreSQL store is kept apart by its own credentials.
+  Nor can a single call: the `database` a query or schema browse may name (Run SQL's database picker, MCP's
+  argument) switches only a server database's - PostgreSQL, MySQL, ClickHouse, Trino, MongoDB - and is refused on
+  every file-backed type, where it would be a path past these checks (`engine.with_database()`). Before the 2026-11-20
+  review of the workspace boundary it wasn't: any role that runs ad-hoc SQL could read the store through a SQLite
+  connection, and with writes on make itself an owner.
 - **A `${VAR}` reference can't name one of the server's own `QUERYAPIGATE_*` settings** in a connection or
   destination - otherwise an administrator could carry the admin key or secret key out in a password sent to a host
   of theirs. **Nor a credential the server itself may run with** - `AWS_*`, `AZURE_*`, `ARM_*`, `GOOGLE_*`, `GCP_*`,
