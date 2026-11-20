@@ -225,7 +225,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 .g-toc a.h3{padding-left:26px;font-size:12.5px}
 .g-toc a:hover{color:var(--ink);text-decoration:none}
 .g-toc a.on{color:var(--ink);font-weight:600;border-left-color:var(--accent-ink)}
-#guide-body h2,#guide-body h3{scroll-margin-top:92px}
+#guide-body h2,#guide-body h3,#guide-body h4{scroll-margin-top:92px}
 @media (max-width:1100px){.g-layout{grid-template-columns:230px minmax(0,1fr) !important;gap:48px !important}.g-toc{display:none !important}}
 @media (max-width:820px){.g-layout{grid-template-columns:minmax(0,1fr) !important;gap:32px !important;padding-left:20px !important;padding-right:20px !important}}
 :root[data-theme=dark] #guide-body p,:root[data-theme=dark] #guide-body ul,:root[data-theme=dark] #guide-body ol{color:#c9d5d0}
@@ -509,20 +509,25 @@ class Component extends DCLogic {
     el.querySelectorAll('td code, th code').forEach(c => { if (c.children.length === 0) c.innerHTML = c.textContent.replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch])).replace(/([_.])/g, '$1<wbr>'); });
     el.dataset.rendered = this.state.slug;
     this.setState({ tocCount: 0 });
+    const kind = this.kind || 'g';
+    const src = kind === 'd' ? (this.docs.find(d => d.slug === this.state.slug) || {}).path : kind === 'g' ? 'how-to/' + this.state.slug + '.md' : null;
     el.querySelectorAll('a[href]').forEach(a => {
       const h = a.getAttribute('href');
       let m = h.match(/^(?:\.\.?\/)?(?:how-to\/)?(\d\d-[a-z0-9-]+)\.md(#.*)?$/);
       if (m) { a.setAttribute('href', 'Guide.dc.html?g=' + m[1] + (m[2] || '')); return; }
-      m = h.match(/^(?:\.\.?\/)?(?:documentation\/)?([A-Z_]+)\.(?:md|MD)(#.*)?$/);
+      m = h.match(/^(?:\.\.?\/)?(?:documentation\/)?([A-Z][A-Z0-9_]*)\.(?:md|MD)(#.*)?$/);
       if (m && this.docs.some(d => d.slug === m[1])) { a.setAttribute('href', 'Guide.dc.html?d=' + m[1] + (m[2] || '')); return; }
       if (/^Guide\.dc\.html|^Home\.dc\.html/.test(h)) return;
       m = h.match(/^\.\.\/(.*)$/) || h.match(/^(?:\.\/)?((?:documentation|deploy|examples|tests|queryapigate|frontend)\/.*)$/) || h.match(/^(?:\.\/)?([A-Z_]+\.md)(#.*)?$/);
       if (m) { a.setAttribute('href', 'https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/' + m[1]); a.target = '_blank'; return; }
       if (/^#/.test(h)) return;
-      if (/^https?:/.test(h)) a.target = '_blank';
+      if (/^https?:/.test(h)) { a.target = '_blank'; return; }
+      // any other relative link in a doc or guide is a file in the product repository, next to that page there
+      if (src && !/^[a-z][a-z0-9+.-]*:|^\//i.test(h)) { a.setAttribute('href', new URL(h, 'https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/' + src).href); a.target = '_blank'; }
     });
     el.querySelectorAll('img[src^="../"]').forEach(img => img.src = 'https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/' + img.getAttribute('src').slice(3));
-    el.querySelectorAll('h2, h3').forEach(h => { if (!h.id) h.id = h.textContent.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); });
+    const seenIds = {};
+    el.querySelectorAll('h2, h3, h4, h5, h6').forEach(h => { if (h.id) return; const base = h.textContent.trim().toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/\s/g, '-'); const n = seenIds[base] || 0; seenIds[base] = n + 1; h.id = n ? base + '-' + n : base; });
     this.buildToc(el);
   }
   // Extras for reports: callouts, right-aligned number columns, captioned figures, ```stats and ```bars blocks.
