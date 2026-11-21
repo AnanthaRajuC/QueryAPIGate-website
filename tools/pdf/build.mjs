@@ -30,7 +30,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright-core';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const SITE = 'https://anantharajuc.github.io/QueryAPIGate-website/';
+const SITE = 'https://queryapigate.com/';
 const MANIFEST = 'pdf/manifest.json';
 const PARALLEL = 4;
 

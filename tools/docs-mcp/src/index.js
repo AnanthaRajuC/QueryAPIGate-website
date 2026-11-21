@@ -11,7 +11,7 @@
 import INDEX from '../../../search-index.json';
 import PAGES from '../../../pages.json';
 
-const SITE = 'https://anantharajuc.github.io/QueryAPIGate-website/';
+const SITE = 'https://queryapigate.com/';
 const VERSION = '1.0.0';
 const PROTOCOLS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 const BIG = 40000; // a page longer than this comes back as its contents, to ask for one section of it

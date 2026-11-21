@@ -2,14 +2,14 @@
 
 > One governed gate between your databases and everything that asks them for data: saved SQL published as REST endpoints, MCP tools for AI agents, live events and scheduled exports, with identity, grants, parameter validation, masking and an audit record on every call. Self-hosted, Python, Apache-2.0.
 
-Site: https://anantharajuc.github.io/QueryAPIGate-website/
+Site: https://queryapigate.com/
 Repository: https://github.com/AnanthaRajuC/QueryAPIGate
-Everything below in one file: https://anantharajuc.github.io/QueryAPIGate-website/llms-full.txt
+Everything below in one file: https://queryapigate.com/llms-full.txt
 Documentation MCP server (search these docs and read any page from an AI agent; read-only, no sign-in): https://queryapigate-docs.queryapigate-docs-mcp.workers.dev/mcp
 Each link below is the markdown of a page; the site renders it at the address that follows.
 
 # Installation and setup
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=INSTALLATION_AND_SETUP
+Source: https://queryapigate.com/Guide.dc.html?d=INSTALLATION_AND_SETUP
 
 # Installation and setup
 
@@ -229,7 +229,7 @@ Integration tests against real databases are enabled by setting `QUERYAPIGATE_IT
 
 
 # Configuration
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=CONFIGURATION
+Source: https://queryapigate.com/Guide.dc.html?d=CONFIGURATION
 
 # Configuration
 
@@ -315,7 +315,7 @@ instead of it - a request has to pass both. See [Per-key rate limiting](API.md#p
 
 
 # Deployment
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=DEPLOYMENT
+Source: https://queryapigate.com/Guide.dc.html?d=DEPLOYMENT
 
 # Production deployment (Docker)
 
@@ -849,7 +849,7 @@ Two limits:
 
 
 # Database connections
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION
+Source: https://queryapigate.com/Guide.dc.html?d=DATABASE_CONNECTION_CONFIGURATION
 
 # Database connection configuration
 
@@ -1262,7 +1262,7 @@ Agent's - is `${file:/run/secrets/name}`, read inside the folders `QUERYAPIGATE_
 
 
 # API reference
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=API
+Source: https://queryapigate.com/Guide.dc.html?d=API
 
 # API reference
 
@@ -3858,7 +3858,7 @@ An error with no more specific code gets the one for its status: `invalid_reques
 
 
 # MCP server
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=MCP
+Source: https://queryapigate.com/Guide.dc.html?d=MCP
 
 # MCP server
 
@@ -4126,7 +4126,7 @@ are the REST server's - an MCP process started with different variables isn't re
 
 
 # Features
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=FEATURES
+Source: https://queryapigate.com/Guide.dc.html?d=FEATURES
 
 # Features
 
@@ -4342,7 +4342,7 @@ Every call - REST, MCP, events or an export - passes the same eight stages, as t
 
 
 # Example APIs
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=EXAMPLES
+Source: https://queryapigate.com/Guide.dc.html?d=EXAMPLES
 
 # Example APIs
 
@@ -4519,7 +4519,7 @@ Granting a second collection to any role - yours or this one - works the same wa
 
 
 # Query metadata
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=QUERY_METADATA_MANAGEMENT
+Source: https://queryapigate.com/Guide.dc.html?d=QUERY_METADATA_MANAGEMENT
 
 # Query metadata
 
@@ -4555,7 +4555,7 @@ Failed runs are recorded with `"status": "error"` and an `"error"` message inste
 
 
 # A tour of the Console
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=SCREENSHOTS
+Source: https://queryapigate.com/Guide.dc.html?d=SCREENSHOTS
 
 # A tour of the Console
 
@@ -4718,7 +4718,7 @@ SQL editor, the demo video and the architecture.
 
 
 # Performance, v5: a Rust data plane in front of /q/
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V5
+Source: https://queryapigate.com/Guide.dc.html?d=PERFORMANCE_V5
 
 # Performance, v5: a Rust data plane in front of `/q/`
 
@@ -4990,7 +4990,7 @@ Pass `--out` as an absolute path, and benchmark committed code: each build is a 
 
 
 # Performance, v4: what 0.43 changed on PostgreSQL
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V4
+Source: https://queryapigate.com/Guide.dc.html?d=PERFORMANCE_V4
 
 # Performance, v4: what 0.43 changed on PostgreSQL
 
@@ -5209,7 +5209,7 @@ The 2026-10-26 run is in
 
 
 # Performance on MySQL, v2: what 0.43 changed
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_MYSQL_V2
+Source: https://queryapigate.com/Guide.dc.html?d=PERFORMANCE_MYSQL_V2
 
 # Performance on MySQL, v2: what 0.43 changed
 
@@ -5557,7 +5557,7 @@ The 2026-10-26 run is in
 
 
 # Performance, v3: an OLTP benchmark on PostgreSQL
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V3
+Source: https://queryapigate.com/Guide.dc.html?d=PERFORMANCE_V3
 
 # Performance, v3: an OLTP benchmark on PostgreSQL
 
@@ -6134,7 +6134,7 @@ python benchmarks/oltp_report.py /tmp/qag-oltp/results.jsonl         # writes re
 
 
 # Performance on MySQL, v1: microservice databases, per-user queries
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_MYSQL_V1
+Source: https://queryapigate.com/Guide.dc.html?d=PERFORMANCE_MYSQL_V1
 
 # Performance on MySQL, v1: microservice databases, per-user queries
 
@@ -6677,7 +6677,7 @@ one JSON line per run, every table, and the py-spy profiles.
 
 
 # Performance, v2: an OLTP benchmark on PostgreSQL
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE_V2
+Source: https://queryapigate.com/Guide.dc.html?d=PERFORMANCE_V2
 
 # Performance, v2: an OLTP benchmark on PostgreSQL
 
@@ -7134,7 +7134,7 @@ python benchmarks/oltp_report.py /tmp/qag-oltp/results.jsonl         # writes re
 
 
 # Performance
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=PERFORMANCE
+Source: https://queryapigate.com/Guide.dc.html?d=PERFORMANCE
 
 # Performance
 
@@ -7490,7 +7490,7 @@ second process's worth. When you're done, `docker rm -fv qag-bench-pg` removes t
 
 
 # Threat model
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=THREAT_MODEL
+Source: https://queryapigate.com/Guide.dc.html?d=THREAT_MODEL
 
 # Threat model and security architecture
 
@@ -8452,7 +8452,7 @@ Being explicit about these is as important as everything above:
 
 
 # Where data goes
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=DATA_PROTECTION
+Source: https://queryapigate.com/Guide.dc.html?d=DATA_PROTECTION
 
 # Where data goes
 
@@ -8656,7 +8656,7 @@ and the two tests that need 3.35 skip.
 
 
 # Security policy
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=SECURITY
+Source: https://queryapigate.com/Guide.dc.html?d=SECURITY
 
 # Security Policy
 
@@ -8752,7 +8752,7 @@ documented way to Level 3; it isn't done yet.
 
 
 # Architecture overview
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=ARCHITECTURE
+Source: https://queryapigate.com/Guide.dc.html?d=ARCHITECTURE
 
 # QueryAPIGate architecture overview
 
@@ -9054,7 +9054,7 @@ only through the deprecation process. Experimental features are outside it.
 
 
 # Security questionnaire answers
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=QUESTIONNAIRE
+Source: https://queryapigate.com/Guide.dc.html?d=QUESTIONNAIRE
 
 # Vendor security questionnaire: pre-filled answers
 
@@ -10104,7 +10104,7 @@ recorded in the threat model, feature by feature, with what each looked at and w
 
 
 # SBOM and release verification
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=SBOM
+Source: https://queryapigate.com/Guide.dc.html?d=SBOM
 
 # Software bill of materials and release verification
 
@@ -10181,7 +10181,7 @@ anything unpinned (0.31.0).
 
 
 # Why QueryAPIGate
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=WHY
+Source: https://queryapigate.com/Guide.dc.html?d=WHY
 
 # Why QueryAPIGate
 
@@ -10265,7 +10265,7 @@ governance, is the API.
 
 
 # Technology stack
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=TECHNOLOGY_STACK
+Source: https://queryapigate.com/Guide.dc.html?d=TECHNOLOGY_STACK
 
 ## Technology Stack
 
@@ -10406,7 +10406,7 @@ The `queryapigate` package is a Flask application, split into focused modules ra
 
 
 # Contributing
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=CONTRIBUTING
+Source: https://queryapigate.com/Guide.dc.html?d=CONTRIBUTING
 
 # Contributing
 
@@ -10628,7 +10628,7 @@ mkdocs serve
 
 
 # Code of conduct
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?d=CODE_OF_CONDUCT
+Source: https://queryapigate.com/Guide.dc.html?d=CODE_OF_CONDUCT
 
 # Contributor Covenant Code of Conduct
 
@@ -10761,7 +10761,7 @@ https://www.contributor-covenant.org/translations.
 
 
 # Guide 01: Turn your first SQL query into a REST API
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=01-turn-your-first-sql-query-into-a-rest-api
+Source: https://queryapigate.com/Guide.dc.html?g=01-turn-your-first-sql-query-into-a-rest-api
 
 # How to turn your first SQL query into a REST API
 
@@ -10919,7 +10919,7 @@ doing before this goes anywhere near production:
 
 
 # Guide 02: Connect to PostgreSQL, MySQL, SQLite, DuckDB, ClickHouse or H2
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=02-connect-a-database
+Source: https://queryapigate.com/Guide.dc.html?g=02-connect-a-database
 
 # How to connect MySQL, PostgreSQL, ClickHouse, SQLite, DuckDB or H2
 
@@ -11096,7 +11096,7 @@ A connection you're not ready to use yet, or want to disable temporarily, doesn'
 
 
 # Guide 03: Connect to anything else via generic JDBC
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=03-connect-via-generic-jdbc
+Source: https://queryapigate.com/Guide.dc.html?g=03-connect-via-generic-jdbc
 
 # How to connect to anything else via generic JDBC
 
@@ -11208,7 +11208,7 @@ Check the URL format against your driver's version - they change.
 
 
 # Guide 04: Connect to MongoDB
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=04-connect-to-mongodb
+Source: https://queryapigate.com/Guide.dc.html?g=04-connect-to-mongodb
 
 # How to connect to MongoDB
 
@@ -11379,7 +11379,7 @@ Worth knowing up front so you don't go looking for it:
 
 
 # Guide 05: Try it without any setup, using the built-in example APIs
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=05-try-the-built-in-example-apis
+Source: https://queryapigate.com/Guide.dc.html?g=05-try-the-built-in-example-apis
 
 # How to try QueryAPIGate without setting anything up
 
@@ -11529,7 +11529,7 @@ a connection or collection name. Real data you connected in the meantime is unto
 
 
 # Guide 06: Use bound parameters safely
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=06-use-bound-parameters-safely
+Source: https://queryapigate.com/Guide.dc.html?g=06-use-bound-parameters-safely
 
 # How to use bound parameters safely
 
@@ -11665,7 +11665,7 @@ parameter if you want to cap it) for how much of it a caller gets per request.
 
 
 # Guide 07: Group related queries into a collection
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=07-group-queries-into-a-collection
+Source: https://queryapigate.com/Guide.dc.html?g=07-group-queries-into-a-collection
 
 # How to group queries into a collection and grant a key access to all of them at once
 
@@ -11782,7 +11782,7 @@ Both are valid, additive grants - the difference is what you're modeling:
 
 
 # Guide 08: Cache a saved query's response
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=08-cache-a-saved-query
+Source: https://queryapigate.com/Guide.dc.html?g=08-cache-a-saved-query
 
 # How to cache a saved query's response
 
@@ -11924,7 +11924,7 @@ TTL.
 
 
 # Guide 09: Export a large result without running out of memory
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=09-stream-a-large-export
+Source: https://queryapigate.com/Guide.dc.html?g=09-stream-a-large-export
 
 # How to export a large result without running out of memory
 
@@ -12025,7 +12025,7 @@ not) open and close its own connection instead, if that trade-off suits your dep
 
 
 # Guide 10: Allow a saved query to write data
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=10-allow-a-saved-query-to-write-data
+Source: https://queryapigate.com/Guide.dc.html?g=10-allow-a-saved-query-to-write-data
 
 # How to allow a saved query to write data
 
@@ -12165,7 +12165,7 @@ thing in the whole system.
 
 
 # Guide 11: Browse a connection's schema before writing a query
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=11-browse-a-connections-schema
+Source: https://queryapigate.com/Guide.dc.html?g=11-browse-a-connections-schema
 
 # How to browse a connection's schema before writing a query
 
@@ -12275,7 +12275,7 @@ sibling database the admin never explicitly granted isn't something a connection
 
 
 # Guide 12: Export a Postman collection for a set of APIs
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=12-export-a-postman-collection
+Source: https://queryapigate.com/Guide.dc.html?g=12-export-a-postman-collection
 
 # How to export a Postman collection for a set of APIs
 
@@ -12358,7 +12358,7 @@ way regardless of the query's own parameters, each with a one-line description o
 
 
 # Guide 13: Set up your first scoped API key
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=13-set-up-a-scoped-api-key
+Source: https://queryapigate.com/Guide.dc.html?g=13-set-up-a-scoped-api-key
 
 # How to set up your first scoped API key
 
@@ -12480,7 +12480,7 @@ Each of these is the same `POST /api/v1/api-keys` call, just with one more field
 
 
 # Guide 14: Give an external partner access to exactly one query
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=14-give-a-partner-one-query-only
+Source: https://queryapigate.com/Guide.dc.html?g=14-give-a-partner-one-query-only
 
 # How to give an external partner access to exactly one query
 
@@ -12603,7 +12603,7 @@ next, with no change to the key.
 
 
 # Guide 15: Create a role and stamp out several keys from it
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=15-create-a-role
+Source: https://queryapigate.com/Guide.dc.html?g=15-create-a-role
 
 # How to create a role and stamp out several keys from it
 
@@ -12707,7 +12707,7 @@ curl 'http://127.0.0.1:5000/api/v1/audit?target=partner' -H 'X-API-Key: demo-key
 
 
 # Guide 16: Restrict a key to specific tables
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=16-restrict-a-key-to-tables
+Source: https://queryapigate.com/Guide.dc.html?g=16-restrict-a-key-to-tables
 
 # How to restrict a key to specific tables
 
@@ -12813,7 +12813,7 @@ Both apply from the key's next request; the secret doesn't change.
 
 
 # Guide 17: Rate-limit a key, or the whole server
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=17-rate-limit-a-key
+Source: https://queryapigate.com/Guide.dc.html?g=17-rate-limit-a-key
 
 # How to rate-limit a key, or the whole server
 
@@ -12937,7 +12937,7 @@ Either way this protects the server from a runaway client; it isn't billing-grad
 
 
 # Guide 18: Restrict a key to specific source IPs
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=18-restrict-a-key-to-ips
+Source: https://queryapigate.com/Guide.dc.html?g=18-restrict-a-key-to-ips
 
 # How to restrict a key to specific source IPs
 
@@ -13027,7 +13027,7 @@ counts by. See [Put QueryAPIGate behind a reverse proxy](23-put-it-behind-a-reve
 
 
 # Guide 19: Give a key an expiry date
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=19-give-a-key-an-expiry-date
+Source: https://queryapigate.com/Guide.dc.html?g=19-give-a-key-an-expiry-date
 
 # How to give a key an expiry date
 
@@ -13123,7 +13123,7 @@ needed again.
 
 
 # Guide 20: Read the audit log to answer "who changed this, and when"
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=20-read-the-audit-log
+Source: https://queryapigate.com/Guide.dc.html?g=20-read-the-audit-log
 
 # How to read the audit log to answer "who changed this, and when"
 
@@ -13265,7 +13265,7 @@ so an edit made with only the store can't be re-signed. A break is named - *BROK
 
 
 # Guide 21: Verify who can reach what
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=21-verify-who-can-reach-what
+Source: https://queryapigate.com/Guide.dc.html?g=21-verify-who-can-reach-what
 
 # How to verify who can reach what, before you find out the hard way
 
@@ -13385,7 +13385,7 @@ that authorizes the calls, not a separate report that could drift.
 
 
 # Guide 22: Keep connection passwords out of the store
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=22-encrypt-passwords-at-rest
+Source: https://queryapigate.com/Guide.dc.html?g=22-encrypt-passwords-at-rest
 
 # How to keep connection passwords out of the store
 
@@ -13535,7 +13535,7 @@ QUERYAPIGATE_SECRET_KEY must be a valid Fernet key*. The same key twice is refus
 
 
 # Guide 23: Put QueryAPIGate behind a reverse proxy with real TLS
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=23-put-it-behind-a-reverse-proxy
+Source: https://queryapigate.com/Guide.dc.html?g=23-put-it-behind-a-reverse-proxy
 
 # How to put QueryAPIGate behind a reverse proxy with real TLS
 
@@ -13697,7 +13697,7 @@ sees the proxy's address for every caller (see
 
 
 # Guide 24: Let an AI agent call your saved queries via MCP
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=24-let-an-agent-call-your-queries-via-mcp
+Source: https://queryapigate.com/Guide.dc.html?g=24-let-an-agent-call-your-queries-via-mcp
 
 # How to let an AI agent call your saved queries via MCP
 
@@ -13824,7 +13824,7 @@ without needing an MCP client at all.
 
 
 # Guide 25: Let an agent explore your schema and run ad-hoc SQL
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=25-mcp-ad-hoc-tools
+Source: https://queryapigate.com/Guide.dc.html?g=25-mcp-ad-hoc-tools
 
 # How to let an agent explore your schema and run ad-hoc SQL
 
@@ -13939,7 +13939,7 @@ An agent can read the `code` and adjust - ask for different tables, drop the wri
 
 
 # Guide 26: Read structured MCP results properly
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=26-mcp-structured-results
+Source: https://queryapigate.com/Guide.dc.html?g=26-mcp-structured-results
 
 # How to read structured MCP results properly
 
@@ -14066,7 +14066,7 @@ def read_result(res):
 
 
 # Guide 27: Check whether your MCP server is running, from the Console
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=27-check-the-mcp-server-from-the-console
+Source: https://queryapigate.com/Guide.dc.html?g=27-check-the-mcp-server-from-the-console
 
 # How to check whether your MCP server is actually running, from the Console
 
@@ -14147,7 +14147,7 @@ MCP calls show up where REST ones do:
 
 
 # Guide 28: Build a client that watches your saved queries run in real time
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=28-build-a-client-that-watches-queries-run
+Source: https://queryapigate.com/Guide.dc.html?g=28-build-a-client-that-watches-queries-run
 
 # How to build a client that watches your saved queries run in real time
 
@@ -14307,7 +14307,7 @@ for a standalone client with no human watching a screen to paper over the gap.
 
 
 # Guide 29: Give each user of your app their own private activity feed
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=29-per-key-live-feeds
+Source: https://queryapigate.com/Guide.dc.html?g=29-per-key-live-feeds
 
 # How to give each user of your app their own private activity feed
 
@@ -14448,7 +14448,7 @@ can never match is refused rather than left silent: `?status=failed` answers `40
 
 
 # Guide 30: Run a scheduled export with cron, systemd or a Kubernetes CronJob
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=30-schedule-an-export
+Source: https://queryapigate.com/Guide.dc.html?g=30-schedule-an-export
 
 # How to run a scheduled export with cron, systemd or a Kubernetes CronJob
 
@@ -14610,7 +14610,7 @@ With Docker Compose instead, run it in the existing container from the host's cr
 
 
 # Guide 31: Get the exact CLI command for a saved query
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=31-get-the-cli-command-for-a-query
+Source: https://queryapigate.com/Guide.dc.html?g=31-get-the-cli-command-for-a-query
 
 # How to get the exact CLI command for a saved query
 
@@ -14680,7 +14680,7 @@ Use the CLI on the server's own machine (cron, systemd); use curl from anywhere 
 
 
 # Guide 32: Deploy with Docker for real
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=32-deploy-with-docker
+Source: https://queryapigate.com/Guide.dc.html?g=32-deploy-with-docker
 
 # How to deploy QueryAPIGate with Docker for real
 
@@ -14862,7 +14862,7 @@ replica count of this Compose file - each would get its own SQLite volume and be
 
 
 # Guide 33: Back up and restore the store
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=33-back-up-and-restore
+Source: https://queryapigate.com/Guide.dc.html?g=33-back-up-and-restore
 
 # How to back up and restore QueryAPIGate's store
 
@@ -14979,7 +14979,7 @@ curl http://127.0.0.1:5099/api/v1/api-keys -H 'X-API-Key: ...'
 
 
 # Guide 34: Upgrade to a new version safely
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=34-upgrade-safely
+Source: https://queryapigate.com/Guide.dc.html?g=34-upgrade-safely
 
 # How to upgrade to a new version safely
 
@@ -15098,7 +15098,7 @@ start the rest on the same version. Don't run old and new versions against the s
 
 
 # Guide 35: Wire up Prometheus and Grafana
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=35-wire-up-prometheus-and-grafana
+Source: https://queryapigate.com/Guide.dc.html?g=35-wire-up-prometheus-and-grafana
 
 # How to wire up Prometheus and Grafana
 
@@ -15232,7 +15232,7 @@ often slow - things that need a person to act, rather than paging anyone.
 
 
 # Guide 36: Read the logs and trace one request end to end
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=36-trace-a-request-in-the-logs
+Source: https://queryapigate.com/Guide.dc.html?g=36-trace-a-request-in-the-logs
 
 # How to read the logs and trace one request end to end
 
@@ -15363,7 +15363,7 @@ in the query line.
 
 
 # Guide 37: Diagnose and tune the connection pool
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=37-tune-the-connection-pool
+Source: https://queryapigate.com/Guide.dc.html?g=37-tune-the-connection-pool
 
 # How to diagnose and tune the connection pool
 
@@ -15448,7 +15448,7 @@ Symptoms and what to change:
 
 
 # Guide 38: Allow a browser-based frontend to call the API directly
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=38-allow-a-browser-frontend-cors
+Source: https://queryapigate.com/Guide.dc.html?g=38-allow-a-browser-frontend-cors
 
 # How to allow a browser-based frontend to call the API directly
 
@@ -15539,7 +15539,7 @@ with `fetch()` too ([guide 28](28-build-a-client-that-watches-queries-run.md)).
 
 
 # Guide 39: Read the example APIs as a template for your own
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=39-walk-through-the-example-apis
+Source: https://queryapigate.com/Guide.dc.html?g=39-walk-through-the-example-apis
 
 # How to read the example APIs as a template for your own
 
@@ -15659,7 +15659,7 @@ Then remove the examples - `queryapigate examples unload` removes exactly what t
 
 
 # Guide 40: Use the threat model to decide how to expose QueryAPIGate
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=40-read-the-threat-model
+Source: https://queryapigate.com/Guide.dc.html?g=40-read-the-threat-model
 
 # How to use the threat model to decide how to expose QueryAPIGate
 
@@ -15777,7 +15777,7 @@ internet and your data.
 
 
 # Guide 41: Publish Parquet, CSV or JSON files in S3 as an API
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=41-publish-files-in-s3-as-an-api
+Source: https://queryapigate.com/Guide.dc.html?g=41-publish-files-in-s3-as-an-api
 
 # How to publish Parquet, CSV or JSON files in S3 as an API
 
@@ -15923,7 +15923,7 @@ stop `https://data.example.com/public/../private/...`.
 
 
 # Guide 42: Run several instances behind a load balancer
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=42-run-several-instances
+Source: https://queryapigate.com/Guide.dc.html?g=42-run-several-instances
 
 # How to run several instances behind a load balancer
 
@@ -16038,7 +16038,7 @@ An instance that stopped stays in `GET /api/v1/instances` for up to 90 seconds; 
 
 
 # Guide 43: Give your team their own admin access
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=43-give-your-team-their-own-admin-access
+Source: https://queryapigate.com/Guide.dc.html?g=43-give-your-team-their-own-admin-access
 
 # How to give your team their own admin access
 
@@ -16215,7 +16215,7 @@ Or keep it, sealed somewhere safe, for emergencies: the alert tells you if it's 
 
 
 # Guide 44: Deliver a daily file to a partner's bucket
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=44-deliver-a-daily-file-to-a-partners-bucket
+Source: https://queryapigate.com/Guide.dc.html?g=44-deliver-a-daily-file-to-a-partners-bucket
 
 # How to deliver a daily file to a partner's bucket
 
@@ -16407,7 +16407,7 @@ With the bucket unreachable:
 
 
 # Guide 45: Hide personal data from a partner or an AI agent
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=45-hide-personal-data-from-a-partner-or-an-ai-agent
+Source: https://queryapigate.com/Guide.dc.html?g=45-hide-personal-data-from-a-partner-or-an-ai-agent
 
 # How to hide personal data from a partner or an AI agent
 
@@ -16592,7 +16592,7 @@ as equal, which is the point of `hash`.
 
 
 # Guide 46: Let AI clients sign in through your identity provider
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=46-let-ai-clients-sign-in-through-your-identity-provider
+Source: https://queryapigate.com/Guide.dc.html?g=46-let-ai-clients-sign-in-through-your-identity-provider
 
 # How to let AI clients sign in through your identity provider
 
@@ -16805,7 +16805,7 @@ naming the MCP server - one leaked from either can't be replayed against the oth
 
 
 # Guide 47: Tell AI agents what your data means, and see what they did
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=47-tell-agents-what-your-data-means-and-see-what-they-did
+Source: https://queryapigate.com/Guide.dc.html?g=47-tell-agents-what-your-data-means-and-see-what-they-did
 
 # How to tell AI agents what your data means, and see what they did
 
@@ -17006,7 +17006,7 @@ and data being pulled out look the same here - the Agents screen tells them apar
 
 
 # Guide 48: Sign in to the Console through your identity provider
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=48-sign-in-to-the-console-through-your-identity-provider
+Source: https://queryapigate.com/Guide.dc.html?g=48-sign-in-to-the-console-through-your-identity-provider
 
 # How to sign in to the Console through your identity provider
 
@@ -17189,7 +17189,7 @@ critical: *Console sign-in through SSO is down*. Owners sign in with a token or 
 
 
 # Guide 49: Let an AI agent write - with a person approving each write
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=49-let-an-agent-write-with-a-person-approving-each-write
+Source: https://queryapigate.com/Guide.dc.html?g=49-let-an-agent-write-with-a-person-approving-each-write
 
 # How to let an AI agent write - with a person approving each write
 
@@ -17375,7 +17375,7 @@ access:
 
 
 # Guide 50: Rotate an API key without downtime
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=50-rotate-an-api-key-without-downtime
+Source: https://queryapigate.com/Guide.dc.html?g=50-rotate-an-api-key-without-downtime
 
 # How to rotate an API key without downtime
 
@@ -17508,7 +17508,7 @@ Run history stays under `partner-acme` whichever secret made the call (`GET /api
 
 
 # Guide 51: See QueryAPIGate in your traces
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=51-see-queryapigate-in-your-traces
+Source: https://queryapigate.com/Guide.dc.html?g=51-see-queryapigate-in-your-traces
 
 # How to see QueryAPIGate in your traces
 
@@ -17623,7 +17623,7 @@ OTEL_TRACES_SAMPLER=parentbased_traceidratio OTEL_TRACES_SAMPLER_ARG=0.1
 
 
 # Guide 52: Give a partner a quota and a concurrency cap
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=52-give-a-partner-a-quota-and-a-concurrency-cap
+Source: https://queryapigate.com/Guide.dc.html?g=52-give-a-partner-a-quota-and-a-concurrency-cap
 
 # How to give a partner a quota and a concurrency cap
 
@@ -17754,7 +17754,7 @@ instances with Redis** if a quota is in a contract. One instance alone counts ex
 
 
 # Guide 53: Send the audit log to your SIEM, and prove nobody edited it
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=53-send-the-audit-log-to-your-siem
+Source: https://queryapigate.com/Guide.dc.html?g=53-send-the-audit-log-to-your-siem
 
 # How to send the audit log to your SIEM, and prove nobody edited it
 
@@ -17934,7 +17934,7 @@ Not checked: all 5 entries are keyed, and QUERYAPIGATE_AUDIT_KEY is not set - se
 
 
 # Guide 54: Install on Kubernetes with Helm
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=54-install-on-kubernetes-with-helm
+Source: https://queryapigate.com/Guide.dc.html?g=54-install-on-kubernetes-with-helm
 
 # How to install QueryAPIGate on Kubernetes with Helm
 
@@ -18178,7 +18178,7 @@ the volume. Expect a few seconds of downtime per upgrade.
 
 
 # Guide 55: Manage your setup as code, and promote it from dev to prod through a pull request
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request
+Source: https://queryapigate.com/Guide.dc.html?g=55-promote-a-setup-from-dev-to-prod-through-a-pull-request
 
 # How to manage your setup as code, and promote it from dev to prod through a pull request
 
@@ -18413,7 +18413,7 @@ one - never what was made in the Console or the API and no file has named.
 
 
 # Guide 56: Use short-lived database credentials from Vault
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=56-use-short-lived-database-credentials-from-vault
+Source: https://queryapigate.com/Guide.dc.html?g=56-use-short-lived-database-credentials-from-vault
 
 # How to use short-lived database credentials from Vault
 
@@ -18575,7 +18575,7 @@ So restarts don't fill Vault with leases waiting out their TTL.
 
 
 # Guide 57: Answer a security questionnaire about data and cryptography
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=57-answer-a-security-questionnaire-about-data-and-cryptography
+Source: https://queryapigate.com/Guide.dc.html?g=57-answer-a-security-questionnaire-about-data-and-cryptography
 
 # How to answer a security questionnaire about data and cryptography
 
@@ -18740,7 +18740,7 @@ tables have a "Read by" column for each kind of data.
 
 
 # Guide 58: Keep the server's own secrets, and its metrics, in
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=58-keep-the-servers-own-secrets-and-metrics-in
+Source: https://queryapigate.com/Guide.dc.html?g=58-keep-the-servers-own-secrets-and-metrics-in
 
 # How to keep the server's own secrets, and its metrics, in
 
@@ -18905,7 +18905,7 @@ own reads it from that Secret. Rendering the chart without the cluster (`helm te
 
 
 # Guide 59: Verify a release before you run it
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=59-verify-a-release-before-you-run-it
+Source: https://queryapigate.com/Guide.dc.html?g=59-verify-a-release-before-you-run-it
 
 # How to verify a release before you run it
 
@@ -19124,7 +19124,7 @@ helm install qag oci://ghcr.io/anantharajuc/charts/queryapigate --version 0.31.0
 
 
 # Guide 60: Give each team its own workspace
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=60-give-each-team-its-own-workspace
+Source: https://queryapigate.com/Guide.dc.html?g=60-give-each-team-its-own-workspace
 
 # How to give each team its own workspace
 
@@ -19297,7 +19297,7 @@ See [Workspaces](../documentation/API.md#workspaces) for the full reference.
 
 
 # Guide 61: Connect to Trino
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=61-connect-to-trino
+Source: https://queryapigate.com/Guide.dc.html?g=61-connect-to-trino
 
 # How to connect to Trino
 
@@ -19437,7 +19437,7 @@ catalog the user was never allowed to touch.
 
 
 # Guide 62: See what's being used, from the Console
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=62-see-whats-being-used-from-the-console
+Source: https://queryapigate.com/Guide.dc.html?g=62-see-whats-being-used-from-the-console
 
 # How to see what's being used, from the Console
 
@@ -19567,7 +19567,7 @@ For a *live* feed rather than history, the **Home** screen's requests panel upda
 
 
 # Guide 63: Tune a deployment for throughput
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=63-tune-a-deployment-for-throughput
+Source: https://queryapigate.com/Guide.dc.html?g=63-tune-a-deployment-for-throughput
 
 # How to tune a deployment for throughput
 
@@ -19727,7 +19727,7 @@ about 75% and triples by 90%.
 
 
 # Guide 64: Try the Rust data plane in front of /q/
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=64-try-the-rust-data-plane
+Source: https://queryapigate.com/Guide.dc.html?g=64-try-the-rust-data-plane
 
 # How to try the Rust data plane in front of `/q/` (experimental)
 
@@ -19910,7 +19910,7 @@ In the chart, `dataplane.enabled: false`. With Docker, stop the second container
 
 
 # Guide 65: Keep run history and the event log in ClickHouse
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=65-keep-runs-in-clickhouse
+Source: https://queryapigate.com/Guide.dc.html?g=65-keep-runs-in-clickhouse
 
 # How to keep run history and the event log in ClickHouse
 
@@ -20028,7 +20028,7 @@ above ClickHouse's, so clients still resume. The runs already in ClickHouse stay
 
 
 # Guide 66: Serve a lakehouse through Trino, to apps and AI agents
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=66-serve-a-lakehouse-through-trino
+Source: https://queryapigate.com/Guide.dc.html?g=66-serve-a-lakehouse-through-trino
 
 # How to serve a lakehouse through Trino, to apps and AI agents
 
@@ -20175,7 +20175,7 @@ Clean up with `docker compose -f deploy/lakehouse/docker-compose.yml down -v`.
 
 
 # Guide 67: Push a query's new result to your app when the data changes
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?g=67-push-new-results-when-the-data-changes
+Source: https://queryapigate.com/Guide.dc.html?g=67-push-new-results-when-the-data-changes
 
 # How to push a query's new result to your app when the data changes
 
@@ -20426,7 +20426,7 @@ proxy: the first result on subscribing, the change 0.8 seconds after the `UPDATE
 
 
 # Pushed when the data changes
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=pushed-when-the-data-changes
+Source: https://queryapigate.com/Guide.dc.html?p=pushed-when-the-data-changes
 
 # Pushed when the data changes
 
@@ -20541,7 +20541,7 @@ seconds after an `UPDATE` made straight in the database. The design is in
 
 
 # The 30% that was in the build
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=the-30-percent-in-the-build
+Source: https://queryapigate.com/Guide.dc.html?p=the-30-percent-in-the-build
 
 # The 30% that was in the build
 
@@ -20689,7 +20689,7 @@ If you get different numbers on your hardware, we'd like to see them.
 
 
 # Every run, recorded
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=every-run-recorded
+Source: https://queryapigate.com/Guide.dc.html?p=every-run-recorded
 
 # Every run, recorded
 
@@ -20819,7 +20819,7 @@ with the harness to run them yourself.
 
 
 # Python decides, Rust serves
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=python-decides-rust-serves
+Source: https://queryapigate.com/Guide.dc.html?p=python-decides-rust-serves
 
 # Python decides, Rust serves
 
@@ -20958,7 +20958,7 @@ The design and the decision are in
 
 
 # One MySQL server, six services, one gateway
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-mysql-six-services
+Source: https://queryapigate.com/Guide.dc.html?p=one-mysql-six-services
 
 # One MySQL server, six services, one gateway
 
@@ -21089,7 +21089,7 @@ in first.
 
 
 # What a governed call costs
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=what-a-governed-call-costs
+Source: https://queryapigate.com/Guide.dc.html?p=what-a-governed-call-costs
 
 # What a governed call costs
 
@@ -21602,7 +21602,7 @@ Plug the laptop in first. Then point it at your own machine and release, and tel
 
 
 # Agents can write now. A person approves each write.
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=agents-can-write-now
+Source: https://queryapigate.com/Guide.dc.html?p=agents-can-write-now
 
 # Agents can write now. A person approves each write.
 
@@ -21633,7 +21633,7 @@ Supported on PostgreSQL, MySQL, SQLite and DuckDB. [Guide 49](Guide.dc.html?g=49
 
 
 # Why every front door runs the same eight steps
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=why-every-front-door-runs-the-same-eight-steps
+Source: https://queryapigate.com/Guide.dc.html?p=why-every-front-door-runs-the-same-eight-steps
 
 # Why every front door runs the same eight steps
 
@@ -21668,7 +21668,7 @@ The [architecture diagram](Home.dc.html) on the home page is this sequence drawn
 
 
 # One worker, many threads, and what Redis is actually for
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=one-worker-many-threads
+Source: https://queryapigate.com/Guide.dc.html?p=one-worker-many-threads
 
 # One worker, many threads, and what Redis is actually for
 
@@ -21704,7 +21704,7 @@ A cached response is a miss. Limits are counted per process for a few seconds, t
 
 
 # SQL2API is now QueryAPIGate
-Source: https://anantharajuc.github.io/QueryAPIGate-website/Guide.dc.html?p=sql2api-is-now-queryapigate
+Source: https://queryapigate.com/Guide.dc.html?p=sql2api-is-now-queryapigate
 
 # SQL2API is now QueryAPIGate
 
@@ -21738,105 +21738,105 @@ The step-by-step upgrade is in [Installation and setup](Guide.dc.html?d=INSTALLA
 # Glossary
 
 
-- **Ad-hoc SQL**: SQL a caller sends directly to /execute_sql or the MCP execute_sql tool, rather than a saved query. Only for keys granted a connection, one statement, read-only unless allowed, and confined to allowed_tables. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#ad-hoc-sql)
-- **Admin roles**: The four fixed administrator roles: owner (everything), admin (everything but administrators), developer (saved queries and collections, no keys) and auditor (read only, no SQL). (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#admin-roles)
-- **Administrator**: A named person or pipeline that manages QueryAPIGate, holding one of four fixed roles and signing in with their own admin tokens, so every change in the audit log has someone behind it. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#administrator)
-- **ADR**: Architecture decision record: a short, numbered document in the product repository that records a design decision, what was weighed and why. The docs cite them, as ADR 0028 for the data plane. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#adr)
-- **Agent usage**: GET /api/v1/usage/agents: what each AI agent did over MCP, per agent: calls, rows, errors, masked calls, the queries and connections it used, its ad-hoc calls and what it was refused. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#agent-usage)
-- **Agent writes**: How an AI agent changes data: only through a saved query its author marked agent_writes, either held for a person’s approval (approval) or as a single idempotent insert (insert). (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#agent-writes)
-- **Alerts**: Live conditions worked out on each request, such as key_expiring or writes_awaiting_approval, shown in the Console and at GET /api/v1/alerts, and gone once the cause is. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#alerts)
-- **allowed_paths**: The files a DuckDB connection may read: local folders, s3://, gs:// and r2:// prefixes, and single files on the web. Nothing outside the list can be read from SQL. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#allowed-paths)
-- **allowed_tables**: A grant that confines a key’s ad-hoc SQL to named tables. The SQL is parsed, not pattern-matched, and a table outside the list answers as if it did not exist. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#allowed-tables)
-- **API key**: The credential an application calls with, sent as X-API-Key. Stored only as a SHA-256 hash; it can be scoped, rate-limited, pinned to IP ranges, given an expiry and rotated. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#api-key)
-- **Approval (write request)**: A held agent write, wr_…, that an administrator with writes.approve approves or rejects in the Console. Once approved it runs once, for that caller, with exactly the arguments shown, before it expires. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#approval-write-request)
-- **Audit log**: The record of every administrative change: who changed what, with the fields that changed. Each entry is chained to the one before, and the log can stream to your SIEM. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#audit-log)
-- **Break-glass key**: QUERYAPIGATE_API_KEY: a full-access key that keeps working as an owner when the identity provider is down. Its use raises an alert. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#break-glass-key)
-- **Catalogue**: GET /catalog: what the calling key may run, and on what terms, such as whether a query is cached, whether this key may write through it, and its rate limit. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#catalogue)
-- **Client SDK**: A typed client generated from /openapi.json with openapi-generator, for Java, TypeScript, Go or any of about 50 languages. The spec is checked in CI against the official validator. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#client-sdk)
-- **Collection**: A named group of saved queries. A key or role granted a collection reaches every query in it, including ones added later; it can be renamed, exported, imported and handed out as a Postman collection. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#collection)
-- **Column masking**: Hiding a column from a caller: hash, mask, null or drop. Traced through aliases, CTEs and joins to the source column; a query whose columns can’t be traced is refused rather than answered unmasked. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#column-masking)
-- **Compatibility promise**: What changes only with notice: REST endpoints and responses, CLI commands, environment variables, the storage format, grant fields, the saved-query format, the MCP tool contract and error codes. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#compatibility-promise)
-- **Configuration as code**: config export, config diff and config apply: the whole setup as one YAML file with no secret in it, reviewed in a pull request and applied all or nothing. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#configuration-as-code)
-- **Connection**: A named database, or a folder or bucket of files, that QueryAPIGate reaches with its own credentials. Callers never see those credentials. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#connection)
-- **Connection pool**: Database connections kept open and reused between requests, for every type but SQLite: QUERYAPIGATE_POOL_SIZE idle ones per connection setting, 8 by default. A connection used by a failed or timed-out request is closed, never reused. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#connection-pool)
-- **Console**: The built-in administration UI at /console: connections, saved queries, keys and roles, a SQL editor, history, the audit log, alerts and approvals. Everything it does is also on the Management API. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#console)
-- **Console sign-in (SSO)**: Administrators sign in to the Console through your identity provider over OpenID Connect, with its MFA and policies, and their role comes from their groups. One provider at a time; no SAML. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#console-sign-in-sso)
-- **CORS**: Calling the API from a browser frontend on another origin. Off unless QUERYAPIGATE_CORS_ORIGINS names the origins allowed. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#cors)
-- **Data dictionary**: An MCP resource per connection, queryapigate://connections/<name>/dictionary, telling an agent what each table and column means and which columns are masked for it. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#data-dictionary)
-- **Data plane Exp**: queryapigate-dataplane, a Rust process in the image that takes the public port and serves saved-query reads from plans the Python server gives it, forwarding everything else unchanged. Measured at 3-9x the calls a second per core, with every run still recorded; in the Helm chart, dataplane.enabled: true. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#data-plane)
-- **Descriptions**: Plain-language notes on connections, tables, columns and parameters, imported from database comments or written by you, and given to agents and docs alike. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#descriptions)
-- **Destination**: Where exports may write: an s3://, gs:// or r2:// prefix, or a local folder inside QUERYAPIGATE_EXPORT_DIRS, with credentials stored like a connection password. Every write goes through a DuckDB connection locked to that prefix. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#destination)
-- **Draft and published**: A saved query has at most one published version: the one /q/<name> runs and OpenAPI, MCP and Postman describe. Newer versions are drafts, invisible to callers until published. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#draft-and-published)
-- **DuckDB connection**: An embedded analytical database that also reads Parquet, CSV and JSON files where they are, on disk, in a bucket or on the web, with no import step. One type for a .duckdb file or for views over files; tier 1. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#duckdb-connection)
-- **The eight stages**: What every call passes, whichever front door it used: identify the caller, apply its limits, check the grant, validate parameters, guard the SQL, run it, mask and format, record it. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#the-eight-stages)
-- **Encryption at rest**: With QUERYAPIGATE_SECRET_KEY set to a Fernet key, every literal connection password is encrypted before it touches disk and decrypted only in memory when a connection opens. The ciphertext is never returned to a client. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#encryption-at-rest)
-- **Erasure**: queryapigate history forget jwt:<subject> deletes a signed-in person’s runs, events and usage counts, in the store and in Redis. The audit log records the erasure by the caller’s SHA-256, not their name. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#erasure)
-- **Error code**: The stable code field on every error, such as param_invalid or forbidden. Part of the compatibility promise: an existing code is never renamed or repurposed. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#error-code)
-- **Event log**: Every run, written to the store in the same batch as its history row. Live events come from it, so a client that reconnects with Last-Event-ID gets what it missed, nothing repeated. Kept 24 hours by default. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#event-log)
-- **Events server**: queryapigate events: a separate asyncio server from the same image that serves /events to many clients at once. The main server’s own GET /events holds a thread per stream, so it serves only a few. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#events-server)
-- **Example APIs**: Four worked scenarios installed by queryapigate examples load: reporting, dashboard data, a streaming export and a partner integration, each with a collection, a role and a ready key, removable with one command. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#example-apis)
-- **Experimental**: A feature that works but sits outside the compatibility promise until it graduates, labelled wherever you meet it. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#experimental)
-- **Export**: queryapigate export or a saved export: a full result written to a file or a bucket through the same streaming path, incrementally from a watermark, with no server needed. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#export)
-- **FIPS mode**: Running on a validated OpenSSL in FIPS mode, such as RHEL 9 or Ubuntu Pro FIPS, with Python and cryptography from the distribution rather than PyPI. Validation belongs to the cryptographic module, not to the application. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#fips-mode)
-- **from_claim**: A parameter whose value comes from the caller’s sign-in token instead of the request, so a user can only ever ask for their own rows. A caller who sends it anyway is refused. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#from-claim)
-- **Front door**: One of the ways a call arrives: REST, MCP, live events, exports or the Management API. All of them pass the same governance code. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#front-door)
-- **Generic JDBC Exp**: db: "jdbc": any database with a JDBC driver, such as Oracle, SQL Server, DB2 or Snowflake, through an embedded JVM and the vendor’s driver jar. It has no query time limit and no schema browser. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#generic-jdbc)
-- **Grant**: What a key or role may reach: whole connections, named saved queries or collections, tables for ad-hoc SQL, and which writes, if any. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#grant)
-- **Health check**: GET /health: public and never rate-limited, it answers the status, version and time zone. A load balancer skips an instance that fails it. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#health-check)
-- **Helm chart**: The Kubernetes chart, published with every release at the server’s version. store.type: sqlite runs one pod; store.type: postgres runs several on PostgreSQL with Redis, rolled one at a time. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#helm-chart)
-- **Identity provider**: Keycloak, Okta, Auth0, Entra ID or another OpenID Connect provider. It signs people in and issues the tokens QueryAPIGate checks, for signed-in users, the Console and AI clients; QueryAPIGate never sees a password. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#identity-provider)
-- **Instances**: GET /api/v1/instances: every serve, mcp and events process using the store, seen in the last 90 seconds, with its version, and problems such as instances whose versions differ. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#instances)
-- **Interactive docs**: /docs: Swagger UI over /openapi.json, listing every saved query as its own endpoint with its parameters, types and defaults. The SQL is never included. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#interactive-docs)
-- **IP allow-list**: allowed_ips: the addresses or CIDR ranges, IPv4 or IPv6, a key may be used from. A call from anywhere else fails like a wrong key, a 401 that says nothing about why. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#ip-allow-list)
-- **Key expiry**: expires_at: a date after which a key stops working on its own. It works through the end of that day, and it is checked on every request, so there is nothing to schedule. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#key-expiry)
-- **Key rotation**: POST /api/v1/api-keys/{name}/rotate: a new secret, shown once, while the old one keeps working for grace_minutes, 60 by default and at most a week. The name, grants and history stay. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#key-rotation)
-- **Last used**: last_used_at on a key: roughly when it last authenticated, updated at most once a minute. It shows a stale key to revoke, or a new one that was never wired up. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#last-used)
-- **list_tables and describe_table**: MCP tools for exploring a connection: its tables and columns, with types and keys, a masked column flagged as such. Listed only for a key with access to whole connections. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#list-tables-and-describe-table)
-- **Live events**: Server-sent events as saved queries run, per key if you want, from GET /events or the separate queryapigate events server for many clients. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#live-events)
-- **Management API**: /api/v1: everything the Console does, over HTTP, for scripts and pipelines. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#management-api)
-- **MCP**: The Model Context Protocol, the standard AI agents use to call tools. QueryAPIGate’s MCP server publishes saved queries as tools under the same rules as REST. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#mcp)
-- **MCP tool**: A published saved query as an agent sees it: a name, a description, an input schema built from its parameters, and structured results. mcp: false hides a query from MCP while it still serves REST. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#mcp-tool)
-- **Metadata cache**: QUERYAPIGATE_METADATA_CACHE_TTL: seconds the key, saved query and connection a call reads from the store are reused instead of read again. Off by default; a change through another instance is seen up to that long later. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#metadata-cache)
-- **Metrics**: /metrics: Prometheus text-format metrics, for a Grafana dashboard or alerting. Public unless QUERYAPIGATE_METRICS_TOKEN is set. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#metrics)
-- **MongoDB connection**: find() queries only, with filter, projection, sort and bound parameters, ad hoc or saved. Nothing else is ever sent, and server-side JavaScript such as $where is refused. Tier 1 since 0.37. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#mongodb-connection)
-- **OAuth for AI clients**: A hosted AI client signs in through your identity provider, following the MCP specification’s OAuth 2.1. QueryAPIGate is the resource server: it checks tokens and issues none. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#oauth-for-ai-clients)
-- **OpenAPI**: /openapi.json: a standard OpenAPI 3.0 document of the API and every saved query. Postman and Insomnia import it by URL, and openapi-generator turns it into clients. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#openapi)
-- **Paging**: page and page_size (10 by default, at most 1000 unless the server says otherwise), within the statement’s own LIMIT. Responses carry X-Page, X-Page-Size and X-Has-More. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#paging)
-- **Parameter rules**: What a :name parameter accepts: type, default, required, enum, numeric range, length and pattern. Values are bound, never spliced into SQL, and a request breaking a rule gets a 400 listing every problem. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#parameter-rules)
-- **Parquet**: A columnar file format. ?format=parquet and exports write it on every database type through DuckDB, with decimals kept exact. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#parquet)
-- **Per-key limits**: max_concurrent, query_timeout and max_rows on a key or role. Each narrows the server’s own limit, never widens it; over max_concurrent a call gets a 429, not a place in a queue. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#per-key-limits)
-- **Per-query write access**: A queries entry such as {"name": "submit_order", "allow_writes": true}: write access to that one query and nothing else. A wildcard never carries write access. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#per-query-write-access)
-- **Query time limit**: QUERYAPIGATE_QUERY_TIMEOUT, 30 seconds by default, enforced by each database itself so the statement is really cancelled. A request or a key can lower it, never raise it. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#query-time-limit)
-- **Quota**: Calls and rows per day or month for a key, with X-Quota-Remaining-* headers on every response and an alert before it runs out. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#quota)
-- **Rate limit**: A request budget: a server-wide limit by client address, and an optional per-key rate_limit. A request must pass both; over it, the answer is a 429 with retry_after. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#rate-limit)
-- **Redis**: Shared state for several instances: rate limits and the response cache. Optional for one instance, which it gives a cache that survives restarts; required for several. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#redis)
-- **Request ID**: An identifier on every response, X-Request-Id, also in the error body and on every log line written for that request. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#request-id)
-- **Response cache**: Optional HTTP caching a saved query opts into with cache_ttl: ETag, conditional requests and 304, never for a query that writes. In-process, or shared through Redis. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#response-cache)
-- **Response formats**: json, ndjson, csv, tsv, xml, yaml, xlsx or parquet, chosen with ?format=. The first is the default. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#response-formats)
-- **Role**: A reusable template of grants and limits, copied onto a key once when the key is created. Editing or deleting a role later never changes a key made from it. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#role)
-- **Rolling upgrade**: Replacing instances on one store one at a time, with no downtime. Within 1.x a release changes the store only by adding to it, so instances still on the previous release keep working; CI checks it. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#rolling-upgrade)
-- **Run history**: The record of each run: when, which connection, which key, through which front door, how long and how many rows. MCP runs carry "transport": "mcp". (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#run-history)
-- **Run store Exp**: QUERYAPIGATE_RUN_STORE_URL: run history, the event log and usage rollups kept in ClickHouse instead of the store, for a data plane’s rates. Keys, queries and the audit log stay where they are. A prototype. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#run-store)
-- **Saved query**: SQL with a name, description, parameters, permissions and optional cache settings, published as GET /q/<name>, an MCP tool and an export from the one definition. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#saved-query)
-- **Schema browser**: A connection’s tables and views, with columns, types, nullability and keys, in the Console and at GET /connections/<name>/schema. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#schema-browser)
-- **Scoped key**: An API key restricted to a set of connections, an allow-list of saved queries or collections, or both, so it reaches only what it was given. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#scoped-key)
-- **Secret reference**: ${VAR}, ${file:...} or ${vault:...} in place of a password, resolved when it is needed, so the secret is never kept in the store. Vault can also issue short-lived database credentials. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#secret-reference)
-- **Security headers**: nosniff, a Content-Security-Policy, no-referrer, no-store and, when configured, HSTS, set on every response by the server itself rather than left to a proxy. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#security-headers)
-- **Semantic search Exp**: A text parameter marked "embed": true: the server turns the caller’s words into an embedding and binds it, so the SQL can rank rows by pgvector similarity. PostgreSQL only, and off unless an embeddings endpoint is set. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#semantic-search)
-- **Several instances**: Any number of interchangeable instances behind a load balancer, sharing a PostgreSQL store and Redis. The reference deployment is three instances behind Caddy in one Compose file. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#several-instances)
-- **SIEM streaming**: Every audit entry, as it is written, to Splunk, Sentinel, Elastic, QRadar or a log forwarder, over syslog with TLS or over OTLP. UDP is refused, because it loses entries silently. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#siem-streaming)
-- **Signed release**: From 0.31, every image and Helm chart is signed keyless with cosign by the release workflow, with SLSA provenance, an SBOM and a GitHub attestation, so you can check what you run. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#signed-release)
-- **Signed-in user**: An app user who calls with their own Authorization: Bearer token from your identity provider instead of a shared key, and is mapped to a role. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#signed-in-user)
-- **SQL guard**: The check that lets only single SELECT, WITH, SHOW, DESCRIBE and EXPLAIN statements through by default, before anything reaches the database. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#sql-guard)
-- **Store**: Where QueryAPIGate keeps its own state: saved queries, keys, roles, history and the audit log. A SQLite file by default, or PostgreSQL for several instances. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#store)
-- **Streaming**: ?stream=true: the whole result sent straight from the database cursor instead of built in memory, so an export larger than memory still downloads. CSV, TSV, NDJSON and Parquet only, and always read-only. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#streaming)
-- **Structured results**: An MCP tool’s answer as data: structuredContent matching its outputSchema, {"rows": [...], "truncated": <bool>}, so code reads rows rather than parsing text. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#structured-results)
-- **Tamper-evident chain**: Each audit entry carries a sequence number, the previous entry’s hash and its own, so a changed, removed, inserted or reordered entry breaks every hash after it. With QUERYAPIGATE_AUDIT_KEY, someone without the key can’t re-sign an edit. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#tamper-evident-chain)
-- **Text placeholder**: The older {name} form in saved SQL, substituted as text, so its value may only be a number, a boolean or a plain string. Bound :name parameters are preferred. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#text-placeholder)
-- **Threat model**: The documented account of what is at risk, who might attack it and from where, the control for each, and what QueryAPIGate does not defend against. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#threat-model)
-- **Tier 1**: The database types with every feature, tested against a real server in CI and covered by the compatibility promise. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#tier-1)
-- **Tracing Exp**: OpenTelemetry spans sent over OTLP to Jaeger, Tempo, Honeycomb, Datadog and others, showing where a request’s time went. Install the otel extra and set OTEL_EXPORTER_OTLP_ENDPOINT. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#tracing)
-- **Trino connection Exp**: The Trino engine, which federates Hive, Iceberg, Delta, Kafka and other databases, as one governed source, with masking, the schema browser, the query time limit and catalog-qualified table grants. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#trino-connection)
-- **Watermark**: For an incremental export, the largest value of a column it last delivered, bound to :since on the next run so only what changed is sent. It moves only once the file is written, so a failed run is sent again. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#watermark)
-- **Workspace Exp**: An experimental way to run several teams on one server, each with its own connections, queries, keys, roles, history and audit entries. Every route also answers at /w/<workspace>/…. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#workspace)
-- **Write granularity**: allowed_write_ops: narrowing a key that may write to specific operations, such as only INSERT, or only on one curated query. (https://anantharajuc.github.io/QueryAPIGate-website/Glossary.dc.html#write-granularity)
+- **Ad-hoc SQL**: SQL a caller sends directly to /execute_sql or the MCP execute_sql tool, rather than a saved query. Only for keys granted a connection, one statement, read-only unless allowed, and confined to allowed_tables. (https://queryapigate.com/Glossary.dc.html#ad-hoc-sql)
+- **Admin roles**: The four fixed administrator roles: owner (everything), admin (everything but administrators), developer (saved queries and collections, no keys) and auditor (read only, no SQL). (https://queryapigate.com/Glossary.dc.html#admin-roles)
+- **Administrator**: A named person or pipeline that manages QueryAPIGate, holding one of four fixed roles and signing in with their own admin tokens, so every change in the audit log has someone behind it. (https://queryapigate.com/Glossary.dc.html#administrator)
+- **ADR**: Architecture decision record: a short, numbered document in the product repository that records a design decision, what was weighed and why. The docs cite them, as ADR 0028 for the data plane. (https://queryapigate.com/Glossary.dc.html#adr)
+- **Agent usage**: GET /api/v1/usage/agents: what each AI agent did over MCP, per agent: calls, rows, errors, masked calls, the queries and connections it used, its ad-hoc calls and what it was refused. (https://queryapigate.com/Glossary.dc.html#agent-usage)
+- **Agent writes**: How an AI agent changes data: only through a saved query its author marked agent_writes, either held for a person’s approval (approval) or as a single idempotent insert (insert). (https://queryapigate.com/Glossary.dc.html#agent-writes)
+- **Alerts**: Live conditions worked out on each request, such as key_expiring or writes_awaiting_approval, shown in the Console and at GET /api/v1/alerts, and gone once the cause is. (https://queryapigate.com/Glossary.dc.html#alerts)
+- **allowed_paths**: The files a DuckDB connection may read: local folders, s3://, gs:// and r2:// prefixes, and single files on the web. Nothing outside the list can be read from SQL. (https://queryapigate.com/Glossary.dc.html#allowed-paths)
+- **allowed_tables**: A grant that confines a key’s ad-hoc SQL to named tables. The SQL is parsed, not pattern-matched, and a table outside the list answers as if it did not exist. (https://queryapigate.com/Glossary.dc.html#allowed-tables)
+- **API key**: The credential an application calls with, sent as X-API-Key. Stored only as a SHA-256 hash; it can be scoped, rate-limited, pinned to IP ranges, given an expiry and rotated. (https://queryapigate.com/Glossary.dc.html#api-key)
+- **Approval (write request)**: A held agent write, wr_…, that an administrator with writes.approve approves or rejects in the Console. Once approved it runs once, for that caller, with exactly the arguments shown, before it expires. (https://queryapigate.com/Glossary.dc.html#approval-write-request)
+- **Audit log**: The record of every administrative change: who changed what, with the fields that changed. Each entry is chained to the one before, and the log can stream to your SIEM. (https://queryapigate.com/Glossary.dc.html#audit-log)
+- **Break-glass key**: QUERYAPIGATE_API_KEY: a full-access key that keeps working as an owner when the identity provider is down. Its use raises an alert. (https://queryapigate.com/Glossary.dc.html#break-glass-key)
+- **Catalogue**: GET /catalog: what the calling key may run, and on what terms, such as whether a query is cached, whether this key may write through it, and its rate limit. (https://queryapigate.com/Glossary.dc.html#catalogue)
+- **Client SDK**: A typed client generated from /openapi.json with openapi-generator, for Java, TypeScript, Go or any of about 50 languages. The spec is checked in CI against the official validator. (https://queryapigate.com/Glossary.dc.html#client-sdk)
+- **Collection**: A named group of saved queries. A key or role granted a collection reaches every query in it, including ones added later; it can be renamed, exported, imported and handed out as a Postman collection. (https://queryapigate.com/Glossary.dc.html#collection)
+- **Column masking**: Hiding a column from a caller: hash, mask, null or drop. Traced through aliases, CTEs and joins to the source column; a query whose columns can’t be traced is refused rather than answered unmasked. (https://queryapigate.com/Glossary.dc.html#column-masking)
+- **Compatibility promise**: What changes only with notice: REST endpoints and responses, CLI commands, environment variables, the storage format, grant fields, the saved-query format, the MCP tool contract and error codes. (https://queryapigate.com/Glossary.dc.html#compatibility-promise)
+- **Configuration as code**: config export, config diff and config apply: the whole setup as one YAML file with no secret in it, reviewed in a pull request and applied all or nothing. (https://queryapigate.com/Glossary.dc.html#configuration-as-code)
+- **Connection**: A named database, or a folder or bucket of files, that QueryAPIGate reaches with its own credentials. Callers never see those credentials. (https://queryapigate.com/Glossary.dc.html#connection)
+- **Connection pool**: Database connections kept open and reused between requests, for every type but SQLite: QUERYAPIGATE_POOL_SIZE idle ones per connection setting, 8 by default. A connection used by a failed or timed-out request is closed, never reused. (https://queryapigate.com/Glossary.dc.html#connection-pool)
+- **Console**: The built-in administration UI at /console: connections, saved queries, keys and roles, a SQL editor, history, the audit log, alerts and approvals. Everything it does is also on the Management API. (https://queryapigate.com/Glossary.dc.html#console)
+- **Console sign-in (SSO)**: Administrators sign in to the Console through your identity provider over OpenID Connect, with its MFA and policies, and their role comes from their groups. One provider at a time; no SAML. (https://queryapigate.com/Glossary.dc.html#console-sign-in-sso)
+- **CORS**: Calling the API from a browser frontend on another origin. Off unless QUERYAPIGATE_CORS_ORIGINS names the origins allowed. (https://queryapigate.com/Glossary.dc.html#cors)
+- **Data dictionary**: An MCP resource per connection, queryapigate://connections/<name>/dictionary, telling an agent what each table and column means and which columns are masked for it. (https://queryapigate.com/Glossary.dc.html#data-dictionary)
+- **Data plane Exp**: queryapigate-dataplane, a Rust process in the image that takes the public port and serves saved-query reads from plans the Python server gives it, forwarding everything else unchanged. Measured at 3-9x the calls a second per core, with every run still recorded; in the Helm chart, dataplane.enabled: true. (https://queryapigate.com/Glossary.dc.html#data-plane)
+- **Descriptions**: Plain-language notes on connections, tables, columns and parameters, imported from database comments or written by you, and given to agents and docs alike. (https://queryapigate.com/Glossary.dc.html#descriptions)
+- **Destination**: Where exports may write: an s3://, gs:// or r2:// prefix, or a local folder inside QUERYAPIGATE_EXPORT_DIRS, with credentials stored like a connection password. Every write goes through a DuckDB connection locked to that prefix. (https://queryapigate.com/Glossary.dc.html#destination)
+- **Draft and published**: A saved query has at most one published version: the one /q/<name> runs and OpenAPI, MCP and Postman describe. Newer versions are drafts, invisible to callers until published. (https://queryapigate.com/Glossary.dc.html#draft-and-published)
+- **DuckDB connection**: An embedded analytical database that also reads Parquet, CSV and JSON files where they are, on disk, in a bucket or on the web, with no import step. One type for a .duckdb file or for views over files; tier 1. (https://queryapigate.com/Glossary.dc.html#duckdb-connection)
+- **The eight stages**: What every call passes, whichever front door it used: identify the caller, apply its limits, check the grant, validate parameters, guard the SQL, run it, mask and format, record it. (https://queryapigate.com/Glossary.dc.html#the-eight-stages)
+- **Encryption at rest**: With QUERYAPIGATE_SECRET_KEY set to a Fernet key, every literal connection password is encrypted before it touches disk and decrypted only in memory when a connection opens. The ciphertext is never returned to a client. (https://queryapigate.com/Glossary.dc.html#encryption-at-rest)
+- **Erasure**: queryapigate history forget jwt:<subject> deletes a signed-in person’s runs, events and usage counts, in the store and in Redis. The audit log records the erasure by the caller’s SHA-256, not their name. (https://queryapigate.com/Glossary.dc.html#erasure)
+- **Error code**: The stable code field on every error, such as param_invalid or forbidden. Part of the compatibility promise: an existing code is never renamed or repurposed. (https://queryapigate.com/Glossary.dc.html#error-code)
+- **Event log**: Every run, written to the store in the same batch as its history row. Live events come from it, so a client that reconnects with Last-Event-ID gets what it missed, nothing repeated. Kept 24 hours by default. (https://queryapigate.com/Glossary.dc.html#event-log)
+- **Events server**: queryapigate events: a separate asyncio server from the same image that serves /events to many clients at once. The main server’s own GET /events holds a thread per stream, so it serves only a few. (https://queryapigate.com/Glossary.dc.html#events-server)
+- **Example APIs**: Four worked scenarios installed by queryapigate examples load: reporting, dashboard data, a streaming export and a partner integration, each with a collection, a role and a ready key, removable with one command. (https://queryapigate.com/Glossary.dc.html#example-apis)
+- **Experimental**: A feature that works but sits outside the compatibility promise until it graduates, labelled wherever you meet it. (https://queryapigate.com/Glossary.dc.html#experimental)
+- **Export**: queryapigate export or a saved export: a full result written to a file or a bucket through the same streaming path, incrementally from a watermark, with no server needed. (https://queryapigate.com/Glossary.dc.html#export)
+- **FIPS mode**: Running on a validated OpenSSL in FIPS mode, such as RHEL 9 or Ubuntu Pro FIPS, with Python and cryptography from the distribution rather than PyPI. Validation belongs to the cryptographic module, not to the application. (https://queryapigate.com/Glossary.dc.html#fips-mode)
+- **from_claim**: A parameter whose value comes from the caller’s sign-in token instead of the request, so a user can only ever ask for their own rows. A caller who sends it anyway is refused. (https://queryapigate.com/Glossary.dc.html#from-claim)
+- **Front door**: One of the ways a call arrives: REST, MCP, live events, exports or the Management API. All of them pass the same governance code. (https://queryapigate.com/Glossary.dc.html#front-door)
+- **Generic JDBC Exp**: db: "jdbc": any database with a JDBC driver, such as Oracle, SQL Server, DB2 or Snowflake, through an embedded JVM and the vendor’s driver jar. It has no query time limit and no schema browser. (https://queryapigate.com/Glossary.dc.html#generic-jdbc)
+- **Grant**: What a key or role may reach: whole connections, named saved queries or collections, tables for ad-hoc SQL, and which writes, if any. (https://queryapigate.com/Glossary.dc.html#grant)
+- **Health check**: GET /health: public and never rate-limited, it answers the status, version and time zone. A load balancer skips an instance that fails it. (https://queryapigate.com/Glossary.dc.html#health-check)
+- **Helm chart**: The Kubernetes chart, published with every release at the server’s version. store.type: sqlite runs one pod; store.type: postgres runs several on PostgreSQL with Redis, rolled one at a time. (https://queryapigate.com/Glossary.dc.html#helm-chart)
+- **Identity provider**: Keycloak, Okta, Auth0, Entra ID or another OpenID Connect provider. It signs people in and issues the tokens QueryAPIGate checks, for signed-in users, the Console and AI clients; QueryAPIGate never sees a password. (https://queryapigate.com/Glossary.dc.html#identity-provider)
+- **Instances**: GET /api/v1/instances: every serve, mcp and events process using the store, seen in the last 90 seconds, with its version, and problems such as instances whose versions differ. (https://queryapigate.com/Glossary.dc.html#instances)
+- **Interactive docs**: /docs: Swagger UI over /openapi.json, listing every saved query as its own endpoint with its parameters, types and defaults. The SQL is never included. (https://queryapigate.com/Glossary.dc.html#interactive-docs)
+- **IP allow-list**: allowed_ips: the addresses or CIDR ranges, IPv4 or IPv6, a key may be used from. A call from anywhere else fails like a wrong key, a 401 that says nothing about why. (https://queryapigate.com/Glossary.dc.html#ip-allow-list)
+- **Key expiry**: expires_at: a date after which a key stops working on its own. It works through the end of that day, and it is checked on every request, so there is nothing to schedule. (https://queryapigate.com/Glossary.dc.html#key-expiry)
+- **Key rotation**: POST /api/v1/api-keys/{name}/rotate: a new secret, shown once, while the old one keeps working for grace_minutes, 60 by default and at most a week. The name, grants and history stay. (https://queryapigate.com/Glossary.dc.html#key-rotation)
+- **Last used**: last_used_at on a key: roughly when it last authenticated, updated at most once a minute. It shows a stale key to revoke, or a new one that was never wired up. (https://queryapigate.com/Glossary.dc.html#last-used)
+- **list_tables and describe_table**: MCP tools for exploring a connection: its tables and columns, with types and keys, a masked column flagged as such. Listed only for a key with access to whole connections. (https://queryapigate.com/Glossary.dc.html#list-tables-and-describe-table)
+- **Live events**: Server-sent events as saved queries run, per key if you want, from GET /events or the separate queryapigate events server for many clients. (https://queryapigate.com/Glossary.dc.html#live-events)
+- **Management API**: /api/v1: everything the Console does, over HTTP, for scripts and pipelines. (https://queryapigate.com/Glossary.dc.html#management-api)
+- **MCP**: The Model Context Protocol, the standard AI agents use to call tools. QueryAPIGate’s MCP server publishes saved queries as tools under the same rules as REST. (https://queryapigate.com/Glossary.dc.html#mcp)
+- **MCP tool**: A published saved query as an agent sees it: a name, a description, an input schema built from its parameters, and structured results. mcp: false hides a query from MCP while it still serves REST. (https://queryapigate.com/Glossary.dc.html#mcp-tool)
+- **Metadata cache**: QUERYAPIGATE_METADATA_CACHE_TTL: seconds the key, saved query and connection a call reads from the store are reused instead of read again. Off by default; a change through another instance is seen up to that long later. (https://queryapigate.com/Glossary.dc.html#metadata-cache)
+- **Metrics**: /metrics: Prometheus text-format metrics, for a Grafana dashboard or alerting. Public unless QUERYAPIGATE_METRICS_TOKEN is set. (https://queryapigate.com/Glossary.dc.html#metrics)
+- **MongoDB connection**: find() queries only, with filter, projection, sort and bound parameters, ad hoc or saved. Nothing else is ever sent, and server-side JavaScript such as $where is refused. Tier 1 since 0.37. (https://queryapigate.com/Glossary.dc.html#mongodb-connection)
+- **OAuth for AI clients**: A hosted AI client signs in through your identity provider, following the MCP specification’s OAuth 2.1. QueryAPIGate is the resource server: it checks tokens and issues none. (https://queryapigate.com/Glossary.dc.html#oauth-for-ai-clients)
+- **OpenAPI**: /openapi.json: a standard OpenAPI 3.0 document of the API and every saved query. Postman and Insomnia import it by URL, and openapi-generator turns it into clients. (https://queryapigate.com/Glossary.dc.html#openapi)
+- **Paging**: page and page_size (10 by default, at most 1000 unless the server says otherwise), within the statement’s own LIMIT. Responses carry X-Page, X-Page-Size and X-Has-More. (https://queryapigate.com/Glossary.dc.html#paging)
+- **Parameter rules**: What a :name parameter accepts: type, default, required, enum, numeric range, length and pattern. Values are bound, never spliced into SQL, and a request breaking a rule gets a 400 listing every problem. (https://queryapigate.com/Glossary.dc.html#parameter-rules)
+- **Parquet**: A columnar file format. ?format=parquet and exports write it on every database type through DuckDB, with decimals kept exact. (https://queryapigate.com/Glossary.dc.html#parquet)
+- **Per-key limits**: max_concurrent, query_timeout and max_rows on a key or role. Each narrows the server’s own limit, never widens it; over max_concurrent a call gets a 429, not a place in a queue. (https://queryapigate.com/Glossary.dc.html#per-key-limits)
+- **Per-query write access**: A queries entry such as {"name": "submit_order", "allow_writes": true}: write access to that one query and nothing else. A wildcard never carries write access. (https://queryapigate.com/Glossary.dc.html#per-query-write-access)
+- **Query time limit**: QUERYAPIGATE_QUERY_TIMEOUT, 30 seconds by default, enforced by each database itself so the statement is really cancelled. A request or a key can lower it, never raise it. (https://queryapigate.com/Glossary.dc.html#query-time-limit)
+- **Quota**: Calls and rows per day or month for a key, with X-Quota-Remaining-* headers on every response and an alert before it runs out. (https://queryapigate.com/Glossary.dc.html#quota)
+- **Rate limit**: A request budget: a server-wide limit by client address, and an optional per-key rate_limit. A request must pass both; over it, the answer is a 429 with retry_after. (https://queryapigate.com/Glossary.dc.html#rate-limit)
+- **Redis**: Shared state for several instances: rate limits and the response cache. Optional for one instance, which it gives a cache that survives restarts; required for several. (https://queryapigate.com/Glossary.dc.html#redis)
+- **Request ID**: An identifier on every response, X-Request-Id, also in the error body and on every log line written for that request. (https://queryapigate.com/Glossary.dc.html#request-id)
+- **Response cache**: Optional HTTP caching a saved query opts into with cache_ttl: ETag, conditional requests and 304, never for a query that writes. In-process, or shared through Redis. (https://queryapigate.com/Glossary.dc.html#response-cache)
+- **Response formats**: json, ndjson, csv, tsv, xml, yaml, xlsx or parquet, chosen with ?format=. The first is the default. (https://queryapigate.com/Glossary.dc.html#response-formats)
+- **Role**: A reusable template of grants and limits, copied onto a key once when the key is created. Editing or deleting a role later never changes a key made from it. (https://queryapigate.com/Glossary.dc.html#role)
+- **Rolling upgrade**: Replacing instances on one store one at a time, with no downtime. Within 1.x a release changes the store only by adding to it, so instances still on the previous release keep working; CI checks it. (https://queryapigate.com/Glossary.dc.html#rolling-upgrade)
+- **Run history**: The record of each run: when, which connection, which key, through which front door, how long and how many rows. MCP runs carry "transport": "mcp". (https://queryapigate.com/Glossary.dc.html#run-history)
+- **Run store Exp**: QUERYAPIGATE_RUN_STORE_URL: run history, the event log and usage rollups kept in ClickHouse instead of the store, for a data plane’s rates. Keys, queries and the audit log stay where they are. A prototype. (https://queryapigate.com/Glossary.dc.html#run-store)
+- **Saved query**: SQL with a name, description, parameters, permissions and optional cache settings, published as GET /q/<name>, an MCP tool and an export from the one definition. (https://queryapigate.com/Glossary.dc.html#saved-query)
+- **Schema browser**: A connection’s tables and views, with columns, types, nullability and keys, in the Console and at GET /connections/<name>/schema. (https://queryapigate.com/Glossary.dc.html#schema-browser)
+- **Scoped key**: An API key restricted to a set of connections, an allow-list of saved queries or collections, or both, so it reaches only what it was given. (https://queryapigate.com/Glossary.dc.html#scoped-key)
+- **Secret reference**: ${VAR}, ${file:...} or ${vault:...} in place of a password, resolved when it is needed, so the secret is never kept in the store. Vault can also issue short-lived database credentials. (https://queryapigate.com/Glossary.dc.html#secret-reference)
+- **Security headers**: nosniff, a Content-Security-Policy, no-referrer, no-store and, when configured, HSTS, set on every response by the server itself rather than left to a proxy. (https://queryapigate.com/Glossary.dc.html#security-headers)
+- **Semantic search Exp**: A text parameter marked "embed": true: the server turns the caller’s words into an embedding and binds it, so the SQL can rank rows by pgvector similarity. PostgreSQL only, and off unless an embeddings endpoint is set. (https://queryapigate.com/Glossary.dc.html#semantic-search)
+- **Several instances**: Any number of interchangeable instances behind a load balancer, sharing a PostgreSQL store and Redis. The reference deployment is three instances behind Caddy in one Compose file. (https://queryapigate.com/Glossary.dc.html#several-instances)
+- **SIEM streaming**: Every audit entry, as it is written, to Splunk, Sentinel, Elastic, QRadar or a log forwarder, over syslog with TLS or over OTLP. UDP is refused, because it loses entries silently. (https://queryapigate.com/Glossary.dc.html#siem-streaming)
+- **Signed release**: From 0.31, every image and Helm chart is signed keyless with cosign by the release workflow, with SLSA provenance, an SBOM and a GitHub attestation, so you can check what you run. (https://queryapigate.com/Glossary.dc.html#signed-release)
+- **Signed-in user**: An app user who calls with their own Authorization: Bearer token from your identity provider instead of a shared key, and is mapped to a role. (https://queryapigate.com/Glossary.dc.html#signed-in-user)
+- **SQL guard**: The check that lets only single SELECT, WITH, SHOW, DESCRIBE and EXPLAIN statements through by default, before anything reaches the database. (https://queryapigate.com/Glossary.dc.html#sql-guard)
+- **Store**: Where QueryAPIGate keeps its own state: saved queries, keys, roles, history and the audit log. A SQLite file by default, or PostgreSQL for several instances. (https://queryapigate.com/Glossary.dc.html#store)
+- **Streaming**: ?stream=true: the whole result sent straight from the database cursor instead of built in memory, so an export larger than memory still downloads. CSV, TSV, NDJSON and Parquet only, and always read-only. (https://queryapigate.com/Glossary.dc.html#streaming)
+- **Structured results**: An MCP tool’s answer as data: structuredContent matching its outputSchema, {"rows": [...], "truncated": <bool>}, so code reads rows rather than parsing text. (https://queryapigate.com/Glossary.dc.html#structured-results)
+- **Tamper-evident chain**: Each audit entry carries a sequence number, the previous entry’s hash and its own, so a changed, removed, inserted or reordered entry breaks every hash after it. With QUERYAPIGATE_AUDIT_KEY, someone without the key can’t re-sign an edit. (https://queryapigate.com/Glossary.dc.html#tamper-evident-chain)
+- **Text placeholder**: The older {name} form in saved SQL, substituted as text, so its value may only be a number, a boolean or a plain string. Bound :name parameters are preferred. (https://queryapigate.com/Glossary.dc.html#text-placeholder)
+- **Threat model**: The documented account of what is at risk, who might attack it and from where, the control for each, and what QueryAPIGate does not defend against. (https://queryapigate.com/Glossary.dc.html#threat-model)
+- **Tier 1**: The database types with every feature, tested against a real server in CI and covered by the compatibility promise. (https://queryapigate.com/Glossary.dc.html#tier-1)
+- **Tracing Exp**: OpenTelemetry spans sent over OTLP to Jaeger, Tempo, Honeycomb, Datadog and others, showing where a request’s time went. Install the otel extra and set OTEL_EXPORTER_OTLP_ENDPOINT. (https://queryapigate.com/Glossary.dc.html#tracing)
+- **Trino connection Exp**: The Trino engine, which federates Hive, Iceberg, Delta, Kafka and other databases, as one governed source, with masking, the schema browser, the query time limit and catalog-qualified table grants. (https://queryapigate.com/Glossary.dc.html#trino-connection)
+- **Watermark**: For an incremental export, the largest value of a column it last delivered, bound to :since on the next run so only what changed is sent. It moves only once the file is written, so a failed run is sent again. (https://queryapigate.com/Glossary.dc.html#watermark)
+- **Workspace Exp**: An experimental way to run several teams on one server, each with its own connections, queries, keys, roles, history and audit entries. Every route also answers at /w/<workspace>/…. (https://queryapigate.com/Glossary.dc.html#workspace)
+- **Write granularity**: allowed_write_ops: narrowing a key that may write to specific operations, such as only INSERT, or only on one curated query. (https://queryapigate.com/Glossary.dc.html#write-granularity)
