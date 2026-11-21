@@ -285,7 +285,7 @@ Everything is configured through environment variables (all optional):
 | `QUERYAPIGATE_MCP_PORT` | `5001` | Bind port for `queryapigate mcp` - see [documentation/MCP.md](MCP.md). |
 | `QUERYAPIGATE_MCP_MAX_ROWS` | `200` | Row cap for an MCP tool call's result. Always a positive count; a malformed value stops startup. |
 | `QUERYAPIGATE_SSO_ISSUER` / `QUERYAPIGATE_SSO_CLIENT_ID` / `QUERYAPIGATE_SSO_CLIENT_SECRET` / `QUERYAPIGATE_SSO_REDIRECT_URL` | unset | Administrators sign in to the Console through your identity provider, their role from their groups (`QUERYAPIGATE_SSO_ROLES`). See [Console sign-in through SSO](API.md#console-sign-in-through-sso). |
-| `QUERYAPIGATE_MCP_RESOURCE_URL` / `QUERYAPIGATE_MCP_AUTH_SERVER` | unset | Let hosted AI clients sign in through your identity provider (OAuth) - the MCP server's own URL and the provider's issuer, with `QUERYAPIGATE_MCP_ROLE` / `QUERYAPIGATE_MCP_ROLE_CLAIM` and `QUERYAPIGATE_MCP_SCOPE`. See [Sign-in for AI clients](MCP.md#sign-in-for-ai-clients-oauth). |
+| `QUERYAPIGATE_MCP_RESOURCE_URL` / `QUERYAPIGATE_MCP_AUTH_SERVER` | unset | Let hosted AI clients sign in through your identity provider (OAuth) - the MCP server's own URL and the provider's issuer, with `QUERYAPIGATE_MCP_ROLE` / `QUERYAPIGATE_MCP_ROLE_CLAIM`, `QUERYAPIGATE_MCP_WORKSPACE_CLAIM` and `QUERYAPIGATE_MCP_SCOPE`. See [Sign-in for AI clients](MCP.md#sign-in-for-ai-clients-oauth). |
 
 The Console's **Settings** screen shows every one of these with its effective value and whether it was set or is the default (secrets are reported as configured or not, never shown). Settings that hold secrets can also be read from a file - `QUERYAPIGATE_SECRET_KEY_FILE` and the like: see [the server's own secrets, from files](API.md#secrets-from-files-and-secrets-managers).
 
@@ -1698,7 +1698,7 @@ and those `workspaces`.
 |---|---|
 | `GET /api/v1/workspaces` | Every workspace - `name`, `description`, `created_at`, `created_by`, `members` (how many) - for a server-wide owner, admin or auditor; the ones you belong to otherwise. |
 | `POST /api/v1/workspaces` | Create one: `{"name": "team-a", "description": "Payments"}`. 409 `workspace_exists`. Owners only. |
-| `GET`, `PATCH`, `DELETE /api/v1/workspaces/{name}` | One workspace (404 for one you may not see, as for one that doesn't exist); change its `description`; remove it - only when it owns nothing (409 `workspace_not_empty`, with what it still has in `contents`), and never `default` (409 `workspace_protected`). Changing and removing: owners only. |
+| `GET`, `PATCH`, `DELETE /api/v1/workspaces/{name}` | One workspace (404 for one you may not see, as for one that doesn't exist); change its `description`; remove it - only when it owns nothing (409 `workspace_not_empty`, with what it still has in `contents`), and never `default` (409 `workspace_protected`). A removed workspace's name isn't given again (409 `workspace_name_retired`): its run history and audit log still name it. Changing and removing: owners only. |
 | `GET /api/v1/workspaces/{name}/members` | Who has a role in it: `admin`, `role`, `created_at`, `added_by`. |
 | `PUT`, `DELETE /api/v1/workspaces/{name}/members/{admin}` | Give an administrator a role in it - `{"role": "developer"}` - or change it; take them out (404 `member_not_found`). A server owner's, or the workspace's own owner's. |
 
@@ -2250,6 +2250,8 @@ curl -X PATCH http://127.0.0.1:5000/api/v1/connections/shop/descriptions -H "X-A
 - Who may: reading with `connections.read`, changing and importing with `connections.write` (owners and admins).
   Every change is in the audit log - `update_descriptions` or `import_descriptions`, with what each one said before
   and after.
+- **They go with their connection:** deleting a connection deletes its descriptions, so a connection given its name
+  later - another database, perhaps - starts with none.
 
 In the Console: the schema browser's **✎** beside a table describes it and its columns; **✎ Describe connection**
 holds the notes and **Import comments**.
@@ -2293,7 +2295,8 @@ their own token, remove it from the environment: **authentication stays required
 and the last active owner can't be demoted, deactivated or removed while the shared key isn't set (`409 last_owner`).
 
 Administrator names and API key names never overlap (`409 name_taken`), so a name in the logs, `/metrics` and run
-history means one caller; `admin` and `cli` are reserved.
+history means one caller; `admin`, `cli`, `startup` and `-` are reserved, for administrators and - since 0.52, for
+new ones - API keys alike (`400 invalid_name`): `admin` is every administrator's label in `/metrics`.
 
 ### Console sign-in through SSO
 
@@ -2322,7 +2325,9 @@ policies apply, and their role comes from their groups:
   ID), nonce, expiry. The browser never holds a token.
 - **Who**: the person is bound to their administrator by the provider's `sub`, never by email; the first sign-in
   creates the administrator (`via: sso`). **The role is the groups'**, at every sign-in - the most capable that maps;
-  none, and the sign-in is refused (`sso_no_role`).
+  none, and the sign-in is refused (`sso_no_role`). An administrator of [workspaces](#workspaces) only - no
+  server-wide role, invited with `{"sso": "pending"}` - stays one: their memberships let them in, with or without a
+  group, and `QUERYAPIGATE_SSO_DEFAULT_ROLE` never makes them server-wide; a group that maps does, as for anyone.
 - **The session** is an `HttpOnly`, `Secure`, `SameSite=Strict` cookie, and a request is authenticated by it only
   together with the session's CSRF token in `X-QAG-CSRF` - which the Console reads from `GET /auth/session`. Sent
   with an `X-API-Key` or `Authorization` header, the header is judged instead. `POST /auth/sso/logout` ends it.
@@ -2381,6 +2386,12 @@ see everything. It protects teams from each other's mistakes and reach, not from
   otherwise), since whoever chooses the path could read any file the server can. A workspace's own owner runs the ones
   a server administrator set up there, switches them on and off and changes their password, and sets up DuckDB over
   remote storage (`s3://`, `gs://`, `https://`...) and server databases themselves.
+- **So are secrets the server reaches for.** A connection or destination whose fields hold a secret reference -
+  `${VAR}`, `${file:...}`, Vault, AWS - or `credentials` is saved, tested and repointed by a server-wide role (`403
+  role_forbidden` otherwise): the allow-lists that bound them are the whole server's, so a workspace's owner naming one
+  could have another team's secret sent to a host of their own. They run those connections, switch them on and off,
+  and replace a reference with a password typed in; a connection or destination with a password of its own is
+  theirs to set up.
 - **The Console**: once there is a second workspace, a switcher under the wordmark picks the one the tab works in -
   every screen then reads and changes that workspace's things - and the **Workspaces** screen lists them, creates and
   removes them (owners), and manages each one's members. An administrator whose roles are all in workspaces starts
@@ -3818,6 +3829,7 @@ An error with no more specific code gets the one for its status: `invalid_reques
 | `query_exists`, `connection_exists`, `key_exists`, `role_exists`, `collection_exists` | 409 | The name is taken |
 | `admin_exists` | 409 | An administrator by that name exists |
 | `workspace_exists` | 409 | A workspace by that name exists |
+| `workspace_name_retired` | 409 | A workspace by that name was removed: its history still names it, so the name isn't given again |
 | `workspace_not_empty`, `workspace_protected` | 409 | Removing a workspace that still owns something (`contents` counts it), or `default` |
 | `destination_exists`, `export_exists` | 409 | A destination or export by that name exists |
 | `export_running` | 409 | Another run of the export holds its lease; retry after `retry_after` seconds |
@@ -3827,6 +3839,7 @@ An error with no more specific code gets the one for its status: `invalid_reques
 | `sso_only` | 409 | A personal token for an administrator who signs in through SSO, with `QUERYAPIGATE_SSO_ONLY` on |
 | `email_required` | 409 | Marking an administrator for SSO before they have an email to match |
 | `sso_ambiguous` | 409 | Two administrators wait for an SSO sign-in with the same email |
+| `sso_no_role` | 403 | An SSO sign-in by someone no group (or default role) gives a role, who isn't an administrator of a workspace either - shown on the Console as `sso_error` |
 | `write_request_not_found` | 404 | No agent write request by that id - or not this caller's, for this tool |
 | `approval_pending` | 409 | An agent's write isn't approved yet |
 | `approval_rejected` | 403 | A person rejected the agent's write; the message gives their reason |
@@ -3983,6 +3996,7 @@ registers the client. QueryAPIGate never sees a password.
 | `QUERYAPIGATE_MCP_SCOPE` | `queryapigate.mcp` | The scope a token must carry. |
 | `QUERYAPIGATE_MCP_ROLE` | unset | The role every agent signed in this way gets... |
 | `QUERYAPIGATE_MCP_ROLE_CLAIM` | unset | ...or the token claim naming its role (a string or a list; the first existing role wins). |
+| `QUERYAPIGATE_MCP_WORKSPACE_CLAIM` | `QUERYAPIGATE_JWT_WORKSPACE_CLAIM`'s | The token claim naming the [workspace](API.md#workspaces) the agent belongs to (experimental, as workspaces are); its role is that workspace's. Neither set, every agent is in the default workspace. |
 
 Set the first two, and a role, to turn it on; anything half-set, or not `https://` (except `localhost`), stops
 startup. Then:
@@ -4007,6 +4021,11 @@ startup. Then:
   same name that person has signed in to REST, when REST trusts the same issuer (or signs nobody in). When REST trusts
   another issuer, whose users' `sub`s could be the same strings for other people, the agent is `mcp:<sub>` instead,
   so two people never share one name, rate limit or event stream.
+- **Its workspace** comes from the token, never from anything the client sends: the
+  `QUERYAPIGATE_MCP_WORKSPACE_CLAIM` claim (or `QUERYAPIGATE_JWT_WORKSPACE_CLAIM`'s, which REST's signed-in users go
+  by), else the default workspace. Its role is looked up there; a workspace without that role, or that doesn't exist,
+  is `403 forbidden`. Before 0.52 the claim was ignored and every agent acted in the default workspace - with the
+  default workspace's role of the same name, and its data.
 - **Registering the client** is between the client and your provider: Client ID Metadata Documents or Dynamic
   Client Registration where the provider supports them, or an administrator registering it by hand. QueryAPIGate
   plays no part, and issues no tokens of its own.
@@ -7708,11 +7727,17 @@ not between a hosted service's tenants. What it holds against, and how:
   request path. The role is looked up in that workspace, and a path naming a different one is the same `404` as for
   an API key. So a user signed in for one team can't reach another team's data by changing the `/w/<workspace>/`
   prefix, even where both workspaces happen to have a role of the same name. (Before this was enforced, the role was
-  resolved in whatever workspace the path named - the finding the 0.39 boundary review turned up and closed.)
+  resolved in whatever workspace the path named - the finding the 0.39 boundary review turned up and closed.) An AI
+  agent signed in to the MCP server through OAuth is held the same way, by `QUERYAPIGATE_MCP_WORKSPACE_CLAIM` (else
+  REST's claim); before 0.52 its token's workspace was ignored and every agent acted in the default workspace, with
+  that workspace's role of the same name - found in the boundary review of 2026-11-20.
 - **A role from a membership is bounded twice**: its reach is its workspace's connections only, and it never holds
   what only a server-wide role does (`adminroles.SERVER_ONLY`): administrators, settings, re-keying, erasing a
   person, creating workspaces, `/metrics` and the instance list. A member naming a workspace they aren't in gets
-  `404`.
+  `404`. `/metrics` holds that line only with `QUERYAPIGATE_METRICS_TOKEN` set - then it answers that token and
+  server-wide administrators. Without one it is open to anyone who can reach the port, as on a server without
+  workspaces - and it names every workspace's keys and connections (`team-b/partner`): set the token on a server with
+  workspaces (the Helm chart does), or keep the port to your monitoring.
 - **A file on the server is a server-wide role's to open.** Whoever chooses a connection's path reads any file the
   server process can - another workspace's SQLite or DuckDB database, a secret's file, a key file. So saving, testing
   or repointing a connection that opens local files - SQLite, H2, JDBC, a DuckDB file or local `allowed_paths` -
@@ -7721,9 +7746,24 @@ not between a hosted service's tenants. What it holds against, and how:
   set up for its workspace, switches them on and off and changes their password, and sets up DuckDB over remote
   storage (`s3://`, `https://`...) itself. Before 0.50 a workspace owner could set any path (found in a review of the
   boundary on 2026-11-05, and confirmed by reading another workspace's database and a key file).
+- **A secret the server reaches for is a server-wide role's to point anywhere.** The allow-lists for `${VAR}`,
+  `${file:...}`, Vault and AWS references (`QUERYAPIGATE_SECRET_ENV_VARS`, `QUERYAPIGATE_SECRET_FILE_DIRS`, the
+  providers' prefixes) are one for the whole server; nothing in them says which workspace a secret is for. So saving,
+  testing or changing where a connection or destination that holds one - or `credentials` - sends it takes a
+  server-wide role (`secretrefs.refuse_member_references()`); a member still runs it, switches it on and off, and
+  replaces the reference with a password of its own. Before 0.52 a workspace owner could test a connection whose
+  password was another team's `${VAR}` against a host of theirs and receive it in the clear (found in the boundary
+  review of 2026-11-20, and confirmed with a ClickHouse handshake to a listener).
 - **What happened is per workspace**: audit entries carry their workspace inside the hash chain, so rewriting whose
   an entry was breaks the chain; a member reads only their workspace's. Events reach only their workspace's
-  subscribers; the response cache, and its management, are per workspace.
+  subscribers; the response cache, and its management, are per workspace; `/metrics` names a key or connection with
+  its workspace - an administrator's work in team-b as `team-b/admin` (before 0.52 `admin` merged every workspace's).
+  The events server's open `/health` says only that it is up: no counts, which would be every workspace's activity
+  together.
+- **A deleted workspace's name isn't given again.** Its run history, events, usage and audit entries stay under its
+  name - deleting a workspace never deletes a team's record - so a new workspace given the name would show them to
+  its own members. The name is retired instead (`409 workspace_name_retired`). Before 0.52 it was freed (found in the
+  boundary review of 2026-11-20).
 
 What it doesn't protect against - stated in the documentation's first paragraph about it:
 
@@ -7731,7 +7771,11 @@ What it doesn't protect against - stated in the documentation's first paragraph 
 - **Shared infrastructure.** One process, one store, one encryption key for every workspace's connection passwords.
   A bug outside the lookups above - in the process, or in a driver - is a bug for every workspace. No per-workspace
   resource limits yet: one workspace can exhaust the shared connection pool, event-stream slots or database load for
-  the others (each key's own rate limits and quotas still apply).
+  the others (each key's own rate limits and quotas still apply). That includes the audit log the store keeps: it is
+  one log, trimmed to its newest `QUERYAPIGATE_AUDIT_LOG_LIMIT` entries (500 by default) for every workspace together,
+  so a workspace making many audited changes pushes others' older entries out of it - the hash chain still verifies,
+  as a trim moves its anchor. Keep the whole record where no workspace can trim it: stream it to a SIEM, which holds
+  undelivered entries back from the trim, or set `QUERYAPIGATE_AUDIT_LOG_EXPORT_FILE`.
 - **The JVM, for what a server administrator set up.** An experimental H2 or JDBC connection is opened read-write on
   one shared JVM with only the SQL guard as its lock. Setting one up, or changing anything but its `active` flag and
   password, is a server-wide role's (above), so a workspace's owner can't choose its URL or jar - but one a server
@@ -7959,9 +8003,16 @@ only when started: nothing changes for a deployment that doesn't. It isn't in th
   with the schema its trace was made from. Plans live in the data plane's memory only.
 - **One shared secret ties the two processes together.** `QUERYAPIGATE_DATAPLANE_SECRET`, at least 16 characters,
   goes in `X-QAG-Dataplane` on every request the data plane forwards; Python compares it in constant time. The data
-  plane removes `X-QAG-Dataplane`, `X-QAG-Peer` and `X-QAG-Plan` from anything a client sends, and Python's
-  outermost WSGI layer removes the first two again before anything else reads or logs a request. Without the secret, Python
-  gives no plan, ignores `X-QAG-Peer`, and answers 404 at `/internal/dataplane/runs`.
+  plane removes `X-QAG-Dataplane`, `X-QAG-Peer`, `X-QAG-Plan` and `X-QAG-Own` from anything a client sends - spelt
+  with `_` for `-` too, which some WSGI servers read as the same header - and Python's outermost WSGI layer removes
+  them again before anything else reads or logs a request. Without the secret, Python gives no plan and ignores
+  `X-QAG-Peer`.
+- **Its own endpoints are its own.** Every call the data plane relays carries the secret, so the secret alone says
+  only that a call came through it. Its own calls - `/internal/dataplane/runs` and `/internal/dataplane/lease` - carry
+  `X-QAG-Own` beside it, which no relayed call can; Python answers 404 there to anything else. Before 0.52 the secret
+  was enough, so any client that could reach the data plane could write run history, events and metrics, raise
+  rate-limit alerts for any workspace's keys, and take the run store's id blocks until new processes got none (found
+  in the boundary review of 2026-11-20).
 - **The client's address is the client's.** With the secret, `X-QAG-Peer` carries the client's own socket address,
   and Python takes it as the real peer before `ProxyFix`. So open-access mode's loopback rule, a key's `allowed_ips`
   and `QUERYAPIGATE_TRUST_PROXY` judge the client, not the data plane's loopback connection. A peer that isn't an IP
@@ -7972,8 +8023,8 @@ only when started: nothing changes for a deployment that doesn't. It isn't in th
   `sql_mode`). Each PostgreSQL message ends with `RESET ALL`. The differential test sends hostile strings for exactly
   this.
 - **Its runs are recorded by Python.** The data plane reports each served run to `/internal/dataplane/runs`, with the
-  secret, and Python writes its history, event and metrics. Python trusts those entries: whoever holds the secret
-  can write run history. Runs the data plane can't queue, and reports Python doesn't take, are counted as dropped in
+  secret and `X-QAG-Own`, and Python writes its history, event and metrics. Python trusts those entries: whoever
+  holds the secret can write run history - the data plane, and nothing that only reaches it. Runs the data plane can't queue, and reports Python doesn't take, are counted as dropped in
   `/metrics`, never lost silently. On SIGTERM it sends what it still holds before it exits, for up to 10 seconds, as
   Python's own history writer flushes at exit; a hard kill loses up to one flush interval of runs, as Python's does.
 - **Resource use before the key is checked is bounded.** The data plane reads a request's body itself only when it
