@@ -4,9 +4,11 @@ What QueryAPIGate does, feature by feature, with links to the reference for each
 
 ## Multi-database support
 
-**Tier 1** - PostgreSQL, MySQL, SQLite, DuckDB and ClickHouse: every feature, tested against a real server in CI, and
-covered by the compatibility promise. **Experimental** - H2, generic JDBC (Oracle, SQL Server, DB2, Snowflake and
-anything else with a driver jar) and MongoDB (`find()` queries): they work, with documented gaps. The same guard,
+**Tier 1** - PostgreSQL, MySQL and MariaDB, SQLite, DuckDB, ClickHouse and MongoDB (`find()` queries): every
+feature, tested against a real server in CI, and covered by the compatibility promise. YugabyteDB, PgBouncer and
+FerretDB are tested as what they stand in for ([compatible servers](DATABASE_CONNECTION_CONFIGURATION.md#compatible-servers)). **Experimental** - H2, generic
+JDBC (Oracle, SQL Server, DB2, Snowflake and anything else with a driver jar) and Trino: they work, with documented
+gaps. The same guard,
 pooling, parameter binding and output formats - JSON, NDJSON, XML, YAML, CSV, TSV, Excel and Parquet - apply to every one.
 What each supports - read-only enforcement, time limits, `allowed_tables`, schema browsing, streaming - is in the
 [support matrix](DATABASE_CONNECTION_CONFIGURATION.md#support-matrix).
@@ -20,7 +22,7 @@ where they are and published like any table, limited to the paths each connectio
 QueryAPIGate is built to expose specific query results, not database credentials:
 
 - API key authentication, with hashed key storage (SHA-256, never the raw secret) in `queryapigate.db`.
-- Database connection passwords encrypted at rest (`QUERYAPIGATE_SECRET_KEY`), decrypted only in memory at the
+- Database connection passwords encrypted at rest (`QUERYAPIGATE_ENCRYPTION_KEY`), decrypted only in memory at the
   moment a connection is opened; a literal password on disk is never returned to a client either way.
 - Scoped API keys: restrict a key to a set of connections, and/or to a specific allow-list of saved queries,
   independent of any connection grant - individual queries in that list can also be curated for write access,
@@ -190,8 +192,9 @@ Configure Access
 
 ## Testing and quality
 
-Unit tests, integration tests against real PostgreSQL, MySQL, ClickHouse, H2 and MongoDB servers (run in CI
-against service containers; the job fails if one skips), DuckDB integration tests that run unconditionally since it's
+Unit tests, integration tests against real PostgreSQL, MySQL, MariaDB, ClickHouse, H2, MongoDB and Trino servers (run
+in CI against service containers; the job fails if one skips) and the servers compatible with them - YugabyteDB,
+PgBouncer, FerretDB, OpenBao - the whole suite with Valkey, Dragonfly and Garnet standing in for Redis, DuckDB integration tests that run unconditionally since it's
 embedded, property tests of the SQL guard with [Hypothesis](https://hypothesis.readthedocs.io/) and fuzzing of the
 guards with Atheris and ClusterFuzzLite ([fuzz/](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/fuzz/README.md)), CodeQL, static type checking with mypy, linting
 with ruff, and CI on every push - on Python 3.11 to 3.14, at the oldest dependency versions allowed, on a PostgreSQL

@@ -666,6 +666,12 @@ export const docs = [
   "cat": "Reference"
  },
  {
+  "slug": "CLI",
+  "path": "documentation/CLI.md",
+  "title": "Command-line reference",
+  "cat": "Reference"
+ },
+ {
   "slug": "PERFORMANCE_V5",
   "path": "documentation/PERFORMANCE_V5.md",
   "title": "Performance, v5: a Rust data plane in front of /q/",

@@ -80,6 +80,14 @@
   "url": "Guide.dc.html?d=SCREENSHOTS"
  },
  {
+  "key": "d=CLI",
+  "title": "Command-line reference",
+  "kind": "documentation",
+  "cat": "Reference",
+  "md": "documentation/CLI.md",
+  "url": "Guide.dc.html?d=CLI"
+ },
+ {
   "key": "d=PERFORMANCE_V5",
   "title": "Performance, v5: a Rust data plane in front of /q/",
   "kind": "documentation",

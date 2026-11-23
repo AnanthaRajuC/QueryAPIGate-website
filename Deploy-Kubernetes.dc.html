@@ -536,7 +536,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere}
 kubectl -n queryapigate create secret generic queryapigate \
   --from-literal=QUERYAPIGATE_API_KEY=&lt;a long random key&gt; \
   --from-literal=QUERYAPIGATE_SECRET_KEY=&lt;a Fernet key&gt;
-helm install queryapigate oci://ghcr.io/anantharajuc/charts/queryapigate --version 0.47.0 \
+helm install queryapigate oci://ghcr.io/anantharajuc/charts/queryapigate --version 0.52.0 \
   -n queryapigate --set existingSecret=queryapigate --wait</pre></div>
   </section>
 
@@ -582,8 +582,8 @@ touch: cannot touch '/x': Read-only file system</pre></div></div><div class="dp-
 
   <section id="verify" class="dp-sec">
     <div class="d-hdr"><div style="display:grid;gap:8px"><span class="dp-eye">Verify</span><h2 class="dp-h2">Verify before you run it</h2></div><p class="dp-lede">The same works for the <code class="qx">-h2</code> image and the chart. Then set <code class="qx">image.digest</code> to the verified digest (<a href="Guide.dc.html?g=59-verify-a-release-before-you-run-it">guide 59</a>).</p></div>
-    <div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">shell</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy shell"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>cosign verify ghcr.io/anantharajuc/queryapigate:0.47.0 \
-  --certificate-identity https://github.com/AnanthaRajuC/QueryAPIGate/.github/workflows/docker.yml@refs/tags/v0.47.0 \
+    <div class="dpc"><div class="dpc-bar"><span aria-hidden="true" class="dpc-dots"><i></i><i></i><i></i></span><span class="dpc-t">shell</span><button type="button" class="copy-btn dpc-copy" data-copy aria-label="Copy shell"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span>Copy</span></button></div><pre>cosign verify ghcr.io/anantharajuc/queryapigate:0.52.0 \
+  --certificate-identity https://github.com/AnanthaRajuC/QueryAPIGate/.github/workflows/docker.yml@refs/tags/v0.52.0 \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com</pre></div>
   </section>
 
