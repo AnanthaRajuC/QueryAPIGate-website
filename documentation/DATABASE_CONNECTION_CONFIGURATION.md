@@ -23,24 +23,50 @@ what it always did:
 }
 ~~~
 
-Driver settings beyond these (`sslmode`, `jdbc_url`, `jar`, ...) may be sent alongside them or inside an `options`
-object; `GET /api/v1/connections/{name}` returns them under `options`.
+Those, and `credentials`, are a connection's own fields. Every driver setting beyond them (`sslmode`, `jdbc_url`,
+`jar`, `allowed_paths`, ...) goes inside an `options` object, as `GET /api/v1/connections/{name}` returns them - and a
+configuration file writes them. Any other field is refused (`400 unknown_field`): before 1.0 one sent alongside became a
+driver option, so a typo was saved instead of reported.
 
 ## Supported types
 
 | `db` | Driver | Notes |
 |------|--------|-------|
-| `mysql` | `mysql-connector-python` | Sessions are opened `READ ONLY` unless writes are enabled |
-| `postgres` | `psycopg2` | Each query runs in a read-only transaction unless writes are enabled |
+| `mysql` | `mysql-connector-python` | MySQL, and MariaDB - the same `mysql` connection, its own time limit applied (`max_statement_time`): MySQL 8.4 and MariaDB 10.11 and 11.4 are tested in CI. Sessions are opened `READ ONLY` unless writes are enabled |
+| `postgres` | `psycopg2` | PostgreSQL, and YugabyteDB (YSQL) - tested in CI - through PgBouncer too: see [Compatible servers](#compatible-servers). Each query runs in a read-only transaction unless writes are enabled |
 | `clickhouse` | `clickhouse-driver` (native protocol, port 9000) | `readonly=1` unless writes are enabled |
 | `sqlite` | `sqlite3` | Opened with `mode=ro` unless writes are enabled |
 | `h2` | `JayDeBeApi` + bundled JDBC jar | Connects to a running H2 TCP server: `jdbc:h2:tcp://<host>[:port]/~/<database>` |
 | `jdbc` | `JayDeBeApi` + your own JDBC jar | Any other JDBC-compliant database (Oracle, SQL Server, DB2, Snowflake, ...) - see [Generic JDBC connections](#generic-jdbc-connections) |
 | `duckdb` | `duckdb` | An embedded analytical database that can also query CSV/JSON/Parquet files directly - see [DuckDB connections](#duckdb-connections) |
-| `mongo` | `pymongo` | `find()` queries only, never writes - see [MongoDB connections](#mongodb-connections) |
+| `mongo` | `pymongo` | MongoDB, and FerretDB 2 - tested in CI. `find()` queries only, never writes - see [MongoDB connections](#mongodb-connections) |
 | `trino` | `trino` (DB-API) | The Trino distributed SQL engine, federating many catalogs - see [Trino connections](#trino-connections) |
 
 `h2`, `jdbc` and `trino` are [experimental](#experimental-h2-jdbc-and-trino).
+
+## Compatible servers
+
+A server that speaks a supported database's protocol is reached through that database's connection type, with
+nothing to set. Those below are tested in CI, each with the integration tests of what it stands in for:
+
+| Server | Connection | Tested | Notes |
+|---|---|---|---|
+| MariaDB | `mysql` | 10.11, 11.4 | Its own time limit (`max_statement_time`) and error numbers are applied; the data plane answers on it as Python does |
+| YugabyteDB (YSQL) | `postgres` | 2026.1 | |
+| PgBouncer, transaction pooling | `postgres` | 1.26, `max_prepared_statements = 0` | What Neon and Supabase put in front of PostgreSQL. Each call's settings are `SET LOCAL` in its own transaction, so none reaches the next client given the same server connection; the data plane answers through it as Python does |
+| FerretDB | `mongo` | 2.7 | Its `serverStatus` doesn't count cursors, so that one test is skipped there |
+
+**Not separately tested, but the same engine:** PostgreSQL with extensions (TimescaleDB, Citus, pgvector, ParadeDB),
+Percona Server for MySQL and for MongoDB, and the managed services - Amazon RDS and Aurora, Google Cloud SQL and
+AlloyDB, Azure Database, Neon, Supabase.
+
+**Not the metadata store through a transaction pooler.** `QUERYAPIGATE_DATABASE_URL` holds session-level state - the
+history sweep's advisory lock and the event stream's `LISTEN` - so point it at PostgreSQL directly or at a pooler in
+session mode (Neon's unpooled host, Supabase's session pooler or direct connection).
+
+**Not yet:** servers that speak a protocol but not its semantics - CockroachDB and TiDB (partial catalogs and
+read-only transactions), Vitess/PlanetScale, SingleStore, StarRocks, Doris, Redshift, Materialize, RisingWave -
+and Amazon DocumentDB and Cosmos DB for MongoDB, which can't be run in CI.
 
 ## Support matrix
 
@@ -146,7 +172,7 @@ distinct connection setting, default 8, `0` disables pooling) and `QUERYAPIGATE_
 | `host` | network databases | Server host |
 | `port` | no | Overrides the driver's default port |
 | `user`, `password` | usually | Credentials |
-| `jar`, `driver_class`, `jdbc_url` | `db: "jdbc"` only | See [Generic JDBC connections](#generic-jdbc-connections) |
+| `options.jar`, `options.driver_class`, `options.jdbc_url` | `db: "jdbc"` only | See [Generic JDBC connections](#generic-jdbc-connections) |
 | `options.schema` | no | Trino: the default schema. PostgreSQL: the schema an unqualified `allowed_tables` name means, `public` by default (a table-restricted key's calls run with `search_path` set to it) |
 
 ## Experimental: h2, jdbc and trino
@@ -198,19 +224,21 @@ export works.
 ## Generic JDBC connections
 
 `db: "jdbc"` reaches any database with a JDBC driver - Oracle, SQL Server, DB2, Snowflake and others not covered by
-a dedicated driver above - by generalising the same embedded-JVM approach `h2` already uses. It needs three fields
-instead of `host`/`port`/`database`, since JDBC URL formats vary too much between vendors to build one generically:
+a dedicated driver above - by generalising the same embedded-JVM approach `h2` already uses. It needs three driver
+options instead of `host`/`port`/`database`, since JDBC URL formats vary too much between vendors to build one
+generically:
 
 ~~~json
 {
-    "oracle-reporting": {
-        "db": "jdbc",
+    "name": "oracle-reporting",
+    "db": "jdbc",
+    "user": "readonly",
+    "password": "${ORACLE_PASSWORD}",
+    "active": true,
+    "options": {
         "jar": "/opt/jdbc/ojdbc11.jar",
         "driver_class": "oracle.jdbc.OracleDriver",
-        "jdbc_url": "jdbc:oracle:thin:@//db.internal:1521/ORCLPDB1",
-        "user": "readonly",
-        "password": "${ORACLE_PASSWORD}",
-        "active": true
+        "jdbc_url": "jdbc:oracle:thin:@//db.internal:1521/ORCLPDB1"
     }
 }
 ~~~
@@ -259,7 +287,7 @@ own table functions - no import step, column types inferred:
 
 ~~~json
 {"name": "files", "db": "duckdb", "database": ":memory:", "active": true,
- "allowed_paths": ["/data/sales/", "/data/reference/countries.csv"]}
+ "options": {"allowed_paths": ["/data/sales/", "/data/reference/countries.csv"]}}
 ~~~
 
 ~~~sql
@@ -282,7 +310,7 @@ reads no files at all** - only its own database.
 **Views** give files a name - for the schema browser, for saved queries, and for `allowed_tables`:
 
 ~~~json
-{"views": {"sales": "SELECT * FROM read_parquet('/data/sales/*.parquet')"}}
+{"options": {"views": {"sales": "SELECT * FROM read_parquet('/data/sales/*.parquet')"}}}
 ~~~
 
 Each is created as a temporary view on every new connection. A key restricted with `allowed_tables: ["sales"]` can
@@ -360,15 +388,15 @@ Docker image; elsewhere it's downloaded on first use, or install it ahead with
 
 ~~~json
 {"name": "lake", "db": "duckdb", "database": ":memory:", "active": true,
- "allowed_paths": ["s3://sales/2026/", "https://data.example.com/prices.parquet"],
- "user": "AKIA...", "password": "${LAKE_SECRET_KEY}", "region": "eu-west-1",
- "views": {"orders": "SELECT * FROM read_parquet('s3://sales/2026/*.parquet')"}}
+ "user": "AKIA...", "password": "${LAKE_SECRET_KEY}",
+ "options": {"allowed_paths": ["s3://sales/2026/", "https://data.example.com/prices.parquet"], "region": "eu-west-1",
+             "views": {"orders": "SELECT * FROM read_parquet('s3://sales/2026/*.parquet')"}}}
 ~~~
 
 | Field | Meaning |
 |---|---|
 | `allowed_paths` | `s3://`, `gs://` (or `gcs://`) and `r2://` prefixes ending in `/`; `http(s)://` **files** - a web address must name one file, because a web server resolves `..` in a URL and a prefix couldn't stop that |
-| `user`, `password` | the access key id and secret - stored like any connection password: masked, encrypted with `QUERYAPIGATE_SECRET_KEY`, or a `${VAR}` reference. Leave both out for public files |
+| `user`, `password` | the access key id and secret - stored like any connection password: masked, encrypted with `QUERYAPIGATE_ENCRYPTION_KEY`, or a `${VAR}` reference. Leave both out for public files |
 | `storage` | `s3` (default, also any S3-compatible service), `gcs` (HMAC keys) or `r2` |
 | `region`, `endpoint`, `url_style`, `use_ssl` | as DuckDB's S3 settings: `endpoint` and `url_style: "path"` for an S3-compatible service such as MinIO; `account_id` for R2 |
 
@@ -394,9 +422,9 @@ publish saved queries or views and grant those instead.
 Any string value may contain `${VAR}` references, replaced with the environment variable's value when the connection is
 used (a missing variable is reported as an error naming it). Set `QUERYAPIGATE_SECRET_ENV_VARS` to the variables your
 connections use - names, or prefixes ending in `*`: `REPORTING_PASSWORD,ORACLE_*` - and no other can be referenced.
-Without it, any can but the server's own settings and the credentials it may run with
-([below](API.md#secrets-from-files-and-secrets-managers)), and the server warns at startup while references are in
-use. `GET /api/v1/connections/{name}` masks plain-text passwords as
+Without it, none can (before 1.0, any could but the server's own settings and the credentials it may run with,
+[below](API.md#secrets-from-files-and-secrets-managers)), and the server logs an error at startup while references are in
+use without it. `GET /api/v1/connections/{name}` masks plain-text passwords as
 `********` and shows `${VAR}` references as written. A secret kept in a file - the CSI driver's, Docker's, Vault
 Agent's - is `${file:/run/secrets/name}`, read inside the folders `QUERYAPIGATE_SECRET_FILE_DIRS` allows
 ([Secrets from files and secrets managers](API.md#secrets-from-files-and-secrets-managers)).

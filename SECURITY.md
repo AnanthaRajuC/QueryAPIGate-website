@@ -68,13 +68,13 @@ documented way to Level 3; it isn't done yet.
   in string literals by default, PostgreSQL/SQLite/H2 do not) and is exercised by a fuzz test suite
   (`tests/test_sql_guard_fuzz.py`), but a regex-based guard can never be a full SQL parser for every server mode.
 - Keep database passwords out of the store: use `"password": "${ENV_VAR}"` references, or set
-  `QUERYAPIGATE_SECRET_KEY` to encrypt them at rest
+  `QUERYAPIGATE_ENCRYPTION_KEY` to encrypt them at rest
   ([guide 22](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/22-encrypt-passwords-at-rest.md)).
 - Set `QUERYAPIGATE_SECRET_ENV_VARS` to the variables your connections reference, and `QUERYAPIGATE_METRICS_TOKEN`
   wherever `/metrics` can be reached from outside
   ([guide 58](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/58-keep-the-servers-own-secrets-and-metrics-in.md)).
 - Run only signed releases ([above](#verify-a-release)), by digest.
-- Do not enable `QUERYAPIGATE_DEBUG` on a reachable host.
+- `QUERYAPIGATE_DEBUG` (`serve --debug`) starts only on a loopback `--host`: it runs an interactive debugger.
 - Set `QUERYAPIGATE_RATE_LIMIT` on anything reachable beyond a trusted network; it also throttles API key guessing.
 - Behind a reverse proxy, set `QUERYAPIGATE_TRUST_PROXY` to the number of proxies so limits apply per real client - and
   leave it at `0` when clients connect directly, otherwise they can forge `X-Forwarded-For` to evade the limit.

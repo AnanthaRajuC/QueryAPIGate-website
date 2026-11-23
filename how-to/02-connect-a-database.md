@@ -9,8 +9,10 @@ Every connection - regardless of database type - is one JSON object with the sam
 of the six built-in SQL dialects, and both ways to add one: the admin UI, or the API directly.
 
 What each type supports - read-only enforcement, time limits, `allowed_tables`, schema browsing, streaming - is
-in the [support matrix](../documentation/DATABASE_CONNECTION_CONFIGURATION.md#support-matrix). PostgreSQL, MySQL,
-SQLite, DuckDB and ClickHouse are tier 1: every feature, tested against a real server in CI. H2 is experimental.
+in the [support matrix](../documentation/DATABASE_CONNECTION_CONFIGURATION.md#support-matrix). PostgreSQL, MySQL and
+MariaDB (a `mysql` connection), SQLite, DuckDB, ClickHouse and MongoDB are tier 1: every feature, tested against a real
+server in CI. H2, JDBC and Trino are experimental. YugabyteDB, PgBouncer and FerretDB connect as the database they
+stand in for - see [compatible servers](../documentation/DATABASE_CONNECTION_CONFIGURATION.md#compatible-servers).
 
 For anything not listed here - Oracle, SQL Server, Snowflake, DB2, or any other JDBC-compliant database -
 see [Connect to anything else via generic JDBC](03-connect-via-generic-jdbc.md)
@@ -73,7 +75,8 @@ curl -X POST http://127.0.0.1:5000/api/v1/connections -H 'X-API-Key: demo-key' -
 
 Needs the driver: `pip install "queryapigate[postgres]"` (already included if you installed
 `queryapigate[all]` or the published Docker image). `${POSTGRES_PASSWORD}` is a reference to an
-environment variable, resolved when the connection is actually used - keep the real password out of
+environment variable, resolved when the connection is actually used - the server must allow it, with
+`QUERYAPIGATE_SECRET_ENV_VARS=POSTGRES_PASSWORD` (or a list or prefix, `POSTGRES_*`), or it's refused. It keeps the real password out of
 `queryapigate.db` entirely; see [Keep connection passwords out of the store](22-encrypt-passwords-at-rest.md)
 for the alternative (encrypting a literal value instead of using an env reference). Verified for this
 guide against a real PostgreSQL 16 container: connect, test, query all worked as shown.

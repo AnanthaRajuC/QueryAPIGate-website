@@ -1,0 +1,7 @@
+# Where to report a security vulnerability in QueryAPIGate (RFC 9116). Please don't open a public issue.
+Contact: mailto:hello@queryapigate.com
+Contact: https://github.com/AnanthaRajuC/QueryAPIGate/security/advisories/new
+Expires: 2027-11-21T00:00:00Z
+Preferred-Languages: en
+Canonical: https://queryapigate.com/.well-known/security.txt
+Policy: https://github.com/AnanthaRajuC/QueryAPIGate/security/policy

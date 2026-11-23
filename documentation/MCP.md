@@ -21,6 +21,21 @@ Tool listing (`tools/list`) honors the exact same per-key scoping `GET /catalog`
 calls more than the identical REST key could. A tool's `inputSchema` is generated from the saved query's own
 declared parameters, the same JSON Schema translation `/openapi.json` already uses.
 
+**Tool names.** A saved query is listed as a tool named for it, in the characters common LLM APIs accept
+(`^[a-zA-Z0-9_-]{1,64}$`): every other character becomes `_`, and the name is cut to 64 - `monthly revenue` is
+`monthly_revenue`, `Umsätze.2026` is `Ums_tze_2026`. A call may name the query itself, as before 1.0. Two queries can't
+share a tool name: a new one that would is refused when it's saved (`400 invalid_name`), and so is one named for a
+built-in tool - `list_tables`, `execute_sql`, `describe_table` - or one kept for tools to come (`list_queries`,
+`describe_query`, `search_queries`, `run_query`, `list_connections`, `list_databases`, `list_collections`,
+`explain_sql`, `sample_table`, `list_resources`, `read_resource`). Of two stored before 1.0 that share one, the
+query named exactly as the tool is listed, else the first by name; one named for a built-in tool isn't listed.
+
+**Parameter names.** A tool's arguments are the query's parameters beside the ones that control a call -
+`page_size`, and a write tool's `approval` or `idempotency_key`. So a parameter can't be named `format`, `page`,
+`page_size`, `connection_name`, `version`, `timeout`, `stream`, `approval` or `idempotency_key`, nor start with `_`
+(kept for controls to come): a query that uses one is refused when it's saved (`400 invalid_body`). One saved before
+1.0 still runs; saving a new version of it needs the parameter renamed.
+
 Calling a tool (`tools/call`) runs the query through the exact same code path `GET /q/<name>` does: the same
 connection-grant check, parameter validation, `cache_ttl` caching, `execution_history` recording and audit
 trail. A run triggered over MCP shows up in the admin UI's History tab and the Home tab's live feed exactly
@@ -50,7 +65,8 @@ only to specific queries or collections never sees these two, the same way it ca
 endpoints either):
 
 - **`list_tables`** - `{"connection_name": "...", "database": "..."}` (`database` is admin-key only, same
-  as REST). Returns the same shape `GET /connections/<name>/schema` does: each table/view (or Mongo
+  as REST, and only on a server database - PostgreSQL, MySQL, ClickHouse, Trino, MongoDB; on a file-backed one it is
+  `unsupported_operation`). Returns the same shape `GET /connections/<name>/schema` does: each table/view (or Mongo
   collection) with its columns, types, nullability, and primary/foreign keys where the dialect supports it.
 - **`describe_table`** - `{"connection_name": "...", "table": "...", "database": "..."}`. One table's columns,
   types and primary/foreign keys - the same, masking-aware, so a masked or dropped column is flagged rather than
@@ -120,6 +136,7 @@ registers the client. QueryAPIGate never sees a password.
 | `QUERYAPIGATE_MCP_SCOPE` | `queryapigate.mcp` | The scope a token must carry. |
 | `QUERYAPIGATE_MCP_ROLE` | unset | The role every agent signed in this way gets... |
 | `QUERYAPIGATE_MCP_ROLE_CLAIM` | unset | ...or the token claim naming its role (a string or a list; the first existing role wins). |
+| `QUERYAPIGATE_MCP_WORKSPACE_CLAIM` | `QUERYAPIGATE_JWT_WORKSPACE_CLAIM`'s | The token claim naming the [workspace](API.md#workspaces) the agent belongs to (experimental, as workspaces are); its role is that workspace's. Neither set, every agent is in the default workspace. |
 
 Set the first two, and a role, to turn it on; anything half-set, or not `https://` (except `localhost`), stops
 startup. Then:
@@ -144,6 +161,11 @@ startup. Then:
   same name that person has signed in to REST, when REST trusts the same issuer (or signs nobody in). When REST trusts
   another issuer, whose users' `sub`s could be the same strings for other people, the agent is `mcp:<sub>` instead,
   so two people never share one name, rate limit or event stream.
+- **Its workspace** comes from the token, never from anything the client sends: the
+  `QUERYAPIGATE_MCP_WORKSPACE_CLAIM` claim (or `QUERYAPIGATE_JWT_WORKSPACE_CLAIM`'s, which REST's signed-in users go
+  by), else the default workspace. Its role is looked up there; a workspace without that role, or that doesn't exist,
+  is `403 forbidden`. Before 0.52 the claim was ignored and every agent acted in the default workspace - with the
+  default workspace's role of the same name, and its data.
 - **Registering the client** is between the client and your provider: Client ID Metadata Documents or Dynamic
   Client Registration where the provider supports them, or an administrator registering it by hand. QueryAPIGate
   plays no part, and issues no tokens of its own.
@@ -224,8 +246,9 @@ run history (and live events) with `"transport": "mcp"`.
 **Limits are shared through Redis.** With `QUERYAPIGATE_REDIS_URL` set (the same value for both processes), a key's
 `rate_limit` of 100/minute is 100 calls a minute over REST and MCP together. Without it, each process counts on its
 own: 100 over REST *and* 100 over MCP, as two instances would. Metrics are per process either way: `queryapigate mcp` serves its own
-`GET /metrics` (and `GET /health`) on its port, beside `/mcp` - open, or with `QUERYAPIGATE_METRICS_TOKEN` set, to a
-scraper sending it as a bearer token, as the REST server's. Scrape both.
+`GET /metrics` (and `GET /health`) on its port, beside `/mcp`, on the REST server's rule: with
+`QUERYAPIGATE_METRICS_TOKEN` set, to a scraper sending it as a bearer token; without, to a client on this machine. Scrape
+both.
 
 **The CLI is a local operator, not a caller.** `queryapigate export` reads the store directly with no key, so no
 grant or rate limit applies - whoever can run it can already read `QUERYAPIGATE_HOME`. Its runs are still recorded

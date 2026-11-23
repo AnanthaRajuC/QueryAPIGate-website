@@ -80,6 +80,14 @@
   "url": "Guide.dc.html?d=SCREENSHOTS"
  },
  {
+  "key": "d=CLI",
+  "title": "Command-line reference",
+  "kind": "documentation",
+  "cat": "Reference",
+  "md": "documentation/CLI.md",
+  "url": "Guide.dc.html?d=CLI"
+ },
+ {
   "key": "d=PERFORMANCE_V5",
   "title": "Performance, v5: a Rust data plane in front of /q/",
   "kind": "documentation",
@@ -742,6 +750,23 @@
   "cat": "Start",
   "md": "how-to/66-serve-a-lakehouse-through-trino.md",
   "url": "Guide.dc.html?g=66-serve-a-lakehouse-through-trino"
+ },
+ {
+  "key": "g=67-push-new-results-when-the-data-changes",
+  "title": "Guide 67: Push a query's new result to your app when the data changes",
+  "kind": "how-to",
+  "cat": "Events & exports",
+  "md": "how-to/67-push-new-results-when-the-data-changes.md",
+  "url": "Guide.dc.html?g=67-push-new-results-when-the-data-changes"
+ },
+ {
+  "key": "p=pushed-when-the-data-changes",
+  "title": "Pushed when the data changes",
+  "kind": "blog",
+  "cat": "Design note",
+  "md": "blog/pushed-when-the-data-changes.md",
+  "url": "Guide.dc.html?p=pushed-when-the-data-changes",
+  "date": "2026-11-17"
  },
  {
   "key": "p=the-30-percent-in-the-build",

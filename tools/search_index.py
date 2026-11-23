@@ -16,7 +16,10 @@ Run by tools/sync-upstream.py after each sync, or by hand: python3 tools/search_
 import html, json, os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SITE = 'https://anantharajuc.github.io/QueryAPIGate-website/'
+SITE = 'https://queryapigate.com/'
+# Atom ids are permanent: they keep the address the feed started on (before queryapigate.com), so readers don't see
+# every post again as new. Only the ids; every link in the feed uses SITE.
+FEED_IDS = 'https://anantharajuc.github.io/QueryAPIGate-website/'
 DOCS_MCP = 'https://queryapigate-docs.queryapigate-docs-mcp.workers.dev/mcp'  # tools/docs-mcp, on Cloudflare Workers
 SKIP_PAGES = {'Guide.dc.html', 'QueryAPIGate Architecture.dc.html'}
 
@@ -186,11 +189,11 @@ def build():
     ent = ''.join(
         f'  <entry>\n    <title>{html.escape(b["title"])}</title>\n'
         f'    <link href="{loc(b.get("href") or "Guide.dc.html?p=" + b["slug"])}"/>\n'
-        f'    <id>{loc("Guide.dc.html?p=" + b["slug"])}</id>\n    <updated>{stamp(b["date"])}</updated>\n'
+        f'    <id>{html.escape(FEED_IDS + quote("Guide.dc.html?p=" + b["slug"], safe="/?=&"))}</id>\n    <updated>{stamp(b["date"])}</updated>\n'
         f'    <category term="{html.escape(b["cat"])}"/>\n    <summary>{html.escape(b.get("summary", ""))}</summary>\n  </entry>\n' for b in items)
     write('feed.xml', '<?xml version="1.0" encoding="utf-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom">\n'
           f'  <title>QueryAPIGate blog</title>\n  <subtitle>Release notes, design notes and performance reports.</subtitle>\n'
-          f'  <link href="{SITE}Blog.dc.html"/>\n  <link rel="self" href="{SITE}feed.xml"/>\n  <id>{SITE}Blog.dc.html</id>\n'
+          f'  <link href="{SITE}Blog.dc.html"/>\n  <link rel="self" href="{SITE}feed.xml"/>\n  <id>{FEED_IDS}Blog.dc.html</id>\n'
           f'  <updated>{max((stamp(b["date"]) for b in items), default="2026-01-01T12:00:00Z")}</updated>\n  <author><name>QueryAPIGate</name></author>\n'
           + ent + '</feed>\n')
     write('robots.txt', f'User-agent: *\nAllow: /\n\nSitemap: {SITE}sitemap.xml\n')

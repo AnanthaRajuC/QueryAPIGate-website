@@ -592,6 +592,15 @@ export const guides = [
   "time": "15 min",
   "timeMin": 15,
   "outcome": "Iceberg tables on S3-compatible storage, read through Trino and joined with a PostgreSQL database, served as governed REST endpoints and MCP tools. An AI agent gets hashed emails and three tables, a partner's app gets one endpoint, and repeat calls skip Trino entirely."
+ },
+ {
+  "num": "67",
+  "slug": "67-push-new-results-when-the-data-changes",
+  "title": "Push a query's new result to your app when the data changes",
+  "cat": "Events & exports",
+  "time": "30 min",
+  "timeMin": 30,
+  "outcome": "An app's product screen that shows a price and stock, and updates within about a second when that row changes in PostgreSQL - changed by any application, not only through QueryAPIGate. No polling, and no change to the saved query the app already calls."
  }
 ];
 
@@ -654,6 +663,12 @@ export const docs = [
   "slug": "SCREENSHOTS",
   "path": "documentation/SCREENSHOTS.md",
   "title": "A tour of the Console",
+  "cat": "Reference"
+ },
+ {
+  "slug": "CLI",
+  "path": "documentation/CLI.md",
+  "title": "Command-line reference",
   "cat": "Reference"
  },
  {
@@ -769,6 +784,15 @@ export const docs = [
    topic and version are optional labels. summary is the card text. featured: true puts a post in the large card at the top
    (otherwise the newest is). href sends the card somewhere other than blog/<slug>.md, such as the changelog. */
 export const posts = [
+ {
+  "slug": "pushed-when-the-data-changes",
+  "title": "Pushed when the data changes",
+  "date": "2026-11-17",
+  "cat": "Design note",
+  "topic": "Architecture",
+  "version": "0.51",
+  "summary": "QueryAPIGate 0.51 pushes a saved query's result again when the data behind it changes - from its own writes or through Debezium. Every push is an ordinary run as the subscriber, with their grants, masking and rate limit. 51 ms from commit to 1,000 streams, 1,000 live queries on three-quarters of a core. Experimental."
+ },
  {
   "slug": "the-30-percent-in-the-build",
   "title": "The 30% that was in the build",

@@ -128,7 +128,9 @@ anything in `.env` above):
  "password": "${PROD_DB_PASSWORD}", "database": "app", "active": true}
 ~~~
 
-`QUERYAPIGATE_SECRET_KEY` (a Fernet key) additionally encrypts every literal connection password *at rest* in
+The server reads only the variables `QUERYAPIGATE_SECRET_ENV_VARS` lists - add `QUERYAPIGATE_SECRET_ENV_VARS=PROD_DB_PASSWORD` to `.env` too.
+
+`QUERYAPIGATE_ENCRYPTION_KEY` (a Fernet key) additionally encrypts every literal connection password *at rest* in
 `queryapigate.db` itself, independent of the `${VAR}` convention above - worth setting if the volume or its
 backups might be read by someone who shouldn't see connection credentials. Generate one and add it to `.env`
 (keep a copy in your secrets manager - backups of the store are useless for these passwords without it):
@@ -221,7 +223,7 @@ The schema is recreated under its original name, so the URL's `search_path` (if 
 
 ### What a backup of the store does not contain
 
-- **`QUERYAPIGATE_SECRET_KEY`**, if you set it: connection passwords are stored encrypted with it. A store restored
+- **`QUERYAPIGATE_ENCRYPTION_KEY`**, if you set it: connection passwords are stored encrypted with it. A store restored
   without the same key has every encrypted password unreadable - each connection must be given its password again.
   Keep the key in your secrets manager, with the `.env` it lives in. After a key rotation (`queryapigate rekey`), a
   backup taken before it still needs the old key: list it after the new one to restore it, then run `rekey` again.
@@ -258,10 +260,10 @@ Then *Dashboards → New → Import* in Grafana, uploading
 [`documentation/grafana-dashboard.json`](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/documentation/grafana-dashboard.json)
 from this repo - panels for request/query rate and latency (p50/p95/p99), error rate, rows returned, active
 queries, pool occupancy and rate-limit rejections, built on exactly the metric names `/metrics` already
-exposes. `/metrics` needs no API key - a scraper shouldn't hold one. It's open to whoever can reach the server,
-until you set `QUERYAPIGATE_METRICS_TOKEN`: then only a request with `Authorization: Bearer <the token>` - and an
-administrator, the Console's Metrics screen - reads it. Set it whenever the server can be reached from outside your
-network: the labels name your API keys, queries and connections.
+exposes. `/metrics` needs no API key - a scraper shouldn't hold one. Set `QUERYAPIGATE_METRICS_TOKEN`, and a request
+with `Authorization: Bearer <the token>` - and an administrator, the Console's Metrics screen - reads it. Without
+one, a server that needs a credential answers only a client on its own machine (before 1.0, whoever could reach it):
+a Prometheus elsewhere needs the token. Its labels name your API keys, queries and connections.
 
 **With several instances, scrape each one** - every process keeps its own counters, as Prometheus expects - and the
 bundled dashboard sums across them. The Console's Metrics screen shows only the instance that served it.
@@ -319,7 +321,8 @@ rolling upgrade.
 
 The main server's own `GET /events` holds a request thread per open stream, so it serves only a few (see
 [Live events](API.md#live-events-server-sent-events)). For apps and phones, add the asyncio events server as a
-second service from the same image, and route `/events` to it:
+second service from the same image, and route `/events` to it - and `/live/`, for
+[live queries](API.md#live-queries), with the `/w/<workspace>/` forms of both:
 
 ~~~yaml
 # docker-compose.yml - next to the queryapigate service
@@ -341,7 +344,8 @@ second service from the same image, and route `/events` to it:
 ~~~caddyfile
 # Caddyfile
 api.example.com {
-    reverse_proxy /events* events:5002
+    @events path /events* /live/* /w/*/events* /w/*/live/*
+    reverse_proxy @events events:5002
     reverse_proxy queryapigate:5000
 }
 ~~~

@@ -70,7 +70,7 @@ dataplane:
 
 ```bash
 helm upgrade --install qag oci://ghcr.io/anantharajuc/charts/queryapigate -f values.yaml
-kubectl logs deploy/qag-queryapigate -c dataplane   # queryapigate-dataplane 0.50.1: listening on 0.0.0.0:5000, ...
+kubectl logs deploy/qag-queryapigate -c dataplane   # queryapigate-dataplane 0.52.0: listening on 0.0.0.0:5000, ...
 ```
 
 Behind the chart's ingress it serves as above: the chart sets `QUERYAPIGATE_TRUST_PROXY=1`, and the data plane reads
@@ -84,7 +84,7 @@ plane on port 5000. Both need the same secret, settings and store.
 
 ```bash
 export QUERYAPIGATE_DATAPLANE_SECRET="$(openssl rand -hex 32)"   # at least 16 characters; the same for both
-IMAGE=ghcr.io/anantharajuc/queryapigate:0.50.1
+IMAGE=ghcr.io/anantharajuc/queryapigate:0.52.0
 docker run -d --name qag -p 5000:5000 -v qag-data:/data --env-file qag.env \
     -e QUERYAPIGATE_DATAPLANE_SECRET -e QUERYAPIGATE_BIND=127.0.0.1:5001 "$IMAGE"
 docker run -d --name qag-dataplane --network container:qag -v qag-data:/data --env-file qag.env \
@@ -130,7 +130,7 @@ than Python's serves nothing, and Python logs why once: in the image, both come 
 | `QUERYAPIGATE_BIND` | `0.0.0.0:5000` in the image | Where the image's gunicorn listens: `127.0.0.1:5001` behind the data plane |
 
 It also reads Python's own settings that change an answer or a log line, and applies them as Python does:
-`QUERYAPIGATE_API_KEY`, `QUERYAPIGATE_SECRET_KEY`, `QUERYAPIGATE_MASK_KEY`, `QUERYAPIGATE_QUERY_TIMEOUT`,
+`QUERYAPIGATE_API_KEY`, `QUERYAPIGATE_ENCRYPTION_KEY`, `QUERYAPIGATE_MASK_KEY`, `QUERYAPIGATE_QUERY_TIMEOUT`,
 `QUERYAPIGATE_MAX_PAGE_SIZE`, `QUERYAPIGATE_METADATA_CACHE_TTL`, `QUERYAPIGATE_HISTORY_FLUSH_INTERVAL`,
 `QUERYAPIGATE_LOG_REQUESTS`, `QUERYAPIGATE_ACCESS_LOG`, `QUERYAPIGATE_JSON_LOGS`, `QUERYAPIGATE_SLOW_QUERY_THRESHOLD`,
 `QUERYAPIGATE_HISTORY_ADHOC_SQL`, `QUERYAPIGATE_TRUST_PROXY`, `QUERYAPIGATE_HSTS_MAX_AGE`,

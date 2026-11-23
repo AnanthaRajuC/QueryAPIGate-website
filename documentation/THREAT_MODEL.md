@@ -214,11 +214,17 @@ not between a hosted service's tenants. What it holds against, and how:
   request path. The role is looked up in that workspace, and a path naming a different one is the same `404` as for
   an API key. So a user signed in for one team can't reach another team's data by changing the `/w/<workspace>/`
   prefix, even where both workspaces happen to have a role of the same name. (Before this was enforced, the role was
-  resolved in whatever workspace the path named - the finding the 0.39 boundary review turned up and closed.)
+  resolved in whatever workspace the path named - the finding the 0.39 boundary review turned up and closed.) An AI
+  agent signed in to the MCP server through OAuth is held the same way, by `QUERYAPIGATE_MCP_WORKSPACE_CLAIM` (else
+  REST's claim); before 0.52 its token's workspace was ignored and every agent acted in the default workspace, with
+  that workspace's role of the same name - found in the boundary review of 2026-11-20.
 - **A role from a membership is bounded twice**: its reach is its workspace's connections only, and it never holds
   what only a server-wide role does (`adminroles.SERVER_ONLY`): administrators, settings, re-keying, erasing a
   person, creating workspaces, `/metrics` and the instance list. A member naming a workspace they aren't in gets
-  `404`.
+  `404`. `/metrics` holds that line only with `QUERYAPIGATE_METRICS_TOKEN` set - then it answers that token and
+  server-wide administrators. Without one it is open to anyone who can reach the port, as on a server without
+  workspaces - and it names every workspace's keys and connections (`team-b/partner`): set the token on a server with
+  workspaces (the Helm chart does), or keep the port to your monitoring.
 - **A file on the server is a server-wide role's to open.** Whoever chooses a connection's path reads any file the
   server process can - another workspace's SQLite or DuckDB database, a secret's file, a key file. So saving, testing
   or repointing a connection that opens local files - SQLite, H2, JDBC, a DuckDB file or local `allowed_paths` -
@@ -227,9 +233,24 @@ not between a hosted service's tenants. What it holds against, and how:
   set up for its workspace, switches them on and off and changes their password, and sets up DuckDB over remote
   storage (`s3://`, `https://`...) itself. Before 0.50 a workspace owner could set any path (found in a review of the
   boundary on 2026-11-05, and confirmed by reading another workspace's database and a key file).
+- **A secret the server reaches for is a server-wide role's to point anywhere.** The allow-lists for `${VAR}`,
+  `${file:...}`, Vault and AWS references (`QUERYAPIGATE_SECRET_ENV_VARS`, `QUERYAPIGATE_SECRET_FILE_DIRS`, the
+  providers' prefixes) are one for the whole server; nothing in them says which workspace a secret is for. So saving,
+  testing or changing where a connection or destination that holds one - or `credentials` - sends it takes a
+  server-wide role (`secretrefs.refuse_member_references()`); a member still runs it, switches it on and off, and
+  replaces the reference with a password of its own. Before 0.52 a workspace owner could test a connection whose
+  password was another team's `${VAR}` against a host of theirs and receive it in the clear (found in the boundary
+  review of 2026-11-20, and confirmed with a ClickHouse handshake to a listener).
 - **What happened is per workspace**: audit entries carry their workspace inside the hash chain, so rewriting whose
   an entry was breaks the chain; a member reads only their workspace's. Events reach only their workspace's
-  subscribers; the response cache, and its management, are per workspace.
+  subscribers; the response cache, and its management, are per workspace; `/metrics` names a key or connection with
+  its workspace - an administrator's work in team-b as `team-b/admin` (before 0.52 `admin` merged every workspace's).
+  The events server's open `/health` says only that it is up: no counts, which would be every workspace's activity
+  together.
+- **A deleted workspace's name isn't given again.** Its run history, events, usage and audit entries stay under its
+  name - deleting a workspace never deletes a team's record - so a new workspace given the name would show them to
+  its own members. The name is retired instead (`409 workspace_name_retired`). Before 0.52 it was freed (found in the
+  boundary review of 2026-11-20).
 
 What it doesn't protect against - stated in the documentation's first paragraph about it:
 
@@ -237,7 +258,11 @@ What it doesn't protect against - stated in the documentation's first paragraph 
 - **Shared infrastructure.** One process, one store, one encryption key for every workspace's connection passwords.
   A bug outside the lookups above - in the process, or in a driver - is a bug for every workspace. No per-workspace
   resource limits yet: one workspace can exhaust the shared connection pool, event-stream slots or database load for
-  the others (each key's own rate limits and quotas still apply).
+  the others (each key's own rate limits and quotas still apply). That includes the audit log the store keeps: it is
+  one log, trimmed to its newest `QUERYAPIGATE_AUDIT_LOG_LIMIT` entries (500 by default) for every workspace together,
+  so a workspace making many audited changes pushes others' older entries out of it - the hash chain still verifies,
+  as a trim moves its anchor. Keep the whole record where no workspace can trim it: stream it to a SIEM, which holds
+  undelivered entries back from the trim, or set `QUERYAPIGATE_AUDIT_LOG_EXPORT_FILE`.
 - **The JVM, for what a server administrator set up.** An experimental H2 or JDBC connection is opened read-write on
   one shared JVM with only the SQL guard as its lock. Setting one up, or changing anything but its `active` flag and
   password, is a server-wide role's (above), so a workspace's owner can't choose its URL or jar - but one a server
@@ -326,14 +351,20 @@ This is the part worth being the most precise about, because it's also the part 
 - **A connection can't be pointed at the server's own metadata store** (`store_not_allowed`): neither a
   SQLite/DuckDB/H2 `database` of `queryapigate.db` nor a DuckDB `allowed_paths` folder containing it - which would
   otherwise hand an administrator the key and token hashes. A PostgreSQL store is kept apart by its own credentials.
+  Nor can a single call: the `database` a query or schema browse may name (Run SQL's database picker, MCP's
+  argument) switches only a server database's - PostgreSQL, MySQL, ClickHouse, Trino, MongoDB - and is refused on
+  every file-backed type, where it would be a path past these checks (`engine.with_database()`). Before the 2026-11-20
+  review of the workspace boundary it wasn't: any role that runs ad-hoc SQL could read the store through a SQLite
+  connection, and with writes on make itself an owner.
 - **A `${VAR}` reference can't name one of the server's own `QUERYAPIGATE_*` settings** in a connection or
   destination - otherwise an administrator could carry the admin key or secret key out in a password sent to a host
   of theirs. **Nor a credential the server itself may run with** - `AWS_*`, `AZURE_*`, `ARM_*`, `GOOGLE_*`, `GCP_*`,
   `VAULT_*`, `KUBERNETES_*` - which would reach beyond every allow-list (found in the review for 0.30:
   `${AWS_SECRET_ACCESS_KEY}` was accepted, and with it the server's whole AWS identity, not just the secret prefixes
-  `QUERYAPIGATE_AWS_SECRET_PREFIXES` opens). Any other variable is reachable until `QUERYAPIGATE_SECRET_ENV_VARS`
-  lists the ones that may be: **set it**, or a credential under a name no rule knows (`DB_ADMIN_PW`) is an
-  administrator's to send. The server warns at startup while references are in use without it.
+  `QUERYAPIGATE_AWS_SECRET_PREFIXES` opens). Any other variable is reachable only if `QUERYAPIGATE_SECRET_ENV_VARS`
+  lists it; unset, none is (since rc1 - before, any other was, so a credential under a name no rule knows,
+  `DB_ADMIN_PW`, was an administrator's to send). The server logs an error at startup while references are in use
+  without it.
 - **Exports write only under their destination's prefix** (ADR 0004). A destination is a bucket prefix or folder and
   write credentials, stored like a connection password. Each run writes through a fresh DuckDB connection locked the
   same way - `allowed_paths` is exactly the prefix plus the one temporary file the rows were staged in - and object
@@ -460,9 +491,16 @@ only when started: nothing changes for a deployment that doesn't. It isn't in th
   with the schema its trace was made from. Plans live in the data plane's memory only.
 - **One shared secret ties the two processes together.** `QUERYAPIGATE_DATAPLANE_SECRET`, at least 16 characters,
   goes in `X-QAG-Dataplane` on every request the data plane forwards; Python compares it in constant time. The data
-  plane removes `X-QAG-Dataplane`, `X-QAG-Peer` and `X-QAG-Plan` from anything a client sends, and Python's
-  outermost WSGI layer removes the first two again before anything else reads or logs a request. Without the secret, Python
-  gives no plan, ignores `X-QAG-Peer`, and answers 404 at `/internal/dataplane/runs`.
+  plane removes `X-QAG-Dataplane`, `X-QAG-Peer`, `X-QAG-Plan` and `X-QAG-Own` from anything a client sends - spelt
+  with `_` for `-` too, which some WSGI servers read as the same header - and Python's outermost WSGI layer removes
+  them again before anything else reads or logs a request. Without the secret, Python gives no plan and ignores
+  `X-QAG-Peer`.
+- **Its own endpoints are its own.** Every call the data plane relays carries the secret, so the secret alone says
+  only that a call came through it. Its own calls - `/internal/dataplane/runs` and `/internal/dataplane/lease` - carry
+  `X-QAG-Own` beside it, which no relayed call can; Python answers 404 there to anything else. Before 0.52 the secret
+  was enough, so any client that could reach the data plane could write run history, events and metrics, raise
+  rate-limit alerts for any workspace's keys, and take the run store's id blocks until new processes got none (found
+  in the boundary review of 2026-11-20).
 - **The client's address is the client's.** With the secret, `X-QAG-Peer` carries the client's own socket address,
   and Python takes it as the real peer before `ProxyFix`. So open-access mode's loopback rule, a key's `allowed_ips`
   and `QUERYAPIGATE_TRUST_PROXY` judge the client, not the data plane's loopback connection. A peer that isn't an IP
@@ -473,8 +511,8 @@ only when started: nothing changes for a deployment that doesn't. It isn't in th
   `sql_mode`). Each PostgreSQL message ends with `RESET ALL`. The differential test sends hostile strings for exactly
   this.
 - **Its runs are recorded by Python.** The data plane reports each served run to `/internal/dataplane/runs`, with the
-  secret, and Python writes its history, event and metrics. Python trusts those entries: whoever holds the secret
-  can write run history. Runs the data plane can't queue, and reports Python doesn't take, are counted as dropped in
+  secret and `X-QAG-Own`, and Python writes its history, event and metrics. Python trusts those entries: whoever
+  holds the secret can write run history - the data plane, and nothing that only reaches it. Runs the data plane can't queue, and reports Python doesn't take, are counted as dropped in
   `/metrics`, never lost silently. On SIGTERM it sends what it still holds before it exits, for up to 10 seconds, as
   Python's own history writer flushes at exit; a hard kill loses up to one flush interval of runs, as Python's does.
 - **Resource use before the key is checked is bounded.** The data plane reads a request's body itself only when it
@@ -539,12 +577,12 @@ graduated in 0.49, with the protections above.
 
 Connection passwords in the store can be a literal string, an
 `"${ENV_VAR}"` reference resolved from the process environment at load time (never written back to disk),
-or - with `QUERYAPIGATE_SECRET_KEY` set - Fernet-encrypted at rest. Encryption is **opt-in, not the
+or - with `QUERYAPIGATE_ENCRYPTION_KEY` set - Fernet-encrypted at rest. Encryption is **opt-in, not the
 default**; without a secret key, a connection password is only as protected as the file/volume it sits in.
 The key itself must be kept outside `QUERYAPIGATE_HOME` and out of version control - there is no recovery
 path for an encrypted password without it, by design, the same property that makes it real encryption
 rather than obfuscation. API responses always mask stored passwords regardless of how they're stored. The key can
-be rotated without taking a connection down (ADR 0009): `QUERYAPIGATE_SECRET_KEY` lists the new key first and the old
+be rotated without taking a connection down (ADR 0009): `QUERYAPIGATE_ENCRYPTION_KEY` lists the new key first and the old
 one after it, `queryapigate rekey` re-encrypts every stored password under the new one in a single transaction (all or
 nothing), and the old key is then removed. A key suspected leaked is replaced the same way; backups taken before the
 rekey still open with the old key, so they need retiring with it.
@@ -694,7 +732,7 @@ to be sent whatever it fetches. So:
 - **IAM tokens and Vault credentials are passwords**: `aws-rds-iam` is refused without TLS, and a PostgreSQL or
   MySQL connection's TLS settings now reach its driver (before 0.28 they were dropped).
 - **The Vault token, AppRole secret ID and the chart's projected token** are the server's to protect like
-  `QUERYAPIGATE_SECRET_KEY`. Vault's policy for that identity is the outer limit of what any reference can reach -
+  `QUERYAPIGATE_ENCRYPTION_KEY`. Vault's policy for that identity is the outer limit of what any reference can reach -
   keep it to the paths and roles connections need. The same goes for the IAM role.
 - **Leases are revoked when a process stops** (on SIGTERM too), so a stopped instance's database users don't linger;
   one that crashes leaves them to their TTL.
@@ -707,7 +745,7 @@ Looked at: each allow-list checked when saved and again when used, and Vault pat
 `reporting` prefix doesn't reach `reporting-admin`); a file opened at the path that was checked; the cache failing
 closed, and a failing provider asked at most every 10 seconds; the Vault token's sign-in and renewal, a forbidden
 answer signing in again only once; what an error tells whom. **Found, and fixed:** a `${file:...}` could read the server's own secrets wherever they were files inside an allowed
-folder - `QUERYAPIGATE_SECRET_KEY_FILE=/run/secrets/fernet` beside `QUERYAPIGATE_SECRET_FILE_DIRS=/run/secrets`, as
+folder - `QUERYAPIGATE_ENCRYPTION_KEY_FILE=/run/secrets/fernet` beside `QUERYAPIGATE_SECRET_FILE_DIRS=/run/secrets`, as
 the docs suggest - and so have the server's key sent to an administrator's host as a password; and, with a broad
 folder, `/proc/self/environ` or the service account's token. And `secret_unavailable` told any caller the reference
 and Vault's own answer. AWS (`${aws-sm:...}`, `aws-rds-iam`) stays experimental, tested only against a stand-in.
@@ -812,7 +850,7 @@ Everything lives in a single SQLite file, `queryapigate.db`, inside `QUERYAPIGAT
 (with passwords plaintext, `${VAR}`-referenced, or Fernet-encrypted per the setting above), saved queries
 and every version's full SQL text, execution history (including row counts), API key *hashes* (never
 secrets) and grants, roles, administrators and their admin tokens' *hashes*, and the audit log. Protecting this one file - filesystem permissions, backup
-encryption, who can reach the volume - is entirely the operator's responsibility; `QUERYAPIGATE_SECRET_KEY`
+encryption, who can reach the volume - is entirely the operator's responsibility; `QUERYAPIGATE_ENCRYPTION_KEY`
 only ever covers connection passwords, not the rest of what the database holds.
 
 ### MCP server
@@ -935,10 +973,11 @@ Being explicit about these is as important as everything above:
 - **An agent may be steered by what it reads.** Data in results, descriptions and notes all become part of an AI
   agent's context. QueryAPIGate limits what an agent can reach and hides what masking covers; it can't make an agent
   ignore instructions planted in data it is allowed to read.
-- **`/metrics` needs no API key** - a scraper shouldn't hold one - **and is open until `QUERYAPIGATE_METRICS_TOKEN` is
-  set**: then only a request with that bearer token, or an administrator who may observe, reads it. Its labels name
-  API keys, queries and connections (administrators and signed-in users only as `admin` and `jwt`): set the token
-  wherever the server can be reached from outside. The Helm chart does.
+- **`/metrics` needs no API key** - a scraper shouldn't hold one. With `QUERYAPIGATE_METRICS_TOKEN` set, a request
+  with that bearer token, or an administrator who may observe, reads it; without, a server that needs a credential
+  answers only a loopback client (since rc1 - before, anyone who could reach it). Its labels name API keys, queries and
+  connections (administrators and signed-in users only as `admin` and `jwt`). A reverse proxy on the same machine is
+  a loopback client: set the token behind one, or keep `/metrics` off it. The Helm chart sets one.
 
 ## Where to go from here
 

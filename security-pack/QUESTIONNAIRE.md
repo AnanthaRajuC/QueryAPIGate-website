@@ -789,7 +789,7 @@ edit the file has an owner's reach at the next start.
 **How are security vulnerabilities reported?**
 
 **Answer:** Privately, not in a public issue: through GitHub's "Report a vulnerability" form on the repository, or by
-email to arcswdev@gmail.com.
+email to hello@queryapigate.com.
 
 *Source:* [SECURITY.md#reporting-a-vulnerability](SECURITY.md#reporting-a-vulnerability)
 
