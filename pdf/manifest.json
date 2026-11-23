@@ -183,11 +183,11 @@
   "d=QUESTIONNAIRE": {
    "file": "pdf/docs/QUESTIONNAIRE.pdf",
    "source": "security-pack/QUESTIONNAIRE.md",
-   "sha256": "ad059b5e34a7bff07851e603564cbabe78baa9ce03b79742fa57ec85e1e8922c",
+   "sha256": "0628bf1338910d92e63430810007a49a0f16342f89df532c3025210c29b19bef",
    "design": "2e8427b1ec1f92a1fa1b9d9aaa85392d841c3320bccfcb3c9e013867852496b1",
    "built": "2026-11-21",
    "pages": 20,
-   "bytes": 846757
+   "bytes": 846847
   },
   "d=SBOM": {
    "file": "pdf/docs/SBOM.pdf",
