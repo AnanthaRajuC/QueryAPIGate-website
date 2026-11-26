@@ -4340,9 +4340,10 @@ The OAuth settings are under [Sign-in for AI clients](#sign-in-for-ai-clients-oa
 
 These show up as a read-only "MCP server" section on the Console's Settings screen (BACKLOG #54) - the effective
 value and whether it's the default, same as every other setting there. The Console also has a dedicated **MCP**
-screen (in the sidebar) for the operational view: **Check now** tries a TCP connection to that port on `127.0.0.1`
-(only when asked - `GET /api/v1/mcp/status`), **Tools** lists what `tools/list` returns in the current workspace
-(`GET /api/v1/mcp/tools`), and a connect snippet shows the URL and header a client needs. Both are worked out by the
+screen (in the sidebar) for the operational view, in three tabs: **Connect a client** shows the URL and header a
+client needs, **Reachability → Check now** tries a TCP connection to that port on `127.0.0.1` (only when asked -
+`GET /api/v1/mcp/status`), and **Tools** lists what `tools/list` returns in the current workspace
+(`GET /api/v1/mcp/tools`). Both are worked out by the
 REST server: the check only says whether *something* listens on that port on the same host, and the settings shown
 are the REST server's - an MCP process started with different variables isn't reflected. See
 [Check the MCP server from the Console](https://github.com/AnanthaRajuC/QueryAPIGate/blob/main/how-to/27-check-the-mcp-server-from-the-console.md).
@@ -4809,7 +4810,7 @@ SQL editor, the demo video and the architecture.
 <tr>
 <td width="50%">
 <a href="https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/sign-in.png">
-<img src="https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/sign-in.png" alt="The Console's sign-in page: a centred card with the QueryAPIGate wordmark, the heading Sign in to the Console, a field for an admin token or API key, a Sign in button, and a note on where tokens come from">
+<img src="https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/sign-in.png" alt="The Console's sign-in page: on the left a deep green panel with the QueryAPIGate mark and wordmark, the tagline Turn SQL into governed data access, three points (saved queries as REST endpoints, the same queries as MCP tools for AI agents, keys, roles, masking and a tamper-evident audit log) and this server's version and health; on the right the heading Sign in to the Console, a field for an admin token or API key with a show button, a Sign in button, a note that the token is kept for this tab only and where tokens come from, and links to the API reference and the documentation">
 </a>
 <br><sub>Signed out, a tab sees only the sign-in page - Sign in with SSO when it's set up, or an admin token</sub>
 </td>
@@ -14668,13 +14669,14 @@ Source: https://queryapigate.com/Guide.dc.html?g=27-check-the-mcp-server-from-th
 without installing an MCP client.
 
 `queryapigate mcp` is a separate process from the server that serves the Console, so the Console can't know about it
-on its own. The **MCP** screen in the sidebar asks on request - and lists the tools a client would see.
+on its own. The **MCP** screen in the sidebar asks on request - and lists the tools a client would see. It has three
+tabs: **Connect a client**, **Reachability** and **Tools**. A link can open one: `/console/mcp?tab=tools`.
 
 ## What the MCP screen shows
 
-[![The MCP server screen: the Connect a client snippet for Claude Desktop, Reachability with a Check now button, and the Tools a client sees - each saved query with its kind, parameters, description and MCP activity](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/mcp.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/mcp.png)
+[![The MCP server screen on its Tools tab, beside the Connect a client and Reachability tabs: the tools a client sees - each saved query with its kind, parameters, description and MCP activity](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/mcp.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/mcp.png)
 
-*The MCP screen: the connect snippet, Check now, and the tools.*
+*The MCP screen's Tools tab.*
 
 **Connect a client** - the config an MCP client needs: the server's URL and a scoped API key as the `X-API-Key`
 header - the same one-entry snippet you paste into Claude Desktop's config.
