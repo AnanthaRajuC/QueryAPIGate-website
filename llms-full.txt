@@ -1890,8 +1890,8 @@ and those `workspaces`.
 | `PATCH /api/v1/collections/{name}` | Rename it: `{"name": "new"}`. Grants follow, and nobody's access narrows part-way. Into an existing collection only with `"merge": true` (409 `collection_exists` otherwise), which also finishes a rename that was interrupted. |
 | `GET /api/v1/collections/{name}/postman` | The collection as a Postman Collection v2.1 file. It holds no key. |
 | `GET /api/v1/examples` | Whether the [example APIs](EXAMPLES.md) are installed: `loaded`, or `partial` after an interrupted load, and what they are. |
-| `POST /api/v1/examples` | Install them (idempotent; completes an interrupted load). The example keys' secrets are in the response, shown this once. 409 `examples_conflict`, changing nothing, if something that isn't an example holds one of their names. |
-| `DELETE /api/v1/examples` | Remove exactly what is marked as an example. `keys_still_granted` names other keys granted an example collection, whose grant now reaches nothing. |
+| `POST /api/v1/examples` | Install them, the example workspace and its members too (idempotent; completes an interrupted load). The example keys' secrets and the members' admin tokens are in the response, shown this once. 409 `examples_conflict`, changing nothing, if something that isn't an example holds one of their names. A server-wide owner's. |
+| `DELETE /api/v1/examples` | Remove exactly what is marked as an example, and the example workspace unless something of yours is in it (`workspace_kept`). `keys_still_granted` names other keys granted an example collection, whose grant now reaches nothing. A server-wide owner's. |
 
 ### The response cache
 
@@ -2174,16 +2174,22 @@ always. `GET /api/v1/config/managed` lists what's managed and whether it's locke
 
 ## Example APIs
 
-Four worked scenarios (reporting, dashboard, export, partner) ship with the package and can be loaded into a home
-folder and removed again - see [Example APIs](EXAMPLES.md) for the walkthrough. Over HTTP (admin only):
+Four worked scenarios (reporting, dashboard, export, partner) and an example team's workspace, `example-stores`,
+with three members, ship with the package and can be loaded into a home folder and removed again - see
+[Example APIs](EXAMPLES.md) for the walkthrough. Over HTTP (an administrator reads them; loading and removing take a
+server-wide owner, as they make and remove administrators):
 
 - `GET /api/v1/examples` - `{"loaded": true, "partial": false, "connection": "examples", "queries": [...],
-  "roles": [...], "keys": [...], "collections": [...]}`. `partial` means an interrupted load: some of it is installed.
-- `POST /api/v1/examples` - install them. Idempotent; the response lists what was `added`, with the example keys'
-  secrets (`key_secrets`), shown this once. `409 examples_conflict` and nothing changed if a query, role, connection
-  or file that is *not* an example already holds one of their names.
-- `DELETE /api/v1/examples` - remove exactly what is marked `example`, and report any keys still granted an example
-  collection (`keys_still_granted`), whose grant now reaches nothing.
+  "roles": [...], "keys": [...], "collections": [...], "workspace": {...}}`. `partial` means an interrupted load: some
+  of it is installed. `workspace` is the example workspace - `{"name", "workspace", "connection", "queries", "roles",
+  "keys", "members"}` - or `null` when it isn't there.
+- `POST /api/v1/examples` - install them. Idempotent; the response lists what was `added` (`added.workspace`: what
+  went into the example workspace), with the example keys' secrets (`key_secrets`) and the example members' admin
+  tokens (`admin_tokens`), shown this once. `409 examples_conflict` and nothing changed if a query, role, connection,
+  file, workspace or administrator that is *not* an example already holds one of their names.
+- `DELETE /api/v1/examples` - remove exactly what is marked `example`, the example workspace's members, and the
+  workspace once nothing else is in it (`workspace_kept`: what of yours keeps it, or `null`), and report any keys
+  still granted an example collection (`keys_still_granted`), whose grant now reaches nothing.
 
 The same as `queryapigate examples load|unload|status`, and `QUERYAPIGATE_LOAD_EXAMPLES=yes` loads them at startup
 (a problem there - a name conflict, a read-only home - is a logged warning, never a startup failure; a malformed value
@@ -2441,7 +2447,7 @@ alone; deactivating the administrator stops them all.
 | Role | May |
 |---|---|
 | `owner` | everything, including administrators, re-encrypting stored passwords under a new key, applying a configuration file and forgetting a person's history |
-| `admin` | everything but administrators, re-encrypting passwords, applying a configuration file and forgetting history: connections, API keys and roles, saved queries, cache, examples, settings |
+| `admin` | everything but administrators, re-encrypting passwords, applying a configuration file, forgetting history and loading the examples (they make administrators): connections, API keys and roles, saved queries, cache, settings |
 | `developer` | saved queries and collections; read connections, history, the audit log and alerts; run SQL - but no API keys, no connection changes, and no moves that give a key or role new reach |
 | `auditor` | read only: queries, connections, API keys and roles, the audit log, history, alerts, instances, settings. No SQL at all |
 
@@ -4279,10 +4285,11 @@ listed as a tool with `readOnlyHint: false` and `destructiveHint: true`. `execut
   the run is in history with `request` and `approved_by`; approvals and rejections are in the audit log.
 - `QUERYAPIGATE_CONSOLE_URL` (`https://data.example.com`) makes `approve_at` a full link; without it, it's the Console
   path.
-- **In the Console:** **Observability → Approvals**, with a count of the writes waiting in the sidebar; the link an
-  agent is given opens its request there - the agent, the SQL, the exact arguments, the row ceiling, when it
-  expires - with **Approve** and **Reject** (and a reason). The `writes_awaiting_approval` alert says when writes are
-  waiting, and the Agents screen counts each agent's write requests by how they ended.
+- **In the Console:** **Observability → Approvals**, with a count of the writes waiting on the tab, and on
+  **Observability** in the sidebar while no alert is open; the link an agent is given opens its request there - the
+  agent, the SQL, the exact arguments, the row ceiling, when it expires - with **Approve** and **Reject** (and a
+  reason). The `writes_awaiting_approval` alert says when writes are waiting, and the Agents screen counts each
+  agent's write requests by how they ended.
 - **Four eyes:** a write is never approved by the credential that asked for it (`own_write`) - give agents their own
   keys. An agent with 100 writes waiting is refused more (`too_many_pending_writes`).
 
@@ -4520,7 +4527,9 @@ version management, API key management, an audit log of administrative changes, 
 response inspection with a collapsible JSON tree for non-tabular results, a quick bar chart of any numeric
 result, and one-click "copy as curl" / "copy as TSV" for any result.
 
-The UI has a collapsible sidebar (Data, Access, Observability; `Ctrl`+`B` toggles it) and a read-only **Settings**
+The UI has a collapsible sidebar (`Ctrl`+`B` toggles it) of one entry per area - Home, Data, API, MCP server,
+Delivery, Access and Observability - each area's page with its screens as tabs (Data: Connections, CDC sources and
+Caching; Access: API keys, Roles, Access map, Workspaces and Administrators; ...), and a read-only **Settings**
 screen that shows every environment variable, its effective value and whether it was set or is the default (secrets are
 reported as configured or not, never shown), with a "Copy as .env" button. Theme, table density and the default
 result format are per-browser preferences.
@@ -4575,13 +4584,14 @@ Source: https://queryapigate.com/Guide.dc.html?d=EXAMPLES
 
 Four worked scenarios you can load, try and remove again - each a [collection](API.md#collections) of saved
 queries plus a [role](API.md#permission-roles-templates) shaped like the key that would front it - plus a fifth
-role that spans two of those collections at once. They show what QueryAPIGate is *for*: a named, small,
+role that spans two of those collections at once, and a [workspace](#6-a-teams-own-workspace---example-stores) of
+an example team's own, with members who sign in to it. They show what QueryAPIGate is *for*: a named, small,
 rate-limited surface over a database, instead of a hand-rolled controller.
 
 ~~~bash
 pip install queryapigate
-queryapigate examples load          # installs everything below, and prints a real API key per scenario -
-                                     # store them now, they cannot be shown again (see below)
+queryapigate examples load          # installs everything below, and prints a real API key per scenario and an
+                                     # admin token per example member - store them now, they cannot be shown again
 queryapigate serve                  # then open http://127.0.0.1:5000/console - a key from above is now required
 queryapigate examples unload        # removes exactly what `load` installed - nothing else
 ~~~
@@ -4598,13 +4608,15 @@ called `examples`.
 | | |
 |---|---|
 | `queryapigate examples load` | Install them. Idempotent: running it again changes nothing (no extra versions), and it finishes an interrupted load. |
-| `queryapigate examples unload` | Remove exactly what was installed - the queries, roles, keys, connection and database file. |
+| `queryapigate examples unload` | Remove exactly what was installed - the queries, roles, keys, connection and database file, and the example workspace's members, and the workspace itself unless something of yours is in it. |
 | `queryapigate examples status` | Say whether they are loaded (`Loaded`, `Partly loaded`, or `Not loaded`). |
 | `QUERYAPIGATE_LOAD_EXAMPLES=yes` | Load them at server start - for a container (`docker run -e QUERYAPIGATE_LOAD_EXAMPLES=yes -v qag:/data ...`). Idempotent across restarts. Unset, or `no`, leaves things as they are: it never removes anything - use `unload`. |
 | Admin UI | Once loaded, API Repository shows an "Example APIs are loaded" bar with **Remove examples** (and **Finish loading** after an interrupted load). Loading itself is the command above, the variable below or the API. |
-| `POST` / `DELETE` / `GET /api/v1/examples` | The same, over [HTTP](API.md#example-apis) (admin only). |
+| `POST` / `DELETE` / `GET /api/v1/examples` | The same, over [HTTP](API.md#example-apis). Loading and removing take a server-wide **owner** (the shared key is one): they make and remove administrators. |
 
-Everything installed is **marked `example`** (`"example": true` on each query, role, key and connection), and removal deletes exactly what is marked:
+Everything installed is **marked `example`** (`"example": true` on each query, role, key and connection; the example
+workspace and its administrators are marked by being made by `queryapigate-examples`, a name no administrator may
+take), and removal deletes exactly what is marked:
 
 - A query, role, key, connection or file of yours that merely shares a name is **never overwritten and never
   removed** - loading stops with a clear message and changes nothing until you rename it.
@@ -4724,6 +4736,37 @@ curl 'http://127.0.0.1:5000/q/example_all_rentals'           -H 'X-API-Key: <exe
 
 Granting a second collection to any role - yours or this one - works the same way: add its name to the role's
 `collections` list and every key created from that role gains it immediately.
+
+## 6. A team's own workspace - `example-stores`
+
+A server with several teams on it gives each a [workspace](adr/0023-workspaces.md) (experimental): its own
+connections, saved queries, keys and roles, and members who administer it and nothing else. The examples load one -
+the store operations team's - so you can see that without setting it up:
+
+| | |
+|---|---|
+| Its own API | An `examples` connection of its own (to the same example database - names are unique within a workspace, not across them), the `examples-stores` collection - `example_store_revenue` and `example_staff_activity` - and a role and key, both `example-stores`, `120/minute`. |
+| Its members | `example-owner` (owner: the workspace and who is in it), `example-developer` (its saved queries) and `example-auditor` (reads, runs no SQL). Each is an administrator with no server-wide role - only this membership - and gets a personal admin token (`qagadm_...`), shown once like the keys. |
+
+Sign in to the Console with a member's token and it is that workspace's alone: its two queries, its key, its
+connection - nothing of `default`'s. Sign in with the shared admin key instead and the workspace switcher under the
+wordmark moves between `default` and `example-stores`; the chip in the top bar says which one you are in.
+
+~~~bash
+curl 'http://127.0.0.1:5000/q/example_staff_activity?city=Berlin' -H 'X-API-Key: <example-stores secret>'  # 200
+curl 'http://127.0.0.1:5000/q/example_top_films'                   -H 'X-API-Key: <example-stores secret>'  # 404 - default's
+curl 'http://127.0.0.1:5000/w/example-stores/api/v1/queries'       -H 'X-API-Key: <example-owner token>'    # its queries
+curl 'http://127.0.0.1:5000/api/v1/queries'                        -H 'X-API-Key: <example-owner token>'    # 403 - no role in default
+~~~
+
+A key acts in its own workspace, so the `example-stores` key needs no `/w/...` in the path; an administrator names
+the workspace (`/w/example-stores/...`), as the Console does for them. Loading the examples is what turns
+workspaces on, so the server logs that this experimental feature is in use.
+
+`unload` removes the workspace's example queries, role, key and connection, its three members (their tokens and
+memberships with them), and then the workspace - unless something of yours is in it, which stays, with the
+workspace (`workspace_kept` in the API's answer). A deleted workspace's name is retired, not freed - its run
+history and audit entries still name it - but a later `load` brings the examples' own back.
 
 ## Things to try next
 
@@ -5125,7 +5168,7 @@ load, remove or check the bundled example APIs (reporting, dashboard, export, pa
 
 #### `queryapigate examples load`
 
-install four worked example scenarios - queries in collections, roles, and a small generated SQLite database - all marked as examples; idempotent, never overwrites anything of yours
+install four worked example scenarios - queries in collections, roles, and a small generated SQLite database - and an example team's workspace with three members who sign in to it, all marked as examples; idempotent, never overwrites anything of yours
 
 | Argument | Meaning |
 |---|---|
@@ -11390,7 +11433,7 @@ an endpoint" screen - distinct from **API Repository**, which lists endpoints yo
 ## Step 3: Pick a connection and look at what's there
 
 A **connection** is a database this server can query. Every connection is listed on the **Connections** screen
-(in the sidebar, under **Data**). Right after `examples load` there's one, `examples`: the SQLite file that
+(**Data** in the sidebar, then its **Connections** tab). Right after `examples load` there's one, `examples`: the SQLite file that
 step 1 created, marked with an `example` badge. Your own databases join it there once you
 [connect them](02-connect-a-database.md).
 
@@ -11452,7 +11495,7 @@ parameter - a request with a rating outside that list gets rejected with a clear
 runs. See [How to use bound parameters safely](06-use-bound-parameters-safely.md) for every available rule
 (`min`/`max`, `pattern`, `default`, `required`, and more).
 
-Click **Save**. A toast confirms it, and **API Repository**'s query count in the sidebar increments - your
+Click **Save**. A toast confirms it, and the query count on the **API Repository** tab increments - your
 query is now a real, versioned, saved endpoint.
 
 ## Step 6: Call your new endpoint
@@ -11526,7 +11569,7 @@ and a schema browser: [Connect to Trino](61-connect-to-trino.md) (experimental).
 
 ## Two ways to add a connection
 
-**Admin UI**: open **<http://127.0.0.1:5000/console>**, go to **Connections** (under **Data** in the sidebar),
+**Admin UI**: open **<http://127.0.0.1:5000/console>**, go to **Data** in the sidebar (it opens on its **Connections** tab),
 click **New connection**, fill in the form, **Test** it, then **Save**.
 
 [![The New connection form open beside the Connections list: name orders, database type postgres, host orders-db.internal, port 5432, user reporting, a password field, default database orders, a Load databases button, an Active checkbox, Test connection, and Cancel and Create buttons](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-02-new-connection.png)](https://raw.githubusercontent.com/AnanthaRajuC/QueryAPIGate/main/documentation/screenshots/guide-02-new-connection.png)
@@ -11973,8 +12016,8 @@ Source: https://queryapigate.com/Guide.dc.html?g=05-try-the-built-in-example-api
 
 **Time:** 2 minutes to load, as long as you like to explore. **You'll end up with:** four realistic,
 fully-worked example APIs - reporting, a live dashboard, a bulk export, and a partner integration - each
-with its own scoped key, running against a small generated database. No external database, no config
-file to write by hand.
+with its own scoped key, running against a small generated database, and an example team's workspace with
+members who sign in to it. No external database, no config file to write by hand.
 
 This is the fastest way to see what a finished, production-shaped setup looks like before building your
 own - real collections, real roles, real per-scenario API keys, real run history, not a placeholder.
@@ -11987,19 +12030,25 @@ QUERYAPIGATE_API_KEY=demo-key queryapigate examples load
 
 ```
 Loaded the example APIs: 11 queries in 4 collections, 5 roles, and the 'examples' connection.
+And the 'example-stores' workspace (experimental): 2 queries of its own and 3 members (example-owner, example-developer, example-auditor).
 Example API keys (store these now - they cannot be shown again):
   example-dashboard: sk_...
   example-executive: sk_...
   example-export: sk_...
   example-partner: sk_...
   example-reporting: sk_...
+  example-stores: sk_...  (workspace example-stores)
+Admin tokens for the 'example-stores' workspace's members - sign in to the Console with one (store these now - they cannot be shown again):
+  example-auditor (auditor): qagadm_...
+  example-developer (developer): qagadm_...
+  example-owner (owner): qagadm_...
 Try:  queryapigate serve   then open /console, or  curl http://127.0.0.1:5000/q/example_top_films -H 'X-API-Key: <one of the secrets above>'
 Watch it live:  curl -N http://127.0.0.1:5000/events -H 'X-API-Key: <one of the secrets above>' (then call a query in another terminal to see the event arrive)
 Remove them again with:  queryapigate examples unload
 ```
 
-Copy those five secrets somewhere now - like any API key, they're generated fresh and shown exactly once;
-there's no way to retrieve them again later, only to remove the keys and start over. Setting
+Copy those six keys and three tokens somewhere now - like any API key or admin token, they're generated fresh
+and shown exactly once; there's no way to retrieve them again later, only to remove the examples and start over. Setting
 `QUERYAPIGATE_API_KEY=demo-key` first gives you an admin key too - the moment any key exists, the server
 requires one for every request, examples included.
 
@@ -12034,6 +12083,14 @@ traffic would realistically need - e.g. `example-export`'s key is capped at 20 r
 export isn't meant to be polled), plus a fifth, `example-executive`, granted *both* the reporting and
 dashboard collections at once - the one thing none of the other four shows on its own: a role reaching
 several collections together, not just one.
+
+**An example team's workspace, `example-stores`** - a [workspace](../documentation/adr/0023-workspaces.md)
+(experimental) is how one server serves several teams: each has its own connections, queries and keys, and members
+who administer it and nothing else. This one is the store operations team's - its own `examples` connection, the
+`examples-stores` collection (`example_store_revenue`, `example_staff_activity`) and an `example-stores` key - with
+three members: `example-owner`, `example-developer` and `example-auditor`. Sign in to the Console with one of their
+tokens and you see that workspace alone, as their role allows; sign in with `demo-key` and the workspace switcher
+under the wordmark moves between `default` and `example-stores`. [Give each team its own workspace](60-give-each-team-its-own-workspace.md) sets one up for real.
 
 **Seeded run history** - each query already has realistic-looking (synthetic, clearly not real traffic)
 execution history, so the admin UI's History tab, Home tab and requests-per-day charts show something
@@ -12085,7 +12142,7 @@ Open **<http://127.0.0.1:5000/console>**. Two things worth noticing right away:
 From there, the same tabs work as they would for a query you wrote yourself: **SQL** (the query text),
 **History** (every run, seeded or real), **Curl**/**CLI** (copy-pasteable commands), **API Keys**/**Roles**
 (which of the five keys can reach this specific query), **Access**, **Cache** (for the dashboard scenario's
-`cache_ttl=30` queries), **Metrics**. Visit **Access map** (under **Access** in the sidebar) to see all
+`cache_ttl=30` queries), **Metrics**. Visit **Access map** (a tab of **Access**, in the sidebar) to see all
 five keys and every query they reach laid out at once - the fastest way to build intuition for how
 `connections`/`queries`/`collections` grants actually compose, before designing your own.
 
@@ -12100,7 +12157,7 @@ queryapigate examples unload
 ```
 
 ```
-Removed 11 example queries, 5 roles, 5 API keys and the connection.
+Removed 13 example queries, 6 roles, 6 API keys, 3 administrators and the connection, and the example-stores workspace.
 ```
 
 Removes exactly what was marked as an example - nothing you've added yourself, even if it happens to share
@@ -17881,7 +17938,7 @@ close_ticket {"id": 2}
 ```
 
 Nothing has changed yet. The agent shows its user the link; it opens on the Console's **Approvals** screen
-(Observability → Approvals, with a count in the sidebar): who asked, the query, the SQL, **the exact arguments**, at
+(Observability → Approvals, with a count on the tab and on Observability in the sidebar): who asked, the query, the SQL, **the exact arguments**, at
 most how many rows, when it expires - **Approve**, or **Reject** with a reason the agent is told. Owners and admins
 can decide (`writes.approve`); here, maria:
 

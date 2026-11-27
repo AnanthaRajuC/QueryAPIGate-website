@@ -42,7 +42,7 @@ export const guides = [
   "cat": "Start",
   "time": "2 min",
   "timeMin": 2,
-  "outcome": "Four realistic, fully-worked example APIs - reporting, a live dashboard, a bulk export, and a partner integration - each with its own scoped key, running against a small generated database. No external database, no config file to write by hand."
+  "outcome": "Four realistic, fully-worked example APIs - reporting, a live dashboard, a bulk export, and a partner integration - each with its own scoped key, running against a small generated database, and an example team's workspace with members who sign in to it. No external database, no config file to write by hand."
  },
  {
   "num": "06",
